@@ -48,6 +48,8 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .banner{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:8px 12px;font-size:13px}
 
+.gatebox{display:flex;flex-direction:column;gap:14px;width:min(400px,100%)}
+.gatebox .card{width:100%}
 .gate{min-height:100vh;display:grid;place-items:center;padding:24px 0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px;width:min(400px,100%);display:flex;flex-direction:column;gap:14px}
 .card h2{margin:0;font-size:19px}
@@ -187,6 +189,7 @@ details.paste textarea{margin-top:8px}
 
 <!-- 로그인 -->
 <div id="auth" class="gate" hidden>
+  <div class="gatebox">
   <form class="card" data-form="login">
     <div><div class="brand" style="color:var(--accent)">V:Dream</div><h2>계약 진행 관리</h2></div>
     <p>V:Scout 와 같은 팀 계정으로 로그인하세요.</p>
@@ -195,6 +198,13 @@ details.paste textarea{margin-top:8px}
     <div class="err" id="login-err" role="alert"></div>
     <button class="btn primary" type="submit" id="login-btn">로그인</button>
   </form>
+  <form class="card" data-form="paste">
+    <div><h2 style="font-size:15px">팀 링크로 입장</h2><p style="margin-top:4px">계정 없이 받은 팀 링크로 들어옵니다. 링크를 통째로 붙여넣어 주세요.</p></div>
+    <label>팀 링크<input id="paste-link" autocomplete="off" placeholder="https://sjvest.github.io/vdream-contracts/#t=…"></label>
+    <div class="err" id="paste-err" role="alert"></div>
+    <button class="btn" type="submit">링크로 입장</button>
+  </form>
+  </div>
 </div>
 
 <!-- 링크 접속: 처음 한 번 이름 입력 -->
@@ -679,6 +689,14 @@ document.addEventListener("submit",function(e){
     try{localStorage.setItem("ct-sb-url",$("#cfg-url").value.trim());localStorage.setItem("ct-sb-key",$("#cfg-key").value.trim())}catch(x){}
     boot();return;
   }
+  if(f==="paste"){
+    var tk=parseToken($("#paste-link").value);
+    if(!tk){$("#paste-err").textContent="링크에서 팀 코드를 찾지 못했습니다. 받은 링크를 끝까지 통째로 붙여넣어 주세요.";return}
+    $("#paste-err").textContent="";
+    try{localStorage.setItem("ct-link",tk)}catch(x){}
+    $("#login-err").textContent="";
+    boot();return;
+  }
   if(f==="who"){
     var nm=$("#who-name").value.trim();if(!nm)return;
     actor=nm;try{localStorage.setItem("ct-name",nm)}catch(x){}
@@ -720,7 +738,7 @@ document.addEventListener("submit",function(e){
 
 /* ---------- 시작: 설정 → (팀 링크 | 로그인) → 앱 ---------- */
 function show(which){["cfg","auth","who","app"].forEach(function(id){$("#"+id).hidden=(id!==which)})}
-var channel=null,pollT=null,startedFor=null;
+var channel=null,pollT=null,startedFor=null,authSub=null;
 function startApp(){
   if(!linkMode){var u=session.user,md=u.user_metadata||{};actor=md.name||md.full_name||(u.email||"").split("@")[0]||""}
   $("#me-name").textContent=actor+(linkMode?" (링크 접속)":"");
@@ -746,13 +764,22 @@ function startApp(){
 }
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&sb&&(session||linkMode)&&loaded)loadCases()});
 
-/* 주소 뒤에 #t=토큰 이 붙은 팀 링크로 들어오면 로그인 없이 사용합니다. 토큰은 저장 후 주소창에서 지웁니다. */
+/* 주소 뒤에 #t=토큰 또는 ?t=토큰 이 붙은 팀 링크로 들어오면 로그인 없이 사용합니다. 토큰은 저장 후 주소창에서 지웁니다. */
+function parseToken(v){
+  v=(v||"").trim();
+  var m=v.match(/[#?&]t=([A-Za-z0-9_-]{16,128})/);
+  if(m)return m[1];
+  return /^[A-Za-z0-9_-]{16,128}$/.test(v)?v:"";
+}
 function readLinkToken(){
-  var m=(location.hash||"").match(/[#&]t=([A-Za-z0-9_-]{16,128})/);
-  if(m){
-    try{localStorage.setItem("ct-link",m[1])}catch(e){}
-    try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
-    return m[1];
+  var tok=parseToken((location.search||"")+(location.hash||""));
+  if(tok){
+    try{localStorage.setItem("ct-link",tok)}catch(e){}
+    try{
+      var sp=new URLSearchParams(location.search);sp.delete("t");var q=sp.toString();
+      history.replaceState(null,"",location.pathname+(q?"?"+q:""));
+    }catch(e){}
+    return tok;
   }
   try{return localStorage.getItem("ct-link")||""}catch(e){return""}
 }
@@ -778,9 +805,10 @@ function boot(){
   if(!key){$("#cfg-url").value=url;show("cfg");return}
   if(!window.supabase){show("auth");$("#login-err").textContent="Supabase 라이브러리를 불러오지 못했습니다. 네트워크를 확인해 주세요.";return}
   var token=readLinkToken();
+  if(authSub&&authSub.unsubscribe){authSub.unsubscribe();authSub=null}
   sb=window.supabase.createClient(url,key,token?{global:{headers:{"x-team-token":token}}}:undefined);
   if(token){enterLink();return}
-  sb.auth.onAuthStateChange(function(ev,s){
+  var sub=sb.auth.onAuthStateChange(function(ev,s){
     session=s;
     if(s){
       if(startedFor!==s.user.id){startedFor=s.user.id;startApp()}
@@ -790,6 +818,7 @@ function boot(){
       clearInterval(pollT);cases=[];loaded=false;sel=null;show("auth");
     }
   });
+  authSub=sub&&sub.data&&sub.data.subscription||null;
   sb.auth.getSession().then(function(r){if(!r.data.session)show("auth")});
 }
 boot();
