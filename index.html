@@ -8,20 +8,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: 상단 바(사용자·로그아웃) → 요약 → 유형 탭·담당자 필터 → 좌측 진행 목록 + 우측 상세 타임라인(모바일은 전체 화면 시트). */
+/* Layout: 상단 바(사용자) → 요약 → 유형 탭·담당자 필터 → 좌측 진행 목록 + 우측 상세 타임라인(모바일은 전체 화면 시트). 항상 밝은 테마. */
 :root{
   color-scheme:light;
-  --bg:#f2f4f9; --surface:#ffffff; --surface-2:#e9edf5; --ink:#1a2233; --ink-2:#5b6579; --line:#d8deea;
-  --accent:#3b5290; --accent-ink:#ffffff; --accent-soft:#e1e8f6;
+  --bg:#f6f8fc; --surface:#ffffff; --surface-2:#edf1f8; --ink:#1c2536; --ink-2:#5f6b80; --line:#dde3ee;
+  --accent:#3f62b5; --accent-ink:#ffffff; --accent-soft:#e6edfa;
   --ok:#1d7a4b; --ok-soft:#dcf0e5; --warn:#9a5600; --warn-soft:#fcebcb; --bad:#b3261e; --bad-soft:#fadfdc;
   --font:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root{
-  color-scheme:dark;
-  --bg:#11141b; --surface:#1a1f2b; --surface-2:#232a3a; --ink:#e6eaf3; --ink-2:#9aa5ba; --line:#2d3546;
-  --accent:#8ea6e8; --accent-ink:#0f1524; --accent-soft:#27314f;
-  --ok:#6fd0a0; --ok-soft:#173226; --warn:#f0b259; --warn-soft:#3a2c12; --bad:#ff8f86; --bad-soft:#3d1d1b}}
 
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -202,11 +197,21 @@ details.paste textarea{margin-top:8px}
   </form>
 </div>
 
+<!-- 링크 접속: 처음 한 번 이름 입력 -->
+<div id="who" class="gate" hidden>
+  <form class="card" data-form="who">
+    <div><div class="brand" style="color:var(--accent)">V:Dream</div><h2>계약 진행 관리</h2></div>
+    <p>변경 이력에 남길 이름을 입력해 주세요. 이 브라우저에 저장되어 다음부터는 묻지 않습니다.</p>
+    <label>이름<input id="who-name" required maxlength="20" autocomplete="name" placeholder="예: 이재성"></label>
+    <button class="btn primary" type="submit">시작하기</button>
+  </form>
+</div>
+
 <!-- 앱 -->
 <div id="app" hidden>
   <div class="topbar"><div class="in">
     <div class="brand">V:Dream<span>계약 진행 관리</span></div>
-    <div class="me"><span id="me-name"></span><button data-act="logout">로그아웃</button></div>
+    <div class="me"><span id="me-name"></span><button id="me-btn" data-act="logout">로그아웃</button></div>
   </div></div>
   <div class="wrap">
     <header class="top">
@@ -315,7 +320,7 @@ function info(c){
 function stepLabel(c,k){var d=stepDefs(c).find(function(x){return x.k===k});return d?d.label:k}
 
 /* ---------- 상태 ---------- */
-var sb=null,session=null,actor="";
+var sb=null,session=null,actor="",linkMode=false;
 var cases=[],team=[],loaded=false;
 var F={type:"대체",mgr:"전체",status:"active",q:"",quick:""};
 var sel=null,showMgrInput=false,delArm=null,mgrInit=false,histCache={};
@@ -617,6 +622,7 @@ document.addEventListener("click",function(e){
   var el=e.target.closest("[data-act]");if(!el)return;
   var a=el.dataset.act;
   if(a==="logout"){sb.auth.signOut();return}
+  if(a==="rename"){show("who");var wn=$("#who-name");wn.value=actor;wn.focus();return}
   if(a==="open"){sel=el.dataset.id;delArm=null;render();return}
   if(a==="close"){sel=null;delArm=null;render();return}
   if(a==="new"){sel="new";render();var n=$("#n-company");if(n)n.focus();return}
@@ -673,6 +679,11 @@ document.addEventListener("submit",function(e){
     try{localStorage.setItem("ct-sb-url",$("#cfg-url").value.trim());localStorage.setItem("ct-sb-key",$("#cfg-key").value.trim())}catch(x){}
     boot();return;
   }
+  if(f==="who"){
+    var nm=$("#who-name").value.trim();if(!nm)return;
+    actor=nm;try{localStorage.setItem("ct-name",nm)}catch(x){}
+    startApp();return;
+  }
   if(f==="login"){
     var btn=$("#login-btn");btn.disabled=true;$("#login-err").textContent="";
     sb.auth.signInWithPassword({email:$("#login-email").value.trim(),password:$("#login-pw").value}).then(function(r){
@@ -707,15 +718,21 @@ document.addEventListener("submit",function(e){
   }
 });
 
-/* ---------- 시작: 설정 → 로그인 → 앱 ---------- */
-function show(which){["cfg","auth","app"].forEach(function(id){$("#"+id).hidden=(id!==which)})}
+/* ---------- 시작: 설정 → (팀 링크 | 로그인) → 앱 ---------- */
+function show(which){["cfg","auth","who","app"].forEach(function(id){$("#"+id).hidden=(id!==which)})}
 var channel=null,pollT=null,startedFor=null;
 function startApp(){
-  var u=session.user,md=u.user_metadata||{};
-  actor=md.name||md.full_name||(u.email||"").split("@")[0]||"";
-  $("#me-name").textContent=actor;
+  if(!linkMode){var u=session.user,md=u.user_metadata||{};actor=md.name||md.full_name||(u.email||"").split("@")[0]||""}
+  $("#me-name").textContent=actor+(linkMode?" (링크 접속)":"");
+  var mb=$("#me-btn");mb.textContent=linkMode?"이름 변경":"로그아웃";mb.dataset.act=linkMode?"rename":"logout";
   show("app");render();
   Promise.all([loadTeam(),loadCases()]);
+  clearInterval(pollT);
+  if(linkMode){
+    /* 링크 접속은 실시간 구독 대신 20초마다 새로 읽습니다. */
+    pollT=setInterval(function(){if(!document.hidden)loadCases()},20000);
+    return;
+  }
   if(channel)sb.removeChannel(channel);
   channel=sb.channel("contracts-live")
     .on("postgres_changes",{event:"*",schema:"public",table:"contract_cases"},function(p){
@@ -725,17 +742,44 @@ function startApp(){
     })
     .on("postgres_changes",{event:"*",schema:"public",table:"contract_managers"},function(){loadTeam()})
     .subscribe();
-  clearInterval(pollT);
   pollT=setInterval(function(){if(!document.hidden)loadCases()},120000);
 }
-document.addEventListener("visibilitychange",function(){if(!document.hidden&&session&&sb)loadCases()});
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&sb&&(session||linkMode)&&loaded)loadCases()});
+
+/* 주소 뒤에 #t=토큰 이 붙은 팀 링크로 들어오면 로그인 없이 사용합니다. 토큰은 저장 후 주소창에서 지웁니다. */
+function readLinkToken(){
+  var m=(location.hash||"").match(/[#&]t=([A-Za-z0-9_-]{16,128})/);
+  if(m){
+    try{localStorage.setItem("ct-link",m[1])}catch(e){}
+    try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+    return m[1];
+  }
+  try{return localStorage.getItem("ct-link")||""}catch(e){return""}
+}
+function dropLinkToken(msg){
+  try{localStorage.removeItem("ct-link")}catch(e){}
+  linkMode=false;show("auth");$("#login-err").textContent=msg;
+}
+function enterLink(){
+  sb.rpc("contract_link_ok").then(function(r){
+    if(r.error||r.data!==true){
+      dropLinkToken(r.error?"링크 접속을 확인하지 못했습니다. 관리자에게 설정 상태를 문의하거나 계정으로 로그인하세요.":"이 링크는 더 이상 유효하지 않습니다. 새 링크를 받거나 계정으로 로그인하세요.");
+      return;
+    }
+    linkMode=true;
+    try{actor=localStorage.getItem("ct-name")||""}catch(e){actor=""}
+    if(actor)startApp();else show("who");
+  }).catch(function(){dropLinkToken("링크 접속을 확인하지 못했습니다. 네트워크를 확인해 주세요.")});
+}
 
 function boot(){
   var url=SUPABASE_URL,key=SUPABASE_ANON_KEY;
   try{url=localStorage.getItem("ct-sb-url")||url;key=key||localStorage.getItem("ct-sb-key")||""}catch(e){}
   if(!key){$("#cfg-url").value=url;show("cfg");return}
   if(!window.supabase){show("auth");$("#login-err").textContent="Supabase 라이브러리를 불러오지 못했습니다. 네트워크를 확인해 주세요.";return}
-  sb=window.supabase.createClient(url,key);
+  var token=readLinkToken();
+  sb=window.supabase.createClient(url,key,token?{global:{headers:{"x-team-token":token}}}:undefined);
+  if(token){enterLink();return}
   sb.auth.onAuthStateChange(function(ev,s){
     session=s;
     if(s){
