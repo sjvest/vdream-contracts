@@ -65,6 +65,22 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 .ltool select,.ltool input[type=search]{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);font:inherit}
 .ltool .cnt{color:var(--ink-2);font-size:13px}
 .ltool label.ck{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2);white-space:nowrap}.ltool label.ck input{margin:0}
+.lgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:start}
+@media (max-width:1100px){.lgrid{grid-template-columns:minmax(0,1fr)}}
+.lsec{min-width:0}
+.v-all .wrap{max-width:none}
+.lgrid .lt td{padding:2px 2px}
+.lgrid .lt th{padding:6px 5px;font-size:12px}
+.lgrid .lt input[type=date],.lgrid .lt input[type=text],.lgrid .lt select{font-size:12px}
+.lgrid .lt input[type=date]{width:124px}
+.lgrid .lt input[data-lf=company]{width:128px!important}
+.lgrid .lt input[data-lf=worker]{width:58px!important}
+.lgrid .lt input[data-lf=repl_name]{width:60px!important}
+.lgrid .lt input[data-lf=type_note]{width:74px!important}
+.lgrid .lt input[data-lf=docs]{width:92px!important}
+.lsh{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.lsh .cnt{color:var(--ink-2);font-size:12px}
+.lgrid .lscroll{max-height:calc(100vh - 290px)}
 .lscroll{overflow:auto;max-height:calc(100vh - 250px);border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 table.lt{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%}
 table.lt th{position:sticky;top:0;background:var(--surface-2);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:600;color:var(--ink-2);z-index:1}
@@ -266,6 +282,7 @@ details.paste textarea{margin-top:8px}
     </header>
     <nav id="nav" class="nav" aria-label="화면 선택">
       <button data-act="view" data-v="track" aria-current="page">진행 현황</button>
+      <button data-act="view" data-v="all">월별 한눈에</button>
       <button data-act="view" data-v="exp">만료 예정</button>
       <button data-act="view" data-v="lea">퇴사 · 중도퇴사</button>
       <button data-act="view" data-v="hir">입사</button>
@@ -709,21 +726,21 @@ var LS={m:{},q:"",mgr:"전체",todo:false};
 var KIND_EXP=["","연장","계약만료","기업전달완료","대기","무기계약"];
 var LT={
   exp:{table:"contract_expiries",label:"만료 예정",mk:"contract_end",rows:[],cols:[
-    {f:"company",h:"기업",t:"text",w:170},{f:"worker",h:"이름",t:"text",w:76},
-    {f:"contract_start",h:"계약시작",t:"date"},{f:"contract_end",h:"계약만료",t:"date"},
-    {f:"kind",h:"구분",t:"sel",o:KIND_EXP},{f:"ext_period",h:"연장기간 · 대체채용",t:"text",w:130},
-    {f:"wish_ok",h:"연장희망 확인",t:"chk"},{f:"notice_sent",h:"연장/만료 전달",t:"chk"},{f:"erp_done",h:"전산반영",t:"chk"},
-    {f:"doc_note",h:"연장근거 · 사직원",t:"text",w:140},{f:"manager",h:"담당자",t:"mgr"},{f:"memo",h:"비고",t:"text",w:170}]},
+    {f:"company",h:"기업",t:"text",w:170,cp:1},{f:"worker",h:"이름",t:"text",w:76,cp:1},
+    {f:"contract_start",h:"계약시작",t:"date"},{f:"contract_end",h:"계약만료",t:"date",cp:1},
+    {f:"kind",h:"구분",t:"sel",o:KIND_EXP,cp:1},{f:"ext_period",h:"연장기간 · 대체채용",t:"text",w:130},
+    {f:"wish_ok",h:"연장희망 확인",t:"chk"},{f:"notice_sent",h:"연장/만료 전달",t:"chk",cp:1},{f:"erp_done",h:"전산반영",t:"chk",cp:1},
+    {f:"doc_note",h:"연장근거 · 사직원",t:"text",w:140},{f:"manager",h:"담당자",t:"mgr",cp:1},{f:"memo",h:"비고",t:"text",w:170}]},
   lea:{table:"contract_leavers",label:"퇴사 · 중도퇴사",mk:"leave_date",rows:[],cols:[
-    {f:"kind",h:"구분",t:"sel",o:["퇴사","중도퇴사"]},{f:"company",h:"기업",t:"text",w:170},{f:"worker",h:"이름",t:"text",w:76},
-    {f:"leave_date",h:"퇴사일",t:"date"},{f:"reason",h:"사유 · 구직 희망",t:"text",w:150},
-    {f:"repl_name",h:"대체자",t:"text",w:80},{f:"repl_start",h:"대체자 플립시작일",t:"date"},{f:"repl_info",h:"대체채용 여부 · 비고",t:"text",w:150}]},
+    {f:"kind",h:"구분",t:"sel",o:["퇴사","중도퇴사"],cp:1},{f:"company",h:"기업",t:"text",w:170,cp:1},{f:"worker",h:"이름",t:"text",w:76,cp:1},
+    {f:"leave_date",h:"퇴사일",t:"date",cp:1},{f:"reason",h:"사유 · 구직 희망",t:"text",w:150},
+    {f:"repl_name",h:"대체자",t:"text",w:80,cp:1},{f:"repl_start",h:"대체자 플립시작일",t:"date"},{f:"repl_info",h:"대체채용 여부 · 비고",t:"text",w:150}]},
   hir:{table:"contract_hires",label:"입사",mk:"contract_start",rows:[],cols:[
-    {f:"kind",h:"구분",t:"sel",o:["입사","대체"]},{f:"type_note",h:"유형",t:"text",w:90},{f:"company",h:"기업",t:"text",w:150},
-    {f:"dept",h:"부서명",t:"text",w:90},{f:"worker",h:"이름",t:"text",w:76},{f:"flip_start",h:"플립시작일",t:"date"},
-    {f:"contract_start",h:"계약시작일",t:"date"},{f:"contract_end",h:"계약만료일",t:"date"},
-    {f:"guide_note",h:"입구서 안내",t:"text",w:130},{f:"docs",h:"입사서류",t:"text",w:130},{f:"flip_joined",h:"플립가입확인",t:"text",w:80},
-    {f:"cancelled",h:"입사취소",t:"chk"}]}
+    {f:"kind",h:"구분",t:"sel",o:["입사","대체"]},{f:"type_note",h:"유형",t:"text",w:90,cp:1},{f:"company",h:"기업",t:"text",w:150,cp:1},
+    {f:"dept",h:"부서명",t:"text",w:90},{f:"worker",h:"이름",t:"text",w:76,cp:1},{f:"flip_start",h:"플립시작일",t:"date"},
+    {f:"contract_start",h:"계약시작일",t:"date",cp:1},{f:"contract_end",h:"계약만료일",t:"date"},
+    {f:"guide_note",h:"입구서 안내",t:"text",w:130},{f:"docs",h:"입사서류",t:"text",w:130,cp:1},{f:"flip_joined",h:"플립가입확인",t:"text",w:80},
+    {f:"cancelled",h:"입사취소",t:"chk",cp:1}]}
 };
 function monthOfRow(t,r){var v=r[LT[t].mk];return v?String(v).slice(0,7):""}
 function curMonth(){return today().slice(0,7)}
@@ -747,7 +764,7 @@ function lsave(t,id,patch){
     .catch(function(e){fail(e);return loadLists()});
 }
 function ladd(t){
-  var T=LT[t],m=LS.m[t],row={},d=(m&&m!=="all"&&m!==curMonth())?m+"-01":today();
+  var T=LT[t],m=LS.m[mKey(t)],row={},d=(m&&m!=="all"&&m!==curMonth())?m+"-01":today();
   if(t==="exp"){row={company:"",worker:"",contract_end:d,manager:(allManagers().indexOf(actor)>=0?actor:"")}}
   else if(t==="lea"){row={kind:"퇴사",company:"",worker:"",leave_date:d}}
   else{row={kind:"입사",company:"",worker:"",contract_start:d}}
@@ -783,12 +800,14 @@ function lcase(id){
     toast(type+" 건으로 만들었습니다. 안내 완료일을 입력하면 경과 일수를 셉니다.");
   }).catch(fail);
 }
+function mKey(t){return V==="all"?"*":t}
 function lMonths(t){
-  var seen={};LT[t].rows.forEach(function(r){seen[monthOfRow(t,r)]=1});
+  var ts=t==="*"?["exp","lea","hir"]:[t],seen={};
+  ts.forEach(function(k){LT[k].rows.forEach(function(r){seen[monthOfRow(k,r)]=1})});
   return Object.keys(seen).sort().reverse();
 }
 function lFiltered(t){
-  var T=LT[t],m=LS.m[t],q=LS.q.trim().toLowerCase();
+  var T=LT[t],m=LS.m[mKey(t)],q=LS.q.trim().toLowerCase();
   var rows=T.rows.filter(function(r){
     if(m&&m!=="all"&&monthOfRow(t,r)!==m)return false;
     if(q&&((r.company||"")+" "+(r.worker||"")+" "+(r.repl_name||"")).toLowerCase().indexOf(q)<0)return false;
@@ -825,63 +844,69 @@ function lCell(t,r,c){
   }
   return'<td><input type="text"'+base+' value="'+esc(v||"")+'" style="width:'+(c.w||100)+'px"></td>';
 }
-function renderLTable(){
-  var box=$("#ltable");if(!box)return;
-  var t=V,T=LT[t],rows=lFiltered(t);
-  var cnt=$("#lcnt");
-  if(cnt){
-    var txt=rows.length+"건";
-    if(t==="exp"){
-      txt+=" · 연장 "+rows.filter(function(r){return r.kind==="연장"}).length+" · 계약만료 "+rows.filter(function(r){return r.kind==="계약만료"}).length+
-        " · 전달 미완료 "+rows.filter(function(r){return!r.notice_sent}).length+" · 전산 미반영 "+rows.filter(function(r){return!r.erp_done}).length;
-    }else if(t==="hir"){
-      txt+=" · 대체 "+rows.filter(function(r){return/대체/.test(r.type_note||"")}).length+" · 신규 "+rows.filter(function(r){return r.type_note==="신규"}).length+
-        " · 추가 "+rows.filter(function(r){return r.type_note==="추가"}).length+" · 취소 "+rows.filter(function(r){return r.cancelled}).length;
-    }else{
-      txt+=" · 퇴사 "+rows.filter(function(r){return r.kind==="퇴사"}).length+" · 중도퇴사 "+rows.filter(function(r){return r.kind==="중도퇴사"}).length;
-    }
-    cnt.textContent=txt;
-  }
-  if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>월·검색 조건을 바꾸거나 오른쪽 위의 “행 추가”로 등록하세요.</span></div>';return}
-  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+T.cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+'<th></th></tr></thead><tbody>';
+function lCount(t,rows){
+  var txt=rows.length+"건";
+  if(t==="exp")txt+=" · 연장 "+rows.filter(function(r){return r.kind==="연장"}).length+" · 계약만료 "+rows.filter(function(r){return r.kind==="계약만료"}).length+
+    " · 전달 미완료 "+rows.filter(function(r){return!r.notice_sent}).length+" · 전산 미반영 "+rows.filter(function(r){return!r.erp_done}).length;
+  else if(t==="hir")txt+=" · 대체 "+rows.filter(function(r){return/대체/.test(r.type_note||"")}).length+" · 신규 "+rows.filter(function(r){return r.type_note==="신규"}).length+
+    " · 추가 "+rows.filter(function(r){return r.type_note==="추가"}).length+" · 취소 "+rows.filter(function(r){return r.cancelled}).length;
+  else txt+=" · 퇴사 "+rows.filter(function(r){return r.kind==="퇴사"}).length+" · 중도퇴사 "+rows.filter(function(r){return r.kind==="중도퇴사"}).length;
+  return txt;
+}
+function renderLBox(t,box){
+  var T=LT[t],rows=lFiltered(t),compact=(V==="all");
+  var cnt=$("#lc-"+t);if(cnt)cnt.textContent=lCount(t,rows);
+  if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>월·검색 조건을 바꾸거나 “행 추가”로 등록하세요.</span></div>';return}
+  var cols=T.cols.filter(function(c){return!compact||c.cp});
+  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+'<th></th></tr></thead><tbody>';
   rows.forEach(function(r){
-    h+='<tr'+((t==="hir"&&r.cancelled)?' class="cx"':'')+'>'+(t==="exp"?'<td>'+dBadge(r)+'</td>':'')+T.cols.map(function(c){return lCell(t,r,c)}).join("");
+    h+='<tr'+((t==="hir"&&r.cancelled)?' class="cx"':'')+'>'+(t==="exp"?'<td>'+dBadge(r)+'</td>':'')+cols.map(function(c){return lCell(t,r,c)}).join("");
     var act='';
     if(t==="exp"){var has=r.case_id&&cases.some(function(c){return c.id===r.case_id});act+='<button class="mini" data-act="l-case" data-id="'+esc(r.id)+'">'+(has?"진행 보기":"진행 시작")+'</button> '}
-    act+='<button class="x'+(lArm===t+r.id?' arm':'')+'" data-act="l-del" data-id="'+esc(r.id)+'" aria-label="삭제">'+(lArm===t+r.id?'정말 삭제':'✕')+'</button>';
+    act+='<button class="x'+(lArm===t+r.id?' arm':'')+'" data-act="l-del" data-t="'+t+'" data-id="'+esc(r.id)+'" aria-label="삭제">'+(lArm===t+r.id?'정말 삭제':'✕')+'</button>';
     h+='<td>'+act+'</td></tr>';
   });
   box.innerHTML=h+'</tbody></table></div>';
 }
+function renderLTable(){
+  ["exp","lea","hir"].forEach(function(t){var box=$("#lt-"+t);if(box)renderLBox(t,box)});
+}
 function renderLists(){
   var box=$("#lv");if(!box)return;
-  var t=V,T=LT[t];
+  var all=V==="all",mk=mKey(V);
   if(LERR==="missing"){box.innerHTML='<div class="empty"><b>이 화면의 데이터 테이블이 아직 없습니다</b><span>Supabase SQL Editor에서 contracts_lists.sql 을 한 번 실행한 뒤 새로고침해 주세요.</span></div>';return}
   if(LERR){box.innerHTML='<div class="empty"><b>불러오지 못했습니다</b><span>'+esc(LERR)+'</span></div>';return}
   if(!lloaded){box.innerHTML='<div class="empty">불러오는 중…</div>';return}
-  var months=lMonths(t);
-  if(LS.m[t]===undefined)LS.m[t]=months.indexOf(curMonth())>=0?curMonth():(months[0]||"all");
-  var mo='<option value="all"'+(LS.m[t]==="all"?" selected":"")+'>전체 기간</option>'+months.map(function(m){
-    return'<option value="'+m+'"'+(LS.m[t]===m?" selected":"")+'>'+(m?m.replace("-","년 ")+"월":"날짜 없음")+'</option>'}).join("");
-  var h='<div class="ltool"><b>'+esc(T.label)+'</b><select id="lmonth" aria-label="월 선택">'+mo+'</select>'+
+  var months=lMonths(mk);
+  if(LS.m[mk]===undefined)LS.m[mk]=months.indexOf(curMonth())>=0?curMonth():(months[0]||"all");
+  var mo='<option value="all"'+(LS.m[mk]==="all"?" selected":"")+'>전체 기간</option>'+months.map(function(m){
+    return'<option value="'+m+'"'+(LS.m[mk]===m?" selected":"")+'>'+(m?m.replace("-","년 ")+"월":"날짜 없음")+'</option>'}).join("");
+  var title=all?"월별 한눈에":LT[V].label;
+  var h='<div class="ltool"><b>'+esc(title)+'</b><select id="lmonth" aria-label="월 선택">'+mo+'</select>'+
     '<input id="lq" type="search" placeholder="기업·이름 검색" value="'+esc(LS.q)+'" aria-label="검색">';
-  if(t==="exp"){
-    h+='<select id="lmgr" aria-label="담당자"><option>전체</option>'+allManagers().map(function(m){return'<option'+(LS.mgr===m?" selected":"")+'>'+esc(m)+'</option>'}).join("")+'</select>'+
-       '<label class="ck"><input type="checkbox" id="ltodo"'+(LS.todo?" checked":"")+'> 미완료만</label>';
+  if(all||V==="exp"){
+    h+='<select id="lmgr" aria-label="만료 예정 담당자"><option>전체</option>'+allManagers().map(function(m){return'<option'+(LS.mgr===m?" selected":"")+'>'+esc(m)+'</option>'}).join("")+'</select>'+
+       '<label class="ck"><input type="checkbox" id="ltodo"'+(LS.todo?" checked":"")+'> 만료 예정 미완료만</label>';
   }
-  h+='<span class="cnt" id="lcnt"></span><span style="flex:1"></span><button class="btn primary" data-act="l-add">행 추가</button></div><div id="ltable"></div>';
+  if(all){
+    h+='<span style="flex:1"></span></div><div class="lgrid">'+["exp","lea","hir"].map(function(t){
+      return'<section class="lsec"><div class="lsh"><b>'+esc(LT[t].label)+'</b><span class="cnt" id="lc-'+t+'"></span><span style="flex:1"></span><button class="mini" data-act="l-add" data-t="'+t+'">+ 행 추가</button></div><div id="lt-'+t+'"></div></section>'}).join("")+'</div>';
+  }else{
+    h+='<span class="cnt" id="lc-'+V+'"></span><span style="flex:1"></span><button class="btn primary" data-act="l-add" data-t="'+V+'">행 추가</button></div><div id="lt-'+V+'"></div>';
+  }
   box.innerHTML=h;renderLTable();
 }
 function renderListsSoft(){
   if(V==="track")return;
   var a=document.activeElement;
-  if(a&&a.closest&&a.closest("#ltable")&&LERR==="")return;
+  if(a&&a.closest&&a.closest(".lscroll")&&LERR==="")return;
   renderLists();
 }
 function applyView(){
   var tr=V==="track";
   ["#summary",".bar","#mgrs","#layout","#alerts"].forEach(function(sel){var el=document.querySelector(sel);if(el)el.hidden=!tr});
   $("#lv").hidden=tr;
+  document.body.classList.toggle("v-all",V==="all");
   var nb=document.querySelector('[data-act="new"]');if(nb)nb.hidden=!tr;
   document.querySelectorAll("#nav button").forEach(function(b){if(b.dataset.v===V)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
 }
@@ -893,8 +918,8 @@ document.addEventListener("click",function(e){
   var el=e.target.closest("[data-act]");if(!el)return;
   var a=el.dataset.act;
   if(a==="view"){V=el.dataset.v;lArm=null;sel=null;render();if(V!=="track"&&!lloaded)loadLists();return}
-  if(a==="l-add"){ladd(V);return}
-  if(a==="l-del"){ldel(V,el.dataset.id);return}
+  if(a==="l-add"){ladd(el.dataset.t||V);return}
+  if(a==="l-del"){ldel(el.dataset.t||V,el.dataset.id);return}
   if(a==="l-case"){lcase(el.dataset.id);return}
   if(a==="logout"){sb.auth.signOut();return}
   if(a==="rename"){show("who");var wn=$("#who-name");wn.value=actor;wn.focus();return}
@@ -928,7 +953,7 @@ document.addEventListener("keydown",function(e){
 document.addEventListener("change",function(e){
   var t=e.target;
   if(t.id==="status"){F.status=t.value;F.quick="";render();return}
-  if(t.id==="lmonth"){LS.m[V]=t.value;renderLTable();return}
+  if(t.id==="lmonth"){LS.m[mKey(V)]=t.value;renderLTable();return}
   if(t.id==="lmgr"){LS.mgr=t.value;renderLTable();return}
   if(t.id==="ltodo"){LS.todo=t.checked;renderLTable();return}
   if(t.dataset&&t.dataset.lt){
