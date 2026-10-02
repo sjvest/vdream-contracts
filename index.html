@@ -91,6 +91,7 @@ table.lt tr.sep td{background:var(--surface-2);color:var(--ink-2);font-size:12px
 table.lt tr.cx input[type=text]{text-decoration:line-through}
 table.lt input[type=text],table.lt input[type=date],table.lt select{border:1px solid transparent;background:transparent;border-radius:4px;padding:4px 5px;font:inherit;color:inherit;max-width:100%}
 table.lt input[type=text]:hover,table.lt input[type=date]:hover,table.lt select:hover{border-color:var(--line);background:var(--surface)}
+table.lt input[type=text].nw{background:var(--accent-soft);color:var(--accent);font-weight:700;border-color:var(--accent-soft)}
 table.lt input:focus,table.lt select:focus{border-color:var(--accent);background:var(--surface);outline:none}
 table.lt td.c{text-align:center}
 table.lt .x{border:0;background:transparent;color:var(--ink-2);padding:2px 6px;border-radius:4px}
@@ -860,7 +861,7 @@ function lCell(t,r,c){
     if(v&&o.indexOf(v)<0)o.push(v);
     return'<td><select'+base+'>'+o.map(function(x){return'<option value="'+esc(x)+'"'+(x===(v||"")?" selected":"")+'>'+esc(x||"—")+'</option>'}).join("")+'</select></td>';
   }
-  return'<td><input type="text"'+base+' value="'+esc(v||"")+'" style="width:'+(c.w||100)+'px"></td>';
+  return'<td><input type="text"'+base+((c.f==="type_note"&&v==="신규")?' class="nw"':'')+' value="'+esc(v||"")+'" style="width:'+(c.w||100)+'px"></td>';
 }
 function lCount(t,rows){
   var txt=rows.length+"건";
