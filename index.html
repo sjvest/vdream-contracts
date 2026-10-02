@@ -67,6 +67,11 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 .ltool select,.ltool input[type=search]{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);font:inherit}
 .ltool .cnt{color:var(--ink-2);font-size:13px}
 .lsh select.addn,.ltool select.addn{border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);font:inherit;font-size:12px;margin-right:4px}
+.wkd td{background:var(--surface-2);padding:8px 10px}
+.wkterms{display:grid;grid-template-columns:repeat(4,max-content);gap:8px 22px;align-items:center}
+.wkterms .tm{display:flex;gap:4px;align-items:center;font-size:12px;color:var(--ink-2);white-space:nowrap}
+.wkterms .tm b{min-width:24px;color:var(--ink)}
+.wkmore{display:block;margin:10px auto;}
 .addwrap{position:relative;display:inline-block}
 .addmenu{display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);padding:4px;min-width:96px}
 .addmenu.on{display:block}
@@ -97,8 +102,8 @@ table.lt tr.cx td{opacity:.55}
 table.lt tr.dn td{opacity:.6}
 table.lt tr.sep td{background:var(--surface-2);color:var(--ink-2);font-size:12px;font-weight:600;padding:5px 10px}
 table.lt tr.cx input[type=text]{text-decoration:line-through}
-table.lt input[type=text],table.lt input[type=date],table.lt select{border:1px solid transparent;background:transparent;border-radius:4px;padding:4px 5px;font:inherit;color:inherit;max-width:100%}
-table.lt input[type=text]:hover,table.lt input[type=date]:hover,table.lt select:hover{border-color:var(--line);background:var(--surface)}
+table.lt input[type=text],table.lt input[type=number],table.lt input[type=date],table.lt select{border:1px solid transparent;background:transparent;border-radius:4px;padding:4px 5px;font:inherit;color:inherit;max-width:100%}
+table.lt input[type=text]:hover,table.lt input[type=number]:hover,table.lt input[type=date]:hover,table.lt select:hover{border-color:var(--line);background:var(--surface)}
 table.lt input[type=text].nw{background:var(--accent-soft);color:var(--accent);font-weight:700;border-color:var(--accent-soft)}
 table.lt input:focus,table.lt select:focus{border-color:var(--accent);background:var(--surface);outline:none}
 table.lt td.c{text-align:center}
@@ -346,6 +351,7 @@ details.paste textarea{margin-top:8px}
       <button data-act="view" data-v="exp">만료 예정</button>
       <button data-act="view" data-v="lea">퇴사 · 중도퇴사</button>
       <button data-act="view" data-v="hir">입사</button>
+      <button data-act="view" data-v="wk">근로자 DB</button>
       <button class="navx" data-act="export" title="진행 현황과 모든 목록을 엑셀 파일 하나로 내려받습니다">엑셀 다운로드</button>
     </nav>
     <div id="banner"></div>
@@ -804,8 +810,32 @@ var LT={
     {f:"dept",h:"부서명",t:"text",w:90},{f:"worker",h:"이름",t:"text",w:76,cp:1},{f:"flip_start",h:"플립시작일",t:"date"},
     {f:"contract_start",h:"계약시작일",t:"date",cp:1},{f:"contract_end",h:"계약만료일",t:"date"},
     {f:"guide_note",h:"입구서 안내",t:"text",w:130},{f:"docs",h:"입사서류",t:"text",w:130,cp:1},{f:"flip_joined",h:"플립가입확인",t:"text",w:80},
-    {f:"cancelled",h:"입사취소",t:"chk",cp:1}]}
+    {f:"cancelled",h:"입사취소",t:"chk",cp:1}]},
+  wk:{table:"contract_workers",label:"근로자 DB",mk:"end_date",rows:[],cols:[
+    {f:"name",h:"성명",t:"text",w:76},{f:"company",h:"업체명",t:"text",w:170},{f:"manager",h:"담당자",t:"mgr"},
+    {f:"corp_code",h:"기업코드",t:"text",w:72},{f:"dept",h:"부서명",t:"text",w:100},{f:"kind",h:"구분",t:"text",w:70},
+    {f:"flip_start",h:"플립시작일",t:"date"},{f:"first_start",h:"최초 계약시작일",t:"date"},{f:"end_date",h:"계약만료예정일",t:"date"},
+    {f:"work_hours",h:"실근무시간",t:"num",w:56},{f:"status",h:"상태",t:"sel",o:["재직","퇴사"]},
+    {f:"leave_date",h:"퇴사일",t:"date"},{f:"leave_reason",h:"퇴사사유",t:"text",w:100},{f:"memo",h:"비고",t:"text",w:150}]}
 };
+var WK={loaded:false,err:""};
+LS.wst="재직";LS.wkn=100;LS.wkOpen=null;
+LT.wk.ext=[];(function(){for(var i=1;i<=8;i++){LT.wk.ext.push({f:"t"+i+"_start",h:i+"차 계약시작일",t:"date"});LT.wk.ext.push({f:"t"+i+"_end",h:i+"차 계약만료일",t:"date"})}})();
+function loadWorkers(){
+  var T=LT.wk,all=[];
+  function page(from){
+    return sb.from(T.table).select("*").order("created_at",{ascending:true}).order("id",{ascending:true}).range(from,from+999).then(function(r){
+      if(r.error)throw r.error;
+      all=all.concat(r.data||[]);
+      if((r.data||[]).length===1000)return page(from+1000);
+    });
+  }
+  return page(0).then(function(){T.rows=all;WK.err="";WK.loaded=true;renderListsSoft()}).catch(function(e){
+    WK.loaded=true;
+    WK.err=(e&&(e.code==="42P01"||/does not exist|schema cache/i.test(e.message||"")))?"missing":((e&&e.message)||"error");
+    renderListsSoft();
+  });
+}
 function monthOfRow(t,r){var v=r[LT[t].mk];return v?String(v).slice(0,7):""}
 function curMonth(){return today().slice(0,7)}
 function loadLists(){
@@ -832,13 +862,14 @@ function ladd(t,n){
   var T=LT[t],m=LS.m[mKey(t)],row={},d=(m&&m!=="all"&&m!==curMonth())?m+"-01":today();
   if(t==="exp"){row={company:"",worker:"",contract_end:d,manager:(allManagers().indexOf(actor)>=0?actor:"")}}
   else if(t==="lea"){row={kind:"퇴사",company:"",worker:"",leave_date:d}}
+  else if(t==="wk"){row={status:LS.wst==="퇴사"?"퇴사":"재직",name:"",company:"",manager:(LS.mgr!=="전체"?LS.mgr:(allManagers().indexOf(actor)>=0?actor:""))}}
   else{row={kind:"입사",company:"",worker:"",contract_start:d}}
   var rowsNew=[];for(var i=0;i<n;i++)rowsNew.push(Object.assign({},row));
   sb.from(T.table).insert(rowsNew).select().then(function(r){
     if(r.error)throw r.error;
-    r.data.forEach(function(x){T.rows.push(x)});LS.q="";renderLists();
+    r.data.forEach(function(x){T.rows.push(x)});LS.q="";if(t==="wk")LS.wkn=Math.max(LS.wkn,100);renderLists();
     if(n>1)toast(n+"개 행을 추가했습니다. 위에서부터 채워 주세요.");
-    var inp=document.querySelector('[data-lid="'+r.data[0].id+'"][data-lf="company"]');if(inp){if(inp.scrollIntoView)inp.scrollIntoView({block:"center"});inp.focus()}
+    var inp=document.querySelector('[data-lid="'+r.data[0].id+'"][data-lf="'+(t==="wk"?"name":"company")+'"]');if(inp){if(inp.scrollIntoView)inp.scrollIntoView({block:"center"});inp.focus()}
   }).catch(fail);
 }
 function ldel(t,id){
@@ -879,8 +910,12 @@ function lMonths(t){
 function lFiltered(t){
   var T=LT[t],m=LS.m[mKey(t)],q=LS.q.trim().toLowerCase();
   var rows=T.rows.filter(function(r){
-    if(m&&m!=="all"&&monthOfRow(t,r)!==m)return false;
-    if(q&&((r.company||"")+" "+(r.worker||"")+" "+(r.repl_name||"")).toLowerCase().indexOf(q)<0)return false;
+    if(t!=="wk"&&m&&m!=="all"&&monthOfRow(t,r)!==m)return false;
+    if(q&&((r.company||"")+" "+(r.worker||"")+" "+(r.repl_name||"")+" "+(r.name||"")+" "+(r.corp_code||"")+" "+(r.dept||"")).toLowerCase().indexOf(q)<0)return false;
+    if(t==="wk"){
+      if(LS.wst!=="전체"&&(r.status||"재직")!==LS.wst)return false;
+      if(LS.mgr!=="전체"&&(r.manager||"")!==LS.mgr)return false;
+    }
     if(t==="exp"){
       if(LS.mgr!=="전체"&&(r.manager||"")!==LS.mgr)return false;
       if(LS.todo&&r.notice_sent&&r.erp_done)return false;
@@ -890,6 +925,7 @@ function lFiltered(t){
   /* 앞으로 처리할 건(0)을 위에 날짜순으로, 완료·지난 건(1)은 아래에 최근순으로 */
   rows.sort(function(a,b){
     var ga=lGroup(t,a),gb=lGroup(t,b);if(ga!==gb)return ga-gb;
+    if(t==="wk"){var wa=(a.company||"")+"\u0001"+(a.name||""),wb=(b.company||"")+"\u0001"+(b.name||"");return wa<wb?-1:wa>wb?1:0}
     var ka=(a[T.mk]||"9999")+(a.company||""),kb=(b[T.mk]||"9999")+(b.company||"");
     var c=ka<kb?-1:ka>kb?1:0;
     return ga===1?-c:c;
@@ -897,6 +933,7 @@ function lFiltered(t){
   return rows;
 }
 function lGroup(t,r){
+  if(t==="wk")return r.status==="퇴사"?1:0;
   if(t==="exp")return(r.notice_sent&&r.erp_done)?1:0;
   if(t==="hir"){if(r.cancelled)return 1;return(r.contract_start&&r.contract_start<today())?1:0}
   return(r.leave_date&&r.leave_date<today())?1:0;
@@ -914,6 +951,7 @@ function lCell(t,r,c){
   var base=' data-lt="'+t+'" data-lid="'+esc(r.id)+'" data-lf="'+c.f+'"';
   var v=r[c.f];
   if(c.t==="chk")return'<td class="c"><input type="checkbox"'+base+(v?" checked":"")+' aria-label="'+esc(c.h)+'"></td>';
+  if(c.t==="num")return'<td><input type="number" step="any" min="0"'+base+' value="'+esc(v==null?"":v)+'" style="width:'+(c.w||60)+'px"></td>';
   if(c.t==="date")return'<td><input type="date"'+base+' value="'+esc(v||"")+'"></td>';
   if(c.t==="sel"||c.t==="mgr"){
     var o=c.t==="mgr"?[""].concat(allManagers()):c.o.slice();
@@ -926,29 +964,51 @@ function lCount(t,rows){
   var txt=rows.length+"건";
   if(t==="exp")txt+=" · 연장 "+rows.filter(function(r){return r.kind==="연장"}).length+" · 계약만료 "+rows.filter(function(r){return r.kind==="계약만료"}).length+
     " · 전달 미완료 "+rows.filter(function(r){return!r.notice_sent}).length+" · 전산 미반영 "+rows.filter(function(r){return!r.erp_done}).length;
+  else if(t==="wk")txt=rows.length+"명 · 재직 "+rows.filter(function(r){return r.status!=="퇴사"}).length+" · 퇴사 "+rows.filter(function(r){return r.status==="퇴사"}).length+
+    " · 30일 내 만료 "+rows.filter(function(r){if(r.status==="퇴사"||!r.end_date||r.end_date>="2099")return false;var d=diff(today(),r.end_date);return d>=0&&d<=30}).length;
   else if(t==="hir")txt+=" · 대체 "+rows.filter(function(r){return/대체/.test(r.type_note||"")}).length+" · 신규 "+rows.filter(function(r){return r.type_note==="신규"}).length+
     " · 추가 "+rows.filter(function(r){return r.type_note==="추가"}).length+" · 취소 "+rows.filter(function(r){return r.cancelled}).length;
   else txt+=" · 퇴사 "+rows.filter(function(r){return r.kind==="퇴사"}).length+" · 중도퇴사 "+rows.filter(function(r){return r.kind==="중도퇴사"}).length;
   return txt;
 }
+function lCellBare(t,r,f){
+  return'<input type="date" data-lt="'+t+'" data-lid="'+esc(r.id)+'" data-lf="'+f+'" value="'+esc(r[f]||"")+'" aria-label="'+esc(f)+'">';
+}
+function wkTerms(r){var n=0;for(var i=1;i<=8;i++)if(r["t"+i+"_start"]||r["t"+i+"_end"])n=i;return n}
+function wkExtra(r){
+  var d="";
+  if(r.status!=="퇴사"&&r.end_date){
+    if(r.end_date>="2099")d='<span class="badge">무기</span>';
+    else{var n=diff(today(),r.end_date);d=n<0?'<span class="badge bad">'+(-n)+'일 지남</span>':n<=30?'<span class="badge warn">D-'+n+'</span>':'<span class="badge">D-'+n+'</span>'}
+  }
+  var k=wkTerms(r);
+  return'<td>'+d+'</td><td class="c">'+(k||"")+'</td>';
+}
 function renderLBox(t,box){
   var T=LT[t],rows=lFiltered(t),compact=(V==="all");
   var cnt=$("#lc-"+t);if(cnt)cnt.textContent=lCount(t,rows);
-  if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>월·검색 조건을 바꾸거나 “행 추가”로 등록하세요.</span></div>';return}
+  if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>'+(t==="wk"?"상태·담당자·검색 조건을 바꾸거나":"월·검색 조건을 바꾸거나")+' “행 추가”로 등록하세요.</span></div>';return}
+  var total=rows.length;if(t==="wk"&&rows.length>LS.wkn)rows=rows.slice(0,LS.wkn);
   var cols=T.cols.filter(function(c){return!compact||c.cp});
-  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+'<th></th></tr></thead><tbody>';
-  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+1;
+  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+(t==="wk"?'<th>남은 일수</th><th>계약 차수</th>':'')+'<th></th></tr></thead><tbody>';
+  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+(t==="wk"?2:0)+1;
   rows.forEach(function(r){
     var g=lGroup(t,r);
-    if(g===1&&prevG===0)h+='<tr class="sep"><td colspan="'+span+'">▼ '+(t==="exp"?"처리 완료":t==="hir"?"지난 입사·취소":"지난 퇴사")+' '+nDone+'건</td></tr>';
+    if(g===1&&prevG===0)h+='<tr class="sep"><td colspan="'+span+'">▼ '+(t==="exp"?"처리 완료":t==="hir"?"지난 입사·취소":t==="wk"?"퇴사":"지난 퇴사")+' '+nDone+(t==="wk"?"명":"건")+'</td></tr>';
     prevG=g;
-    h+='<tr'+((t==="hir"&&r.cancelled)?' class="cx"':(g===1?' class="dn"':''))+'>'+(t==="exp"?'<td>'+dBadge(r)+'</td>':'')+cols.map(function(c){return lCell(t,r,c)}).join("");
+    h+='<tr'+((t==="hir"&&r.cancelled)?' class="cx"':(g===1?' class="dn"':''))+'>'+(t==="exp"?'<td>'+dBadge(r)+'</td>':'')+cols.map(function(c){return lCell(t,r,c)}).join("")+(t==="wk"?wkExtra(r):"");
     var act='';
+    if(t==="wk")act+='<button class="mini" data-act="wk-terms" data-id="'+esc(r.id)+'" aria-expanded="'+(LS.wkOpen===r.id)+'">계약 이력 '+(LS.wkOpen===r.id?'▴':'▾')+'</button> ';
     if(t==="exp"){var has=r.case_id&&cases.some(function(c){return c.id===r.case_id});act+='<button class="mini" data-act="l-case" data-id="'+esc(r.id)+'">'+(has?"진행 보기":"진행 시작")+'</button> '}
     if(ADMIN)act+='<button class="x'+(lArm===t+r.id?' arm':'')+'" data-act="l-del" data-t="'+t+'" data-id="'+esc(r.id)+'" aria-label="삭제">'+(lArm===t+r.id?'정말 삭제':'✕')+'</button>';
     h+='<td>'+act+'</td></tr>';
+    if(t==="wk"&&LS.wkOpen===r.id){
+      h+='<tr class="wkd"><td colspan="'+span+'"><div class="wkterms">';
+      for(var i=1;i<=8;i++)h+='<span class="tm"><b>'+i+'차</b>'+lCellBare(t,r,"t"+i+"_start")+'~'+lCellBare(t,r,"t"+i+"_end")+'</span>';
+      h+='</div></td></tr>';
+    }
   });
-  box.innerHTML=h+'</tbody></table></div>';
+  box.innerHTML=h+'</tbody></table></div>'+(total>rows.length?'<button class="btn wkmore" data-act="wk-more">더 보기 ('+(total-rows.length)+'명 남음)</button>':'');
 }
 function fitScroll(){
   if(document.querySelector(".lgrid"))return;
@@ -960,7 +1020,7 @@ function fitScroll(){
 window.addEventListener("resize",fitScroll);
 window.addEventListener("scroll",fitScroll,{passive:true});
 function renderLTable(){
-  ["exp","lea","hir"].forEach(function(t){var box=$("#lt-"+t);if(box)renderLBox(t,box)});
+  (V==="wk"?["wk"]:["exp","lea","hir"]).forEach(function(t){var box=$("#lt-"+t);if(box)renderLBox(t,box)});
   fitScroll();
 }
 function addBtn(t,cls,label){
@@ -969,6 +1029,16 @@ function addBtn(t,cls,label){
 function renderLists(){
   var box=$("#lv");if(!box)return;
   var all=V==="all",mk=mKey(V);
+  if(V==="wk"){
+    if(WK.err==="missing"){box.innerHTML='<div class="empty"><b>근로자 DB 테이블이 아직 없습니다</b><span>Supabase SQL Editor에서 6_workers.sql 을 한 번 실행한 뒤 새로고침해 주세요.</span></div>';return}
+    if(WK.err){box.innerHTML='<div class="empty"><b>불러오지 못했습니다</b><span>'+esc(WK.err)+'</span></div>';return}
+    if(!WK.loaded){box.innerHTML='<div class="empty">불러오는 중…</div>';return}
+    var hw='<div class="ltool"><b>근로자 DB</b><input id="lq" type="search" placeholder="이름·업체·기업코드 검색" value="'+esc(LS.q)+'" aria-label="검색">'+
+      '<select id="wst" aria-label="상태">'+["재직","퇴사","전체"].map(function(x){return'<option'+(LS.wst===x?" selected":"")+'>'+x+'</option>'}).join("")+'</select>'+
+      '<select id="lmgr" aria-label="담당자"><option>전체</option>'+allManagers().map(function(m){return'<option'+(LS.mgr===m?" selected":"")+'>'+esc(m)+'</option>'}).join("")+'</select>'+
+      '<span class="cnt" id="lc-wk"></span><span style="flex:1"></span>'+addBtn("wk","btn primary","행 추가")+'</div><div id="lt-wk"></div>';
+    box.innerHTML=hw;renderLTable();return;
+  }
   if(LERR==="missing"){box.innerHTML='<div class="empty"><b>이 화면의 데이터 테이블이 아직 없습니다</b><span>Supabase SQL Editor에서 contracts_lists.sql 을 한 번 실행한 뒤 새로고침해 주세요.</span></div>';return}
   if(LERR){box.innerHTML='<div class="empty"><b>불러오지 못했습니다</b><span>'+esc(LERR)+'</span></div>';return}
   if(!lloaded){box.innerHTML='<div class="empty">불러오는 중…</div>';return}
@@ -994,7 +1064,7 @@ function renderLists(){
 function renderListsSoft(){
   if(V==="track"||V==="todo")return;
   var a=document.activeElement;
-  if(a&&a.closest&&a.closest(".lscroll")&&LERR==="")return;
+  if(a&&a.closest&&a.closest(".lscroll")&&(V==="wk"?WK.err==="":LERR===""))return;
   renderLists();
 }
 function applyView(){
@@ -1174,10 +1244,10 @@ function xDate(v){
   var p=v.slice(0,10).split("-").map(Number);return new Date(Date.UTC(p[0],p[1]-1,p[2],12));
 }
 function xRows(t){
-  var T=LT[t],mk=T.mk;
-  var rows=T.rows.slice().sort(function(a,b){var ka=(a[mk]||"9999")+(a.company||""),kb=(b[mk]||"9999")+(b.company||"");return ka<kb?-1:ka>kb?1:0});
-  var head=T.cols.map(function(c){return c.h}),aoa=[head];
-  rows.forEach(function(r){aoa.push(T.cols.map(function(c){
+  var T=LT[t],mk=T.mk,XC=T.cols.concat(T.ext||[]);
+  var rows=T.rows.slice().sort(function(a,b){var ka=(t==="wk"?(a.status==="퇴사"?"1":"0")+(a.company||"")+(a.name||""):(a[mk]||"9999")+(a.company||"")),kb=(t==="wk"?(b.status==="퇴사"?"1":"0")+(b.company||"")+(b.name||""):(b[mk]||"9999")+(b.company||""));return ka<kb?-1:ka>kb?1:0});
+  var head=XC.map(function(c){return c.h}),aoa=[head];
+  rows.forEach(function(r){aoa.push(XC.map(function(c){
     var v=r[c.f];
     if(c.t==="chk")return v?"O":"";
     if(c.t==="date")return xDate(v);
@@ -1213,7 +1283,7 @@ function exportXlsx(){
   var btn=document.querySelector('[data-act="export"]');if(btn)btn.disabled=true;
   toast("엑셀 파일을 만들고 있어요…");
   var X;
-  ensureXlsx().then(function(x){X=x;return Promise.all([loadCases(),loadLists()])}).then(function(){
+  ensureXlsx().then(function(x){X=x;return Promise.all([loadCases(),loadLists(),loadWorkers()])}).then(function(){
     return sb.from("contract_todos").select("*").order("day",{ascending:true}).limit(10000).then(function(r){return r.error?[]:(r.data||[])});
   }).then(function(todos){
     var wb=X.utils.book_new();
@@ -1221,6 +1291,7 @@ function exportXlsx(){
     X.utils.book_append_sheet(wb,xSheet(X,xRows("exp")),"만료 예정");
     X.utils.book_append_sheet(wb,xSheet(X,xRows("lea")),"퇴사·중도퇴사");
     X.utils.book_append_sheet(wb,xSheet(X,xRows("hir")),"입사");
+    X.utils.book_append_sheet(wb,xSheet(X,xRows("wk")),"근로자 DB");
     X.utils.book_append_sheet(wb,xSheet(X,xTodos(todos)),"할 일");
     var out=X.write(wb,{bookType:"xlsx",type:"array",cellDates:true});
     var blob=new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
@@ -1239,7 +1310,9 @@ document.addEventListener("click",function(e){
   document.querySelectorAll(".addmenu.on").forEach(function(m){m.classList.remove("on")});
   if(!el)return;
   var a=el.dataset.act;
-  if(a==="view"){V=el.dataset.v;lArm=null;sel=null;TD.edit=null;TD.draft=null;render();if(V==="todo")loadTodos();else if(V!=="track"&&!lloaded)loadLists();return}
+  if(a==="view"){V=el.dataset.v;lArm=null;sel=null;TD.edit=null;TD.draft=null;render();if(V==="todo")loadTodos();else if(V==="wk"){if(!WK.loaded)loadWorkers()}else if(V!=="track"&&!lloaded)loadLists();return}
+  if(a==="wk-terms"){LS.wkOpen=(LS.wkOpen===el.dataset.id)?null:el.dataset.id;renderLTable();return}
+  if(a==="wk-more"){LS.wkn+=200;renderLTable();return}
   if(a==="export"){exportXlsx();return}
   if(a==="td-new"){openTd(null);return}
   if(a==="td-cancel"){TD.edit=null;TD.draft=null;TD.arm=null;renderTodo();return}
@@ -1304,13 +1377,15 @@ document.addEventListener("change",function(e){
   if(t.dataset&&t.dataset.tdid){tdDone(t.dataset.tdid,t.checked);return}
   if(t.closest&&t.closest(".tdform")){tdReadForm();return}
   if(t.id==="lmonth"){LS.m[mKey(V)]=t.value;renderLTable();return}
-  if(t.id==="lmgr"){LS.mgr=t.value;renderLTable();return}
+  if(t.id==="lmgr"){LS.mgr=t.value;LS.wkn=100;renderLTable();return}
+  if(t.id==="wst"){LS.wst=t.value;LS.wkn=100;renderLTable();return}
   if(t.id==="ltodo"){LS.todo=t.checked;renderLTable();return}
   if(t.dataset&&t.dataset.lt){
     var lt=t.dataset.lt,lf=t.dataset.lf,lv=(t.type==="checkbox")?t.checked:t.value;
     if(t.type==="date")lv=lv||null;
+    if(t.type==="number")lv=(lv===""||isNaN(Number(lv)))?null:Number(lv);
     var pt={};pt[lf]=lv;lsave(lt,t.dataset.lid,pt);
-    if(lf===LT[lt].mk||lf==="notice_sent"||lf==="erp_done"||lf==="cancelled"||lf==="kind"||lf==="type_note")renderLTable();
+    if(lf===LT[lt].mk||lf==="notice_sent"||lf==="erp_done"||lf==="cancelled"||lf==="kind"||lf==="type_note"||(lt==="wk"&&(lf==="status"||/^t\d_/.test(lf)||lf==="end_date")))renderLTable();
     return;
   }
   if(t.id==="idle-sel"){IDLE=parseInt(t.value,10)||3;try{localStorage.setItem("ct-idle",String(IDLE))}catch(x){}render();return}
@@ -1332,7 +1407,7 @@ document.addEventListener("input",function(e){
   var t=e.target;
   if(t.closest&&t.closest(".tdform")){tdReadForm();return}
   if(t.id==="q"){F.q=t.value;renderList();return}
-  if(t.id==="lq"){LS.q=t.value;renderLTable();return}
+  if(t.id==="lq"){LS.q=t.value;LS.wkn=100;renderLTable();return}
   if(t.dataset&&t.dataset.f==="memo"){
     var id=sel,v=t.value;clearTimeout(memoT);
     memoT=setTimeout(function(){dbUpdate(id,{memo:v},null)},700);
@@ -1519,7 +1594,7 @@ function boot(){
     }else{
       startedFor=null;
       if(channel){sb.removeChannel(channel);channel=null}
-      clearInterval(pollT);cases=[];loaded=false;lloaded=false;["exp","lea","hir"].forEach(function(k){LT[k].rows=[]});TD.rows=[];TD.loaded=false;TD.edit=null;TD.draft=null;TD.day=today();ADMIN=false;mgrArm=null;V="track";sel=null;show("auth");
+      clearInterval(pollT);cases=[];loaded=false;lloaded=false;["exp","lea","hir","wk"].forEach(function(k){LT[k].rows=[]});WK.loaded=false;WK.err="";TD.rows=[];TD.loaded=false;TD.edit=null;TD.draft=null;TD.day=today();ADMIN=false;mgrArm=null;V="track";sel=null;show("auth");
     }
   });
   authSub=sub&&sub.data&&sub.data.subscription||null;
