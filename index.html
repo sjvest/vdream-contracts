@@ -241,17 +241,11 @@ details.paste textarea{margin-top:8px}
   <div class="gatebox">
   <form class="card" data-form="login">
     <div><div class="brand" style="color:var(--accent)">V:Dream</div><h2>계약 진행 관리</h2></div>
-    <p>V:Scout 와 같은 팀 계정으로 로그인하세요.</p>
+    <p>회사 이메일과 비밀번호로 로그인하세요.</p>
     <label>이메일<input id="login-email" type="email" required autocomplete="username"></label>
     <label>비밀번호<input id="login-pw" type="password" required autocomplete="current-password"></label>
     <div class="err" id="login-err" role="alert"></div>
     <button class="btn primary" type="submit" id="login-btn">로그인</button>
-  </form>
-  <form class="card" data-form="paste">
-    <div><h2 style="font-size:15px">팀 링크로 입장</h2><p style="margin-top:4px">계정 없이 받은 팀 링크로 들어옵니다. 링크를 통째로 붙여넣어 주세요.</p></div>
-    <label>팀 링크<input id="paste-link" autocomplete="off" placeholder="https://sjvest.github.io/vdream-contracts/#t=…"></label>
-    <div class="err" id="paste-err" role="alert"></div>
-    <button class="btn" type="submit">링크로 입장</button>
   </form>
   </div>
 </div>
@@ -266,11 +260,25 @@ details.paste textarea{margin-top:8px}
   </form>
 </div>
 
+<!-- 내 정보: 이름 · 비밀번호 변경 -->
+<div id="me-gate" class="gate" hidden>
+  <form class="card" data-form="me">
+    <div><div class="brand" style="color:var(--accent)">V:Dream</div><h2>내 정보</h2></div>
+    <p id="me-note">변경 이력에 표시할 이름을 확인하고, 필요하면 비밀번호를 바꿔 주세요.</p>
+    <label>이름<input id="me-fname" required maxlength="20" autocomplete="name" placeholder="예: 임세진"></label>
+    <label>새 비밀번호 (바꾸지 않으려면 비워 두세요)<input id="me-pw1" type="password" autocomplete="new-password" placeholder="8자 이상"></label>
+    <label>새 비밀번호 확인<input id="me-pw2" type="password" autocomplete="new-password"></label>
+    <div class="err" id="me-err" role="alert"></div>
+    <button class="btn primary" type="submit" id="me-save">저장</button>
+    <button class="btn" type="button" data-act="me-cancel">취소</button>
+  </form>
+</div>
+
 <!-- 앱 -->
 <div id="app" hidden>
   <div class="topbar"><div class="in">
     <div class="brand">V:Dream<span>계약 진행 관리</span></div>
-    <div class="me"><span id="me-name"></span><button id="me-btn" data-act="logout">로그아웃</button></div>
+    <div class="me"><span id="me-name"></span><button id="me-info" data-act="me-open">내 정보</button><button id="me-btn" data-act="logout">로그아웃</button></div>
   </div></div>
   <div class="wrap">
     <header class="top">
@@ -317,8 +325,8 @@ details.paste textarea{margin-top:8px}
 /* ===== 설정 =====
    SUPABASE_ANON_KEY 에 anon public 키를 넣어 두면 팀원이 키 입력 없이 바로 로그인합니다.
    (anon 키는 공개용이며, 실제 보호는 contracts_schema.sql 의 RLS 가 합니다.) */
-var SUPABASE_URL="https://kpmhawrpkzshjlmjvnev.supabase.co";
-var SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwbWhhd3Jwa3pzaGpsbWp2bmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTAyNjcsImV4cCI6MjA5NjE2NjI2N30.mSR0Nq-qElwkt7NxCjOytU6t8oWatVW30aM1n9e_h40";
+var SUPABASE_URL="https://owbmscecbyixhjqzwnny.supabase.co";
+var SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93Ym1zY2VjYnlpeGhqcXp3bm55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MDQ0NDMsImV4cCI6MjEwNjQ4MDQ0M30.UDlJgEww0WL8qDXiJ7BhgPSt9KXEEZEZY6-WQuzkfMU";
 
 var TYPES=["대체","만료","연장"];
 var METHODS={esign:"전자서명",orig_seal:"원본 · 직인 있음",orig_noseal:"원본 · 직인 없음"};
@@ -922,6 +930,8 @@ document.addEventListener("click",function(e){
   if(a==="l-del"){ldel(el.dataset.t||V,el.dataset.id);return}
   if(a==="l-case"){lcase(el.dataset.id);return}
   if(a==="logout"){sb.auth.signOut();return}
+  if(a==="me-open"){openMe(false);return}
+  if(a==="me-cancel"){show("app");return}
   if(a==="rename"){show("who");var wn=$("#who-name");wn.value=actor;wn.focus();return}
   if(a==="alert-open"){var ac=cases.find(function(x){return x.id===el.dataset.id});if(ac){F.type=ac.type;F.quick="";if(F.status==="done"||F.status==="hold")F.status="active";saveF();sel=ac.id;delArm=null;render()}return}
   if(a==="alert-more"){alertAll=!alertAll;renderAlerts();return}
@@ -1001,6 +1011,26 @@ document.addEventListener("submit",function(e){
     $("#login-err").textContent="";
     boot();return;
   }
+  if(f==="me"){
+    var mn=$("#me-fname").value.trim(),p1=$("#me-pw1").value,p2=$("#me-pw2").value,me=$("#me-err");
+    me.textContent="";
+    if(!mn){me.textContent="이름을 입력해 주세요.";return}
+    if(p1||p2){
+      if(p1.length<8){me.textContent="비밀번호는 8자 이상으로 입력해 주세요.";return}
+      if(p1!==p2){me.textContent="새 비밀번호와 확인 값이 서로 다릅니다.";return}
+    }
+    var mb2=$("#me-save");mb2.disabled=true;
+    var upd={data:{name:mn}};if(p1)upd.password=p1;
+    sb.auth.updateUser(upd).then(function(r){
+      mb2.disabled=false;
+      if(r.error){me.textContent="저장하지 못했습니다. "+(/different|same/i.test(r.error.message||"")?"이전과 다른 비밀번호를 입력해 주세요.":"잠시 후 다시 시도해 주세요.");return}
+      actor=mn;
+      if(session&&session.user){session.user.user_metadata=Object.assign({},session.user.user_metadata,{name:mn})}
+      $("#me-name").textContent=actor;
+      show("app");toast(p1?"이름과 비밀번호를 저장했습니다":"저장했습니다");
+    }).catch(function(){mb2.disabled=false;me.textContent="네트워크를 확인한 뒤 다시 시도해 주세요."});
+    return;
+  }
   if(f==="who"){
     var nm=$("#who-name").value.trim();if(!nm)return;
     actor=nm;try{localStorage.setItem("ct-name",nm)}catch(x){}
@@ -1041,7 +1071,7 @@ document.addEventListener("submit",function(e){
 });
 
 /* ---------- 시작: 설정 → (팀 링크 | 로그인) → 앱 ---------- */
-function show(which){["cfg","auth","who","app"].forEach(function(id){$("#"+id).hidden=(id!==which)})}
+function show(which){["cfg","auth","who","me-gate","app"].forEach(function(id){$("#"+id).hidden=(id!==which)})}
 var channel=null,pollT=null,startedFor=null,authSub=null;
 function startApp(){
   if(!linkMode){var u=session.user,md=u.user_metadata||{};actor=md.name||md.full_name||(u.email||"").split("@")[0]||""}
@@ -1049,6 +1079,7 @@ function startApp(){
   var mb=$("#me-btn");mb.textContent=linkMode?"이름 변경":"로그아웃";mb.dataset.act=linkMode?"rename":"logout";
   show("app");render();
   Promise.all([loadTeam(),loadCases(),loadLists()]);
+  if(!linkMode&&!((session.user.user_metadata||{}).name))openMe(true);
   clearInterval(pollT);
   if(linkMode){
     /* 링크 접속은 실시간 구독 대신 20초마다 새로 읽습니다. */
@@ -1103,12 +1134,19 @@ function enterLink(){
   }).catch(function(){dropLinkToken("링크 접속을 확인하지 못했습니다. 네트워크를 확인해 주세요.")});
 }
 
+function openMe(first){
+  $("#me-fname").value=actor||"";$("#me-pw1").value="";$("#me-pw2").value="";$("#me-err").textContent="";
+  $("#me-note").textContent=first?"처음 한 번만 설정해 주세요. 변경 이력에 표시할 이름을 확인하고, 받은 임시 비밀번호는 본인만 아는 비밀번호로 바꿔 주세요.":"변경 이력에 표시할 이름을 확인하고, 필요하면 비밀번호를 바꿔 주세요.";
+  show("me-gate");$("#me-fname").focus();
+}
 function boot(){
   var url=SUPABASE_URL,key=SUPABASE_ANON_KEY;
   try{url=localStorage.getItem("ct-sb-url")||url;key=key||localStorage.getItem("ct-sb-key")||""}catch(e){}
   if(!key){$("#cfg-url").value=url;show("cfg");return}
   if(!window.supabase){show("auth");$("#login-err").textContent="Supabase 라이브러리를 불러오지 못했습니다. 네트워크를 확인해 주세요.";return}
-  var token=readLinkToken();
+  /* 팀 링크 방식은 사용하지 않습니다. 예전에 저장된 링크 코드가 있으면 지우고 로그인으로 진행합니다. */
+  try{localStorage.removeItem("ct-link")}catch(e){}
+  var token="";
   if(authSub&&authSub.unsubscribe){authSub.unsubscribe();authSub=null}
   sb=window.supabase.createClient(url,key,token?{global:{headers:{"x-team-token":token}}}:undefined);
   if(token){enterLink();return}
