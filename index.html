@@ -1045,6 +1045,7 @@ function renderLBox(t,box){
       h+='<tr class="wkd"><td colspan="'+span+'"><div class="wkterms">';
       var shown=Math.min(8,Math.max(wkTerms(r)+1,LS.wkOpenN||0));
       for(var i=1;i<=shown;i++)h+='<span class="tm"><b>'+i+'차</b>'+lCellBare(t,r,"t"+i+"_start")+'~'+lCellBare(t,r,"t"+i+"_end")+'</span>';
+      if(shown<8)h+='<button class="mini" data-act="wk-round+" data-id="'+esc(r.id)+'" data-n="'+shown+'">+ '+(shown+1)+'차 추가</button>';
       h+='</div></td></tr>';
     }
   });
@@ -1362,6 +1363,7 @@ document.addEventListener("click",function(e){
   if(!el)return;
   var a=el.dataset.act;
   if(a==="view"){V=el.dataset.v;lArm=null;sel=null;TD.edit=null;TD.draft=null;render();if(V==="todo")loadTodos();else if(V==="wk"){if(!WK.loaded)loadWorkers()}else if(V!=="track"&&!lloaded)loadLists();return}
+  if(a==="wk-round+"){LS.wkOpen=el.dataset.id;LS.wkOpenN=Math.min(8,Number(el.dataset.n)+1);renderLTable();var ins=document.querySelectorAll(".wkd input");if(ins.length)ins[ins.length-2].focus();return}
   if(a==="wk-terms"){LS.wkOpen=(LS.wkOpen===el.dataset.id)?null:el.dataset.id;LS.wkOpenN=0;renderLTable();return}
   if(a==="wk-more"){LS.wkn+=200;renderLTable();return}
   if(a==="export"){exportXlsx();return}
