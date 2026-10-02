@@ -46,6 +46,17 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
 .btn.danger.confirm{background:var(--bad);color:#fff}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.alerts{background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:10px 14px;margin-top:10px}
+.alerts.none{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-size:13px}
+.alerts .ah{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between;color:var(--warn);font-size:14px}
+.alerts .ah label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.alerts .ah select{font-size:12px;padding:2px 6px}
+.alerts ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.alerts li button{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px}
+.alerts li button:hover{border-color:var(--accent)}
+.alerts li .t{font-family:var(--mono);font-weight:600;color:var(--warn)} .alerts li .t.bad{color:var(--bad)}
+.alerts li small{color:var(--ink-2)}
+.alerts .more{margin-top:6px;font-size:12px;color:var(--ink-2)}
 .banner{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:8px 12px;font-size:13px}
 
 .gatebox{display:flex;flex-direction:column;gap:14px;width:min(400px,100%)}
@@ -232,6 +243,7 @@ details.paste textarea{margin-top:8px}
       <button class="btn primary" data-act="new">새 건 추가</button>
     </header>
     <div id="banner"></div>
+    <div id="alerts" aria-live="polite"></div>
     <div id="summary" class="summary"></div>
     <div class="bar">
       <div id="tabs" class="tabs" role="tablist"></div>
@@ -333,6 +345,7 @@ function stepLabel(c,k){var d=stepDefs(c).find(function(x){return x.k===k});retu
 var sb=null,session=null,actor="",linkMode=false;
 var cases=[],team=[],loaded=false;
 var F={type:"대체",mgr:"전체",status:"active",q:"",quick:""};
+var IDLE=3,alertAll=false;try{var iv=parseInt(localStorage.getItem("ct-idle"),10);if(iv>=1&&iv<=30)IDLE=iv}catch(e){}
 var sel=null,showMgrInput=false,delArm=null,mgrInit=false,histCache={};
 try{var sv=JSON.parse(localStorage.getItem("ct-filter")||"{}");if(sv.type&&TYPES.indexOf(sv.type)>=0)F.type=sv.type;if(sv.mgr)F.mgr=sv.mgr}catch(e){}
 function saveF(){try{localStorage.setItem("ct-filter",JSON.stringify({type:F.type,mgr:F.mgr}))}catch(e){}}
@@ -444,7 +457,7 @@ function visible(){
     if(q&&((r.c.company||"")+" "+(r.c.worker||"")).toLowerCase().indexOf(q)<0)return false;
     var active=!r.i.complete&&!r.i.hold;
     if(F.quick==="due")return active&&r.i.resumeD!==null&&r.i.resumeD<=2;
-    if(F.quick==="idle")return active&&r.i.idle>=3;
+    if(F.quick==="idle")return active&&r.i.start&&r.i.idle>=IDLE;
     if(F.status==="active")return active;
     if(F.status==="done")return r.i.complete;
     if(F.status==="hold")return r.i.hold;
@@ -465,14 +478,14 @@ function renderTop(){
   var infos=cases.map(function(c){return{c:c,i:info(c)}});
   var act=infos.filter(function(r){return !r.i.complete&&!r.i.hold});
   var due=act.filter(function(r){return r.i.resumeD!==null&&r.i.resumeD<=2}).length;
-  var idle=act.filter(function(r){return r.i.idle>=3}).length;
+  var idle=act.filter(function(r){return r.i.start&&r.i.idle>=IDLE}).length;
   var month=today().slice(0,7);
   var doneM=infos.filter(function(r){return r.i.complete&&r.i.last.slice(0,7)===month}).length;
   function stat(a,n,label,cls,on){return'<button class="stat '+cls+(on?" on":"")+'" data-act="'+a+'"><b>'+n+'</b><span>'+label+'</span></button>'}
   $("#summary").innerHTML=
     stat("quick-none",act.length,"진행 중","",!F.quick&&F.status==="active")+
     stat("quick-due",due,"이력서 마감 임박·경과",due?"bad":"",F.quick==="due")+
-    stat("quick-idle",idle,"3일 이상 진행 정체",idle?"warn":"",F.quick==="idle")+
+    stat("quick-idle",idle,IDLE+"일 이상 진행 정체",idle?"warn":"",F.quick==="idle")+
     stat("quick-done",doneM,"이번 달 완료","",!F.quick&&F.status==="done");
   $("#tabs").innerHTML=TYPES.map(function(t){
     var n=cases.filter(function(c){return c.type===t}).length;
@@ -510,7 +523,7 @@ function renderList(){
     var c=r.c,i=r.i,st=c.steps||{};
     var segs=i.defs.map(function(d){var cls=st[d.k]?"d":(i.next&&i.next.k===d.k?"n":"");return'<span class="seg '+cls+'" title="'+esc(d.label)+'"></span>'}).join("");
     var now=i.complete?'완료':(i.hold?'보류 · '+esc(i.next.label):esc(i.next.label));
-    var idleCls=i.idle>=7?"bad":(i.idle>=3?"warn":"");
+    var idleCls=i.idle>=IDLE*2?"bad":(i.idle>=IDLE?"warn":"");
     var daysHtml;
     if(i.complete)daysHtml='<span class="mono">총 '+i.elapsed+'일 소요</span><small>안내 '+fmt(i.start)+' → 완료 '+fmt(i.last)+'</small>';
     else if(!i.start)daysHtml='<span class="mono">안내 전</span><small>안내 완료일 입력 필요</small>';
@@ -625,7 +638,41 @@ function renderPanel(){
   loadHist(c.id);
 }
 
-function render(){renderTop();renderList();renderPanel()}
+function alertItems(){
+  var out=[];
+  cases.forEach(function(c){
+    var i=info(c);if(i.complete||i.hold)return;
+    if(F.mgr!=="전체"&&c.manager!==F.mgr)return;
+    var late=i.resumeD!==null&&i.resumeD<=1;
+    var stall=i.start&&i.idle>=IDLE;
+    if(!late&&!stall)return;
+    var score=(late?1000+(-i.resumeD):0)+(stall?i.idle:0);
+    out.push({c:c,i:i,late:late,stall:stall,score:score});
+  });
+  out.sort(function(a,b){return b.score-a.score});
+  return out;
+}
+function renderAlerts(){
+  var el=$("#alerts");if(!el)return;
+  if(!loaded){el.innerHTML="";return}
+  var items=alertItems();
+  document.title=(items.length?"("+items.length+") ":"")+"V:Dream 계약 진행 관리";
+  var selH='<label>정체 기준 <select id="idle-sel" aria-label="정체 알림 기준 일수">'+[2,3,5,7,10].map(function(n){return'<option value="'+n+'"'+(n===IDLE?" selected":"")+'>'+n+'일</option>'}).join("")+'</select></label>';
+  if(!items.length){el.innerHTML='<div class="alerts none"><div class="ah"><span>✓ '+IDLE+'일 이상 멈춰 있는 건이 없습니다'+(F.mgr!=="전체"?" ("+esc(F.mgr)+")":"")+'</span>'+selH+'</div></div>';return}
+  var max=alertAll?items.length:6;
+  var h='<div class="alerts"><div class="ah"><b>⚠ 확인이 필요한 건 '+items.length+'건'+(F.mgr!=="전체"?" · "+esc(F.mgr):"")+'</b>'+selH+'</div><ul>';
+  items.slice(0,max).forEach(function(r){
+    var c=r.c,i=r.i,t=[];
+    if(r.late)t.push('<span class="t bad">'+(i.resumeD<0?"이력서 마감 "+(-i.resumeD)+"일 경과":(i.resumeD===0?"이력서 오늘 마감":"이력서 D-1"))+'</span>');
+    if(r.stall)t.push('<span class="t'+(i.idle>=IDLE*2?" bad":"")+'">'+i.idle+'일째 진행 없음</span>');
+    h+='<li><button data-act="alert-open" data-id="'+esc(c.id)+'">'+t.join("")+'<b>'+esc(c.company||"(기업명 없음)")+'</b><span>'+esc(c.worker||"")+'</span><small>'+esc(c.type)+' · 담당 '+esc(c.manager||"미지정")+' · 다음: '+esc(i.next?i.next.label:"")+'</small></button></li>';
+  });
+  h+='</ul>';
+  if(items.length>max)h+='<div class="more"><button class="chip" data-act="alert-more">나머지 '+(items.length-max)+'건 모두 보기</button></div>';
+  else if(alertAll&&items.length>6)h+='<div class="more"><button class="chip" data-act="alert-more">접기</button></div>';
+  el.innerHTML=h+'</div>';
+}
+function render(){renderTop();renderAlerts();renderList();renderPanel()}
 
 /* ---------- 이벤트 ---------- */
 document.addEventListener("click",function(e){
@@ -633,6 +680,8 @@ document.addEventListener("click",function(e){
   var a=el.dataset.act;
   if(a==="logout"){sb.auth.signOut();return}
   if(a==="rename"){show("who");var wn=$("#who-name");wn.value=actor;wn.focus();return}
+  if(a==="alert-open"){var ac=cases.find(function(x){return x.id===el.dataset.id});if(ac){F.type=ac.type;F.quick="";if(F.status==="done"||F.status==="hold")F.status="active";saveF();sel=ac.id;delArm=null;render()}return}
+  if(a==="alert-more"){alertAll=!alertAll;renderAlerts();return}
   if(a==="open"){sel=el.dataset.id;delArm=null;render();return}
   if(a==="close"){sel=null;delArm=null;render();return}
   if(a==="new"){sel="new";render();var n=$("#n-company");if(n)n.focus();return}
@@ -661,6 +710,7 @@ document.addEventListener("keydown",function(e){
 document.addEventListener("change",function(e){
   var t=e.target;
   if(t.id==="status"){F.status=t.value;F.quick="";render();return}
+  if(t.id==="idle-sel"){IDLE=parseInt(t.value,10)||3;try{localStorage.setItem("ct-idle",String(IDLE))}catch(x){}render();return}
   var c=cases.find(function(x){return x.id===sel});if(!c)return;
   if(t.dataset.f){
     var f=t.dataset.f,v=t.value;
