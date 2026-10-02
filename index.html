@@ -82,6 +82,12 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 @media (max-width:1100px){.lgrid{grid-template-columns:minmax(0,1fr)}}
 .lsec{min-width:0}
 .v-all .wrap{max-width:none}
+.v-wide .wrap,.v-wide .topbar .in{max-width:none}
+.v-wide table.lt{font-size:12px}
+.v-wide table.lt th{padding:6px 4px}
+.v-wide table.lt td{padding:2px 2px}
+.v-wide table.lt input[type=date]{width:118px;padding:3px 2px;font-size:12px}
+.v-wide table.lt input[type=text],.v-wide table.lt input[type=number],.v-wide table.lt select{padding:3px 3px;font-size:12px}
 .lgrid .lt td{padding:2px 2px}
 .lgrid .lt th{padding:6px 5px;font-size:12px}
 .lgrid .lt input[type=date],.lgrid .lt input[type=text],.lgrid .lt select{font-size:12px}
@@ -819,6 +825,8 @@ var LT={
     {f:"leave_date",h:"퇴사일",t:"date"},{f:"leave_reason",h:"퇴사사유",t:"text",w:100},{f:"memo",h:"비고",t:"text",w:150}]}
 };
 var WK={loaded:false,err:""};
+try{LS.fit=localStorage.getItem("ct-fit")!=="0"}catch(x){LS.fit=true}
+function fitBox(){return'<label class="cbx"><input type="checkbox" id="lfit"'+(LS.fit!==false?" checked":"")+'> 화면에 맞추기</label>'}
 LS.wst="재직";LS.wkn=100;LS.wkOpen=null;
 LT.wk.ext=[];(function(){for(var i=1;i<=8;i++){LT.wk.ext.push({f:"t"+i+"_start",h:i+"차 계약시작일",t:"date"});LT.wk.ext.push({f:"t"+i+"_end",h:i+"차 계약만료일",t:"date"})}})();
 function loadWorkers(){
@@ -1041,6 +1049,16 @@ function renderLBox(t,box){
   });
   box.innerHTML=h+'</tbody></table></div>'+(total>rows.length?'<button class="btn wkmore" data-act="wk-more">더 보기 ('+(total-rows.length)+'명 남음)</button>':'');
 }
+function fitZoom(){
+  var on=LS.fit!==false;
+  document.querySelectorAll(".lscroll").forEach(function(el){
+    var tb=el.querySelector("table.lt");if(!tb)return;
+    tb.style.zoom="";
+    if(!on||document.querySelector(".lgrid"))return;
+    var sw=el.scrollWidth,cw=el.clientWidth;
+    if(sw>cw+1){var z=Math.max(0.62,Math.floor(cw/sw*1000)/1000-0.004);tb.style.zoom=String(z)}
+  });
+}
 function fitScroll(){
   if(document.querySelector(".lgrid"))return;
   document.querySelectorAll(".lscroll").forEach(function(el){
@@ -1048,11 +1066,11 @@ function fitScroll(){
     el.style.maxHeight=Math.max(240,window.innerHeight-top-16)+"px";
   });
 }
-window.addEventListener("resize",fitScroll);
+window.addEventListener("resize",function(){fitScroll();fitZoom()});
 window.addEventListener("scroll",fitScroll,{passive:true});
 function renderLTable(){
   (V==="wk"?["wk"]:["exp","lea","hir"]).forEach(function(t){var box=$("#lt-"+t);if(box)renderLBox(t,box)});
-  fitScroll();
+  fitZoom();fitScroll();
 }
 function addBtn(t,cls,label){
   return'<span class="addwrap"><button class="'+cls+'" data-act="l-add" data-t="'+t+'" aria-haspopup="true">'+label+' ▾</button><div class="addmenu">'+[1,5,10,20].map(function(n){return'<button data-act="l-addn" data-t="'+t+'" data-n="'+n+'">'+n+'행 추가</button>'}).join("")+'</div></span>';
@@ -1067,7 +1085,7 @@ function renderLists(){
     var hw='<div class="ltool"><b>근로자 DB</b><input id="lq" type="search" placeholder="이름·업체·기업코드 검색" value="'+esc(LS.q)+'" aria-label="검색">'+
       '<select id="wst" aria-label="상태">'+["재직","퇴사","전체"].map(function(x){return'<option'+(LS.wst===x?" selected":"")+'>'+x+'</option>'}).join("")+'</select>'+
       '<select id="lmgr" aria-label="담당자"><option>전체</option>'+allManagers().map(function(m){return'<option'+(LS.mgr===m?" selected":"")+'>'+esc(m)+'</option>'}).join("")+'</select>'+
-      '<span class="cnt" id="lc-wk"></span><span style="flex:1"></span>'+addBtn("wk","btn primary","행 추가")+'</div><div id="lt-wk"></div>';
+      fitBox()+'<span class="cnt" id="lc-wk"></span><span style="flex:1"></span>'+addBtn("wk","btn primary","행 추가")+'</div><div id="lt-wk"></div>';
     box.innerHTML=hw;renderLTable();return;
   }
   if(LERR==="missing"){box.innerHTML='<div class="empty"><b>이 화면의 데이터 테이블이 아직 없습니다</b><span>Supabase SQL Editor에서 contracts_lists.sql 을 한 번 실행한 뒤 새로고침해 주세요.</span></div>';return}
@@ -1088,7 +1106,7 @@ function renderLists(){
     h+='<span style="flex:1"></span></div><div class="lgrid">'+["exp","lea","hir"].map(function(t){
       return'<section class="lsec"><div class="lsh"><b>'+esc(LT[t].label)+'</b><span class="cnt" id="lc-'+t+'"></span><span style="flex:1"></span>'+addBtn(t,"mini","+ 행 추가")+'</div><div id="lt-'+t+'"></div></section>'}).join("")+'</div>';
   }else{
-    h+='<span class="cnt" id="lc-'+V+'"></span><span style="flex:1"></span>'+addBtn(V,"btn primary","행 추가")+'</div><div id="lt-'+V+'"></div>';
+    h+=fitBox()+'<span class="cnt" id="lc-'+V+'"></span><span style="flex:1"></span>'+addBtn(V,"btn primary","행 추가")+'</div><div id="lt-'+V+'"></div>';
   }
   box.innerHTML=h;renderLTable();
 }
@@ -1103,6 +1121,7 @@ function applyView(){
   ["#summary",".bar","#mgrs","#layout","#alerts"].forEach(function(sel){var el=document.querySelector(sel);if(el)el.hidden=!tr});
   $("#lv").hidden=tr;
   document.body.classList.toggle("v-all",V==="all"||V==="todo");
+  document.body.classList.toggle("v-wide",V!=="track");
   var nb=document.querySelector('[data-act="new"]');if(nb)nb.hidden=!tr;
   document.querySelectorAll("#nav button").forEach(function(b){if(b.dataset.v===V)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
 }
@@ -1410,6 +1429,7 @@ document.addEventListener("change",function(e){
   if(t.id==="lmonth"){LS.m[mKey(V)]=t.value;renderLTable();return}
   if(t.id==="lmgr"){LS.mgr=t.value;LS.wkn=100;renderLTable();return}
   if(t.dataset&&t.dataset.wkr){wkSetRound(t.dataset.wkr,parseInt(t.value,10));return}
+  if(t.id==="lfit"){LS.fit=t.checked;try{localStorage.setItem("ct-fit",t.checked?"1":"0")}catch(x){}renderLTable();return}
   if(t.id==="wst"){LS.wst=t.value;LS.wkn=100;renderLTable();return}
   if(t.id==="ltodo"){LS.todo=t.checked;renderLTable();return}
   if(t.dataset&&t.dataset.lt){
