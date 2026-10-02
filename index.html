@@ -86,6 +86,8 @@ table.lt{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 table.lt th{position:sticky;top:0;background:var(--surface-2);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:600;color:var(--ink-2);z-index:1}
 table.lt td{padding:3px 4px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
 table.lt tr.cx td{opacity:.55}
+table.lt tr.dn td{opacity:.6}
+table.lt tr.sep td{background:var(--surface-2);color:var(--ink-2);font-size:12px;font-weight:600;padding:5px 10px}
 table.lt tr.cx input[type=text]{text-decoration:line-through}
 table.lt input[type=text],table.lt input[type=date],table.lt select{border:1px solid transparent;background:transparent;border-radius:4px;padding:4px 5px;font:inherit;color:inherit;max-width:100%}
 table.lt input[type=text]:hover,table.lt input[type=date]:hover,table.lt select:hover{border-color:var(--line);background:var(--surface)}
@@ -825,11 +827,19 @@ function lFiltered(t){
     }
     return true;
   });
+  /* 앞으로 처리할 건(0)을 위에 날짜순으로, 완료·지난 건(1)은 아래에 최근순으로 */
   rows.sort(function(a,b){
+    var ga=lGroup(t,a),gb=lGroup(t,b);if(ga!==gb)return ga-gb;
     var ka=(a[T.mk]||"9999")+(a.company||""),kb=(b[T.mk]||"9999")+(b.company||"");
-    return ka<kb?-1:ka>kb?1:0;
+    var c=ka<kb?-1:ka>kb?1:0;
+    return ga===1?-c:c;
   });
   return rows;
+}
+function lGroup(t,r){
+  if(t==="exp")return(r.notice_sent&&r.erp_done)?1:0;
+  if(t==="hir"){if(r.cancelled)return 1;return(r.contract_start&&r.contract_start<today())?1:0}
+  return(r.leave_date&&r.leave_date<today())?1:0;
 }
 function dBadge(r){
   if(!r.contract_end)return"";
@@ -867,8 +877,12 @@ function renderLBox(t,box){
   if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>월·검색 조건을 바꾸거나 “행 추가”로 등록하세요.</span></div>';return}
   var cols=T.cols.filter(function(c){return!compact||c.cp});
   var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+'<th></th></tr></thead><tbody>';
+  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+1;
   rows.forEach(function(r){
-    h+='<tr'+((t==="hir"&&r.cancelled)?' class="cx"':'')+'>'+(t==="exp"?'<td>'+dBadge(r)+'</td>':'')+cols.map(function(c){return lCell(t,r,c)}).join("");
+    var g=lGroup(t,r);
+    if(g===1&&prevG===0)h+='<tr class="sep"><td colspan="'+span+'">▼ '+(t==="exp"?"처리 완료":t==="hir"?"지난 입사·취소":"지난 퇴사")+' '+nDone+'건</td></tr>';
+    prevG=g;
+    h+='<tr'+((t==="hir"&&r.cancelled)?' class="cx"':(g===1?' class="dn"':''))+'>'+(t==="exp"?'<td>'+dBadge(r)+'</td>':'')+cols.map(function(c){return lCell(t,r,c)}).join("");
     var act='';
     if(t==="exp"){var has=r.case_id&&cases.some(function(c){return c.id===r.case_id});act+='<button class="mini" data-act="l-case" data-id="'+esc(r.id)+'">'+(has?"진행 보기":"진행 시작")+'</button> '}
     act+='<button class="x'+(lArm===t+r.id?' arm':'')+'" data-act="l-del" data-t="'+t+'" data-id="'+esc(r.id)+'" aria-label="삭제">'+(lArm===t+r.id?'정말 삭제':'✕')+'</button>';
