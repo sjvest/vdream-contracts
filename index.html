@@ -981,6 +981,23 @@ function mdiff(a,b){
   var m=(y[0]-x[0])*12+(y[1]-x[1]);if(y[2]<x[2])m--;
   return m<0?null:m;
 }
+function addDaysStr(v,n){
+  if(!v)return null;var p=String(v).split("-").map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));
+  return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");
+}
+function wkSetRound(id,n){
+  var r=LT.wk.rows.find(function(x){return x.id===id});if(!r||!n)return;
+  var cur=wkTerms(r);if(n<=cur)return;
+  var patch={},prevEnd=cur?r["t"+cur+"_end"]:null;
+  if(n===cur+1){
+    var st=prevEnd?addDaysStr(prevEnd,1):(cur===0?r.first_start:null);
+    if(st&&!r["t"+n+"_start"])patch["t"+n+"_start"]=st;
+  }
+  if(!Object.keys(patch).length)patch["t"+n+"_start"]=r["t"+n+"_start"]||null;
+  LS.wkOpen=id;lsave("wk",id,patch);renderLTable();
+  var inp=document.querySelector('.wkd [data-lf="t'+n+'_end"]');if(inp)inp.focus();
+  toast(n+"차 계약 칸을 열었습니다. 만료일을 입력하세요.");
+}
 function wkCalc(r){
   var end=r.status==="퇴사"&&r.leave_date?r.leave_date:today();
   var work=mdiff(r.flip_start,end),span=(r.end_date&&r.end_date<"2099")?mdiff(r.first_start,r.end_date):null,k=wkTerms(r);
@@ -992,8 +1009,11 @@ function wkExtra(r){
     if(r.end_date>="2099")d='<span class="badge">무기</span>';
     else{var n=diff(today(),r.end_date);d=n<0?'<span class="badge bad">'+(-n)+'일 지남</span>':n<=30?'<span class="badge warn">D-'+n+'</span>':'<span class="badge">D-'+n+'</span>'}
   }
-  var c=wkCalc(r),f=function(v,u){return v==null?"":v+u};
-  return'<td>'+d+'</td><td class="c">'+f(c.work,"개월")+'</td><td class="c">'+f(c.span,"개월")+'</td><td class="c">'+f(c.ext,"회")+'</td>';
+  var c=wkCalc(r),f=function(v,u){return v==null?"":v+u},k=wkTerms(r);
+  var sel='<select data-wkr="'+esc(r.id)+'" aria-label="계약 차수"><option value=""'+(k?"":" selected")+'>—</option>';
+  for(var i=1;i<=8;i++)sel+='<option value="'+i+'"'+(i===k?" selected":"")+(i<k?" disabled":"")+'>'+i+'차</option>';
+  sel+='</select>';
+  return'<td>'+sel+'</td><td>'+d+'</td><td class="c">'+f(c.work,"개월")+'</td><td class="c">'+f(c.span,"개월")+'</td><td class="c">'+f(c.ext,"회")+'</td>';
 }
 function renderLBox(t,box){
   var T=LT[t],rows=lFiltered(t),compact=(V==="all");
@@ -1001,8 +1021,8 @@ function renderLBox(t,box){
   if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>'+(t==="wk"?"상태·담당자·검색 조건을 바꾸거나":"월·검색 조건을 바꾸거나")+' “행 추가”로 등록하세요.</span></div>';return}
   var total=rows.length;if(t==="wk"&&rows.length>LS.wkn)rows=rows.slice(0,LS.wkn);
   var cols=T.cols.filter(function(c){return!compact||c.cp});
-  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+(t==="wk"?'<th>남은 일수</th><th>실근무</th><th>계약기간</th><th>연장 횟수</th>':'')+'<th></th></tr></thead><tbody>';
-  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+(t==="wk"?4:0)+1;
+  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+(t==="wk"?'<th>계약 차수</th><th>남은 일수</th><th>실근무</th><th>계약기간</th><th>연장 횟수</th>':'')+'<th></th></tr></thead><tbody>';
+  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+(t==="wk"?5:0)+1;
   rows.forEach(function(r){
     var g=lGroup(t,r);
     if(g===1&&prevG===0)h+='<tr class="sep"><td colspan="'+span+'">▼ '+(t==="exp"?"처리 완료":t==="hir"?"지난 입사·취소":t==="wk"?"퇴사":"지난 퇴사")+' '+nDone+(t==="wk"?"명":"건")+'</td></tr>';
@@ -1389,6 +1409,7 @@ document.addEventListener("change",function(e){
   if(t.closest&&t.closest(".tdform")){tdReadForm();return}
   if(t.id==="lmonth"){LS.m[mKey(V)]=t.value;renderLTable();return}
   if(t.id==="lmgr"){LS.mgr=t.value;LS.wkn=100;renderLTable();return}
+  if(t.dataset&&t.dataset.wkr){wkSetRound(t.dataset.wkr,parseInt(t.value,10));return}
   if(t.id==="wst"){LS.wst=t.value;LS.wkn=100;renderLTable();return}
   if(t.id==="ltodo"){LS.todo=t.checked;renderLTable();return}
   if(t.dataset&&t.dataset.lt){
@@ -1396,6 +1417,10 @@ document.addEventListener("change",function(e){
     if(t.type==="date")lv=lv||null;
     if(t.type==="number")lv=(lv===""||isNaN(Number(lv)))?null:Number(lv);
     var pt={};pt[lf]=lv;lsave(lt,t.dataset.lid,pt);
+    if(lt==="wk"&&/^t\d_end$/.test(lf)){
+      var wr=LT.wk.rows.find(function(x){return x.id===t.dataset.lid}),le=null;
+      if(wr){for(var wi=1;wi<=8;wi++)if(wr["t"+wi+"_end"])le=wr["t"+wi+"_end"];if(le&&le!==wr.end_date)lsave("wk",wr.id,{end_date:le})}
+    }
     if(lf===LT[lt].mk||lf==="notice_sent"||lf==="erp_done"||lf==="cancelled"||lf==="kind"||lf==="type_note"||(lt==="wk"&&(lf==="status"||/^t\d_/.test(lf)||lf==="end_date")))renderLTable();
     return;
   }
