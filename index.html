@@ -815,7 +815,7 @@ var LT={
     {f:"name",h:"성명",t:"text",w:76},{f:"company",h:"업체명",t:"text",w:170},{f:"manager",h:"담당자",t:"mgr"},
     {f:"corp_code",h:"기업코드",t:"text",w:72},{f:"dept",h:"부서명",t:"text",w:100},{f:"kind",h:"구분",t:"text",w:70},
     {f:"flip_start",h:"플립시작일",t:"date"},{f:"first_start",h:"최초 계약시작일",t:"date"},{f:"end_date",h:"계약만료예정일",t:"date"},
-    {f:"work_hours",h:"실근무시간",t:"num",w:56},{f:"status",h:"상태",t:"sel",o:["재직","퇴사"]},
+    {f:"status",h:"상태",t:"sel",o:["재직","퇴사"]},
     {f:"leave_date",h:"퇴사일",t:"date"},{f:"leave_reason",h:"퇴사사유",t:"text",w:100},{f:"memo",h:"비고",t:"text",w:150}]}
 };
 var WK={loaded:false,err:""};
@@ -975,14 +975,25 @@ function lCellBare(t,r,f){
   return'<input type="date" data-lt="'+t+'" data-lid="'+esc(r.id)+'" data-lf="'+f+'" value="'+esc(r[f]||"")+'" aria-label="'+esc(f)+'">';
 }
 function wkTerms(r){var n=0;for(var i=1;i<=8;i++)if(r["t"+i+"_start"]||r["t"+i+"_end"])n=i;return n}
+function mdiff(a,b){
+  if(!a||!b)return null;
+  var x=String(a).split("-").map(Number),y=String(b).split("-").map(Number);
+  var m=(y[0]-x[0])*12+(y[1]-x[1]);if(y[2]<x[2])m--;
+  return m<0?null:m;
+}
+function wkCalc(r){
+  var end=r.status==="퇴사"&&r.leave_date?r.leave_date:today();
+  var work=mdiff(r.flip_start,end),span=(r.end_date&&r.end_date<"2099")?mdiff(r.first_start,r.end_date):null,k=wkTerms(r);
+  return{work:work,span:span,ext:k?Math.max(k-1,0):null};
+}
 function wkExtra(r){
   var d="";
   if(r.status!=="퇴사"&&r.end_date){
     if(r.end_date>="2099")d='<span class="badge">무기</span>';
     else{var n=diff(today(),r.end_date);d=n<0?'<span class="badge bad">'+(-n)+'일 지남</span>':n<=30?'<span class="badge warn">D-'+n+'</span>':'<span class="badge">D-'+n+'</span>'}
   }
-  var k=wkTerms(r);
-  return'<td>'+d+'</td><td class="c">'+(k||"")+'</td>';
+  var c=wkCalc(r),f=function(v,u){return v==null?"":v+u};
+  return'<td>'+d+'</td><td class="c">'+f(c.work,"개월")+'</td><td class="c">'+f(c.span,"개월")+'</td><td class="c">'+f(c.ext,"회")+'</td>';
 }
 function renderLBox(t,box){
   var T=LT[t],rows=lFiltered(t),compact=(V==="all");
@@ -990,8 +1001,8 @@ function renderLBox(t,box){
   if(!rows.length){box.innerHTML='<div class="empty"><b>표시할 항목이 없습니다</b><span>'+(t==="wk"?"상태·담당자·검색 조건을 바꾸거나":"월·검색 조건을 바꾸거나")+' “행 추가”로 등록하세요.</span></div>';return}
   var total=rows.length;if(t==="wk"&&rows.length>LS.wkn)rows=rows.slice(0,LS.wkn);
   var cols=T.cols.filter(function(c){return!compact||c.cp});
-  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+(t==="wk"?'<th>남은 일수</th><th>계약 차수</th>':'')+'<th></th></tr></thead><tbody>';
-  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+(t==="wk"?2:0)+1;
+  var h='<div class="lscroll"><table class="lt"><thead><tr>'+(t==="exp"?'<th>D-day</th>':'')+cols.map(function(c){return'<th>'+esc(c.h)+'</th>'}).join("")+(t==="wk"?'<th>남은 일수</th><th>실근무</th><th>계약기간</th><th>연장 횟수</th>':'')+'<th></th></tr></thead><tbody>';
+  var nDone=rows.filter(function(r){return lGroup(t,r)===1}).length,prevG=-1,span=cols.length+(t==="exp"?1:0)+(t==="wk"?4:0)+1;
   rows.forEach(function(r){
     var g=lGroup(t,r);
     if(g===1&&prevG===0)h+='<tr class="sep"><td colspan="'+span+'">▼ '+(t==="exp"?"처리 완료":t==="hir"?"지난 입사·취소":t==="wk"?"퇴사":"지난 퇴사")+' '+nDone+(t==="wk"?"명":"건")+'</td></tr>';
@@ -1246,13 +1257,13 @@ function xDate(v){
 function xRows(t){
   var T=LT[t],mk=T.mk,XC=T.cols.concat(T.ext||[]);
   var rows=T.rows.slice().sort(function(a,b){var ka=(t==="wk"?(a.status==="퇴사"?"1":"0")+(a.company||"")+(a.name||""):(a[mk]||"9999")+(a.company||"")),kb=(t==="wk"?(b.status==="퇴사"?"1":"0")+(b.company||"")+(b.name||""):(b[mk]||"9999")+(b.company||""));return ka<kb?-1:ka>kb?1:0});
-  var head=XC.map(function(c){return c.h}),aoa=[head];
-  rows.forEach(function(r){aoa.push(XC.map(function(c){
+  var head=XC.map(function(c){return c.h}).concat(t==="wk"?["실근무(개월)","계약기간(개월)","연장 횟수"]:[]),aoa=[head];
+  rows.forEach(function(r){var wc=t==="wk"?wkCalc(r):null;aoa.push(XC.map(function(c){
     var v=r[c.f];
     if(c.t==="chk")return v?"O":"";
     if(c.t==="date")return xDate(v);
     return v==null?"":v;
-  }))});
+  }).concat(wc?[wc.work==null?"":wc.work,wc.span==null?"":wc.span,wc.ext==null?"":wc.ext]:[]))});
   return aoa;
 }
 function xCases(){
