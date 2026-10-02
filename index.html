@@ -1148,7 +1148,14 @@ function boot(){
   try{localStorage.removeItem("ct-link")}catch(e){}
   var token="";
   if(authSub&&authSub.unsubscribe){authSub.unsubscribe();authSub=null}
-  sb=window.supabase.createClient(url,key,token?{global:{headers:{"x-team-token":token}}}:undefined);
+  /* 로그인 상태는 이 탭(창)에만 보관합니다. 로그아웃하지 않고 창을 닫으면 다음에 다시 로그인해야 합니다. */
+  var st=null;
+  try{st=window.sessionStorage;st.setItem("_ct","1");st.removeItem("_ct")}catch(e){st=null}
+  try{
+    var m=url.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/i);
+    if(m)localStorage.removeItem("sb-"+m[1]+"-auth-token");
+  }catch(e){}
+  sb=window.supabase.createClient(url,key,{auth:st?{storage:st,persistSession:true}:{persistSession:false}});
   if(token){enterLink();return}
   var sub=sb.auth.onAuthStateChange(function(ev,s){
     session=s;
