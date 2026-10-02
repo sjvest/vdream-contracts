@@ -68,7 +68,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 .ltool .cnt{color:var(--ink-2);font-size:13px}
 .lsh select.addn,.ltool select.addn{border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);font:inherit;font-size:12px;margin-right:4px}
 .wkd td{background:var(--surface-2);padding:8px 10px}
-.wkterms{display:grid;grid-template-columns:repeat(4,max-content);gap:8px 22px;align-items:center}
+.wkterms{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center}
 .wkterms .tm{display:flex;gap:4px;align-items:center;font-size:12px;color:var(--ink-2);white-space:nowrap}
 .wkterms .tm b{min-width:24px;color:var(--ink)}
 .wkmore{display:block;margin:10px auto;}
@@ -1002,7 +1002,7 @@ function wkSetRound(id,n){
     if(st&&!r["t"+n+"_start"])patch["t"+n+"_start"]=st;
   }
   if(!Object.keys(patch).length)patch["t"+n+"_start"]=r["t"+n+"_start"]||null;
-  LS.wkOpen=id;lsave("wk",id,patch);renderLTable();
+  LS.wkOpen=id;LS.wkOpenN=n;lsave("wk",id,patch);renderLTable();
   var inp=document.querySelector('.wkd [data-lf="t'+n+'_end"]');if(inp)inp.focus();
   toast(n+"차 계약 칸을 열었습니다. 만료일을 입력하세요.");
 }
@@ -1043,7 +1043,8 @@ function renderLBox(t,box){
     h+='<td>'+act+'</td></tr>';
     if(t==="wk"&&LS.wkOpen===r.id){
       h+='<tr class="wkd"><td colspan="'+span+'"><div class="wkterms">';
-      for(var i=1;i<=8;i++)h+='<span class="tm"><b>'+i+'차</b>'+lCellBare(t,r,"t"+i+"_start")+'~'+lCellBare(t,r,"t"+i+"_end")+'</span>';
+      var shown=Math.min(8,Math.max(wkTerms(r)+1,LS.wkOpenN||0));
+      for(var i=1;i<=shown;i++)h+='<span class="tm"><b>'+i+'차</b>'+lCellBare(t,r,"t"+i+"_start")+'~'+lCellBare(t,r,"t"+i+"_end")+'</span>';
       h+='</div></td></tr>';
     }
   });
@@ -1361,7 +1362,7 @@ document.addEventListener("click",function(e){
   if(!el)return;
   var a=el.dataset.act;
   if(a==="view"){V=el.dataset.v;lArm=null;sel=null;TD.edit=null;TD.draft=null;render();if(V==="todo")loadTodos();else if(V==="wk"){if(!WK.loaded)loadWorkers()}else if(V!=="track"&&!lloaded)loadLists();return}
-  if(a==="wk-terms"){LS.wkOpen=(LS.wkOpen===el.dataset.id)?null:el.dataset.id;renderLTable();return}
+  if(a==="wk-terms"){LS.wkOpen=(LS.wkOpen===el.dataset.id)?null:el.dataset.id;LS.wkOpenN=0;renderLTable();return}
   if(a==="wk-more"){LS.wkn+=200;renderLTable();return}
   if(a==="export"){exportXlsx();return}
   if(a==="td-new"){openTd(null);return}
