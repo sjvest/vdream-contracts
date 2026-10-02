@@ -72,7 +72,7 @@ h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
 .addmenu.on{display:block}
 .addmenu button{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:6px;cursor:pointer;color:var(--ink)}
 .addmenu button:hover{background:var(--line)}
-.ltool label.ck{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2);white-space:nowrap}.ltool label.ck input{margin:0}
+.ltool label.cbx{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2);white-space:nowrap}.ltool label.cbx input{margin:0}
 .lgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:start}
 @media (max-width:1100px){.lgrid{grid-template-columns:minmax(0,1fr)}}
 .lsec{min-width:0}
@@ -243,7 +243,7 @@ details.paste textarea{margin-top:8px}
 .tdform input,.tdform select{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);font:inherit;color:var(--ink)}
 .tdform .f-title{flex:1 1 260px}.tdform .f-title input{width:100%}
 .tdform .f-case{flex:1 1 220px}.tdform .f-case select{width:100%}
-.tdform label.ck{flex-direction:row;align-items:center;gap:6px;padding-bottom:7px;font-size:13px;white-space:nowrap;flex:none}
+.tdform label.cbx{flex-direction:row;align-items:center;gap:6px;padding-bottom:7px;font-size:13px;white-space:nowrap;flex:none}
 .tdform .acts{display:flex;gap:6px;align-items:center}
 .tdgrid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:10px;overflow-x:auto;align-items:start;padding-bottom:6px}
 .tdcol{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
@@ -971,7 +971,7 @@ function renderLists(){
     '<input id="lq" type="search" placeholder="기업·이름 검색" value="'+esc(LS.q)+'" aria-label="검색">';
   if(all||V==="exp"){
     h+='<select id="lmgr" aria-label="만료 예정 담당자"><option>전체</option>'+allManagers().map(function(m){return'<option'+(LS.mgr===m?" selected":"")+'>'+esc(m)+'</option>'}).join("")+'</select>'+
-       '<label class="ck"><input type="checkbox" id="ltodo"'+(LS.todo?" checked":"")+'> 만료 예정 미완료만</label>';
+       '<label class="cbx"><input type="checkbox" id="ltodo"'+(LS.todo?" checked":"")+'> 만료 예정 미완료만</label>';
   }
   if(all){
     h+='<span style="flex:1"></span></div><div class="lgrid">'+["exp","lea","hir"].map(function(t){
@@ -1099,7 +1099,7 @@ function tdFormHtml(){
     '<label>시작<input id="td-f-start" type="time" step="300" value="'+esc(d.start)+'"></label>'+
     '<label>종료<input id="td-f-end" type="time" step="300" value="'+esc(d.end)+'"></label>'+
     '<label class="f-case">계약 건 연결<select id="td-f-case">'+opts+'</select></label>'+
-    (isNew?'':'<label class="ck"><input id="td-f-done" type="checkbox"'+(d.done?" checked":"")+'> 완료</label>')+
+    (isNew?'':'<label class="cbx"><input id="td-f-done" type="checkbox"'+(d.done?" checked":"")+'> 완료</label>')+
     '<span class="acts"><button class="btn primary" type="submit" id="td-save">저장</button><button class="btn" type="button" data-act="td-cancel">취소</button>'+
     (isNew?'':'<button class="btn" type="button" data-act="td-del" data-id="'+esc(d.id)+'">'+(TD.arm===d.id?"정말 삭제":"삭제")+'</button>')+
     (d.case_id?'<button class="btn" type="button" data-act="td-case" data-id="'+esc(d.case_id)+'">진행 보기</button>':'')+'</span>'+
