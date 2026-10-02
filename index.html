@@ -950,8 +950,18 @@ function renderLBox(t,box){
   });
   box.innerHTML=h+'</tbody></table></div>';
 }
+function fitScroll(){
+  if(document.querySelector(".lgrid"))return;
+  document.querySelectorAll(".lscroll").forEach(function(el){
+    var top=Math.max(el.getBoundingClientRect().top,0);
+    el.style.maxHeight=Math.max(240,window.innerHeight-top-16)+"px";
+  });
+}
+window.addEventListener("resize",fitScroll);
+window.addEventListener("scroll",fitScroll,{passive:true});
 function renderLTable(){
   ["exp","lea","hir"].forEach(function(t){var box=$("#lt-"+t);if(box)renderLBox(t,box)});
+  fitScroll();
 }
 function addBtn(t,cls,label){
   return'<span class="addwrap"><button class="'+cls+'" data-act="l-add" data-t="'+t+'" aria-haspopup="true">'+label+' ▾</button><div class="addmenu">'+[1,5,10,20].map(function(n){return'<button data-act="l-addn" data-t="'+t+'" data-n="'+n+'">'+n+'행 추가</button>'}).join("")+'</div></span>';
