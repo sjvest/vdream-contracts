@@ -282,7 +282,7 @@ details.paste textarea{margin-top:8px}
     </header>
     <nav id="nav" class="nav" aria-label="화면 선택">
       <button data-act="view" data-v="track" aria-current="page">진행 현황</button>
-      <button data-act="view" data-v="all">월별 한눈에</button>
+      <button data-act="view" data-v="all">월별 현황</button>
       <button data-act="view" data-v="exp">만료 예정</button>
       <button data-act="view" data-v="lea">퇴사 · 중도퇴사</button>
       <button data-act="view" data-v="hir">입사</button>
@@ -881,7 +881,7 @@ function renderLists(){
   if(LS.m[mk]===undefined)LS.m[mk]=months.indexOf(curMonth())>=0?curMonth():(months[0]||"all");
   var mo='<option value="all"'+(LS.m[mk]==="all"?" selected":"")+'>전체 기간</option>'+months.map(function(m){
     return'<option value="'+m+'"'+(LS.m[mk]===m?" selected":"")+'>'+(m?m.replace("-","년 ")+"월":"날짜 없음")+'</option>'}).join("");
-  var title=all?"월별 한눈에":LT[V].label;
+  var title=all?"월별 현황":LT[V].label;
   var h='<div class="ltool"><b>'+esc(title)+'</b><select id="lmonth" aria-label="월 선택">'+mo+'</select>'+
     '<input id="lq" type="search" placeholder="기업·이름 검색" value="'+esc(LS.q)+'" aria-label="검색">';
   if(all||V==="exp"){
