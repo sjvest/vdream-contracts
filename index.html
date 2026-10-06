@@ -474,6 +474,9 @@ function opt(list,val,blank){return(blank!=null?'<option value="">'+esc(blank)+'
 
 /* ============ 코드값 (V-Work 기획안 명칭) ============ */
 var PARTS=["지원파트","채용파트"];
+var STAFF_PARTS=["인재경영파트","채용파트","운영파트","발굴파트"];
+var ROLES=["담당자","관리자","최고관리자"];
+function isAdminRole(r){return r==="관리자"||r==="최고관리자"}
 var HIRE_TYPES=["신규","대체","추가"];
 var END_TYPES=["중도퇴사","입사취소","계약만료"];
 var LEAVE_REASONS=["근무 조건 불일치","업무 적응 어려움","건강 또는 치료 사정","가족 또는 개인 사정","다른 곳 취업","장애 편의 제공 부족","기타"];
@@ -1361,14 +1364,14 @@ function vAcct(){
   var h='<div class="hd"><div><h1>계정 관리</h1><p>담당자 로그인 계정 생성 · 비밀번호 초기화 · 권한 · 비활성화</p></div><div class="acts"><button class="btn pri" data-act="acct-new" data-spec="2">아이디 생성</button></div></div><div data-spec="1">'+
     dtable("acct",cols,DB.staff.slice(),function(s){
       var stt=!s.active?'<span class="b">비활성</span>':s.must?'<span class="b warn">비밀번호 변경 필요</span>':'<span class="b ok">활성</span>';
-      return'<tr class="'+(s.active?"":"dim")+'" data-act="noop"><td>'+esc(s.name)+'</td><td class="num">'+esc(s.email)+'</td><td>'+esc(s.part)+'</td><td><select class="inl" data-ch="acct-role" data-id="'+s.id+'" aria-label="권한"'+(s.id===S.me?" disabled":"")+'>'+opt(["담당자","관리자"],s.role)+'</select></td><td>'+stt+'</td><td class="num">'+esc(s.last||"—")+'</td>'+
+      return'<tr class="'+(s.active?"":"dim")+'" data-act="noop"><td>'+esc(s.name)+'</td><td class="num">'+esc(s.email)+'</td><td><select class="inl" data-ch="acct-part" data-id="'+s.id+'" aria-label="파트">'+opt(STAFF_PARTS.indexOf(s.part)>=0?STAFF_PARTS:STAFF_PARTS.concat([s.part]),s.part)+'</select></td><td><select class="inl" data-ch="acct-role" data-id="'+s.id+'" aria-label="권한"'+(s.id===S.me?" disabled":"")+'>'+opt(ROLES,s.role)+'</select></td><td>'+stt+'</td><td class="num">'+esc(s.last||"—")+'</td>'+
         '<td><button class="btn sm danger'+(S.armReset===s.id?" arm":"")+'" data-act="acct-reset" data-id="'+s.id+'"'+(s.active?"":" disabled")+'>'+(S.armReset===s.id?"정말 초기화":"비밀번호 초기화")+'</button> <button class="btn sm" data-act="acct-active" data-id="'+s.id+'"'+(s.id===S.me?" disabled":"")+'>'+(s.active?"비활성화":"다시 활성화")+'</button></td></tr>';
     })+'</div><p class="hint" data-spec="5">실제 계정 생성 · 초기화는 서버(Supabase Edge Function)에서 처리하고, 화면에는 임시 비밀번호를 한 번만 보여 줍니다.</p>';
   if(S.acctSel==="new"){
-    var F=S.acctF||(S.acctF={name:"",email:"",part:"지원파트",role:"담당자"});
+    var F=S.acctF||(S.acctF={name:"",email:"",part:"운영파트",role:"담당자"});
     h+='<aside class="pnl"><div class="ph"><div><div class="k">계정 관리</div><h2>아이디 생성</h2></div>'+closeBtn()+'</div><div class="ps wide"><div class="fg">'+
       '<label class="f req"><span>이름</span><input data-af="name" value="'+esc(F.name)+'"></label><label class="f req"><span>아이디 (회사 메일)</span><input type="email" data-af="email" value="'+esc(F.email)+'" placeholder="name@vdream.co.kr"></label>'+
-      '<label class="f req"><span>파트</span><select data-af="part">'+opt(PARTS,F.part)+'</select></label><label class="f req"><span>권한</span><select data-af="role">'+opt(["담당자","관리자"],F.role)+'</select></label></div>'+
+      '<label class="f req"><span>파트</span><select data-af="part">'+opt(STAFF_PARTS,F.part)+'</select></label><label class="f req"><span>권한</span><select data-af="role">'+opt(ROLES,F.role)+'</select></label></div>'+
       '<p class="hint" style="margin-top:8px">임시 비밀번호가 자동으로 만들어집니다. 첫 로그인 때 본인 비밀번호로 바꾸는 화면이 뜹니다.</p></div><div class="ps foot"><button class="btn" data-act="close">취소</button><button class="btn pri" data-act="acct-create">생성</button></div></aside>';
   }else if(S.newPw){
     var s2=st(S.newPw.id);
@@ -2658,8 +2661,6 @@ function mDate(v){var s=mt(v);if(!s)return"";if(/^\d{5}(\.\d+)?$/.test(s)){var n
   s=s.replace(/[T ]\d{1,2}:\d{2}(:\d{2}(\.\d+)?)?Z?$/,"").replace(/\s*\(.*\)$/,"");return parseDate(s)}
 function mPhone(v){var n=normPhone(mt(v));if(!/^01\d{8,9}$/.test(n))return"";return n.length===11?n.slice(0,3)+"-"+n.slice(3,7)+"-"+n.slice(7):n.slice(0,3)+"-"+n.slice(3,6)+"-"+n.slice(6)}
 function mNone(s){return!s||s==="-"||s==="—"}
-var MIG_KEEP0=["condolence_pay","bonus","round"];
-function mZero(v){var s=mt(v);return s==="0"||s==="1899-12-30"||s==="1899-12-31"}
 function mTelOk(s){if(mNone(s))return true;return s.split(/[\n,\/]+/).every(function(p){p=p.trim();return!p||p==="-"||normPhone(p).length>=8})}
 function mMailOk(s){if(mNone(s))return true;return s.split(/[\n,;\s]+/).every(function(p){p=p.trim();return!p||p==="-"||EMAIL_RE.test(p)})}
 function mNorm(s){return String(s||"").replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g,"").replace(/[\s()·.,\-_]/g,"").toLowerCase()}
@@ -2697,7 +2698,7 @@ function migCount(rows){var c={ok:0,warn:0,err:0,rej:0};rows.forEach(function(r)
 function migPreview(){
   var M=S.mig,all=migAll(),c=migCount(all),regN=c.ok+c.warn;
   var h='<section class="migp" id="mig-p"><div class="migp-h"><div><div class="k">'+esc({comp:"① 기업 DB",wk:"② 근로자 DB",in:"③ 입구서 이관"}[M.kind])+' · 미리보기</div><h2>'+esc(M.file)+'</h2></div><button class="close" data-act="mig-close" aria-label="미리보기 닫기">×</button></div>';
-  h+='<div class="migsum">'+["ok","warn","err","rej"].map(function(k){return'<span class="b '+MIG_ST[k][1]+'">'+MIG_ST[k][0]+' '+c[k]+'</span>'}).join(" ")+'<span class="hint">정상 · 경고는 등록되고, 반려는 빠집니다. 오류는 고쳐야 등록할 수 있어요.'+(M.zero?' · 0만 있던 '+M.zero+'칸은 빈칸으로 처리했어요(경조사비 · 상여 · 배분회차는 0 그대로).':"")+'</span></div>';
+  h+='<div class="migsum">'+["ok","warn","err","rej"].map(function(k){return'<span class="b '+MIG_ST[k][1]+'">'+MIG_ST[k][0]+' '+c[k]+'</span>'}).join(" ")+'<span class="hint">정상 · 경고는 등록되고, 반려는 빠집니다. 오류는 고쳐야 등록할 수 있어요.</span></div>';
   if(M.kind==="in"){
     var unm=migMapRows().filter(function(x){return!M.map[x.code]}).length;
     h+='<div class="tabs" role="tablist">'+[["map","기업 연결",unm]].concat(MIG_IN_ORDER.map(function(k){var rs=M.sets[k]||[],cc=migCount(rs);return[k,MIG_IN[k].t,cc.err,rs.length]})).map(function(x){
@@ -2800,9 +2801,8 @@ function migParseC(wb,M){
   if(bad.length)return"칸 순서가 양식과 다릅니다("+bad.map(function(x){return x[1]}).join(", ")+" 위치). 양식을 다시 받아 붙여 넣어 주세요";
   var rows=[];
   for(var r=hr+1;r<=ws.rowCount;r++){
-    var d={},any=false,z=0;MIG_C.forEach(function(f){if(!f[1])return;var v=wsCell(ws,r,f[0]);if(mZero(v)&&MIG_KEEP0.indexOf(f[1])<0){v="";z++}d[f[1]]=f[3]==="date"?v:mt(v);if(mt(v))any=true});
+    var d={},any=false;MIG_C.forEach(function(f){if(!f[1])return;var v=wsCell(ws,r,f[0]);d[f[1]]=f[3]==="date"?v:mt(v);if(mt(v))any=true});
     if(!any||(!d.corp_code&&!d.name&&!d.display_name))continue;
-    M.zero=(M.zero||0)+z;
     rows.push({n:r,sh:ws.name,d:d,iss:[],st:"ok"});
   }
   if(!rows.length)return"등록할 행이 없습니다. "+(hr+1)+"행부터 내용을 넣어 주세요";
@@ -2819,9 +2819,8 @@ function migParseW(wb,M){
     var col=function(f){var k=hNorm(f[1]);if(k==="성명"&&!map[k])k="이름";if(/^\d차계약/.test(k)&&!map[k])k=k.replace("차계약","차 계약").replace(/\s/g,"");return map[k]};
     if(!map["연락처"]||!map["생년월일"])M.noKey=(M.noKey||[]).concat([ws.name]);
     for(var r2=hr+1;r2<=ws.rowCount;r2++){
-      var d={},c,z=0;F.forEach(function(f){if(f[2]==="skip")return;c=col(f);var v=c?wsCell(ws,r2,c):"";if(mZero(v)){v="";z++}d[f[0]]=f[2]==="date"?v:mt(v)});
+      var d={},c;F.forEach(function(f){if(f[2]==="skip")return;c=col(f);d[f[0]]=c?(f[2]==="date"?wsCell(ws,r2,c):mt(wsCell(ws,r2,c))):""});
       if(!d.name&&!mt(d.code))continue;
-      M.zero=(M.zero||0)+z;
       rows.push({n:r2,sh:ws.name,d:d,retired:retired,iss:[],st:"ok"});
     }
   });
@@ -3999,6 +3998,7 @@ document.addEventListener("change",function(ev){
   if(d.ch==="__old_req_link"){DB.requests.find(function(y){return y.id===d.id}).link=t.value;toast("링크를 저장했습니다");schedulePersist();return}
   if(d.ch==="rehire"){S.rehire=t.checked;render();return}
   if(d.ch==="comp-chk"){S.compChk[d.id]=t.checked;render();return}
+  if(d.ch==="acct-part"){var s3=st(d.id);logChange("staff",s3.id,s3.name,"파트",s3.part,t.value,"브이드림 내부");s3.part=t.value;if(LIVE)sb.from("staff").update({part:t.value}).eq("id",s3.id).then(function(r){if(r.error){toast("파트를 바꾸지 못했습니다: "+r.error.message);reloadStaff().then(render)}});toast(s3.name+" 파트를 "+t.value+"(으)로 바꿨습니다");render();return}
   if(d.ch==="acct-role"){var s2=st(d.id);logChange("staff",s2.id,s2.name,"권한",s2.role,t.value,"브이드림 내부");s2.role=t.value;if(LIVE)sb.from("staff").update({role:t.value}).eq("id",s2.id).then(function(r){if(r.error){toast("권한을 바꾸지 못했습니다: "+r.error.message);reloadStaff().then(render)}});toast(s2.name+" 권한을 "+t.value+"(으)로 바꿨습니다");render();return}
   if(d.dis&&S.disF){var F=S.disF;if(d.dis==="doc"){var k=F.docs.indexOf(t.value);if(t.checked&&k<0)F.docs.push(t.value);if(!t.checked&&k>=0)F.docs.splice(k,1);return}if(d.dis==="permanent"){F.permanent=t.checked;if(t.checked)F.recheck="";render();return}F[d.dis]=t.value;if(d.dis==="result")render();return}
   if(d.or){var q=d.or.split(":"),row=S.onbRows&&S.onbRows[+q[0]];if(!row)return;row[q[1]]=t.value;if(q[1]==="cs"&&t.value){row.ce=addD(addM(t.value,(S.onbDef&&+S.onbDef.months)||12),-1);row.vs=t.value;var tr=t.closest("tr");tr.querySelector('[data-or="'+q[0]+':ce"]').value=row.ce;tr.querySelector('[data-or="'+q[0]+':vs"]').value=row.vs}if(q[1]==="phone"||q[1]==="name")updateOnbLinks();return}
@@ -4219,7 +4219,7 @@ function afterLogin(session){
   loadAll().then(function(){
     var me=DB.staff.find(function(x){return x.id===session.user.id});
     if(!me||!me.active){sb.auth.signOut();showGate(me?"비활성화된 계정입니다. 관리자에게 문의하세요.":"담당자 정보가 등록되지 않은 계정입니다. 관리자에게 문의하세요.");return}
-    S.me=me.id;S.role=me.role==="관리자"?"admin":"staff";S.scope=S.role==="admin"?"all":"mine";
+    S.me=me.id;S.role=isAdminRole(me.role)?"admin":"staff";S.scope=S.role==="admin"?"all":"mine";
     READY=true;g.hidden=true;g.innerHTML="";loadPrefs();autoLinkMine();
     sb.rpc("vw_touch_login").then(function(){},function(){});
     render();
