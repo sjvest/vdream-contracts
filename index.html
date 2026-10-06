@@ -865,7 +865,7 @@ function vTodo(){
   RAW.todo={rows:base,cols:TODO_COLS};
   var rows=tFilter("todo",base,TODO_COLS),s=tst("todo"),dir=(s.sort&&s.sort.k==="due"&&s.sort.dir==="desc")?-1:1;
   var sel=S.sel&&all.find(function(t){return t.key===S.sel});
-  var h='<div class="hd"><div><h1>내 할 일</h1><p>'+md(TODAY)+' 기준 · '+(S.mgr?esc(st(S.mgr).name)+" 담당"+(absentNow(S.mgr)?" (부재 중 · 대무자에게 넘어간 건 포함)":""):S.scope==="mine"?esc(st(S.me).name)+" 담당(대무 포함)":"전체 담당자")+'</p></div></div>'+
+  var h='<div class="hd"><div><h1>내 할 일</h1><p>'+md(TODAY)+' 기준 · '+(S.mgr?esc(st(S.mgr).name)+" 담당"+(absentNow(S.mgr)?" (부재 중 · 대무자에게 넘어간 건 포함)":""):S.scope==="mine"?esc(st(S.me).name)+" 담당(대무 포함)":"전체 담당자")+(function(n){return n&&!S.mgr&&S.scope!=="mine"?' · <span class="b bad">담당 미배정 기업 과업 '+n+'건</span>':""})(all.filter(function(t){return!t.assignee}).length)+'</p></div></div>'+
     '<div class="stats" data-spec="1" role="group" aria-label="요약 · 누르면 그 조건으로 거르기">'+TODO_FILTERS.map(function(x){var n=all.filter(function(t){return todoMatch(t,x[0])}).length;var on=S.todoTab===x[0];return'<button class="stat'+(x[2]&&n?" "+x[2]:"")+(on?" on":"")+'" data-act="todo-tab" data-v="'+x[0]+'" aria-pressed="'+on+'" title="'+(on&&x[0]!=="all"?"다시 누르면 전체":"누르면 "+x[1]+"만 보기")+'"><b>'+n+'</b><span>'+x[1]+'</span></button>'}).join("")+'</div>'+
     '<div class="fbar"><div class="seg" role="group" aria-label="보기 범위" data-spec="2"><button data-act="scope" data-v="mine" class="'+(S.scope==="mine"?"on":"")+'">내 담당</button><button data-act="scope" data-v="all" class="'+(S.scope==="all"?"on":"")+'">전체</button></div>'+
     '<select id="f-mgr" data-ch="mgr" aria-label="담당자">'+staffOpts(S.mgr,"담당자 전체")+'</select>'+
@@ -1200,12 +1200,12 @@ function vComp(){
   var h='<div class="hd"><div><h1>기업 DB</h1><p>등록 필수값 3개(기업코드 · 기업명 · 담당자)가 비면 저장할 수 없습니다. 일하면서 받아야 할 정보는 ‘수취 필요’로 표시합니다(관리자 › 설정에서 항목 선택). 대무자는 나중에 배정합니다. 행을 누르면 상세 창이 열립니다</p></div><div class="acts">'+(admin?'<button class="btn" data-act="go-mig">일괄 업로드</button>':"")+''+(admin?'<button class="btn" data-act="trf-open" data-spec="6">담당 일괄 변경</button>':"")+'<button class="btn pri" data-act="comp-new">기업 추가</button></div></div>'+
     '<div class="tabs" role="tablist" data-spec="1">'+[["all","전체"],["on1","계약중 · 재직자 있음"],["on0","계약중 · 재직자 없음"],["end","계약만료"]].map(function(x){return'<button class="'+(S.compTab===x[0]?"on":"")+'" data-act="comp-tab" data-v="'+x[0]+'">'+x[1]+'<span class="c">'+cnt[x[0]]+'</span></button>'}).join("")+'</div>'+fbar();
   if(admin&&chk.length)h+='<div class="bulk"><b>'+chk.length+'곳 선택</b><span class="grow"></span><button class="btn sm" data-act="trf-open">선택한 기업 담당 일괄 변경</button><button class="x" data-act="comp-chk-clear">선택 해제</button></div>';
-  var cols=(admin?[{k:"chk",h:"",t:"none"}]:[]).concat([{k:"code",h:"기업코드",t:"text",f:function(c){return c.corp_code}},{k:"name",h:"기업명",t:"text",f:function(c){return c.name}},{k:"m",h:"담당자",t:"text",f:function(c){return st(c.manager).name}},{k:"b",h:"대무자",t:"text",f:function(c){return c.backup?st(c.backup).name:"미지정"}},
+  var cols=(admin?[{k:"chk",h:"",t:"none"}]:[]).concat([{k:"code",h:"기업코드",t:"text",f:function(c){return c.corp_code}},{k:"name",h:"기업명",t:"text",f:function(c){return c.name}},{k:"m",h:"담당자",t:"text",f:function(c){return c.manager?st(c.manager).name:"미배정"}},{k:"b",h:"대무자",t:"text",f:function(c){return c.backup?st(c.backup).name:"미지정"}},
     {k:"hi",h:"기업레벨",t:"text",f:function(c){return c.is_high}},{k:"n",h:"재직",t:"num",v:function(c){return compStats(c.id).n},spec:"2"},{k:"e",h:"만료 예정",t:"num",v:function(c){return compStats(c.id).exp}},{k:"mi",h:"수취 필요",t:"num",v:function(c){return missingReq(c).length*100+missingOpt(c).length},spec:"3"}]);
   h+=dtable("comp",cols,rows,function(c){
     var s=compStats(c.id),mr=missingReq(c),mo=missingOpt(c).length;
     return'<tr class="'+(S.cm===c.id?"sel":"")+'" data-act="comp-open" data-id="'+c.id+'">'+(admin?'<td><input type="checkbox" data-ch="comp-chk" data-id="'+c.id+'"'+(S.compChk[c.id]?" checked":"")+' aria-label="선택"></td>':"")+
-      '<td class="num">'+esc(c.corp_code||"—")+'</td><td>'+esc(c.name)+(c.display_name&&c.display_name!==c.name?'<div class="small muted">'+esc(c.display_name)+'</div>':"")+'</td><td>'+esc(st(c.manager).name)+(absentNow(c.manager)?' <span class="b warn">부재</span>':"")+'</td><td>'+(c.backup?esc(st(c.backup).name):'<span style="color:var(--bad)">미지정</span>')+'</td>'+
+      '<td class="num">'+esc(c.corp_code||"—")+'</td><td>'+esc(c.name)+(c.display_name&&c.display_name!==c.name?'<div class="small muted">'+esc(c.display_name)+'</div>':"")+'</td><td>'+(c.manager?esc(st(c.manager).name):'<span class="b bad">미배정</span>')+(absentNow(c.manager)?' <span class="b warn">부재</span>':"")+'</td><td>'+(c.backup?esc(st(c.backup).name):'<span style="color:var(--bad)">미지정</span>')+'</td>'+
       '<td>'+lvlBadge(c)+'</td><td class="num r">'+s.n+'</td><td>'+(s.exp?'<span class="b warn">'+s.exp+'</span>':"—")+'</td>'+
       '<td>'+(mr.length?'<span class="b bad tip" tabindex="0" data-tip="'+esc("등록 필수: "+mr.join(", "))+'">등록 필수 '+mr.length+'</span> ':"")+(mo?'<span class="b warn tip" tabindex="0" data-tip="'+esc("수취 필요: "+missingOpt(c).join(", "))+'">수취 필요 '+mo+'</span>':"")+(!mr.length&&!mo?"—":"")+'</td></tr>';
   },"조건에 맞는 기업이 없습니다.");
@@ -2264,16 +2264,16 @@ function askConfirm(title,body,ok,fn){
    ================================================================ */
 function trfOpen(o){S.trf=Object.assign({target:"manager",mode:Object.keys(S.compChk).some(function(k){return S.compChk[k]})?"sel":"from",from:"",to:"",why:""},o||{});if(S.trf.mode==="sel"&&S.trf.target==="both")S.trf.target="manager"}
 function trfPlan(){
-  var F=S.trf,ids=F.mode==="sel"?Object.keys(S.compChk).filter(function(k){return S.compChk[k]&&comp(k)}):DB.companies.filter(function(c){return F.from&&(((F.target==="manager"||F.target==="both")&&c.manager===F.from)||((F.target==="backup"||F.target==="both")&&c.backup===F.from))}).map(function(c){return c.id});
+  var F=S.trf,FROM=F.from==="__none"?"":F.from,ids=F.mode==="sel"?Object.keys(S.compChk).filter(function(k){return S.compChk[k]&&comp(k)}):DB.companies.filter(function(c){return F.from&&(((F.target==="manager"||F.target==="both")&&(c.manager||"")===FROM)||((F.target==="backup"||F.target==="both")&&(c.backup||"")===FROM))}).map(function(c){return c.id});
   return ids.map(function(id){var c=comp(id),nm=c.manager,nb=c.backup,ch=[],skip="";
-    if(F.to){if(F.mode==="sel"){if(F.target==="manager")nm=F.to;else nb=F.to}else{if((F.target==="manager"||F.target==="both")&&c.manager===F.from)nm=F.to;if((F.target==="backup"||F.target==="both")&&c.backup===F.from)nb=F.to}}
+    if(F.to){if(F.mode==="sel"){if(F.target==="manager")nm=F.to;else nb=F.to}else{if((F.target==="manager"||F.target==="both")&&(c.manager||"")===FROM)nm=F.to;if((F.target==="backup"||F.target==="both")&&(c.backup||"")===FROM)nb=F.to}}
     if(nm!==c.manager)ch.push(["manager","담당자",c.manager,nm]);if(nb!==c.backup)ch.push(["backup","대무자",c.backup,nb]);
     if(!F.to)skip="새 담당자를 고르세요";else if(!ch.length)skip="이미 "+st(F.to).name;else if(nm&&nm===nb)skip="담당자와 대무자가 같아짐";
     return{c:c,ch:ch,skip:skip}});
 }
 function trfPanel(){
   var F=S.trf,P=trfPlan(),ok=P.filter(function(p){return !p.skip}),selN=Object.keys(S.compChk).filter(function(k){return S.compChk[k]}).length;
-  var allStaff=opt(DB.staff.map(function(s){return[s.id,s.name+(s.active===false?" (비활성)":"")]}),F.from,"선택");
+  var allStaff=opt([["__none","미배정 (담당자 없음 · "+DB.companies.filter(function(c){return!c.manager}).length+"곳)"]].concat(DB.staff.map(function(s){return[s.id,s.name+(s.active===false?" (비활성)":"")]})),F.from,"선택");
   var h='<aside class="pnl pnl-m" aria-label="담당 일괄 변경"><div class="ph"><div><div class="k">관리자 · 기업 DB</div><h2>담당 일괄 변경</h2><p class="hint" style="margin-top:4px">담당자가 바뀌면 그 기업의 과업(내 할 일)도 새 담당자에게 자동으로 넘어갑니다. 기업마다 변경 이력과 인수인계 메모가 남습니다.</p></div>'+closeBtn("trf-close")+'</div>';
   h+='<div class="ps wide"><div class="fg">'+
     '<div class="f full"><span>대상 기업</span><div class="seg" role="group" aria-label="대상 기업"><button data-act="trf-set" data-k="mode" data-v="sel" class="'+(F.mode==="sel"?"on":"")+'"'+(selN?"":" disabled")+'>목록에서 선택한 기업 '+selN+'곳</button><button data-act="trf-set" data-k="mode" data-v="from" class="'+(F.mode==="from"?"on":"")+'">특정 담당자의 기업 전체</button></div>'+(selN?"":'<small>기업 DB 목록 왼쪽 체크박스로 고르면 ‘선택한 기업’으로도 바꿀 수 있습니다</small>')+'</div>'+
@@ -2661,6 +2661,9 @@ function mDate(v){var s=mt(v);if(!s)return"";if(/^\d{5}(\.\d+)?$/.test(s)){var n
   s=s.replace(/[T ]\d{1,2}:\d{2}(:\d{2}(\.\d+)?)?Z?$/,"").replace(/\s*\(.*\)$/,"");return parseDate(s)}
 function mPhone(v){var n=normPhone(mt(v));if(!/^01\d{8,9}$/.test(n))return"";return n.length===11?n.slice(0,3)+"-"+n.slice(3,7)+"-"+n.slice(7):n.slice(0,3)+"-"+n.slice(3,6)+"-"+n.slice(6)}
 function mNone(s){return!s||s==="-"||s==="—"}
+/* 업로드: 칸 값이 0뿐이면 빈칸으로(원본 시트 수식이 빈칸을 0으로 바꾼 경우, 날짜 칸의 0은 1899-12-30으로 읽힘). 0이 실제 값일 수 있는 칸은 제외 */
+var MIG_KEEP0=["condolence_pay","bonus","round"];
+function mZero(v){var s=mt(v);return s==="0"||s==="1899-12-30"||s==="1899-12-31"}
 function mTelOk(s){if(mNone(s))return true;return s.split(/[\n,\/]+/).every(function(p){p=p.trim();return!p||p==="-"||normPhone(p).length>=8})}
 function mMailOk(s){if(mNone(s))return true;return s.split(/[\n,;\s]+/).every(function(p){p=p.trim();return!p||p==="-"||EMAIL_RE.test(p)})}
 function mNorm(s){return String(s||"").replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g,"").replace(/[\s()·.,\-_]/g,"").toLowerCase()}
@@ -2698,7 +2701,7 @@ function migCount(rows){var c={ok:0,warn:0,err:0,rej:0};rows.forEach(function(r)
 function migPreview(){
   var M=S.mig,all=migAll(),c=migCount(all),regN=c.ok+c.warn;
   var h='<section class="migp" id="mig-p"><div class="migp-h"><div><div class="k">'+esc({comp:"① 기업 DB",wk:"② 근로자 DB",in:"③ 입구서 이관"}[M.kind])+' · 미리보기</div><h2>'+esc(M.file)+'</h2></div><button class="close" data-act="mig-close" aria-label="미리보기 닫기">×</button></div>';
-  h+='<div class="migsum">'+["ok","warn","err","rej"].map(function(k){return'<span class="b '+MIG_ST[k][1]+'">'+MIG_ST[k][0]+' '+c[k]+'</span>'}).join(" ")+'<span class="hint">정상 · 경고는 등록되고, 반려는 빠집니다. 오류는 고쳐야 등록할 수 있어요.</span></div>';
+  h+='<div class="migsum">'+["ok","warn","err","rej"].map(function(k){return'<span class="b '+MIG_ST[k][1]+'">'+MIG_ST[k][0]+' '+c[k]+'</span>'}).join(" ")+'<span class="hint">정상 · 경고는 등록되고, 반려는 빠집니다. 오류는 고쳐야 등록할 수 있어요.'+(M.zero?' · 0만 있던 '+M.zero+'칸은 빈칸으로 처리했어요(경조사비 · 상여 · 배분회차는 0 그대로).':"")+'</span></div>';
   if(M.kind==="in"){
     var unm=migMapRows().filter(function(x){return!M.map[x.code]}).length;
     h+='<div class="tabs" role="tablist">'+[["map","기업 연결",unm]].concat(MIG_IN_ORDER.map(function(k){var rs=M.sets[k]||[],cc=migCount(rs);return[k,MIG_IN[k].t,cc.err,rs.length]})).map(function(x){
@@ -2801,8 +2804,9 @@ function migParseC(wb,M){
   if(bad.length)return"칸 순서가 양식과 다릅니다("+bad.map(function(x){return x[1]}).join(", ")+" 위치). 양식을 다시 받아 붙여 넣어 주세요";
   var rows=[];
   for(var r=hr+1;r<=ws.rowCount;r++){
-    var d={},any=false;MIG_C.forEach(function(f){if(!f[1])return;var v=wsCell(ws,r,f[0]);d[f[1]]=f[3]==="date"?v:mt(v);if(mt(v))any=true});
+    var d={},any=false,z=0;MIG_C.forEach(function(f){if(!f[1])return;var v=wsCell(ws,r,f[0]);if(mZero(v)&&MIG_KEEP0.indexOf(f[1])<0){v="";z++}d[f[1]]=f[3]==="date"?v:mt(v);if(mt(v))any=true});
     if(!any||(!d.corp_code&&!d.name&&!d.display_name))continue;
+    M.zero=(M.zero||0)+z;
     rows.push({n:r,sh:ws.name,d:d,iss:[],st:"ok"});
   }
   if(!rows.length)return"등록할 행이 없습니다. "+(hr+1)+"행부터 내용을 넣어 주세요";
@@ -2819,8 +2823,9 @@ function migParseW(wb,M){
     var col=function(f){var k=hNorm(f[1]);if(k==="성명"&&!map[k])k="이름";if(/^\d차계약/.test(k)&&!map[k])k=k.replace("차계약","차 계약").replace(/\s/g,"");return map[k]};
     if(!map["연락처"]||!map["생년월일"])M.noKey=(M.noKey||[]).concat([ws.name]);
     for(var r2=hr+1;r2<=ws.rowCount;r2++){
-      var d={},c;F.forEach(function(f){if(f[2]==="skip")return;c=col(f);d[f[0]]=c?(f[2]==="date"?wsCell(ws,r2,c):mt(wsCell(ws,r2,c))):""});
+      var d={},c,z=0;F.forEach(function(f){if(f[2]==="skip")return;c=col(f);var v=c?wsCell(ws,r2,c):"";if(mZero(v)){v="";z++}d[f[0]]=f[2]==="date"?v:mt(v)});
       if(!d.name&&!mt(d.code))continue;
+      M.zero=(M.zero||0)+z;
       rows.push({n:r2,sh:ws.name,d:d,retired:retired,iss:[],st:"ok"});
     }
   });
@@ -2856,7 +2861,7 @@ function migVC(){
     var chain=["m0","m1","m2"].map(function(k){return mt(d[k])}).filter(function(v){return!mNone(v)});
     x.chain=chain;x.mgrName=chain[chain.length-1]||"";
     if(d._mgr)x.mgr=d._mgr;else{var s=staffByName(x.mgrName);if(s)x.mgr=s.id}
-    if(!x.mgr)I.push(mi("_mgr","err",x.mgrName?"담당자 ‘"+x.mgrName+"’을 계정에서 찾지 못했어요 · 계정을 골라 주세요":"담당자가 비어 있어요 · 계정을 골라 주세요","staff"));
+    if(!x.mgr)I.push(mi("_mgr","warn",x.mgrName?"담당자 ‘"+x.mgrName+"’은 계정이 없어요(퇴사 등) · 미배정으로 등록되고 이름은 이력에 남아요 · 계정을 고르면 그 사람으로 등록":"담당자가 비어 있어요 · 미배정으로 등록돼요 · 계정을 고르면 그 사람으로 등록","staff"));
     var ev=mt(d.service_end);x.end=mDate(d.service_end);
     if(!ev){if(colKeys().indexOf("service_end")>=0)I.push(mi("service_end","warn","임대계약 종료일이 비어 있어요 · 등록 후 ‘수취 필요’로 표시돼요"))}
     else if(!x.end)I.push(mi("service_end","err","임대계약 종료일 형식이 이상해요(‘"+ev+"’) · 수정이 필요해요","date"));
@@ -2982,7 +2987,7 @@ var RECV_TO_METHOD={"원본":"원본"};
 function migRegC(){
   var L=regRows("main"),src=S.mig.file,nd=0;
   L.forEach(function(r){
-    var d=r.d,x=r.x,id=nid(),o={id:id,corp_code:mt(d.corp_code),name:mt(d.name),display_name:"",group_name:"",biz_type:"",address:"",is_high:"일반기업",part:"지원파트",manager:x.mgr,backup:"",service_end:x.end,extra_hire:"",promotion:"",dept:"",contact_name:"",contact_phone:"",contact_email:"",work_rules:"",leave_rules:"",pay_day:"",attend_close:"",annual_schedule:"",welfare:"",special_note:"",missing_since:TODAY,ceo:"",pay_bank:"",mail_manager:"",mail_tpl:"",doc_group:"",need_pdf:""};
+    var d=r.d,x=r.x,id=nid(),o={id:id,corp_code:mt(d.corp_code),name:mt(d.name),display_name:"",group_name:"",biz_type:"",address:"",is_high:"일반기업",part:"지원파트",manager:x.mgr||"",backup:"",service_end:x.end,extra_hire:"",promotion:"",dept:"",contact_name:"",contact_phone:"",contact_email:"",work_rules:"",leave_rules:"",pay_day:"",attend_close:"",annual_schedule:"",welfare:"",special_note:"",missing_since:TODAY,ceo:"",pay_bank:"",mail_manager:"",mail_tpl:"",doc_group:"",need_pdf:""};
     COMP_X.forEach(function(k){o[k]=""});
     MIG_C.forEach(function(f){var k=f[1];if(!k||f[3]==="skip"||f[3]==="mgr"||f[3]==="date"||k==="pw"||k==="round"||k==="corp_code"||k==="name")return;var v=mt(d[k]);o[k]=mNone(v)?"":v});
     if(!o.is_high)o.is_high="일반기업";
@@ -2995,6 +3000,7 @@ function migRegC(){
     logChange("companies",id,o.name,"기업 등록","","일괄 업로드 · "+src,"브이드림 내부");
     var ch=x.chain,rd=mt(d.round);
     for(var i=1;i<ch.length;i++)if(ch[i]!==ch[i-1])logChange("companies",id,o.name,"담당자 (이관 기록"+(i===ch.length-1&&rd?" · 배분 "+rd+"회차":"")+")",ch[i-1],ch[i],"브이드림 내부");
+    if(!x.mgr)logChange("companies",id,o.name,"담당자 (이관 기록 · 계정 없음)",x.mgrName||"(비어 있음)","미배정","브이드림 내부");
   });
   return"기업 "+L.length+"곳을 등록했습니다 · 서류 양식 "+nd+"건 · 반려 "+(S.mig.sets.main.length-L.length)+"건 제외";
 }
@@ -3285,7 +3291,7 @@ function vDash(){
   var SL=DB.staff.filter(function(s){return s.active!==false&&(admin?(S.mgr?s.id===S.mgr:(S.scope!=="mine"||s.id===S.me)):s.id===S.me)});
   h+='<table class="t" style="margin-top:12px"><thead><tr><th>'+(admin?"담당자":"내 처리 현황")+'</th><th class="r">기간 안 완료</th><th class="r">지금 진행 중</th><th class="r">기한 경과</th><th class="r">대무 중</th></tr></thead><tbody>'+SL.map(function(s){
       var L=T.filter(function(t){return t.assignee===s.id}),dn=0;cats.forEach(function(c){dn+=keep(done[c]).filter(function(cid){return cid&&assignee(cid).who===s.id}).length});
-      return'<tr><td>'+esc(s.name)+(absentNow(s.id)?' <span class="b warn">부재</span>':"")+(function(n){return n?' <span class="small muted">· 대무자가 처리 중 '+n+'건</span>':""})(T.filter(function(t){return t.proxy&&t.orig===s.id}).length)+'</td><td class="num r">'+dn+'</td><td class="num r">'+L.length+'</td><td class="num r">'+L.filter(function(t){return t.due<TODAY}).length+'</td><td class="num r">'+L.filter(function(t){return t.proxy}).length+'</td></tr>'}).join("")+'</tbody></table><p class="hint" style="margin-top:6px">'+(admin?"담당자별 완료는 그 기업의 지금 담당자 기준입니다.":"내 담당 기업(대무 중인 기업 포함) 기준입니다. 다른 담당자와의 비교는 관리자 화면에서만 보입니다.")+' 기업 정보 수취는 과업이 아니라 뱃지라 여기에 넣지 않았습니다.</p></div>';
+      return'<tr><td>'+esc(s.name)+(absentNow(s.id)?' <span class="b warn">부재</span>':"")+(function(n){return n?' <span class="small muted">· 대무자가 처리 중 '+n+'건</span>':""})(T.filter(function(t){return t.proxy&&t.orig===s.id}).length)+'</td><td class="num r">'+dn+'</td><td class="num r">'+L.length+'</td><td class="num r">'+L.filter(function(t){return t.due<TODAY}).length+'</td><td class="num r">'+L.filter(function(t){return t.proxy}).length+'</td></tr>'}).join("")+(function(U){return admin&&!S.mgr&&S.scope!=="mine"&&U.length?'<tr><td><span class="b bad">담당 미배정</span> <span class="small muted">· 기업 DB › 담당 일괄 변경에서 배정</span></td><td class="num r">—</td><td class="num r">'+U.length+'</td><td class="num r">'+U.filter(function(t){return t.due<TODAY}).length+'</td><td class="num r">—</td></tr>':""})(T.filter(function(t){return!t.assignee}))+'</tbody></table><p class="hint" style="margin-top:6px">'+(admin?"담당자별 완료는 그 기업의 지금 담당자 기준입니다.":"내 담당 기업(대무 중인 기업 포함) 기준입니다. 다른 담당자와의 비교는 관리자 화면에서만 보입니다.")+' 기업 정보 수취는 과업이 아니라 뱃지라 여기에 넣지 않았습니다.</p></div>';
   return h;
 }
 
