@@ -2658,6 +2658,8 @@ function mDate(v){var s=mt(v);if(!s)return"";if(/^\d{5}(\.\d+)?$/.test(s)){var n
   s=s.replace(/[T ]\d{1,2}:\d{2}(:\d{2}(\.\d+)?)?Z?$/,"").replace(/\s*\(.*\)$/,"");return parseDate(s)}
 function mPhone(v){var n=normPhone(mt(v));if(!/^01\d{8,9}$/.test(n))return"";return n.length===11?n.slice(0,3)+"-"+n.slice(3,7)+"-"+n.slice(7):n.slice(0,3)+"-"+n.slice(3,6)+"-"+n.slice(6)}
 function mNone(s){return!s||s==="-"||s==="—"}
+var MIG_KEEP0=["condolence_pay","bonus","round"];
+function mZero(v){var s=mt(v);return s==="0"||s==="1899-12-30"||s==="1899-12-31"}
 function mTelOk(s){if(mNone(s))return true;return s.split(/[\n,\/]+/).every(function(p){p=p.trim();return!p||p==="-"||normPhone(p).length>=8})}
 function mMailOk(s){if(mNone(s))return true;return s.split(/[\n,;\s]+/).every(function(p){p=p.trim();return!p||p==="-"||EMAIL_RE.test(p)})}
 function mNorm(s){return String(s||"").replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g,"").replace(/[\s()·.,\-_]/g,"").toLowerCase()}
@@ -2695,7 +2697,7 @@ function migCount(rows){var c={ok:0,warn:0,err:0,rej:0};rows.forEach(function(r)
 function migPreview(){
   var M=S.mig,all=migAll(),c=migCount(all),regN=c.ok+c.warn;
   var h='<section class="migp" id="mig-p"><div class="migp-h"><div><div class="k">'+esc({comp:"① 기업 DB",wk:"② 근로자 DB",in:"③ 입구서 이관"}[M.kind])+' · 미리보기</div><h2>'+esc(M.file)+'</h2></div><button class="close" data-act="mig-close" aria-label="미리보기 닫기">×</button></div>';
-  h+='<div class="migsum">'+["ok","warn","err","rej"].map(function(k){return'<span class="b '+MIG_ST[k][1]+'">'+MIG_ST[k][0]+' '+c[k]+'</span>'}).join(" ")+'<span class="hint">정상 · 경고는 등록되고, 반려는 빠집니다. 오류는 고쳐야 등록할 수 있어요.</span></div>';
+  h+='<div class="migsum">'+["ok","warn","err","rej"].map(function(k){return'<span class="b '+MIG_ST[k][1]+'">'+MIG_ST[k][0]+' '+c[k]+'</span>'}).join(" ")+'<span class="hint">정상 · 경고는 등록되고, 반려는 빠집니다. 오류는 고쳐야 등록할 수 있어요.'+(M.zero?' · 0만 있던 '+M.zero+'칸은 빈칸으로 처리했어요(경조사비 · 상여 · 배분회차는 0 그대로).':"")+'</span></div>';
   if(M.kind==="in"){
     var unm=migMapRows().filter(function(x){return!M.map[x.code]}).length;
     h+='<div class="tabs" role="tablist">'+[["map","기업 연결",unm]].concat(MIG_IN_ORDER.map(function(k){var rs=M.sets[k]||[],cc=migCount(rs);return[k,MIG_IN[k].t,cc.err,rs.length]})).map(function(x){
@@ -2798,8 +2800,9 @@ function migParseC(wb,M){
   if(bad.length)return"칸 순서가 양식과 다릅니다("+bad.map(function(x){return x[1]}).join(", ")+" 위치). 양식을 다시 받아 붙여 넣어 주세요";
   var rows=[];
   for(var r=hr+1;r<=ws.rowCount;r++){
-    var d={},any=false;MIG_C.forEach(function(f){if(!f[1])return;var v=wsCell(ws,r,f[0]);d[f[1]]=f[3]==="date"?v:mt(v);if(mt(v))any=true});
+    var d={},any=false,z=0;MIG_C.forEach(function(f){if(!f[1])return;var v=wsCell(ws,r,f[0]);if(mZero(v)&&MIG_KEEP0.indexOf(f[1])<0){v="";z++}d[f[1]]=f[3]==="date"?v:mt(v);if(mt(v))any=true});
     if(!any||(!d.corp_code&&!d.name&&!d.display_name))continue;
+    M.zero=(M.zero||0)+z;
     rows.push({n:r,sh:ws.name,d:d,iss:[],st:"ok"});
   }
   if(!rows.length)return"등록할 행이 없습니다. "+(hr+1)+"행부터 내용을 넣어 주세요";
@@ -2816,8 +2819,9 @@ function migParseW(wb,M){
     var col=function(f){var k=hNorm(f[1]);if(k==="성명"&&!map[k])k="이름";if(/^\d차계약/.test(k)&&!map[k])k=k.replace("차계약","차 계약").replace(/\s/g,"");return map[k]};
     if(!map["연락처"]||!map["생년월일"])M.noKey=(M.noKey||[]).concat([ws.name]);
     for(var r2=hr+1;r2<=ws.rowCount;r2++){
-      var d={},c;F.forEach(function(f){if(f[2]==="skip")return;c=col(f);d[f[0]]=c?(f[2]==="date"?wsCell(ws,r2,c):mt(wsCell(ws,r2,c))):""});
+      var d={},c,z=0;F.forEach(function(f){if(f[2]==="skip")return;c=col(f);var v=c?wsCell(ws,r2,c):"";if(mZero(v)){v="";z++}d[f[0]]=f[2]==="date"?v:mt(v)});
       if(!d.name&&!mt(d.code))continue;
+      M.zero=(M.zero||0)+z;
       rows.push({n:r2,sh:ws.name,d:d,retired:retired,iss:[],st:"ok"});
     }
   });
