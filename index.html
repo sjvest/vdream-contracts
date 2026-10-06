@@ -2621,7 +2621,7 @@ function dlBlob(blob,name){var a=document.createElement("a");a.href=URL.createOb
 /* ---- 양식 정의 ---- */
 /* 기업: 기존 ‘기업정보(확정)’ 시트와 같은 칸 순서. A열만 NO → 기업코드. [열, 키, 머리글, 형식, 목록, 필수] */
 var MIG_C=[[1,"corp_code","기업코드","code",0,1],[2,"group_name","그룹"],[3,"name","기업명","text",0,1],[4,"display_name","브이워크 기업명"],[5,"biz_type","사업 구분","opt","biz"],[6,"is_high","기업레벨","opt","lvl"],[7,"","재직자수","skip"],
-  [8,"m0","담당자\n(브이드림)","mgr"],[9,"m1","담당자변경1","mgr"],[10,"m2","담당자변경2","mgr"],[11,"","변경전담당자","skip"],[12,"","변경후담당자","skip"],[13,"round","배분회차"],[14,"service_end","임대계약 종료일","date"],[15,"promotion","프로모션 기준"],[16,"extra_hire","추가채용적용여부","opt","extra"],
+  [8,"m0","담당자\n(브이드림)","mgr"],[9,"m1","담당자변경1","mgr"],[10,"m2","담당자변경2","mgr"],[11,"m3","변경전담당자","mgr"],[12,"m4","변경후담당자","mgr"],[13,"round","배분회차"],[14,"service_end","임대계약 종료일","date"],[15,"promotion","프로모션 기준"],[16,"extra_hire","추가채용적용여부","opt","extra"],
   [17,"address","주소"],[18,"special_note","특이사항"],[19,"contact_name","소통 담당자(기업)"],[20,"contact_task","담당 업무"],[21,"contact_phone","휴대전화","tel"],[22,"contact_tel","내선전화","tel"],[23,"contact_email","이메일","email"],
   [24,"sub_name","부 담당자(기업)"],[25,"sub_task","담당 업무"],[26,"sub_phone","휴대전화","tel"],[27,"sub_tel","내선전화","tel"],[28,"sub_email","이메일","email"],
   [29,"ctr_name","계약 담당자\n(기업)"],[30,"ctr_phone","휴대전화","tel"],[31,"ctr_tel","내선전화","tel"],[32,"ctr_email","이메일","email"],
@@ -2800,7 +2800,7 @@ function migParseC(wb,M){
   wb.worksheets.forEach(function(w){if(ws)return;for(var r=1;r<=6;r++){if(hNorm(wsCell(w,r,3))==="기업명"&&hNorm(wsCell(w,r,4))==="브이워크기업명"){ws=w;hr=r;return}}});
   if(!ws)return"기업 양식이 아닙니다. [양식 다운로드]로 받은 파일(C열 기업명 · D열 브이워크 기업명)에 넣어 올려 주세요";
   if(hNorm(wsCell(ws,hr,1))!=="기업코드")return"A열이 ‘기업코드’가 아닙니다(기존 시트는 A열이 NO). 양식의 A열에 기업코드를 넣고 B열부터 기존 내용을 붙여 넣어 주세요";
-  var bad=[[8,"담당자(브이드림)"],[14,"임대계약종료일"],[34,"수취방법"],[46,"규정"],[68,"수취방법"]].filter(function(x){return hNorm(wsCell(ws,hr,x[0])).indexOf(x[1].replace(/[()]/g,""))<0&&hNorm(wsCell(ws,hr,x[0]))!==x[1]});
+  var bad=[[8,"담당자(브이드림)"],[12,"변경후담당자"],[14,"임대계약종료일"],[34,"수취방법"],[46,"규정"],[68,"수취방법"]].filter(function(x){return hNorm(wsCell(ws,hr,x[0])).indexOf(x[1].replace(/[()]/g,""))<0&&hNorm(wsCell(ws,hr,x[0]))!==x[1]});
   if(bad.length)return"칸 순서가 양식과 다릅니다("+bad.map(function(x){return x[1]}).join(", ")+" 위치). 양식을 다시 받아 붙여 넣어 주세요";
   var rows=[];
   for(var r=hr+1;r<=ws.rowCount;r++){
@@ -2857,11 +2857,11 @@ function migVC(){
     if(!mt(d.name))I.push(mi("name","err","기업명(사업자등록증상)이 비어 있어요 · 입력이 필요해요","text"));
     var dn=mNorm(d.display_name);
     if(dn){if(DB.companies.some(function(c){return mNorm(c.display_name)===dn}))I.push(mi("display_name","warn","같은 브이워크 기업명이 기업 DB에 이미 있어요 · 확인 필요"));else if(seenV[dn])I.push(mi("display_name","warn","파일 안에 같은 브이워크 기업명이 있어요("+seenV[dn]+"행) · 확인 필요"));else seenV[dn]=r.n}
-    /* 현재 담당자 = 담당자변경2 → 변경1 → 담당자(브이드림) 중 마지막에 채워진 사람 */
-    var chain=["m0","m1","m2"].map(function(k){return mt(d[k])}).filter(function(v){return!mNone(v)});
-    x.chain=chain;x.mgrName=chain[chain.length-1]||"";
+    /* 현재 담당자 = L열(변경후담당자). H~K열(담당자 · 변경1 · 변경2 · 변경전담당자)은 과거 이력 */
+    var chain=["m0","m1","m2","m3","m4"].map(function(k){return mt(d[k])}).filter(function(v){return!mNone(v)});
+    x.chain=chain;x.mgrName=mNone(mt(d.m4))?"":mt(d.m4);x.prevName=chain.filter(function(v){return v!==x.mgrName}).pop()||"";
     if(d._mgr)x.mgr=d._mgr;else{var s=staffByName(x.mgrName);if(s)x.mgr=s.id}
-    if(!x.mgr)I.push(mi("_mgr","warn",x.mgrName?"담당자 ‘"+x.mgrName+"’은 계정이 없어요(퇴사 등) · 미배정으로 등록되고 이름은 이력에 남아요 · 계정을 고르면 그 사람으로 등록":"담당자가 비어 있어요 · 미배정으로 등록돼요 · 계정을 고르면 그 사람으로 등록","staff"));
+    if(!x.mgr)I.push(mi("_mgr","warn",x.mgrName?"현재 담당자(L열) ‘"+x.mgrName+"’은 계정이 없어요(퇴사 등) · 미배정으로 등록되고 이름은 이력에 남아요 · 계정을 고르면 그 사람으로 등록":"현재 담당자(L열)가 비어 있어요 · 미배정으로 등록돼요"+(x.prevName?" · 이전 담당자 ‘"+x.prevName+"’은 이력에 남아요":"")+" · 계정을 고르면 그 사람으로 등록","staff"));
     var ev=mt(d.service_end);x.end=mDate(d.service_end);
     if(!ev){if(colKeys().indexOf("service_end")>=0)I.push(mi("service_end","warn","임대계약 종료일이 비어 있어요 · 등록 후 ‘수취 필요’로 표시돼요"))}
     else if(!x.end)I.push(mi("service_end","err","임대계약 종료일 형식이 이상해요(‘"+ev+"’) · 수정이 필요해요","date"));
@@ -3000,7 +3000,7 @@ function migRegC(){
     logChange("companies",id,o.name,"기업 등록","","일괄 업로드 · "+src,"브이드림 내부");
     var ch=x.chain,rd=mt(d.round);
     for(var i=1;i<ch.length;i++)if(ch[i]!==ch[i-1])logChange("companies",id,o.name,"담당자 (이관 기록"+(i===ch.length-1&&rd?" · 배분 "+rd+"회차":"")+")",ch[i-1],ch[i],"브이드림 내부");
-    if(!x.mgr)logChange("companies",id,o.name,"담당자 (이관 기록 · 계정 없음)",x.mgrName||"(비어 있음)","미배정","브이드림 내부");
+    if(!x.mgr)logChange("companies",id,o.name,"담당자 (이관 기록 · "+(x.mgrName?"계정 없음":"현재 담당자 빈칸")+")",x.mgrName||ch[ch.length-1]||"(비어 있음)","미배정","브이드림 내부");
   });
   return"기업 "+L.length+"곳을 등록했습니다 · 서류 양식 "+nd+"건 · 반려 "+(S.mig.sets.main.length-L.length)+"건 제외";
 }
@@ -3053,12 +3053,12 @@ function migTemplate(k){
       MIG_CG2.forEach(function(g){if(g[1]>g[0])ws.mergeCells(2,g[0],2,g[1]);var c=ws.getCell(2,g[0]);c.value=g[2];c.fill=hdFill;c.alignment={horizontal:"center"}});
       MIG_C.forEach(function(f){var c=ws.getCell(3,f[0]);c.value=f[2]+(f[5]?" *":"");c.font={bold:true,color:f[5]?red:undefined};c.fill=hdFill;c.border=bd;c.alignment={wrapText:true,vertical:"middle",horizontal:"center"};
         ws.getColumn(f[0]).width=f[3]==="date"?14:f[0]===17||f[0]===18||f[0]===40||f[0]===52?28:13;
-        if(f[3]==="opt")dv(ws,f[0],4,1003,CO[f[4]],f[1]==="is_high");if(f[3]==="date")ws.getColumn(f[0]).numFmt="yyyy-mm-dd";if(f[1]==="m0"||f[1]==="m1"||f[1]==="m2")dv(ws,f[0],4,1003,DB.staff.filter(function(s){return s.active!==false}).map(function(s){return s.name}).slice(0,40),false)});
+        if(f[3]==="opt")dv(ws,f[0],4,1003,CO[f[4]],f[1]==="is_high");if(f[3]==="date")ws.getColumn(f[0]).numFmt="yyyy-mm-dd";if(/^m[0-4]$/.test(f[1]))dv(ws,f[0],4,1003,DB.staff.filter(function(s){return s.active!==false}).map(function(s){return s.name}).slice(0,40),false)});
       ws.getRow(3).height=34;
-      [["A열은 기업코드(필수)입니다. 기존 ‘기업정보(확정)’ 시트의 B열(그룹)부터 BP열(건강검진 수취방법)까지 그대로 4행부터 붙여 넣으면 됩니다."],["빨간 * 머리글은 등록 필수값입니다: 기업코드 · 기업명(사업자등록증상) · 담당자(담당자/변경1/변경2 중 하나). 임대계약 종료일 · 근로계약서 수취방법 등이 비면 등록은 되고 ‘수취 필요’로 표시됩니다."],
-       ["현재 담당자는 ‘담당자변경2 → 변경1 → 담당자(브이드림)’ 중 마지막에 채워진 사람입니다. 이전 담당자는 변경 이력으로 남고, 배분회차는 마지막 변경에 기록합니다. 대무자는 나중에 페이지에서 배정합니다."],
+      [["A열은 기업코드(필수)입니다. 기존 ‘기업정보(확정)’ 시트의 B열(그룹)부터 BP열(건강검진 수취방법)까지 그대로 4행부터 붙여 넣으면 됩니다."],["빨간 * 머리글은 등록 필수값입니다: 기업코드 · 기업명(사업자등록증상). 담당자는 필수가 아니며 비면 미배정으로 등록됩니다. 임대계약 종료일 · 근로계약서 수취방법 등이 비면 등록은 되고 ‘수취 필요’로 표시됩니다."],
+       ["현재 담당자는 L열(변경후담당자)입니다. H~K열(담당자 · 변경1 · 변경2 · 변경전담당자)은 과거 담당자로 변경 이력에 순서대로 남고, 배분회차는 마지막 변경에 기록합니다. L열이 비었거나 계정이 없는 사람(퇴사자 등)이면 ‘미배정’으로 등록되고, 기업 DB › 담당 일괄 변경에서 나중에 배정합니다. 대무자도 나중에 페이지에서 배정합니다."],
        ["기업코드가 이미 있거나 파일 안에서 겹치면 반려(등록하지 않음)됩니다. 브이워크 기업명이 겹치면 경고만 합니다."],["드롭다운 목록에 없는 값은 경고 후 그대로 저장됩니다(기업레벨만 목록 값 필수). 연락처 · 이메일 · 날짜 형식이 틀리면 업로드 화면에서 고쳐야 등록됩니다."],
-       ["재직자수 · 변경전/변경후 담당자 칸은 읽지 않습니다. 플립계정 PW는 해당 기업 담당자 · 대무자 · 관리자만 볼 수 있게 따로 저장합니다."]].forEach(function(t,i){guide.getCell(i+2,2).value=(i+1)+". "+t[0];guide.mergeCells(i+2,2,i+2,4);guide.getCell(i+2,2).alignment={wrapText:true};guide.getRow(i+2).height=32});
+       ["재직자수 칸은 읽지 않습니다. 플립계정 PW는 해당 기업 담당자 · 대무자 · 관리자만 볼 수 있게 따로 저장합니다."]].forEach(function(t,i){guide.getCell(i+2,2).value=(i+1)+". "+t[0];guide.mergeCells(i+2,2,i+2,4);guide.getCell(i+2,2).alignment={wrapText:true};guide.getRow(i+2).height=32});
       guide.getCell(1,2).value="기업 DB 업로드 양식 안내";guide.getCell(1,2).font={bold:true,size:13};
       var g0=10;guide.getRow(g0).values=["열","항목","필수","형식 · 허용 값"];guide.getRow(g0).font={bold:true};
       MIG_C.forEach(function(f,i){var col=ws.getColumn(f[0]).letter;guide.getRow(g0+1+i).values=[col,migCLabel(f[1])||f[2].replace(/\n/g," "),f[5]?"필수":"",f[3]==="skip"?"읽지 않음":f[3]==="opt"?CO[f[4]].join(" / "):f[3]==="date"?"날짜 2026-03-01":f[3]==="tel"?"전화번호(여러 개면 줄바꿈)":f[3]==="email"?"이메일(여러 개면 줄바꿈)":f[3]==="mgr"?"담당자 이름(계정 이름과 같게)":"글"]});
