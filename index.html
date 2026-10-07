@@ -424,6 +424,7 @@ label.btn{cursor:pointer}label.btn.dis{opacity:.45;cursor:not-allowed}
 .tagrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tabtn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff;cursor:pointer}.tabtn:hover{border-color:var(--p);background:#F7F6FC}.tabtn span{font-size:12.5px;color:var(--muted)}
 .dlg.dlg-ce{width:min(760px,100%)}.cetab input[type=date]{font-size:13px;padding:3px 6px;border:1px solid #D9D6E6;border-radius:6px}
 .stepok{color:var(--t);font-weight:700}
+.steps li.lock .no{opacity:.55;cursor:not-allowed}.steps li.lock .lb small{color:#B26A00}.steps li.skip{opacity:.55}
 </style>
 </head>
 <body>
@@ -682,7 +683,7 @@ function buildTodos(){
     var ACT=activeEmp(e);if(!ACT&&!caseOpenAfterEnd(e))return;
     var x=xOf(e.id),t=curTerm(e.id);
     if(x&&x.created&&!caseDone(x)){
-      var nx=CASE_STEPS.find(function(s){return !x.steps[s[0]]});
+      var nx=stepsFor(x).find(function(s){return !x.steps[s[0]]});nx=[nx[0],stepName(x,nx)];
       push({key:"case:"+e.id,type:"case",cat:"계약 진행",task:"다음 단계: "+nx[1],worker:e.worker,emp:e.id,company:e.company,base:x.created,auto:true});
     }
     if(t&&t.end&&!(x&&x.decision)){var d=dd(TODAY,t.end);if(d<=30){var ph=expPhase(x),rm=needRemind(x,t.end);push({key:"exp:"+e.id,type:"exp",cat:"계약만료 결정",task:ph+(rm?" · 근로자 응답 없음":"")+" · 만료 "+dlabel(d),worker:e.worker,emp:e.id,company:e.company,base:t.end,auto:!!(x&&x.corp),remind:rm,remindDue:rm?addD(t.end,setting("remind").offset):""})}}
@@ -980,22 +981,17 @@ function expBody(eid){
   var h='<div class="ps"><h3>계약 정보 <button class="linkbtn small" data-act="ce-open" data-e="'+eid+'" style="font-weight:500">계약 정보 수정</button></h3><div class="kv"><div><span>현재 차수</span><b>'+seqBadge(t.seq)+'</b></div><div><span>계약시작일</span><b class="num">'+t.start+'</b></div><div><span>계약만료일</span><b class="num">'+t.end+'</b></div><div><span>만료까지</span><b class="num">'+dlabel(d)+'</b></div><div><span>브이워크 시작일</span><b class="num">'+e.vwork_start+'</b></div><div><span>근로자 연락처</span><b>'+telHtml(wk(e.worker).phone)+'</b></div></div></div>';
   h+='<div class="ps" data-spec="4"><h3>결정 순서</h3>';
   if(x.decision){
-    h+='<p style="margin:0">최종 결정: <b>'+esc(x.decision)+(x.decision!=="종료"&&x.period?" "+extLabel(x):"")+'</b>'+(x.newSeq?' · <span class="b t">'+x.newSeq+'차 계약 생성</span>':"")+(x.decision==="종료"?' · <span class="b">퇴사 서류 생성</span>':"")+'</p><p class="hint">고객사 결정: '+esc(x.corp||"—")+' · 근로자: '+esc(x.corp==="종료"?"해당 없음":(wishOf(x)||"—"))+'</p>';
+    h+='<p style="margin:0">최종 결정: <b>'+esc(x.decision)+(x.decision!=="종료"&&x.period?" "+extLabel(x):"")+'</b>'+(x.newSeq?' · <span class="b t">'+x.newSeq+'차 계약 생성</span>':"")+(x.decision==="종료"?' · <span class="b">퇴사 서류 생성</span>':"")+'</p><p class="hint">고객사 결정: '+esc(x.corp||"—")+' · 근로자 안내: '+esc(wrState(x))+'</p>';
   }else{
     var corpSel=S.xcorp||x.corp||"",fin=finalOf(x);
     h+='<ol class="flow">'+
       '<li class="'+(x.corp?"d":"n")+'"><b>고객사 결정</b>'+(x.corp?'<span>'+esc(x.corp)+(x.corp==="연장"&&x.period?" · "+extLabel(x):"")+' <button class="linkbtn small" data-act="x-corp-edit" data-e="'+eid+'">수정</button></span>':"")+
         (!x.corp||S.xcorpEdit===eid?'<div class="fg" style="margin-top:6px"><label class="f">고객사 회신 결과<select id="x-corp" data-ch="x-corp">'+opt(["연장","무기계약 전환","종료"],corpSel,"선택")+'</select></label>'+(corpSel==="연장"?'<div></div>':'<div></div>')+'</div>'+(corpSel==="연장"?extForm(eid,x):"")+'<button class="btn sm pri" style="margin-top:6px" data-act="x-corp-save" data-e="'+eid+'">고객사 결정 저장</button>':"")+'</li>'+
-      '<li class="'+(!x.corp?"":x.corp==="종료"?"skip":(wishOf(x)==="수락"||wishOf(x)==="거절")?"d":"n")+'"><b>근로자 수락 여부</b>'+
-        (!x.corp?'<span class="muted">고객사 결정 후 진행</span>':x.corp==="종료"?'<span class="muted">고객사 종료 결정으로 해당 없음</span>':
-        '<div class="seg" role="group" aria-label="근로자 수락 여부" style="margin-top:6px">'+["수락","거절","응답 없음"].map(function(v){return'<button data-act="x-wish" data-e="'+eid+'" data-v="'+v+'" class="'+(wishOf(x)===v?"on":"")+'">'+v+'</button>'}).join("")+'</div>'+(needRemind(x,t.end)?'<span class="b bad" style="align-self:flex-start;margin-top:6px">만료 D-'+(-setting("remind").offset)+' 이내 · 응답 없음 재알림</span>':""))+'</li>'+
-      '<li class="'+(fin?"n":"")+'"><b>최종 결정 확정</b>'+(fin?'<span>최종: <b>'+esc(fin)+(fin==="연장"?" "+extLabel(x):"")+'</b>'+(fin==="연장"?" → "+(t.seq+1)+"차 계약 생성":fin==="무기계약 전환"?" → 종료일 없는 차수 생성":" → 계약만료 종료 예정 + 퇴사 서류 생성")+'</span>'+(fin==="종료"?'<span class="small muted" style="margin-top:4px">확정할 때 추천인재 등록 여부를 묻습니다</span>':"")+'<button class="btn sm pri" style="margin-top:6px" data-act="x-final" data-e="'+eid+'">최종 확정</button>':'<span class="muted">'+(x.corp?"근로자 수락 여부를 기다리는 중":"앞 단계를 먼저 진행")+'</span>')+'</li></ol>';
+      wrLi(eid,x,t)+
+      '<li class="'+(fin?"n":"")+'"><b>최종 결정 확정</b>'+(fin?'<span>최종: <b>'+esc(fin)+(fin==="연장"?" "+extLabel(x):"")+'</b>'+(fin==="연장"?" → "+(t.seq+1)+"차 계약 생성":fin==="무기계약 전환"?" → 종료일 없는 차수 생성":" → 계약만료 종료 예정 + 퇴사 서류 생성")+'</span>'+(fin==="종료"?'<span class="small muted" style="margin-top:4px">확정할 때 추천인재 등록 여부를 묻습니다</span>':"")+'<button class="btn sm pri" style="margin-top:6px" data-act="x-final" data-e="'+eid+'">최종 확정</button>':'<span class="muted">'+(x.corp?"근로자 안내 · 응답을 기다리는 중":"앞 단계를 먼저 진행")+'</span>')+'</li></ol>';
   }
   h+='</div><div class="ps" data-spec="5"><h3>진행 단계 <span class="small muted" style="font-weight:400;letter-spacing:0">체크하면 오늘 날짜</span></h3><ul class="steps">';
-  CASE_STEPS.forEach(function(s,i){
-    var v=x.steps[s[0]];
-    h+='<li class="'+(v?"d":"")+'"><button class="no" data-act="x-step" data-e="'+eid+'" data-k="'+s[0]+'" aria-label="'+s[1]+(v?" 체크 해제":" 체크")+'">'+(v?"✓":i+1)+'</button><span class="lb">'+s[1]+'<small>'+(s[2]==="고객사"?"고객사 대상 · 일괄 체크 가능":s[2]==="근로자"?"플립에서 직접 발송 후 체크":"내부 처리")+'</small></span><span class="rt">'+(v?md(v):"")+'</span></li>';
-  });
+  h+=expStepsHtml(eid,x);
   return h+'</ul></div>';
 }
 function docBody(id){
@@ -1036,7 +1032,7 @@ function vExp(){
   var rows=expRows(),selIds=Object.keys(S.bulk).filter(function(k){return S.bulk[k]&&rows.some(function(r){return r.e.id===k})});
   var cos=selIds.map(function(id){return emp(id).company}).filter(function(v,i,a){return a.indexOf(v)===i});
   var sel=S.sel&&S.sel.indexOf("exp:")===0?S.sel.slice(4):null;
-  var h='<div class="hd"><div><div class="small muted">계약 진행</div><h1>계약만료</h1><p>현재 계약만료일 D-60 이내 고용 건 · 결정 순서는 ① 고객사 연장 결정 → ② 근로자 수락 · 거절 → ③ 최종 확정</p></div></div>'+
+  var h='<div class="hd"><div><div class="small muted">계약 진행</div><h1>계약만료</h1><p>현재 계약만료일 D-60 이내 고용 건 · 결정 순서는 ① 고객사 결정 → ② 근로자 안내 · 응답 → ③ 최종 확정</p></div></div>'+
     fbar({spec:"7",extra:'<select data-ch="exp-range" aria-label="만료 범위">'+opt([["60","D-60 이내"],["30","D-30 이내"],["14","D-14 이내"]],S.expRange)+'</select><label class="cb"><input type="checkbox" data-ch="exp-nodec"'+(S.expNoDec?" checked":"")+'> 최종 미확정만</label>'});
   if(selIds.length){
     h+=cos.length===1?'<div class="bulk" data-spec="6"><b>'+esc(comp(cos[0]).name)+' '+selIds.length+'건 선택</b><span>단계 일괄 체크(같은 기업만)</span><span class="grow"></span>'+BULK_KEYS.map(function(k){return'<button class="btn sm" data-act="bulk" data-k="'+k+'">'+STEP_SHORT[k]+'</button>'}).join("")+'<button class="x" data-act="bulk-clear">선택 해제</button></div>'
@@ -1044,17 +1040,13 @@ function vExp(){
   }
   var cols=[{k:"sel",h:"",t:"none"},{k:"d",h:"만료 D-day",t:"num",v:function(r){return r.d},spec:"2"},{k:"w",h:"근로자",t:"text",f:function(r){return wk(r.e.worker).name}},{k:"c",h:"기업",t:"text",f:function(r){return comp(r.e.company).name}},
     {k:"seq",h:"차수",t:"num",v:function(r){return r.t.seq},spec:"3"},{k:"st",h:"계약시작일",t:"date",v:function(r){return r.t.start}},{k:"en",h:"계약만료일",t:"date",v:function(r){return r.t.end}},
-    {k:"corp",h:"① 고객사 결정",t:"text",f:function(r){return r.x.corp||"미입력"},spec:"4"},{k:"wish",h:"② 근로자 수락",t:"text",f:function(r){return r.x.corp==="종료"?"해당 없음":(wishOf(r.x)||"미확인")}},{k:"dec",h:"③ 최종",t:"text",f:function(r){return r.x.decision||"미확정"}}]
-    .concat(CASE_STEPS.map(function(s,i){return{k:"s_"+s[0],h:STEP_SHORT[s[0]],t:"none",f:function(r){return r.x.steps[s[0]]||""},spec:i===0?"5":""}}));
+    {k:"_x",h:"",t:"none"}].concat(expColsV()).filter(function(c){return c.k!=="_x"});
   h+='<div data-spec="1">'+dtable("exp",cols,rows,function(r){
     var e=r.e,x=r.x;
     return'<tr class="'+(sel===e.id?"sel":"")+'" data-act="exp-open" data-e="'+e.id+'"><td><input type="checkbox" data-ch="bulk-pick" data-e="'+e.id+'"'+(S.bulk[e.id]?" checked":"")+' aria-label="선택"></td>'+
       '<td>'+endBadge(r.t.end)+'</td><td>'+wlink(e.worker)+'</td><td>'+clink(e.company)+proxyTag(e.company)+'</td>'+termTds(r.t).replace('<td class="c">'+seqBadge(r.t.seq)+'</td>','<td class="c">'+seqBadge(r.t.seq)+(x.newSeq?'<span class="dt">'+x.newSeq+'차 생성</span>':"")+'</td>')+
-      '<td>'+(x.corp?'<span class="b '+(x.corp==="종료"?"":"p")+'">'+esc(x.corp)+'</span>':'<span class="muted">미입력</span>')+'</td>'+
-      '<td>'+(x.corp==="종료"?'<span class="muted">해당 없음</span>':wishOf(x)?esc(wishOf(x))+(needRemind(x,r.t.end)?' <span class="b bad">재알림</span>':""):'<span class="muted">미확인</span>'+(needRemind(x,r.t.end)?' <span class="b bad">재알림</span>':""))+'</td>'+
-      '<td>'+(x.decision?'<span class="b ok">'+esc(x.decision)+'</span>':'<span class="muted">미확정</span>')+'</td>'+
-      CASE_STEPS.map(function(s){var v=x.steps&&x.steps[s[0]],nx=x.created&&!v&&CASE_STEPS.find(function(z){return!(x.steps&&x.steps[z[0]])})===s;return'<td class="c">'+(v?'<span class="stepok">✓</span><span class="dt">'+md(v)+'</span>':nx?'<span class="b warn">다음</span>':'<span class="muted">—</span>')+'</td>'}).join("")+'</tr>';
-  },"조건에 맞는 건이 없습니다.")+'</div><p class="hint">D-14 이내 빨강, D-30 이내 주황. 표는 진행 상황만 보여 줍니다. 단계는 행을 눌러 상세 창에서 체크하거나, 같은 기업 건을 골라 일괄 체크합니다. 종료로 확정해 계약만료일이 지나도 5단계를 모두 마칠 때까지 목록에 남습니다.</p>';
+      EXP_COLS2.map(function(c){return'<td class="c">'+expCell(x,c[0],r)+'</td>'}).join("")+'</tr>';
+  },"조건에 맞는 건이 없습니다.")+'</div><p class="hint">D-14 이내 빨강, D-30 이내 주황. 표는 진행 순서대로 상황만 보여 줍니다(다음 = 지금 할 차례). 단계는 행을 눌러 상세 창에서 체크하거나, 같은 기업 건을 골라 일괄 체크합니다. 고객사 회신 · 근로자 안내는 고객사 결정 후, 기업 전달 · 전산반영은 최종 확정 후에 체크할 수 있습니다. 고객사가 종료로 정하면 기업 최종 전달은 해당 없음(4단계). 계약만료일이 지나도 단계를 모두 마칠 때까지 목록에 남습니다.</p>';
   if(sel){var e=emp(sel);h+='<aside class="pnl"><div class="ph"><div><div class="k">계약만료</div><h2>'+wlink(e.worker)+' · '+clink(e.company)+reqBadge(e.company)+'</h2><div class="tags">'+stBadge(statusOf(e))+'</div></div>'+closeBtn()+'</div>'+missBox({type:"exp",company:e.company},"")+expBody(sel)+'</aside>'}
   return h;
 }
@@ -4157,6 +4149,55 @@ SPEC.wreq={t:"근로자 요청사항 (근로자 관리)",items:[
 DBMAP.push(["worker_requests","worker_id, employment_id, company_id, category, subtype, content, channel, received_on, due_date, status, result, done_on","근로자 요청사항, 내 할 일(근로자 요청), 근로자 정보 창","등록 · 수정 · 완료"]);
 DBMAP.push(["custom_todos","title, worker_id, company_id, assignee_id, due_date, status, note, done_on","내 할 일(기타 업무)","내 할 일 › 할 일 등록 › 기타 업무"]);
 
+/* ================================================================
+   v13: 계약만료 진행 단계 — 고객사 종료면 4단계 · 순서 잠금 · 근로자 안내 상태 · 표 정리
+   ================================================================ */
+STEP_SHORT.worker="근로자 안내";
+/* 고객사가 종료로 정했으면 '기업 최종 전달'은 해당 없음(고객사가 이미 앎) */
+function stepsFor(x){return CASE_STEPS.filter(function(s){return!(s[0]==="corp"&&x&&x.corp==="종료")})}
+function stepName(x,s){return s[0]==="worker"?(x&&x.corp==="종료"?"근로자 통보 · 쪽지":"근로자 안내 · 쪽지"):s[1]}
+caseDone=function(x){return stepsFor(x).every(function(s){return x.steps&&x.steps[s[0]]})};
+/* 순서 잠금: 고객사 회신 · 근로자 안내는 ① 고객사 결정 후, 기업 전달 · 전산반영은 ③ 최종 확정 후 */
+function stepAllowed(x,k){if(k==="corp"&&x.corp==="종료")return false;if(k==="reply"||k==="worker")return!!x.corp;if(k==="corp"||k==="erp")return!!x.decision;return true}
+function stepWhy(x,k){if(k==="corp"&&x.corp==="종료")return"고객사가 종료로 정해 기업 최종 전달은 해당 없습니다";if(k==="reply"||k==="worker")return"① 고객사 결정(연장 · 무기계약 · 종료)을 먼저 저장해 주세요";return"③ 최종 결정 확정을 먼저 해 주세요"}
+var _xStep0=xStep;xStep=function(eid,k,force){var x=ensureX(eid),on=force!=null?force:!(x.steps&&x.steps[k]);if(on&&!stepAllowed(x,k)){toast(stepWhy(x,k));return false}return _xStep0(eid,k,force)};
+/* 결정 없이 단계만 체크된 건 */
+function stepGap(x){return!!(x&&((x.steps.reply||x.steps.worker)&&!x.corp||(x.steps.corp||x.steps.erp)&&!x.decision))}
+/* 근로자 안내 상태 */
+function wrState(x){if(!x||!x.steps||!x.steps.worker)return"안내 전";if(x.corp==="종료")return"통보 완료";var w=wishOf(x);return w==="수락"||w==="거절"?w:"안내함 · 미회신"}
+function wrStateBadge(x){var s=wrState(x);return'<span class="b '+(s==="수락"||s==="통보 완료"?"ok":s==="거절"?"bad":s==="안내 전"?"":"warn")+'">'+esc(s)+'</span>'}
+/* 진행 순서상 다음 칸 */
+function expNext(x){if(!x||!x.created)return"";if(!x.steps.mail)return"mail";if(!x.corp)return"reply";if(!x.steps.reply)return"reply";if(!x.steps.worker)return"worker";var w=wishOf(x);if(x.corp!=="종료"&&w!=="수락"&&w!=="거절")return"worker";if(!x.decision)return"final";if(x.corp!=="종료"&&!x.steps.corp)return"corp";if(!x.steps.erp)return"erp";return""}
+var NEXT_B='<span class="b warn">다음</span>';
+function expCell(x,k,r){var v=x.steps&&x.steps[k],nx=expNext(x)===k,dt=function(d){return'<span class="dt">'+md(d)+'</span>'};
+  if(k==="reply")return x.corp?'<span class="b '+(x.corp==="종료"?"":"p")+'">'+esc(x.corp)+'</span>'+(v?dt(v):(nx?" "+NEXT_B:"")):(v?'<span class="b bad">결정 누락</span>'+dt(v):nx?NEXT_B:'<span class="muted">대기</span>');
+  if(k==="worker")return x.corp?wrStateBadge(x)+(v?dt(v):"")+(needRemind(x,r.t.end)?' <span class="b bad">재알림</span>':"")+(nx&&!v?" "+NEXT_B:""):'<span class="muted">—</span>';
+  if(k==="final")return x.decision?'<span class="b ok">'+esc(x.decision)+'</span>'+(x.newSeq?'<span class="dt">'+x.newSeq+'차 생성</span>':""):finalOf(x)?'<span class="b warn">확정 대기</span>':'<span class="muted">미확정</span>';
+  if(k==="corp"&&x.corp==="종료")return'<span class="muted small">해당 없음</span>';
+  return v?(x.decision?'<span class="stepok">✓</span>':'<span class="b bad">결정 누락</span>')+dt(v):nx?NEXT_B:'<span class="muted">—</span>';
+}
+var EXP_COLS2=[["mail","안내 메일"],["reply","고객사 회신"],["worker","근로자 안내"],["final","최종 확정"],["corp","기업 최종 전달"],["erp","전산반영"]];
+function expColsV(){return EXP_COLS2.map(function(c,i){return{k:"v_"+c[0],h:c[1],t:"text",al:"c",f:function(r){var x=r.x;return c[0]==="reply"?(x.corp||"대기"):c[0]==="worker"?(x.corp?wrState(x):"—"):c[0]==="final"?(x.decision||"미확정"):(c[0]==="corp"&&x.corp==="종료")?"해당 없음":(x.steps[c[0]]?"완료":"미완료")},spec:i===0?"5":""}})}
+/* 상세 창: ② 근로자 안내 · 응답 */
+function wrLi(eid,x,t){
+  var st0=wrState(x),done=x.corp&&(x.corp==="종료"?!!x.steps.worker:(wishOf(x)==="수락"||wishOf(x)==="거절"));
+  var h='<li class="'+(!x.corp?"":done?"d":"n")+'"><b>근로자 안내 · 응답</b>';
+  if(!x.corp)return h+'<span class="muted">고객사 결정 후 진행</span></li>';
+  h+='<span>'+wrStateBadge(x)+(x.steps.worker?' <span class="small muted">안내 '+md(x.steps.worker)+'</span>':"")+'</span>';
+  if(x.corp==="종료"){h+=x.steps.worker?'<span class="small muted" style="margin-top:4px">고객사 종료 결정을 근로자에게 통보했습니다</span>':'<button class="btn sm" style="margin-top:6px" data-act="x-step" data-e="'+eid+'" data-k="worker">근로자에게 통보함 (플립 쪽지 등)</button>';return h+'</li>'}
+  if(!x.steps.worker)h+='<button class="btn sm" style="margin-top:6px" data-act="x-step" data-e="'+eid+'" data-k="worker">근로자에게 안내함 (플립 쪽지 등)</button>';
+  else h+='<div class="seg" role="group" aria-label="근로자 응답" style="margin-top:6px">'+[["수락","수락"],["거절","거절"],["응답 없음","미회신"]].map(function(v){return'<button data-act="x-wish" data-e="'+eid+'" data-v="'+v[0]+'" class="'+(wishOf(x)===v[0]?"on":"")+'">'+v[1]+'</button>'}).join("")+'</div>';
+  if(needRemind(x,t.end))h+='<span class="b bad" style="align-self:flex-start;margin-top:6px">만료 D-'+(-setting("remind").offset)+' 이내 · 미회신 재알림</span>';
+  return h+'</li>';
+}
+/* 상세 창: 진행 단계 목록 */
+function expStepsHtml(eid,x){var h="",i=0;
+  CASE_STEPS.forEach(function(s){var v=x.steps[s[0]];
+    if(s[0]==="corp"&&x.corp==="종료"){h+='<li class="skip"><span class="no">–</span><span class="lb">'+s[1]+'<small>고객사가 종료로 정해 해당 없음</small></span><span class="rt"></span></li>';return}
+    i++;var ok=v||stepAllowed(x,s[0]);
+    h+='<li class="'+(v?"d":"")+(ok?"":" lock")+'"><button class="no" data-act="x-step" data-e="'+eid+'" data-k="'+s[0]+'" aria-label="'+stepName(x,s)+(v?" 체크 해제":" 체크")+'"'+(ok?"":' title="'+esc(stepWhy(x,s[0]))+'"')+'>'+(v?"✓":ok?i:"🔒")+'</button><span class="lb">'+stepName(x,s)+'<small>'+(ok?(s[2]==="고객사"?"고객사 대상 · 일괄 체크 가능":s[2]==="근로자"?"플립에서 직접 발송 후 체크":"내부 처리"):esc(stepWhy(x,s[0])))+'</small></span><span class="rt">'+(v?md(v):"")+(v&&!stepAllowed(x,s[0])?' <span class="b bad">결정 누락</span>':"")+'</span></li>'});
+  return h}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -4321,7 +4362,7 @@ document.addEventListener("click",function(ev){
   case"x-final":(function(){var x=ensureX(el.dataset.e);if(finalOf(x)==="종료"){xfOpen(el.dataset.e);return}saveDecision(el.dataset.e)})();return;
   case"x-step":xStep(el.dataset.e,el.dataset.k);afterAction("case:"+el.dataset.e);return;
   case"exp-open":S.sel="exp:"+el.dataset.e;S.xcorp="";S.fix=null;render();return;
-  case"bulk":(function(){var k=el.dataset.k,ids=Object.keys(S.bulk).filter(function(i){return S.bulk[i]});ids.forEach(function(i){xStep(i,k,true)});toast(ids.length+"건 ‘"+STEP_SHORT[k]+"’ 체크 완료");render()})();return;
+  case"bulk":(function(){var k=el.dataset.k,ids=Object.keys(S.bulk).filter(function(i){return S.bulk[i]});var ok=0,sk=0;ids.forEach(function(i){var x0=ensureX(i);if(stepAllowed(x0,k)){_xStep0(i,k,true);ok++}else sk++});toast(ok+"건 ‘"+STEP_SHORT[k]+"’ 체크 완료"+(sk?" · "+sk+"건은 결정이 없거나 해당 없어 제외":""));render()})();return;
   case"bulk-clear":S.bulk={};render();return;
   /* 서류 */
   case"d-step":docStep(el,el.dataset.id,+el.dataset.i);return;
