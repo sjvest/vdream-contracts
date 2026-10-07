@@ -439,6 +439,7 @@ label.btn{cursor:pointer}label.btn.dis{opacity:.45;cursor:not-allowed}
 .admbar{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;background:#FFF4E5;border-bottom:1px solid #F3D9AE;color:#7A4A00;padding:7px 20px;font-size:13px}.admbar>b{color:#8A5100}
 .cplink{margin-left:8px;font-weight:500}.mailb{margin-left:8px;vertical-align:1px}.dlg-mail{width:min(760px,100%)}.mailsec{display:flex;flex-direction:column;gap:4px}
 .fte .fg{margin-top:8px}
+.mini tr.cdg td{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--ink-2)}
 </style>
 </head>
 <body>
@@ -1069,10 +1070,10 @@ function vExp(){
 var DIS_RESULTS=["확인완료","재발급안내완료","거부-중증제출","거부","기타"];
 var DIS_NEED_REASON={"거부-중증제출":1,"거부":1,"기타":1};
 var DIS_DOCS=["복지카드","판정서류"];
-function docProg(eid){var ds=DB.casedocs.filter(function(c){return c.emp===eid});var a=0,b=0;ds.forEach(function(c){a+=Math.min(c.step,docSteps(c.method).length);b+=docSteps(c.method).length});return{a:a,b:b,n:ds.length}}
+function docProg(eid){var ds=DB.casedocs.filter(function(c){return c.emp===eid&&!isExitCase(c)});var a=0,b=0;ds.forEach(function(c){a+=Math.min(c.step,docSteps(c.method).length);b+=docSteps(c.method).length});return{a:a,b:b,n:ds.length}}
 function barSeg(a,b){var n=Math.min(b,10),k=b?Math.round(a/b*n):0,s="";for(var i=0;i<n;i++)s+='<i class="'+(i<k?"d":"")+'"></i>';return s}
 function pOnb(e){
-  var ds=DB.casedocs.filter(function(c){return c.emp===e.id}),t1=termsOf(e.id)[0],w=wk(e.worker),c=comp(e.company);
+  var ds=DB.casedocs.filter(function(c){return c.emp===e.id&&!isExitCase(c)}),t1=termsOf(e.id)[0],w=wk(e.worker),c=comp(e.company);
   var h='<aside class="pnl" aria-label="입사 상세"><div class="ph"><div><div class="k">신규입사자 관리</div><h2>'+wlink(e.worker)+' · '+clink(e.company)+reqBadge(e.company)+'</h2><div class="tags">'+stBadge(statusOf(e))+'<span class="b">'+esc(e.hire_type)+'</span>'+telHtml(w.phone)+'</div></div>'+closeBtn()+'</div>';
   if(c.special_note)h+='<div class="notebox"><b>'+esc(c.name)+' 특이요청사항</b>'+esc(c.special_note)+'</div>';
   h+='<div class="ps"><h3>계약기간</h3><div class="kv"><div><span>차수</span><b>'+seqBadge(t1.seq)+'</b></div><div><span>계약시작일</span><b class="num">'+t1.start+'</b></div><div><span>계약만료일</span><b class="num">'+t1.end+'</b></div><div><span>브이워크 시작일</span><b class="num">'+(e.vwork_start||"—")+'</b></div></div>'+
@@ -1300,7 +1301,7 @@ function pComp(c){
   if(S.compPTab==="admin"){
     var ds=docsOf(c.id);
     h+='<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="small muted" style="font-weight:600">서류 양식 (서류마다 제출 방식이 다를 수 있음)</span><button class="btn sm" data-act="cdoc-add" data-id="'+c.id+'">+ 양식 추가</button></div><table class="mini"><thead><tr><th>구분</th><th>서류명</th><th>제출 방식 *</th><th>비고</th><th></th></tr></thead><tbody>'+
-      (ds.length?ds.map(function(d){return'<tr><td><select data-df="'+d.id+':doc_type">'+opt(DOC_TYPES,d.doc_type)+'</select></td><td><input data-df="'+d.id+':doc_name" value="'+esc(d.doc_name)+'"></td><td><select data-df="'+d.id+':method" style="'+(d.method?"":"border-color:var(--bad);background:#FFF8F7")+'">'+opt(METHODS,d.method,"선택")+'</select></td><td><input data-df="'+d.id+':note" value="'+esc(d.note)+'"></td><td><button class="btn sm" data-act="cdoc-del" data-id="'+d.id+'" aria-label="삭제">삭제</button></td></tr>'}).join(""):'<tr><td colspan="5" class="muted">서류 양식이 없습니다. 필수값입니다.</td></tr>')+'</tbody></table><p class="hint" style="margin-top:4px">서류 제출 방식은 입사 · 퇴사 서류 진행 단계(원본 5단계 · PDF 모두싸인 3단계)를 정합니다. 위 수취방법은 기존 시트 값 그대로 보관합니다.</p></div>';
+      (ds.length?[["입사 서류",ds.filter(function(d){return!isExitCdoc(d)})],["퇴사 서류 (퇴직원 · 사직원)",ds.filter(isExitCdoc)]].map(function(G){return'<tr class="cdg"><td colspan="5">'+G[0]+' <span class="muted">'+G[1].length+'</span></td></tr>'+G[1].map(function(d){return'<tr><td><select data-df="'+d.id+':doc_type">'+opt(DOC_TYPES,d.doc_type)+'</select></td><td><input data-df="'+d.id+':doc_name" value="'+esc(d.doc_name)+'"></td><td><select data-df="'+d.id+':method" style="'+(d.method?"":"border-color:var(--bad);background:#FFF8F7")+'">'+opt(METHODS,d.method,"선택")+'</select></td><td><input data-df="'+d.id+':note" value="'+esc(d.note)+'"></td><td><button class="btn sm" data-act="cdoc-del" data-id="'+d.id+'" aria-label="삭제">삭제</button></td></tr>'}).join("")}).join(""):'<tr><td colspan="5" class="muted">서류 양식이 없습니다. 필수값입니다.</td></tr>')+'</tbody></table><p class="hint" style="margin-top:4px">서류 제출 방식은 입사 · 퇴사 서류 진행 단계(원본 5단계 · PDF 모두싸인 3단계)를 정합니다. 구분이 ‘사직원’인 양식은 퇴사 서류용이라 신규 입사 때 입사서류 과업을 만들지 않습니다. 위 수취방법은 기존 시트 값 그대로 보관합니다.</p></div>';
   }
   if(S.compPTab==="intake")h+=compIntakeExtra(c);
   h+='</div><div class="ps wide" style="background:var(--bg)" data-spec="5"><h3>변경 근거</h3>'+sourceBox()+'<div class="foot" style="margin-top:10px"><button class="btn pri" data-act="comp-save" data-id="'+c.id+'">저장</button></div></div>';
@@ -1354,7 +1355,7 @@ function pWk(w){
   h+=empCardsHtml(w,es);
   h+='</div>'+(e?disBody(e.id):"");
   h+='<div class="ps" data-spec="6"><h3>서류</h3>';
-  var ds=DB.casedocs.filter(function(d){return es.some(function(x){return x.id===d.emp})});
+  var ds=DB.casedocs.filter(function(d){return es.some(function(x){return x.id===d.emp})&&!isExitCase(d)});
   h+=ds.length?ds.map(function(d){var n=docSteps(d.method).length;return'<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:3px 0"><span>'+esc(d.name)+' · '+esc(d.method)+'</span>'+(d.step>=n?'<span class="b ok">완료</span>':'<span class="b warn">'+d.step+'/'+n+'</span>')+'</div>'}).join(""):'<p class="hint">입사 서류 기록 없음</p>';
   var xs=DB.xdocs.filter(function(x){return es.some(function(y){return y.id===x.emp})});
   h+='<div class="small muted" style="margin-top:8px;font-weight:600">퇴사 서류</div>'+(xs.length?xs.map(function(x){return'<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:3px 0"><span>'+esc(x.name)+' ('+esc(x.requester)+')</span><span class="b '+(x.status==="완료"?"ok":x.status==="해당 없음"?"":"warn")+'">'+esc(SL(x.status))+'</span></div>'}).join(""):'<p class="hint">없음</p>');
@@ -1690,7 +1691,7 @@ function linkIntake(a){
   var eid=nid();
   DB.employments.push({id:eid,worker:wid,company:a.cid,dept:"",hire_type:"신규",replaced:"",status:a.cs>TODAY?"입사서류 요청":"재직",end_date:"",end_type:"",leave_reason:"",ins_reason:"",leave_detail:"",rehire:false,rehire_note:"",flip_joined:false,cancelled:false,vwork_start:a.flip||a.cs,onb_note:""});
   DB.terms.push({id:nid(),emp:eid,seq:1,start:a.cs,end:a.ce,type:"최초"});
-  docsOf(a.cid).forEach(function(d){if(d.method)DB.casedocs.push({id:nid(),emp:eid,cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:a.cs,dates:[],bundle:d.method==="원본"?eid+"-orig":"",info:{}})});
+  docsOf(a.cid).forEach(function(d){if(d.method&&!isExitCdoc(d))DB.casedocs.push({id:nid(),emp:eid,cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:a.cs,dates:[],bundle:d.method==="원본"?eid+"-orig":"",info:{}})});
   logChange("workers",wid,String(a.name).trim(),"입사 등록 (입구서 발송)","",comp(a.cid).name+" · 신규 · "+a.cs+"~"+a.ce,"브이드림 내부");
   a.emp=eid;a.link_note="";return true;
 }
@@ -2350,7 +2351,7 @@ if(!LIVE)(function(){
   /* 발송 완료 → 신규입사자 관리로 넘어간 건 */
   W("w19","장민서","1998-08-08","010-5150-7742",{email:"minseo.jang@gmail.com",dis_type:"지체장애",dis_level:"경증"});E("e19","w19","c1",addD(addM(D(10),12),-1),1,{status:"입사서류 요청",flip_joined:false});
   var t19=DB.terms.filter(function(t){return t.emp==="e19"})[0];t19.start=D(10);t19.end=addD(addM(D(10),12),-1);emp("e19").vwork_start=D(7);emp("e19").onb_note="";
-  docsOf("c1").forEach(function(d){if(d.method)DB.casedocs.push({id:nid(),emp:"e19",cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:D(10),dates:[],bundle:d.method==="원본"?"e19-orig":"",info:{}})});
+  docsOf("c1").forEach(function(d){if(d.method&&!isExitCdoc(d))DB.casedocs.push({id:nid(),emp:"e19",cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:D(10),dates:[],bundle:d.method==="원본"?"e19-orig":"",info:{}})});
   var ms=A({name:"장민서",phone:"010-5150-7742",email:"minseo.jang@gmail.com",birth:"1998-08-08",cid:"c1",flip:D(7),cs:D(10),ce:t19.end,mail_sent:true,sent_at:D(-2)+" 14:05",receive:"email_received",rch:"메일",rat:D(-1)+"T11:20",folder:"https://drive.google.com/drive/folders/DEMO-minseo",emp:"e19",created:D(-4)+" 15:00"});
   LOG(ms,comp("c1"),"DEFAULT",true,"",D(-2)+" 14:05");JOB(ms,"done","",D(-2)+" 14:04");
   var sr=A({name:"오세린",phone:"010-2290-6618",email:"serin.oh@gmail.com",birth:"2000-01-30",cid:"c6",flip:D(5),mail_sent:true,sent_at:D(-3)+" 10:12",receive:"rerequest",link_note:"계약시작 · 계약종료 입력 후 수정 · 저장하면 연결됩니다",created:D(-5)+" 09:00"});
@@ -4420,13 +4421,13 @@ function preEmpOfW(wid){return empsOfW(wid).filter(function(e){return activeEmp(
 function wkBaseV(){return DB.workers.filter(function(w){var e=curEmpOfW(w.id);return e&&scopeOK(e.company)&&qwOK(w.id)&&(!S.qc.trim()&&!S.qcId||empsOfW(w.id).some(function(x){return qcOK(x.company)}))})}
 wkTabsHtml=function(){var b=wkBaseV(),pre=b.filter(function(w){return workerPre(w.id)}).length,act=b.filter(function(w){return workerActive(w.id)}).length-pre,out=b.length-act-pre;
   return'<div class="tabs" role="tablist" data-spec="1">'+[["act","재직자",act],["pre","입사예정",pre],["out","퇴사자",out],["all","전체",wkAllBase().length]].map(function(x){return'<button class="'+(S.wkTab===x[0]?"on":"")+'" data-act="wk-tab" data-v="'+x[0]+'">'+x[1]+'<span class="c">'+x[2]+'</span></button>'}).join("")+'</div>'};
-function docProg(eid){var L=DB.casedocs.filter(function(d){return d.emp===eid}),d=L.filter(function(c){return c.step>=docSteps(c.method).length}).length;return{n:L.length,d:d}}
+function wkDocProg(eid){var L=DB.casedocs.filter(function(d){return d.emp===eid&&!isExitCase(d)}),d=L.filter(function(c){return c.step>=docSteps(c.method).length}).length;return{n:L.length,d:d}}
 function vWkPre(){
   var rows=wkBaseV().filter(function(w){return workerPre(w.id)}).map(function(w){var e=preEmpOfW(w.id);return{w:w,e:e,t:termsOf(e.id)[0]||{}}}).sort(function(a,b){return(a.t.start||"").localeCompare(b.t.start||"")});
   var cols=[{k:"n",h:"성명",t:"text",f:function(r){return r.w.name}},{k:"p",h:"연락처",t:"none",f:function(r){return r.w.phone}},{k:"c",h:"기업",t:"text",f:function(r){return comp(r.e.company).name}},
-    {k:"st",h:"입사 예정일",t:"date",al:"c",v:function(r){return r.t.start}},{k:"s",h:"상태",t:"text",f:function(r){return statusOf(r.e)}},{k:"dp",h:"입사서류",t:"none",al:"c",f:function(r){var p=docProg(r.e.id);return p.n?p.d+"/"+p.n:"없음"}},{k:"m",h:"담당자",t:"text",f:function(r){return st(assignee(r.e.company).who).name}}];
+    {k:"st",h:"입사 예정일",t:"date",al:"c",v:function(r){return r.t.start}},{k:"s",h:"상태",t:"text",f:function(r){return statusOf(r.e)}},{k:"dp",h:"입사서류",t:"none",al:"c",f:function(r){var p=wkDocProg(r.e.id);return p.n?p.d+"/"+p.n:"없음"}},{k:"m",h:"담당자",t:"text",f:function(r){return st(assignee(r.e.company).who).name}}];
   var h='<div class="hd"><div><h1>근로자 DB</h1><p>입사예정 = 고용 건은 등록됐지만 첫 계약 시작일이 오늘 이후인 근로자 · 조회용입니다(입사서류 처리는 <button class="linkbtn" data-act="view" data-v="onb">신규입사자 관리</button>에서)</p></div></div>'+wkTabsHtml()+fbar({});
-  h+=dtable("wk-pre",cols,rows,function(r){var p=docProg(r.e.id),d=dd(TODAY,r.t.start);
+  h+=dtable("wk-pre",cols,rows,function(r){var p=wkDocProg(r.e.id),d=dd(TODAY,r.t.start);
     return'<tr class="'+(S.wm===r.w.id?"sel":"")+'" data-act="wk-open" data-id="'+r.w.id+'"><td>'+esc(r.w.name)+talBadge(r.w.id)+'</td><td>'+telHtml(r.w.phone)+'</td><td>'+clink(r.e.company)+proxyTag(r.e.company)+'</td><td class="num c">'+(r.t.start||"—")+' <span class="b '+(d<=3?"warn":"")+'">D-'+d+'</span></td><td>'+stBadge(statusOf(r.e))+'</td><td class="c">'+(p.n?'<span class="b '+(p.d===p.n?"ok":"warn")+'">'+p.d+"/"+p.n+'</span>':'<span class="muted">없음</span>')+'</td><td>'+esc(st(assignee(r.e.company).who).name)+'</td></tr>'},"입사예정 근로자가 없습니다.");
   return h;
 }
@@ -4654,6 +4655,21 @@ function v18Change(t,d){
   return false;
 }
 
+/* ================================================================
+   v19: 퇴직원 · 사직원 양식이 입사서류로 생기던 문제
+   - 기업 서류 양식 중 구분 '사직원'(퇴직원 · 사직원)은 퇴사 서류용 → 입사서류 과업을 만들지 않음
+   - 이미 잘못 생긴 입사서류는 화면(내 할 일 · 근로자 정보 · 입사예정 · 대시보드)에서 숨김
+   ================================================================ */
+function isExitCdoc(d){return!!d&&(d.doc_type==="사직원"||/퇴직원|사직원/.test(d.doc_name||""))}
+function isExitCase(c){if(!c)return false;var d=c.cdoc&&DB.cdocs.find(function(x){return x.id===c.cdoc});return d?isExitCdoc(d):/퇴직원|사직원/.test(c.name||"")}
+function exitCaseList(){return DB.casedocs.filter(isExitCase)}
+var _bt19=buildTodos;buildTodos=function(){return _bt19().filter(function(t){if(t.type!=="odoc")return true;return!isExitCase(DB.casedocs.find(function(c){return c.id===t.doc}))})};
+var _dd19=dashDone;dashDone=function(a,b){var o=_dd19(a,b),n=0;DB.casedocs.forEach(function(c){if(!isExitCase(c))return;var k=docSteps(c.method).length;if(c.step<k)return;var last=(c.dates||[])[k-1];if(inR(last,a,b))n++});if(n&&o["입사서류"])o["입사서류"]=o["입사서류"].slice(n);return o};
+var _vSet19=vSet;vSet=function(){var L=exitCaseList(),h=_vSet19();if(!L.length)return h;
+  return h+'<div class="dcard" style="max-width:760px;margin-top:14px"><div class="dcard-h"><b>입사서류로 잘못 생긴 퇴직원 · 사직원</b><span class="small muted">예전 버전에서 신규 입사 등록 때 퇴사용 양식까지 입사서류로 만들어졌습니다 · 지금은 화면에서 숨김 처리되어 과업에 나오지 않습니다</span></div>'+
+    '<p class="small" style="margin:6px 0">숨김 처리된 건 <b>'+L.length+'건</b> (근로자 '+L.map(function(c){return c.emp}).filter(function(v,i,a){return a.indexOf(v)===i}).length+'명)</p><div class="small muted" style="max-height:140px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">'+
+    L.slice(0,40).map(function(c){var e=emp(c.emp);return e?esc(wk(e.worker).name)+' · '+esc(comp(e.company).name)+' · '+esc(c.name)+' ('+esc(c.method)+')':esc(c.name)}).join("<br>")+(L.length>40?"<br>…":"")+'</div></div>'};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -4855,13 +4871,13 @@ document.addEventListener("click",function(ev){
         var eid=nid();DB.employments.push({id:eid,worker:wid,company:r.cid,dept:"",hire_type:r.type,replaced:"",status:r.cs>TODAY?"입사서류 요청":"재직",end_date:"",end_type:"",leave_reason:"",ins_reason:"",leave_detail:"",rehire:false,rehire_note:"",flip_joined:false,cancelled:false,vwork_start:r.vs||r.cs,onb_note:""});
         DB.terms.push({id:nid(),emp:eid,seq:1,start:r.cs,end:r.ce,type:"최초"});
         if(!docsOf(r.cid).some(function(d){return d.method}))nodoc[comp(r.cid).name]=1;
-        docsOf(r.cid).forEach(function(d){if(d.method)DB.casedocs.push({id:nid(),emp:eid,cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:r.cs,dates:[],bundle:d.method==="원본"?eid+"-orig":"",info:{}})});
+        docsOf(r.cid).forEach(function(d){if(d.method&&!isExitCdoc(d))DB.casedocs.push({id:nid(),emp:eid,cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:r.cs,dates:[],bundle:d.method==="원본"?eid+"-orig":"",info:{}})});
         logChange("workers",wid,f.name.trim(),"입사 등록","",comp(r.cid).name+" · "+r.type+" · "+r.cs+"~"+r.ce,"브이드림 내부");cnt++;
       });
     });
     S.onbSel=null;S.onbRows=null;var nd=Object.keys(nodoc);toast(people+"명 · "+cnt+"건 입사 등록"+(linked?" (기존 근로자 연결 "+linked+"명)":"")+(nd.length?" · 서류 양식이 없는 기업 "+nd.length+"곳("+nd.join(", ")+")은 서류 없이 등록됐습니다. 양식을 넣은 뒤 입사 상세에서 서류를 만드세요":""));render();
   })();return;
-  case"onb-mkdocs":(function(){var e=emp(el.dataset.e),t1=termsOf(e.id)[0],n=0;docsOf(e.company).forEach(function(d){if(d.method){DB.casedocs.push({id:nid(),emp:e.id,cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:t1.start,dates:[],bundle:d.method==="원본"?e.id+"-orig":"",info:{}});n++}});toast("서류 "+n+"건을 만들었습니다");render()})();return;
+  case"onb-mkdocs":(function(){var e=emp(el.dataset.e),t1=termsOf(e.id)[0],n=0;docsOf(e.company).forEach(function(d){if(d.method&&!isExitCdoc(d)){DB.casedocs.push({id:nid(),emp:e.id,cdoc:d.id,name:d.doc_name,method:d.method,step:0,base:t1.start,dates:[],bundle:d.method==="원본"?e.id+"-orig":"",info:{}});n++}});toast("서류 "+n+"건을 만들었습니다");render()})();return;
   case"dis-save":(function(){var eid=el.dataset.e,F=S.disF,e=emp(eid),w=wk(e.worker);
     if(!F||F.emp!==eid)return;
     if(!F.result){toast("처리결과를 선택해 주세요");return}
