@@ -988,7 +988,7 @@ function expBody(eid){
       '<li class="'+(x.corp?"d":"n")+'"><b>고객사 결정</b>'+(x.corp?'<span>'+esc(x.corp)+(x.corp==="연장"&&x.period?" · "+extLabel(x):"")+' <button class="linkbtn small" data-act="x-corp-edit" data-e="'+eid+'">수정</button></span>':"")+
         (!x.corp||S.xcorpEdit===eid?'<div class="fg" style="margin-top:6px"><label class="f">고객사 회신 결과<select id="x-corp" data-ch="x-corp">'+opt(["연장","무기계약 전환","종료"],corpSel,"선택")+'</select></label>'+(corpSel==="연장"?'<div></div>':'<div></div>')+'</div>'+(corpSel==="연장"?extForm(eid,x):"")+'<button class="btn sm pri" style="margin-top:6px" data-act="x-corp-save" data-e="'+eid+'">고객사 결정 저장</button>':"")+'</li>'+
       wrLi(eid,x,t)+
-      '<li class="'+(fin?"n":"")+'"><b>최종 결정 확정</b>'+(fin?'<span>최종: <b>'+esc(fin)+(fin==="연장"?" "+extLabel(x):"")+'</b>'+(fin==="연장"?" → "+(t.seq+1)+"차 계약 생성":fin==="무기계약 전환"?" → 종료일 없는 차수 생성":" → 계약만료 종료 예정 + 퇴사 서류 생성")+'</span>'+(fin==="종료"?'<span class="small muted" style="margin-top:4px">확정할 때 추천인재 등록 여부를 묻습니다</span>':"")+'<button class="btn sm pri" style="margin-top:6px" data-act="x-final" data-e="'+eid+'">최종 확정</button>':'<span class="muted">'+(x.corp?"근로자 안내 · 응답을 기다리는 중":"앞 단계를 먼저 진행")+'</span>')+'</li></ol>';
+      '<li class="'+(fin?"n":"")+'"><b>최종 결정 확정</b>'+(fin?'<span>최종: <b>'+esc(fin)+(fin==="연장"?" "+extLabel(x):"")+'</b>'+(fin==="연장"?" → "+(t.seq+1)+"차 계약 생성":fin==="무기계약 전환"?" → 종료일 없는 차수 생성":" → 계약만료 종료 예정 + 퇴사 서류 생성")+'</span>'+(fin==="종료"?'<span class="small muted" style="margin-top:4px">확정할 때 추천인재 등록 여부를 묻습니다</span>':"")+'<button class="btn sm pri" style="margin-top:6px" data-act="x-final" data-e="'+eid+'">최종 확정</button>':'<span class="muted">'+(x.corp==="종료"?"근로자에게 통보하면 확정할 수 있어요":x.corp?"근로자 안내 · 응답을 기다리는 중":"앞 단계를 먼저 진행")+'</span>')+'</li></ol>';
   }
   h+='</div><div class="ps" data-spec="5"><h3>진행 단계 <span class="small muted" style="font-weight:400;letter-spacing:0">체크하면 오늘 날짜</span></h3><ul class="steps">';
   h+=expStepsHtml(eid,x);
@@ -2107,7 +2107,7 @@ function intakeChange(t,d,isInput){
   if(d.tplbody&&S.tplF){S.tplF.body=t.innerHTML;S.tplF.dirty=true;S.tplF.armClose=false;return true}
   if(isInput)return false;
   if(d.ch==="in-pick"){S.inSel[d.id]=t.checked;render();return true}
-  if(d.ch==="t-all"&&d.t==="intake"){var R=RAW.intake;tFilter("intake",R.rows,R.cols).filter(canPick).forEach(function(a){S.inSel[a.id]=t.checked});render();return true}
+  if(d.ch==="t-all"){selAllSet(d.t,t.checked);render();return true}
   if(t.hasAttribute&&t.hasAttribute("data-rrdoc")&&S.inRr){var L=S.inRr.docs,i=L.indexOf(t.value);if(t.checked&&i<0)L.push(t.value);if(!t.checked&&i>=0)L.splice(i,1);return true}
   if(d.ch==="du-files"){var dl=$("#du-list");if(dl)dl.innerHTML=fileListHtml(t.files);return true}
   if(d.ch==="cu-file"){var nm=$("#cu-n"+d.n);if(nm)nm.textContent=t.files&&t.files[0]?t.files[0].name:"";return true}
@@ -4198,6 +4198,28 @@ function expStepsHtml(eid,x){var h="",i=0;
     h+='<li class="'+(v?"d":"")+(ok?"":" lock")+'"><button class="no" data-act="x-step" data-e="'+eid+'" data-k="'+s[0]+'" aria-label="'+stepName(x,s)+(v?" 체크 해제":" 체크")+'"'+(ok?"":' title="'+esc(stepWhy(x,s[0]))+'"')+'>'+(v?"✓":ok?i:"🔒")+'</button><span class="lb">'+stepName(x,s)+'<small>'+(ok?(s[2]==="고객사"?"고객사 대상 · 일괄 체크 가능":s[2]==="근로자"?"플립에서 직접 발송 후 체크":"내부 처리"):esc(stepWhy(x,s[0])))+'</small></span><span class="rt">'+(v?md(v):"")+(v&&!stepAllowed(x,s[0])?' <span class="b bad">결정 누락</span>':"")+'</span></li>'});
   return h}
 
+/* ================================================================
+   v14: 종료 = 근로자 통보 후 확정 · 표 전체 선택(필터 결과 전체)
+   ================================================================ */
+/* 고객사 종료: 근로자 통보 전에는 최종 확정 불가 */
+var _finalOf0=finalOf;finalOf=function(x){var f=_finalOf0(x);if(f&&x.corp==="종료"&&!(x.steps&&x.steps.worker))return"";return f};
+wrState=function(x){if(!x||!x.steps||!x.steps.worker)return x&&x.corp==="종료"?"통보 전":"안내 전";if(x.corp==="종료")return"통보 완료";var w=wishOf(x);return w==="수락"||w==="거절"?w:"안내함 · 미회신"};
+/* 종료 건은 [통보함]을 누르면 바로 종료 확정 창(퇴사 서류 · 추천인재)으로 이어짐 */
+var _xStep13=xStep;xStep=function(eid,k,force){var x=ensureX(eid),was=!!(x.steps&&x.steps[k]),r=_xStep13(eid,k,force);if(k==="worker"&&!was&&x.steps&&x.steps.worker&&x.corp==="종료"&&!x.decision)xfOpen(eid);return r};
+/* 통보 전에 확정된 기존 건 표시 */
+var _expCell13=expCell;expCell=function(x,k,r){var h=_expCell13(x,k,r);if(k==="final"&&x.decision&&x.corp==="종료"&&!(x.steps&&x.steps.worker))h+=' <span class="b bad tip" tabindex="0" data-tip="근로자 통보 전에 종료가 확정됐어요. 근로자에게 통보하고 체크해 주세요">통보 누락</span>';return h};
+
+/* ---- 표 전체 선택: 검색 · 필터 적용 결과 전체(다른 페이지 포함) ---- */
+var SELALL={exp:{o:"bulk",id:function(r){return r.e.id}},comp:{o:"compChk",id:function(c){return c.id}},req:{o:"reqChk",id:function(x){return x.c.id}},intake:{o:"inSel",id:function(a){return a.id},ok:canPick}};
+function selAllCfg(k){return SELALL[k]||(/^wk-/.test(k)?{o:"wkChk",id:function(w){return w.id}}:null)}
+function selAllRows(k){var g=selAllCfg(k),R=RAW[k];if(!g||!R)return[];return tFilter(k,R.rows,R.cols).filter(g.ok||function(){return true})}
+var _thHtml0=thHtml;thHtml=function(k,c){var g=selAllCfg(k);
+  if(g&&c.t==="none"&&(c.all||c.k==="sel"||c.k==="chk")){var L=selAllRows(k),O=S[g.o]||{},n=L.filter(function(r){return O[g.id(r)]}).length;
+    return'<th class="c"><input type="checkbox" data-ch="t-all" data-t="'+k+'" aria-label="검색 · 필터 결과 '+L.length+'건 전체 선택" title="검색 · 필터 결과 '+L.length+'건 전체 선택 (다른 페이지 포함)"'+(L.length&&n===L.length?" checked":"")+(n&&n<L.length?' data-ind="1"':"")+(L.length?"":" disabled")+'></th>'}
+  return _thHtml0(k,c)};
+function selAllSet(k,on){var g=selAllCfg(k);if(!g)return;var L=selAllRows(k);S[g.o]=S[g.o]||{};L.forEach(function(r){S[g.o][g.id(r)]=on});toast(on?"검색 · 필터 결과 "+L.length+"건을 모두 선택했습니다 (다른 페이지 포함)":"선택을 해제했습니다")}
+var _render14=render;render=function(){var r=_render14.apply(this,arguments);try{$$('input[data-ind="1"]').forEach(function(i){i.indeterminate=true})}catch(_){}return r};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -4271,7 +4293,7 @@ function extForm(eid,x){
 }
 function saveDecision(eid){
   var x=ensureX(eid),dec=finalOf(x);
-  if(!dec){toast("고객사 결정과 근로자 의사를 먼저 확인해 주세요");return}
+  if(!dec){toast(x.corp==="종료"?"근로자에게 통보한 뒤 확정해 주세요":"고객사 결정과 근로자 의사를 먼저 확인해 주세요");return}
   var talV=arguments[1]||null;
   var e=emp(eid),t=curTerm(eid),w=wk(e.worker);
   x.decision=dec;
