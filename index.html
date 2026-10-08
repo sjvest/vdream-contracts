@@ -4692,7 +4692,7 @@ function expNow(r){var x=r.x,e=r.e,s=(x&&x.steps)||{},w=wishOf(x||{}),gap=!!(s.c
   if(!x.corp)return{t:s.reply?"고객사 결정 입력 (단계만 체크됨)":"고객사 결정 받아 입력"};
   if(!s.reply)return{t:"고객사 회신 확인 체크"};
   if(x.corp==="종료"){
-    if(!s.worker)return{t:x.decision?"근로자에게 종료 통보 후 체크 (확정은 먼저 됨)":"근로자에게 종료 통보",bad:!!x.decision};
+    if(!s.worker)return{t:x.decision?"근로자에게 종료 통보 후 체크":"근로자에게 종료 통보",bad:!!x.decision};
     if(!x.decision)return{t:"종료 확정 (퇴사 서류 선택)"};
     if(!s.erp)return{t:"전산반영"};return{t:"완료",done:true}}
   var kind=x.corp==="연장"?"연장":"무기계약";
