@@ -8157,6 +8157,39 @@ var _inAskSend37=inAskSend;inAskSend=function(ids){var ok=[],no=[];(ids||[]).for
   if(no.length)toast(no.length+"건은 정보가 부족해 빼고 발송해요 ("+no.map(function(a){return a.name}).slice(0,3).join(", ")+(no.length>3?" 외":"")+")");
   return _inAskSend37(ok.map(function(a){return a.id}))};
 
+/* ================================================================
+   v38. 입구서 등록할 때 '신규입사자 관리에도 바로 등록할까요?' · 줄마다 [신규입사자 등록]
+        신규입사자 관리: 입구서 미발송 뱃지
+   ================================================================ */
+S.regNo=S.regNo||{};
+function inRegMiss(a){var m=[];if(!a.birth)m.push("생년월일");if(normPhone(a.phone||"").length<9)m.push("연락처");if(!a.cid||!comp(a.cid))m.push("기업");if(!a.cs||!a.ce)m.push("계약기간");else if(a.ce<=a.cs)m.push("계약기간 확인");return m}
+function inRegAsk(ids){var L=(ids||[]).map(inA).filter(function(a){return a&&!a.emp&&!a.completed&&!S.regNo[a.id]});if(!L.length)return;S.regAsk=L.map(function(a){return a.id});
+  var ok=L.filter(function(a){return!inRegMiss(a).length});
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="신규입사자 등록" style="width:min(560px,calc(100vw - 32px))"><div class="ph"><div><div class="k">입구서 발송</div><h2>신규입사자 관리에도 바로 등록할까요?</h2></div><button class="close" data-act="reg-no" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><p class="small" style="margin:0 0 8px">바로 등록하면 근로자 · 고용 건 · 1차 계약 · 입사 서류가 지금 만들어져요. 입구서 메일은 따로 [발송]해 주세요.</p>'+
+    '<table class="mini rlt"><tbody>'+L.map(function(a){var m=inRegMiss(a);return'<tr class="'+(m.length?"dim":"")+'"><td><b>'+esc(a.name)+'</b></td><td>'+esc((comp(a.cid)||{}).name||"")+'</td><td class="num">'+esc(a.cs||"")+(a.ce?" ~ "+esc(a.ce):"")+'</td><td>'+(m.length?'<span class="b sm warn">'+esc(m.join(" · "))+' 입력 후 가능</span>':'<span class="b sm ok">등록 가능</span>')+'</td></tr>'}).join("")+'</tbody></table>'+
+    '<p class="hint" style="margin-top:8px">테스트로 넣은 건이면 [나중에]를 눌러 주세요 · 나중에 고르면 발송이 성공할 때 자동으로 등록되고, 입구서 줄의 [신규입사자 등록]으로 언제든 등록할 수 있어요</p></div>'+
+    '<div class="ps foot"><button class="btn" data-act="reg-no">나중에</button><button class="btn pri" data-act="reg-ok"'+(ok.length?"":" disabled")+'>바로 등록'+(ok.length?" ("+ok.length+"명)":"")+'</button></div></div></div>'}
+function inRegOk(){var ids=S.regAsk||[],n=0,bad=[];ids.forEach(function(id){var a=inA(id);if(!a||a.emp)return;if(inRegMiss(a).length)return;if(linkIntake(a))n++;else bad.push(a.name+"("+(a.link_note||"확인 필요")+")")});
+  S.regAsk=null;$("#modal").innerHTML="";toast(n?"신규입사자 관리에 "+n+"명 등록했어요"+(bad.length?" · 등록 못 한 사람: "+bad.join(", "):""):"등록하지 못했어요"+(bad.length?" · "+bad.join(", "):""));render()}
+function inRegNo(){(S.regAsk||[]).forEach(function(id){S.regNo[id]=1});S.regAsk=null;$("#modal").innerHTML="";render()}
+function inReg1(id){var a=inA(id);if(!a||a.emp)return;var m=inRegMiss(a);if(m.length){toast(m.join(" · ")+"을(를) 먼저 입력해 주세요 · [수정]");return}
+  askConfirm("신규입사자 등록","["+a.name+"]님을 신규입사자 관리에 등록할까요? 근로자 · 고용 건 · 1차 계약 · 입사 서류가 만들어져요.","등록",function(){if(linkIntake(a))toast(a.name+"님을 신규입사자 관리에 등록했어요");else toast(a.link_note||"등록하지 못했어요");render()})}
+/* 입구서 저장(신규 · 수정) 뒤에 묻기 */
+var _inSave38=inSave;inSave=function(){var F=S.inForm;if(!F)return _inSave38();var mode=F.mode,n0=DB.intake.length,eids=mode==="new"?[]:(F.rows||[]).map(function(r){return r.id}).filter(Boolean);
+  var r=_inSave38();if(S.inForm)return r;var ids=mode==="new"?DB.intake.slice(n0).map(function(a){return a.id}):eids;
+  if(ids.length)setTimeout(function(){inRegAsk(ids)},0);return r};
+/* 줄: 아직 연결 전이면 [신규입사자 등록] */
+var _inLinkTag38=inLinkTag;inLinkTag=function(a){var h=_inLinkTag38(a);if(h||a.emp||a.completed)return h;return'<span class="dt"><button class="linkbtn" data-act="in-reg" data-id="'+a.id+'" title="발송 전에 신규입사자 관리에 먼저 등록해요">신규입사자 등록</button></span>'};
+/* 신규입사자 관리: 입구서 미발송 */
+function onbUnsent(eid){return DB.intake.find(function(a){return a.emp===eid&&!a.mail_sent&&!a.completed})}
+var _dtable38=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="onb"&&rowFn){var rf=rowFn;rowFn=function(e){var h=rf(e),a=onbUnsent(e.id);if(!a)return h;return h.replace(/(<td>[\s\S]*?)(<\/td>)/,'$1 <span class="b sm warn" title="입구서 메일이 아직 안 나갔어요 · 입구서 발송에서 [발송]">입구서 미발송</span>$2')}}return _dtable38(k,cols,rows,rowFn,empty)};
+function v38Act(a,el){var D0=el.dataset;switch(a){
+  case"reg-ok":inRegOk();return true;
+  case"reg-no":inRegNo();return true;
+  case"in-reg":inReg1(D0.id);return true}
+  return false}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -8453,7 +8486,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
