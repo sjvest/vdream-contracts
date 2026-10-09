@@ -567,6 +567,9 @@ button.chip{cursor:pointer;font:inherit;font-size:12.5px}button.chip.on{backgrou
 .ismeta{font-size:11.5px;color:var(--ink-3);margin-bottom:2px}.isbub{background:#F3F4F6;border-radius:12px;padding:8px 11px;white-space:pre-wrap;text-align:left;font-size:13.5px}.ismsg.adm .isbub{background:#EEEBFA}
 #is-msg{width:100%;border:1px solid #D9D6E6;border-radius:8px;padding:8px;font:inherit;resize:vertical}.islast{font-size:12.5px;background:#FAFAFC;border-radius:6px;padding:5px 8px}.iscard.stale{opacity:.6}button.isb{border:0;cursor:pointer;font:inherit;font-size:12px}
 .wkrq{table-layout:fixed;width:100%}.wkrq td{text-align:left}.wkrq td.c{text-align:center}.wkrq tr.grp td{font-size:12px;color:var(--ink-3);padding:8px 0 2px;border-bottom:0;cursor:default}
+.qalist{gap:10px}.qa{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}.qah{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:3px}.qah b{font-size:12.5px;color:var(--p)}
+.qab{white-space:pre-wrap;font-size:13.5px}.qaa{margin:7px 0 0 6px;padding:6px 10px;background:#F6F5FB;border-radius:8px}.qaah{font-size:12px;color:var(--ink-2);margin-bottom:2px}.qaa.wait{color:var(--ink-3);font-size:12.5px;background:#FAFAFC}
+.qaline{text-align:center;font-size:12px;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:6px}.qaline.ok{color:#15803D}
 </style>
 </head>
 <body>
@@ -7590,7 +7593,7 @@ vIssues=function(){if(S.role!=="admin")return'<div class="empty">관리자만 �
   if(!L.length)return h+'<div class="empty">'+(tab==="접수"?"답변할 이슈가 없어요":"해당하는 이슈가 없어요")+'</div>';
   return h+'<div class="islist">'+L.map(function(x){var C=isCase(x.table,x.tid),cx=C.cx,last=isLast(x),stale=isStale(x);
     return'<div class="iscard'+(x.urgent&&x.status!=="해결"?" urg":"")+(x.status==="해결"?" done":"")+(stale?" stale":"")+'"><div class="ish">'+(x.urgent?'<span class="b sm bad">긴급</span>':"")+'<span class="b sm '+IS_CLS2[x.status]+'">'+esc(x.status==="답변"?"답변 대기":x.status)+'</span>'+(stale?'<span class="b sm warn">응답 없음 '+dd(String(last.at).slice(0,10),TODAY)+'일</span>':"")+'<b>'+esc(isNames(C))+'</b><span class="small muted">'+esc(cx?cx.l:x.table)+'</span><span class="grow"></span><span class="small muted">'+esc(x.by)+' ('+esc(isPart(x).replace(/파트$/,""))+') · '+esc(String(x.at).slice(5,16))+'</span></div>'+
-      '<div class="isbody">'+esc(x.body)+'</div>'+(x.thread.length>1?'<div class="islast"><span class="small muted">최근 · '+esc(last.by)+(last.role==="admin"?" (관리자)":"")+' · '+esc(String(last.at).slice(5,16))+'</span> '+esc(drepCut(last.body||"",60))+' <span class="small muted">· 대화 '+x.thread.filter(function(m){return m.kind!=="sys"}).length+'개</span></div>':"")+
+      '<div class="isbody">'+esc(x.body)+'</div>'+(x.thread.length>1?'<div class="islast"><span class="small muted">최근 · '+esc(last.by)+(last.role==="admin"?" (관리자)":"")+' · '+esc(String(last.at).slice(5,16))+'</span> '+esc(drepCut(last.body||"",60))+' <span class="small muted">· '+(function(c){return"문의 "+c.q+" · 답변 "+c.a})(isQaCnt(x))+'</span></div>':"")+
       '<div class="isa">'+(cx?'<button class="btn xs" data-act="is-case" data-id="'+x.id+'">케이스 열기</button>':"")+(x.status==="접수"?'<button class="btn xs" data-act="is-cf2" data-id="'+x.id+'">확인만 표시</button>':"")+'<button class="btn xs pri" data-act="is-view" data-id="'+x.id+'">'+(x.status==="해결"?"대화 보기":"답변하기")+'</button></div></div>'}).join("")+'</div>'};
 /* 담당자: 내 할 일 위 '이슈 답변' (관리자 답변이 와 있는 내 이슈) */
 isReplyBox=function(){var me=st(S.me).name,L=DB.issues.filter(function(x){isNorm(x);return x.by===me&&x.status==="답변"}).sort(function(a,b){return String(isLast(b).at).localeCompare(String(isLast(a).at))});if(!L.length)return"";
@@ -7624,6 +7627,31 @@ function v32Act(a,el){var D0=el.dataset;switch(a){
 /* 예전 데이터 정리 */
 var _render32=render;render=function(){if(DB.issues)DB.issues.forEach(isNorm);return _render32.apply(this,arguments)};
 
+/* ================================================================
+   v33. 삭제 버튼은 DB가 관리자로 인정할 때만 (로그인 때 vw_is_admin 확인)
+   ================================================================ */
+var DEL_ACTS=["del-open","att-del","org-del","rr-del","rd-del","pf-del","memo-del","wr-del","ce-del","in-del"];
+function dbAdmFix(root){if(!root||!root.querySelectorAll||!(LIVE&&S.dbAdmin===false))return;
+  root.querySelectorAll(".delzone").forEach(function(z){z.innerHTML='<h3>관리자 · 삭제</h3><p class="hint">DB 관리자 권한이 확인되지 않아 삭제할 수 없어요 · 계정 역할(관리자)과 DB의 vw_is_admin 설정을 확인해 주세요</p>'});
+  root.querySelectorAll(DEL_ACTS.map(function(a){return'[data-act="'+a+'"]'}).join(",")).forEach(function(b){b.remove()})}
+function dbAdmCheck(){if(!LIVE||!sb)return;sb.rpc("vw_is_admin").then(function(r){if(r&&!r.error&&typeof r.data==="boolean"){var was=S.dbAdmin;S.dbAdmin=r.data;if(was!==r.data)render()}},function(){})}
+var _afterLogin33=afterLogin;afterLogin=function(s){var r=_afterLogin33.apply(this,arguments);setTimeout(dbAdmCheck,1500);return r};
+
+/* ---- 이슈 창: 대화 말풍선 대신 '보고 / 추가 문의 → 답변' 묶음 ---- */
+function isGroups(x){var G=[],cur=null;(x.thread||[]).forEach(function(m){
+  if(m.role!=="admin"&&(m.kind==="report"||m.kind==="ask")){cur={q:m,a:[]};G.push({t:"q",g:cur});return}
+  if(m.role==="admin"&&m.kind==="reply"){if(cur)cur.a.push(m);else G.push({t:"line",m:m});return}
+  G.push({t:"line",m:m})});return G}
+function isQaCnt(x){var q=0,a=0;isGroups(x).forEach(function(g){if(g.t==="q"){q++;a+=g.g.a.length}});return{q:q,a:a}}
+function isThreadHtml(x){var n=0;return isGroups(x).map(function(g){var tm=function(m){return esc(String(m.at).slice(5,16))};
+  if(g.t==="line"){var m=g.m,lab=m.kind==="resolve"?"해결":m.kind==="reopen"?"다시 열기":m.kind==="reply"?"답변":m.kind==="sys"?"확인":"";if(m.kind==="sys")return'<div class="qaline"><span><b>확인</b> · '+esc(m.by)+' · '+tm(m)+'</span></div>';return'<div class="qaline'+(m.kind==="resolve"?" ok":"")+'"><span>'+(lab?'<b>'+lab+'</b> · ':"")+esc(m.by)+' · '+tm(m)+(m.body&&m.kind!=="sys"?' · “'+esc(m.body)+'”':m.kind==="sys"?' · '+esc(m.body):"")+'</span></div>'}
+  n++;var q=g.g.q;return'<div class="qa"><div class="qah"><b>'+n+' · '+(q.kind==="report"?"보고":"추가 문의")+'</b><span class="small muted">'+esc(q.by)+' · '+tm(q)+'</span></div><div class="qab">'+esc(q.body||"")+'</div>'+
+    (g.g.a.length?g.g.a.map(function(a){return'<div class="qaa"><div class="qaah">└ 답변 · '+esc(a.by)+' (관리자) · '+tm(a)+'</div><div class="qab">'+esc(a.body||"")+'</div></div>'}).join(""):'<div class="qaa wait">└ 답변 대기 중</div>')+'</div>'}).join("")}
+var _isModal33=isModal;isModal=function(){_isModal33();var x=isById(S.isV),t=$("#modal .isthread");if(!x||!t)return;t.className="isthread qalist";t.innerHTML=isThreadHtml(x);t.scrollTop=t.scrollHeight};
+var _vIssues33=vIssues;vIssues=function(){var h=_vIssues33();return h.replace(/<span class="small muted">· 대화 \d+개<\/span>/g,"")};
+
+isLast=function(x){var T=(x.thread||[]).filter(function(m){return m.kind!=="sys"});return T.length?T[T.length-1]:{at:x.at,by:x.by,body:x.body}};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -7637,7 +7665,7 @@ function renderMain(){
   if(/<aside class="pnl( pnl-[mw])?"/.test(h))h+='<div class="pnl-bg" aria-hidden="true"></div>';
   if(S.wm&&wk(S.wm))h+='<div class="ov2" aria-hidden="true"></div>'+pWk(wk(S.wm));
   if(S.cm&&comp(S.cm))h+='<div class="ov3" aria-hidden="true"></div>'+pComp(comp(S.cm));
-  h=isDeco(h);$("#main").innerHTML=h;pnlFix($("#main"));
+  h=isDeco(h);$("#main").innerHTML=h;pnlFix($("#main"));dbAdmFix($("#main"));
   document.body.classList.toggle("modal-open",/class="pnl/.test(h));
 }
 function render(){
