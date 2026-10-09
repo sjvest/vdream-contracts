@@ -593,6 +593,7 @@ button.chip{cursor:pointer;font:inherit;font-size:12.5px}button.chip.on{backgrou
 .rrround .rrc input:not([type=checkbox]),.rrround .rrc select{height:28px;min-height:28px;padding-left:7px}.rrround .rrc input[type=date]{width:128px}.rrround .rrc td{vertical-align:middle}.rrround .btn.xs{min-height:28px}
 .rrho{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 6px;padding:6px 10px;background:#F7F6FC;border-radius:8px;font-size:12.5px}
 .ball.w[title^="운영"]{background:#EEF2FF;color:#4338CA}
+.box[data-tk="intake"] td:nth-child(2){max-width:170px;white-space:normal}.box[data-tk="intake"] td:nth-child(4){max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.box[data-tk="intake"] .acts-cell{white-space:nowrap}.box[data-tk="intake"] .acts-cell .btn.xs{padding:2px 6px}
 </style>
 </head>
 <body>
@@ -1887,14 +1888,14 @@ function inAppView(){
   var sel=Object.keys(S.inSel).filter(function(k){var a=inA(k);return S.inSel[k]&&a&&canPick(a)});
   var cols=[{k:"sel",h:"",t:"none",al:"c",all:true},{k:"n",h:"이름",t:"text",f:function(a){return a.name}},{k:"p",h:"연락처",t:"none",al:"c",f:function(a){return a.phone}},{k:"e",h:"이메일",t:"none",f:function(a){return a.email}},
     {k:"c",h:"기업명",t:"text",f:function(a){var c=comp(a.cid);return c?c.name:"(기업 없음)"}},{k:"f",h:"브이워크 시작",t:"date",v:function(a){return a.flip}},{k:"s",h:"상태",t:"text",al:"c",f:function(a){return a.pass||"PASS"}},
-    {k:"m",h:"발송여부",t:"text",al:"c",f:sentText,spec:"3"},{k:"r",h:"서류수신",t:"text",al:"c",f:function(a){return RCV[a.receive||"pending"][0]},spec:"4"},{k:"a",h:"작업",t:"none",al:"c",spec:"5"}];
+    {k:"rd",h:"발송 준비",t:"text",al:"c",f:function(a){return inReady(a).ok?"발송 가능":"정보 부족"}},{k:"m",h:"발송여부",t:"text",al:"c",f:sentText,spec:"3"},{k:"r",h:"서류수신",t:"text",al:"c",f:function(a){return RCV[a.receive||"pending"][0]},spec:"4"},{k:"a",h:"작업",t:"none",al:"c",spec:"5"}];
   var h='<div class="fbar"><span class="muted small">진행 중 '+rows.length+'명'+(sel.length?' · <b style="color:var(--p)">'+sel.length+'명 선택</b>':"")+'</span><input type="search" id="in-q" data-in="inq" placeholder="이름 · 이메일 · 연락처 검색" aria-label="입사자 검색" value="'+esc(S.inq||"")+'" style="width:200px"><span class="grow"></span>'+resetBtn()+'<button class="btn" data-act="excel" data-spec="C">엑셀 다운로드</button></div>';
   h+='<div data-spec="2">'+dtable("intake",cols,rows,function(a){
     var c=comp(a.cid),pick=canPick(a),on=pick&&S.inSel[a.id];
     return'<tr data-act="noop" class="'+(on?"sel":"")+'"><td><input type="checkbox" data-ch="in-pick" data-id="'+a.id+'"'+(on?" checked":"")+(pick?"":" disabled")+' aria-label="'+esc(a.name)+' 선택"></td>'+
-      '<td><b>'+esc(a.name)+'</b>'+inLinkTag(a)+'</td><td>'+telHtml(a.phone)+'</td><td>'+esc(a.email||"—")+'</td><td>'+(c?clink(c.id)+inCompWarn(c):'<span class="b bad">기업 없음</span>')+'</td><td class="num">'+(a.flip||"—")+'</td>'+
-      '<td><span class="b '+(a.pass==="FAIL"?"bad":"ok")+'">'+esc(a.pass||"PASS")+'</span></td><td>'+sentBadge(a)+'</td><td>'+rcvBadge(a)+'</td>'+
-      '<td class="acts-cell"><button class="btn xs" data-act="in-edit" data-id="'+a.id+'">수정</button> <button class="btn xs" data-act="in-rr" data-id="'+a.id+'">재요청</button> <button class="btn xs" data-act="in-done" data-id="'+a.id+'"'+(a.completed?" disabled":"")+'>완료</button> <button class="btn xs'+(a.mail_sent?"":" pri")+'" data-act="in-send1" data-id="'+a.id+'"'+(a.send_state==="대기"?" disabled":"")+'>'+(a.mail_sent?"재발송":"발송")+'</button></td></tr>';
+      '<td><b>'+esc(a.name)+'</b>'+inLinkTag(a)+'</td><td>'+telHtml(a.phone)+'</td><td>'+esc(a.email||"—")+'</td><td>'+(c?clink(c.id):'<span class="b bad">기업 없음</span>')+'</td><td class="num">'+(a.flip||"—")+'</td>'+
+      '<td><span class="b '+(a.pass==="FAIL"?"bad":"ok")+'">'+esc(a.pass||"PASS")+'</span></td><td class="c">'+inReadyHtml(a)+'</td><td>'+sentBadge(a)+'</td><td>'+rcvBadge(a)+'</td>'+
+      '<td class="acts-cell"><button class="btn xs" data-act="in-edit" data-id="'+a.id+'">수정</button> <button class="btn xs" data-act="in-rr" data-id="'+a.id+'">재요청</button> <button class="btn xs" data-act="in-done" data-id="'+a.id+'"'+(a.completed?" disabled":"")+'>완료</button> <button class="btn xs'+(a.mail_sent?"":" pri")+'" data-act="in-send1" data-id="'+a.id+'"'+(a.send_state==="대기"||!inReady(a).ok?" disabled title=\"발송 준비 칸의 빠진 정보를 먼저 채워 주세요\"":"")+'>'+(a.mail_sent?"재발송":"발송")+'</button></td></tr>';
   },"진행 중인 입사자가 없습니다. + 신규 등록으로 추가하세요.")+'</div>';
   h+='<div style="display:flex;gap:8px;align-items:center"><button class="btn" data-act="in-done-list" data-spec="9">완료된 입사자 보기</button><span class="hint">서류수신 헤더를 누르면 미수신 · 수신 · 재요청중 · 우편발송완료를 골라 볼 수 있습니다. 미수신 · 수신(메일)을 누르면 받은 서류를 직접 올립니다.</span></div>';
   return h;
@@ -8003,6 +8004,7 @@ function cdRes(c){if(!c)return"";if(c.final==="합격")return"최종 합격";if(
   if(c.iv==="불합격")return"면접 불합격";if(c.iv==="진행 예정")return"면접 진행";if(c.iv)return"";if(c.doc==="합격")return"서류 합격";if(c.doc==="불합격")return"서류 불합격";return""}
 function cdNeedTell(c){var r=cdRes(c);return!!r&&c.told!==r&&!(c.final==="합격"&&c.hired)}
 function cdResOn(c){return c.final_on||c.iv_on||c.doc_on||c.sent||TODAY}
+function cdIntake(xid,i){return DB.intake.find(function(a){return a.rrr===xid&&+a.rri===+i})||null}
 function cdLoaded(xid,i){return DB.intake.some(function(a){return a.rrr===xid&&+a.rri===+i})}
 function rrAll(r){var L=[];rrRounds(r.id).forEach(function(x){(x.cands||[]).forEach(function(c,i){L.push({x:x,c:c,i:i})})});return L}
 function rrPend(r){return rrRounds(r.id).filter(function(x){return x.ho_on&&!(x.cands||[]).length})}
@@ -8058,8 +8060,11 @@ function rrBall(r){var s=rrStage(r);if(s==="완료"||s==="보류")return null;va
   var tell=all.filter(function(o){return cdNeedTell(o.c)});
   if(tell.length){R.t.push("구직자 결과 안내 "+tell.length+"명 ("+nm(tell,cdRes)+")");R.d.push(addD(minD(tell.map(function(o){return cdResOn(o.c)})),1))}
   if(!A.length&&!P.length){R.t.push("후보자 찾기 · 운영파트에 이력서 전달");R.d.push(r.due_date||addD(TODAY,7))}
-  var ok=A.filter(function(o){return o.c.final==="합격"&&!o.c.hired&&!cdLoaded(o.x.id,o.i)}),send=ok.filter(function(o){return ciOk(o.c.ci)}),wci=ok.filter(function(o){return!ciOk(o.c.ci)});
-  if(send.length){R.t.push("입구서 발송 "+send.length+"명 ("+nm(send)+") · 입구서 발송 › 채용 합격자 불러오기");R.d.push(minD(send.map(function(o){return o.c.ci.cs})))}
+  var ok=A.filter(function(o){var a=cdIntake(o.x.id,o.i);return o.c.final==="합격"&&!o.c.hired&&!(a&&(a.mail_sent||a.send_state==="대기"))}),wci=ok.filter(function(o){return!cdIntake(o.x.id,o.i)&&!ciOk(o.c.ci)});
+  var ld=ok.filter(function(o){return!cdIntake(o.x.id,o.i)&&ciOk(o.c.ci)}),inp=[],snd=[];ok.forEach(function(o){var a=cdIntake(o.x.id,o.i);if(!a)return;(typeof inReady==="function"&&!inReady(a).ok?inp:snd).push(o)});
+  if(ld.length){R.t.push("입구서 불러오기 "+ld.length+"명 ("+nm(ld)+")");R.d.push(minD(ld.map(function(o){return o.c.ci.cs})))}
+  if(inp.length){R.t.push("입구서 정보 입력 "+inp.length+"명 ("+nm(inp)+")");R.d.push(minD(inp.map(function(o){return(o.c.ci||{}).cs})))}
+  if(snd.length){R.t.push("입구서 발송 "+snd.length+"명 ("+nm(snd)+")");R.d.push(minD(snd.map(function(o){return(o.c.ci||{}).cs})))}
   var rWait=false;if(!R.t.length&&wci.length){R.t.push("계약 정보 대기 (운영) · "+nm(wci));R.d.push(addD(minD(wci.map(function(o){return o.c.final_on})),3));rWait=true}
   /* 운영파트 */
   if(P.length){O.t.push(P.map(function(x){return x.seq+"차"}).join(" · ")+" 이력서 "+P.reduce(function(a,x){return a+(+x.ho_n||0)},0)+"명 고객사 전달 · 후보자 입력");O.d.push(addD(minD(P.map(function(x){return x.ho_on})),1));O.wait=false}
@@ -8107,6 +8112,50 @@ function v36Act(a,el){var D0=el.dataset;switch(a){
   case"cd-tell":cdTell(D0.r,D0.i);return true;
   case"rpd-save":(function(){var v=+String(($("#set-rpd")||{}).value||"").replace(/[^\d]/g,"");if(!(v>0&&v<31)){toast("1~30일로 넣어 주세요");return}var o=appSet("rr_reply_days",3);appSetPut("rr_reply_days",v);logChange("app_settings","rr_reply_days","채용 회신 기한","고객사 회신 기한",String(o),String(v),"브이드림 내부");toast("저장했어요");render()})();return true}
   return false}
+
+/* ================================================================
+   v37. 합격자 계약 정보 = 운영파트(계약 칸만) · 구직자 정보 = 채용파트(입구서)
+        근무시간 = 시간대 · 입구서 '발송 준비' 칸 (구직자 · 계약 · 기업 발송 정보, DEFAULT 불가)
+   ================================================================ */
+ciOk=function(ci){return!!(ci&&ci.cs&&ci.ce)};
+/* 근무시간: 09:00~12:00 (휴게 30분) */
+function rrTimeRange(r){if(!r)return"";var m=String(r.time_note||"").match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/),a,b;
+  if(m){a=m[1];b=m[2]}else if(r.t_start){a=r.t_start;b=rrTimeEnd(r)}if(!a||!b)return"";var f=function(t){var p=t.split(":");return pad(+p[0])+":"+p[1]};
+  return f(a)+"~"+f(b)+(+r.break_min?" (휴게 "+r.break_min+"분)":"")}
+ciOpen=function(id,i){var R=rdRead(id);if(R){R.x.cands=R.C}var x=DB.rrr.find(function(y){return y.id===id}),r=x&&rcOf(x.req),c=x&&x.cands&&x.cands[+i];if(!c||!r)return;var ci=c.ci||{};
+  var cs=ci.cs||(r.start_date&&r.start_date>=TODAY?r.start_date:""),ce=ci.ce||(cs&&r.term_months?addD(addM(cs,+r.term_months),-1):""),wh=ci.wh&&/\d{1,2}:\d{2}/.test(ci.wh)?ci.wh:rrTimeRange(r);S.ciF={id:id,i:+i};
+  var f=function(k,l,v,t,req,ph){return'<label class="f"><span>'+l+(req?' *':"")+'</span><input id="ci-'+k+'" type="'+(t||"text")+'" value="'+esc(v||"")+'"'+(ph?' placeholder="'+esc(ph)+'"':"")+'></label>'};
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="합격자 계약 정보" style="width:min(600px,calc(100vw - 32px))"><div class="ph"><div><div class="k">채용 요청 · 최종 합격자 계약 정보 (운영파트)</div><h2>'+esc(c.name||"")+' · '+esc((comp(r.company)||{}).name||"")+'</h2><div class="tags"><span class="b">'+esc(r.kind)+'</span>'+(c.job?'<span class="b">'+esc(c.job)+'</span>':"")+'</div></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><div class="fg">'+f("cs","계약시작일",cs,"date",1)+f("ce","계약종료일",ce,"date",1)+f("flip","브이워크 시작일",ci.flip||cs,"date")+f("wh","근무시간",wh,"text",0,"예: 09:00~12:00")+'</div>'+
+    '<p class="hint" style="margin-top:8px">고객사와 확인한 계약 내용만 넣어 주세요 · 구직자 연락처 · 생년월일 · 이메일은 채용파트가 입구서에서 입력해요</p></div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="ci-save">저장</button></div></div></div>';
+  setTimeout(function(){var e=$("#ci-cs");if(e)e.focus()},0)};
+ciSave=function(){var F=S.ciF;if(!F)return;var x=DB.rrr.find(function(y){return y.id===F.id}),c=x&&x.cands&&x.cands[F.i],r=x&&rcOf(x.req);if(!c)return;var g=function(k){return(($("#ci-"+k)||{}).value||"").trim()};
+  var ci=Object.assign({},c.ci||{},{wh:g("wh"),cs:g("cs"),ce:g("ce"),flip:g("flip")||g("cs")});
+  if(!ci.cs||!ci.ce||ci.ce<=ci.cs){toast("계약기간을 확인해 주세요");return}
+  x.cands=x.cands.slice();x.cands[F.i]=Object.assign({},c,{ci:ci});logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"","합격자 계약 정보",ciOk(c.ci)?"수정":"",(c.name||"")+" · "+ci.cs+"~"+ci.ce+(ci.wh?" · "+ci.wh:""),"브이드림 내부");
+  S.ciF=null;$("#modal").innerHTML="";toast("계약 정보를 저장했어요 · 채용파트가 입구서로 불러올 수 있어요");render()};
+
+/* 불러오기: 구직자 정보는 비워 두고, 불러온 줄을 바로 수정 화면으로 */
+var _rrLoadOk37=rrLoadOk;rrLoadOk=function(){var n0=DB.intake.length;_rrLoadOk37();var N=DB.intake.slice(n0);if(!N.length)return;
+  N.forEach(function(a){["phone","email","birth"].forEach(function(k){if(a[k]==null)a[k]=""});if(!a.wh||!/\d{1,2}:\d{2}/.test(a.wh)){var r=rcOf(a.rr);a.wh=rrTimeRange(r)||a.wh||""}});
+  try{inFormOpen("edit",N.map(function(a){return a.id}));render();toast(N.length+"명을 불러왔어요 · 연락처 · 생년월일 · 이메일을 입력해 주세요")}catch(e){}};
+
+/* ---- 발송 준비 ---- */
+var TPL_NEED=[["{{CEO}}","대표자",function(c){return c.ceo}],["{{MANAGER}}","메일 담당자 표기",function(c){return c.mail_manager}],["{{BANK}}","급여은행",function(c){return c.pay_bank}]];
+function inReady(a){var G=[],c=comp(a.cid),P=[],K=[],C=[];
+  if(!String(a.name||"").trim())P.push("이름");if(normPhone(a.phone||"").length<9)P.push("연락처");if(!a.birth)P.push("생년월일");if(!EMAIL_RE.test(a.email||""))P.push("이메일");
+  if(!a.cs)K.push("계약시작일");if(!a.ce)K.push("계약종료일");if(a.cs&&a.ce&&a.ce<=a.cs)K.push("계약기간 확인");if(!a.flip)K.push("브이워크 시작일");
+  if(!c)C.push("기업 없음");else{var T=c.mail_tpl?tplByCode(c.mail_tpl):null;
+    if(!c.mail_tpl)C.push("메일 템플릿 미지정");else if(!T)C.push("메일 템플릿 '"+c.mail_tpl+"' 없음");
+    if(!c.doc_group)C.push("서류그룹 미지정");else if(!grpDocs(c.doc_group).length)C.push("서류그룹 '"+c.doc_group+"'에 서류 없음");
+    if(T){var body=String(T.subject||"")+" "+String(T.body||"");TPL_NEED.forEach(function(n){if(body.indexOf(n[0])>=0&&!String(n[2](c)||"").trim())C.push(n[1]+" 비어 있음")});if(body.indexOf("{{WORK_TIME}}")>=0&&!String(a.wh||"").trim())K.push("근무시간")}}
+  if(P.length)G.push({k:"p",l:"구직자",m:P});if(K.length)G.push({k:"k",l:"계약",m:K});if(C.length)G.push({k:"c",l:"기업 발송 정보",m:C});return{ok:!G.length,G:G}}
+function inReadyHtml(a){if(a.completed)return'<span class="muted">-</span>';if(a.mail_sent)return'<span class="muted small">발송됨</span>';var R=inReady(a);if(R.ok)return a.mail_sent?'<span class="muted small">발송됨</span>':'<span class="b sm ok">✓ 발송 가능</span>';
+  return R.G.map(function(g){return'<span class="b sm bad tip" tabindex="0" data-tip="'+esc(g.l+": "+g.m.join(" · "))+'">✕ '+esc(g.l)+'</span>'}).join(" ")}
+var _inAskSend37=inAskSend;inAskSend=function(ids){var ok=[],no=[];(ids||[]).forEach(function(id){var a=inA(id);if(!a)return;(inReady(a).ok?ok:no).push(a)});
+  if(!ok.length&&no.length){var a0=no[0],g=inReady(a0).G[0];toast(no.length===1?"["+a0.name+"] 발송할 수 없어요 · "+g.l+": "+g.m.join(", "):"선택한 "+no.length+"건 모두 발송 정보가 부족해요 · '발송 준비' 칸을 확인해 주세요");return}
+  if(no.length)toast(no.length+"건은 정보가 부족해 빼고 발송해요 ("+no.map(function(a){return a.name}).slice(0,3).join(", ")+(no.length>3?" 외":"")+")");
+  return _inAskSend37(ok.map(function(a){return a.id}))};
 
 /* ============ 렌더 ============ */
 function renderMain(){
