@@ -6333,7 +6333,7 @@ function rrImport(sheets){var made=0,rounds=0,warn=[],pre0=DB.rr.slice();var hdr
   sheets.forEach(function(ws){var name=ws.name;if(!/신규|대체/.test(name)||/사본/.test(name))return;var hr=hdrRow(ws);if(!hr)return;var H={};ws.getRow(hr).values.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});
     var col=function(row,k){var i=H[k];return i?rrCellTxt(row.values[i]):""},cur=null,curX=null,isRepl=/대체/.test(name);
     for(var r=hr+1;r<=ws.rowCount;r++){var row=ws.getRow(r),cname=col(row,"업체명"),sq=col(row,"차수"),mc=function(k){var i=H[k];if(!i)return false;var c=row.getCell(i);return!!(c&&c.isMerged&&c.master&&c.master.address!==c.address)};if(mc("업체명"))cname="";var sqC=!!sq&&mc("차수"),more=!sq&&!cname&&!!(col(row,"이력서전달")||col(row,"최종및비고")||col(row,"서류결과")||col(row,"면접"));if(!cname&&!sq&&!more)continue;if(!cname&&curX&&(sqC||more)){rrAddRowCands(curX,row,col,(cur&&cur.requested||TODAY).slice(0,4),name,r,warn);continue}
-      if(cname){var c=DB.companies.find(function(x){var n=mNorm(cname.replace(/\((신규|추가|대체)\)/,""));return mNorm(x.name)===n||mNorm(x.display_name)===n});var rawL=[];
+      if(cname){var c=DB.companies.find(function(x){var n=mNorm(cname.replace(/\((신규|추가|대체)\)/,""));return mNorm(x.name)===n||mNorm(x.display_name)===n});if(!c){var mq=pre0.find(function(q){return q.company&&rrSheetName(q)===cname});if(mq)c=comp(mq.company)}var rawL=[];
         var F={id:nid(),created:stamp(),company:c?c.id:"",kind:isRepl?"대체":(col(row,"구분")||(/\(추가\)/.test(cname)?"추가":"신규")),requested:rrDate(col(row,"요청일")||col(row,"최초이력서요청일")),due_date:rrDate(col(row,"마감요청일")),start_date:rrDate(col(row,"입사요청일")),start_note:"",jobs:rrParseJobs(col(row,"직무")),replaced:[],replaced_names:isRepl?col(row,"대체자명"):"",extra:col(row,"추가사항"),weekly_off:col(row,"주휴"),status:/true/i.test(rrCellTxt(row.values[2]))?"완료":"진행중",recruiter:"",requester:"시트 이관",dis_exclude:[],dis_require:[]};
         if(!F.start_date&&col(row,"입사요청일"))F.start_note=col(row,"입사요청일");if(!F.due_date&&col(row,"마감요청일"))rawL.push("마감요청일: "+col(row,"마감요청일"));
         var hrs=col(row,"근무시간");if(hrs&&!rrParseHours(hrs,F))rawL.push("근무시간: "+hrs);else if(hrs&&/[가-힣]{4,}/.test(hrs.replace(/주|일|시간|휴게|분|무관|근무/g,"")))rawL.push("근무시간: "+hrs);
@@ -6343,7 +6343,7 @@ function rrImport(sheets){var made=0,rounds=0,warn=[],pre0=DB.rr.slice();var hdr
         var dl=col(row,"장애정도");if(dl&&!rrParseDis(dl,F))rawL.push("장애정도: "+dl);
         var hc=+col(row,"채용수");if(!F.jobs.length)F.jobs=[{job:"(직무 미입력)",n:hc||1}];F.headcount=rrHead(F)||hc;
         if(!c){warn.push(name+" "+r+"행: 기업 '"+cname+"'을 기업 DB에서 못 찾았어요");rawL.unshift("업체명: "+cname)}
-        F.raw=rawL.join("\n");if(F.company&&pre0.some(function(q){return q.company===F.company&&q.kind===F.kind&&(q.requested||"")===(F.requested||"")&&String(q.replaced_names||"")===String(F.replaced_names||"")})){warn.push(name+" "+r+"행: '"+cname+"' 요청이 이미 있어 건너뛰었어요");cur=null;curX=null;continue}DB.rr.push(F);cur=F;curX=null;made++;logChange("recruit_requests",F.id,cname,"채용 요청 등록","","시트 이관 · "+name,"일괄 업로드")}
+        F.raw=rawL.join("\n");if(pre0.some(function(q){return(F.company?q.company===F.company:rrSheetName(q)===cname)&&q.kind===F.kind&&(q.requested||"")===(F.requested||"")&&String(q.replaced_names||"")===String(F.replaced_names||"")})){warn.push(name+" "+r+"행: '"+cname+"' 요청이 이미 있어 건너뛰었어요");cur=null;curX=null;continue}DB.rr.push(F);cur=F;curX=null;made++;logChange("recruit_requests",F.id,cname,"채용 요청 등록","","시트 이관 · "+name,"일괄 업로드")}
       if(cur&&sq){var by=(cur.requested||TODAY).slice(0,4),x={id:nid(),req:cur.id,seq:+String(sq).replace(/\D/g,"")||rrRounds(cur.id).length+1,channel:col(row,"채용담당자")||col(row,"인재수급")||"",notice:col(row,"지원안내"),docs:col(row,"이력서확인서류"),comm:[],cands:[],raw:""};
         var cm=col(row,"기업소통");if(cm)x.comm.push({t:cm,by:"시트 이관",d:cur.requested||""});
         var sent=col(row,"이력서전달");x.cands=rrParseCands(sent,by);rrApplyResult(x.cands,col(row,"서류결과"),"doc",by);rrApplyResult(x.cands,col(row,"최종및비고"),"final",by);var iv=col(row,"면접");if(iv)x.cands.forEach(function(c){if(iv.indexOf(c.name)>=0){var dm=iv.match(/\((\d{1,2}\/\d{1,2})\)/);c.iv=dm?rrDate(dm[1],by):""}});
@@ -8766,6 +8766,36 @@ var _rrRoundHtml56=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml56(x),C
 function impWarnHtml(W){var g={},o=[];W.forEach(function(x){var k=/기업 DB에서 못 찾/.test(x)?"기업 DB에서 못 찾은 업체명":/후보자 이름/.test(x)?"후보자 이름을 못 읽은 줄":/이미 있어/.test(x)?"이미 있어 건너뛴 요청":/희망 직무/.test(x)?"희망 직무를 기타로":"기타";if(!g[k]){g[k]=[];o.push(k)}g[k].push(x)});
   return o.map(function(k){return'<details class="small" style="margin:4px 0"><summary>⚠ '+esc(k)+' <b>'+g[k].length+'건</b></summary><div style="max-height:180px;overflow:auto;padding:4px 0 4px 14px">'+g[k].map(esc).join("<br>")+'</div></details>'}).join("")}
 
+/* ================================================================
+   v57. 이관한 채용 요청: 시트 업체명 → 기업 한 번에 연결 · '기업 없음' 거르기 · 다시 올려도 같은 업체명은 자동 연결
+   ================================================================ */
+APP_VER="v57";APP_VER_ON="10/10";
+function rrSheetName(r){var m=String(r&&r.raw||"").match(/(?:^|\n)업체명:\s*([^\n]+)/);return m?m[1].trim():""}
+function rrNoCo(){return DB.rr.filter(function(r){return!r.company||!comp(r.company)})}
+function rrNoCoGroups(){var g={},o=[];rrNoCo().forEach(function(r){var n=rrSheetName(r)||"(업체명 없음)";if(!g[n]){g[n]=[];o.push(n)}g[n].push(r)});return o.map(function(n){return{n:n,L:g[n]}}).sort(function(a,b){return b.L.length-a.L.length})}
+function coSuggest(n){var k=mNorm(String(n).replace(/\((신규|추가|대체)\)/g,""));if(!k)return[];var L=DB.companies.filter(function(c){return!c.deleted});
+  var ex=L.filter(function(c){return mNorm(c.name)===k||mNorm(c.display_name)===k});if(ex.length)return ex;
+  return L.filter(function(c){var a=mNorm(c.name),b=mNorm(c.display_name);return k.length>=2&&(a&&(a.indexOf(k)>=0||k.indexOf(a)>=0&&a.length>=2)||b&&(b.indexOf(k)>=0||k.indexOf(b)>=0&&b.length>=2))}).slice(0,5)}
+function rrCoBanner(){var G=rrNoCoGroups();if(!G.length)return"";var n=G.reduce(function(a,g){return a+g.L.length},0);
+  return'<div class="inwarn onbtop"><div class="inwr"><span><b>기업 연결 필요 '+n+'건</b> · 시트 업체명 '+G.length+'개가 기업 DB와 연결되지 않았어요</span><span style="display:flex;gap:6px"><button class="btn xs" data-act="rrnc-flt">'+(S.rrNoCoF?"전체 보기":"기업 없음만 보기")+'</button><button class="btn xs act" data-act="rrnc-open">한 번에 연결</button></span></div></div>'}
+var _vRreq57=vRreq;vRreq=function(){var save=null;if(S.rrNoCoF){save=DB.rr;DB.rr=rrNoCo();if(!DB.rr.length){DB.rr=save;save=null;S.rrNoCoF=false}}
+  try{var h=_vRreq57()}finally{if(save)DB.rr=save}var b=rrCoBanner();if(!b)return h;var k=h.indexOf('<div class="tabs"');return k>=0?h.slice(0,k)+b+h.slice(k):b+h};
+function rrncOpen(){var G=rrNoCoGroups();if(!G.length){toast("연결할 요청이 없어요");return}var all=DB.companies.filter(function(c){return!c.deleted}).sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
+  var sel=function(g,i){var sg=coSuggest(g.n),pick=sg.length===1?sg[0].id:"";return'<select data-rrnc="'+i+'" style="width:100%"><option value="">선택 안 함</option>'+(sg.length?'<optgroup label="추천">'+sg.map(function(c){return'<option value="'+c.id+'"'+(c.id===pick?" selected":"")+'>'+esc(c.name)+(c.display_name&&c.display_name!==c.name?" ("+esc(c.display_name)+")":"")+(c.corp_code?" · "+esc(c.corp_code):"")+'</option>'}).join("")+'</optgroup>':"")+
+    '<optgroup label="전체 기업">'+all.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+(c.corp_code?" · "+esc(c.corp_code):"")+'</option>'}).join("")+'</optgroup><option value="__new">+ 기업 DB에 이 이름으로 등록</option></select>'};
+  S.rrnc=G.map(function(g){return g.n});
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="기업 연결" style="width:min(760px,calc(100vw - 32px))"><div class="ph"><div><div class="k">채용 요청 · 시트 이관</div><h2>시트 업체명 → 기업 연결</h2><p class="hint" style="margin-top:4px">같은 업체명은 한 번만 고르면 그 이름의 요청 전체에 적용돼요 · 이름이 같거나 비슷한 기업은 미리 골라 뒀어요</p></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'+
+    '<div class="ps" style="max-height:60vh;overflow:auto"><table class="mini"><thead><tr><th>시트 업체명</th><th class="c">요청</th><th style="width:55%">기업</th></tr></thead><tbody>'+G.map(function(g,i){return'<tr><td><b>'+esc(g.n)+'</b></td><td class="c num">'+g.L.length+'</td><td>'+sel(g,i)+'</td></tr>'}).join("")+'</tbody></table>'+
+    '<p class="hint" style="margin-top:8px">‘기업 DB에 등록’은 기업명과 자동 기업코드만 만들어요 · 담당자는 나('+esc(st(S.me).name||"")+')로 들어가니 기업 DB에서 바꿔 주세요</p></div>'+
+    '<div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="rrnc-ok">연결</button></div></div></div>'}
+function rrncOk(){var N=S.rrnc||[],G=rrNoCoGroups(),by={};G.forEach(function(g){by[g.n]=g.L});var n=0,made=0;
+  $$("[data-rrnc]").forEach(function(s){var name=N[+s.dataset.rrnc],v=s.value;if(!v||!name)return;var L=by[name]||[];if(!L.length)return;
+    if(v==="__new"){if(name==="(업체명 없음)")return;var nm=name.replace(/\((신규|추가|대체)\)/g,"").trim();v=nid();C({id:v,corp_code:nextCoCode(),name:nm,manager:S.me,backup:"",service_end:"",is_high:"일반기업",part:"운영파트"});logChange("companies",v,nm,"기업 등록","",nm+" · 채용 요청 이관에서 이름만 등록","브이드림 내부");made++}
+    var c=comp(v);if(!c)return;L.forEach(function(r){r.company=c.id;logChange("recruit_requests",r.id,c.name,"기업 연결","",name+" → "+c.name,"브이드림 내부");n++})});
+  S.rrnc=null;$("#modal").innerHTML="";if(!rrNoCo().length)S.rrNoCoF=false;toast(n?"요청 "+n+"건을 기업과 연결했어요"+(made?" · 기업 "+made+"곳 새로 등록":""):"고른 기업이 없어요");render()}
+var _rrScope57=rrScope;rrScope=function(r){return!r.company||!comp(r.company)?true:_rrScope57(r)};
+function v57Act(a,el){switch(a){case"rrnc-open":rrncOpen();return true;case"rrnc-ok":rrncOk();return true;case"rrnc-flt":S.rrNoCoF=!S.rrNoCoF;if(S.rrNoCoF)S.rrTab="전체";render();return true}return false}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -9062,7 +9092,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
