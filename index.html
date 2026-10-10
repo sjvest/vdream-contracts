@@ -601,6 +601,7 @@ button.chip{cursor:pointer;font:inherit;font-size:12.5px}button.chip.on{backgrou
 .mgpl{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px}.mgpr{display:flex!important;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13.5px}.mgpr:hover{background:#F7F6FC}.mgpr small{margin-left:auto}.mgpr:has(input:checked){background:#F3F1FB}.mgpr[hidden]{display:none!important}
 .brand .ver{margin-left:8px;font-size:11.5px;color:rgba(255,255,255,.85);font-weight:500;letter-spacing:.2px;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:1px 8px;white-space:nowrap}
 .ntc{max-width:180px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-size:12.5px}.vwsw{margin-left:4px}.pfln{margin-left:4px;cursor:pointer;border:0}
+.pfwhl{display:flex;flex-wrap:wrap;gap:6px}.pfwh{display:inline-flex;align-items:center;gap:4px}.pfwh .x{font-size:14px;line-height:1}
 </style>
 </head>
 <body>
@@ -8537,6 +8538,45 @@ function v49Act(a,el){var D0=el.dataset;switch(a){
   case"pfc-ok":pfcOk();return true}return false}
 function v49Change(t,d){if(d.ch==="onb-note"){var e=emp(d.e);if(e&&(e.onb_note||"")!==t.value){e.onb_note=t.value;toast("특이사항을 저장했습니다");schedulePersist();render()}return true}return false}
 
+/* ================================================================
+   v52. 포트폴리오: 희망 근무 여러 개 · 채용 요청에서 직무 맞는 포트폴리오 추천
+   ================================================================ */
+APP_VER="v52";APP_VER_ON="10/10";
+function pfWhList(s){return String(s||"").split(/\s*\/\s*/).map(function(x){return x.trim()}).filter(Boolean)}
+function pfWhLab(H){return[H.d?"주 "+H.d+"일":"",H.h?"일 "+H.h+"시간":""].filter(Boolean).join(" · ")}
+var _pPf52=pPf;pPf=function(){var h=_pPf52(),F=S.pfF;if(!F)return h;var L=pfWhList(F.wish_hours),B=S.pfWhB||{};
+  var w='<div class="f full"><span>희망 근무시간 (여러 개 가능)</span><input type="hidden" data-pff="wish_hours" value="'+esc(L.join(" / "))+'">'+
+    '<div class="pfwhl">'+(L.length?L.map(function(x,i){return'<span class="b pfwh">'+esc(x)+' <button class="x" data-act="pfwh-rm" data-i="'+i+'" aria-label="빼기">×</button></span>'}).join(""):'<span class="small muted">아직 없어요 · 아래에서 골라 추가해 주세요</span>')+'</div>'+
+    '<div class="rrhg" style="margin-top:6px"><span class="lbs">주</span>'+chips("pfwh-b",[3,4,5],B.d||"",' data-k="d"')+'<span class="lbs">일 · 하루</span>'+chips("pfwh-b",[2,3,4,6,8],B.h||"",' data-k="h"')+'<span class="lbs">시간</span><button class="btn xs" data-act="pfwh-add"'+(B.d||B.h?"":" disabled")+'>+ 추가</button></div></div>';
+  return h.replace(/<div class="f"><span>희망 근무시간<\/span><input type="hidden" data-pff="wish_hours"[^>]*><div class="rrhg">[\s\S]*?<\/div><\/div>/,function(){return w})};
+/* ---- 추천 ---- */
+function pfFitHrs(p,r){var L=pfWhList(p.wish_hours).map(pfHrsParse).filter(function(H){return H.d||H.h});if(!L.length||!(r.wk_days||r.day_hours))return 0;
+  return L.some(function(H){return(!r.wk_days||!H.d||+H.d===+r.wk_days)&&(!r.day_hours||!H.h||+H.h===+r.day_hours)})?1:-1}
+function pfFitPay(p,r){var P=pfPayParse(p.wish_pay);if(!P.min&&!P.a)return 0;if(r.pay_type==="최저시급")return P.min?1:-1;if(P.min)return 1;
+  if(P.t&&r.pay_type&&P.t!==r.pay_type)return 0;var a=+String(P.a).replace(/\D/g,""),b=+String(r.pay_amount||"").replace(/\D/g,"");if(!a||!b)return 0;return a<=b?1:-1}
+function pfRec(r){var J={};(r.jobs||[]).forEach(function(j){if(j.job)J[j.job]=1});if(!Object.keys(J).length)return[];var mine={},bad={};
+  DB.rrr.forEach(function(x){var q=rcOf(x.req);(x.cands||[]).forEach(function(c){if(!c.pf)return;if(x.req===r.id)mine[c.pf]=1;if(q&&q.company===r.company&&PF_DEAD.test([c.doc,c.iv,c.final].join(" ")))bad[c.pf]=1})});
+  return DB.pf.filter(function(p){return(p.status==="대기"||p.status==="제안중")&&!mine[p.id]&&!bad[p.id]&&(p.jobs||[]).some(function(j){return J[j]})})
+    .map(function(p){var h=pfFitHrs(p,r),y=pfFitPay(p,r);return{p:p,h:h,y:y,jobs:(p.jobs||[]).filter(function(j){return J[j]}),sc:h*2+y}})
+    .sort(function(a,b){return b.sc-a.sc||String(a.p.created).localeCompare(String(b.p.created))})}
+function pfRecTag(l,v){return'<span class="b sm '+(v>0?"ok":v<0?"bad":"")+'">'+l+' '+(v>0?"✓":v<0?"✕":"–")+'</span>'}
+function pfRecHtml(r){var R=pfRec(r),rs=rrRounds(r.id);if(!R.length&&!(r.jobs||[]).some(function(j){return j.job}))return"";var all=S.pfRecAll===r.id,V=all?R:R.slice(0,5),last=rs.slice().sort(function(a,b){return b.seq-a.seq})[0];
+  return'<div class="ps wide"><h3>포트폴리오 추천 <span class="small muted" style="font-weight:400;letter-spacing:0">'+R.length+'명 · 요청 직무와 희망 직무가 겹치는 대기 · 제안중</span>'+IH("근무시간: 희망 근무 중 하나라도 요청(주 n일 · 하루 n시간)과 같으면 ✓ · 급여: 희망급여가 요청 이하이면 ✓ · 정보가 없으면 – · 같은 기업에서 떨어진 사람과 이미 후보인 사람은 빼요")+'</h3>'+
+    (R.length?'<table class="mini"><tbody>'+V.map(function(o){var p=o.p;return'<tr><td><button class="linkbtn" data-act="pf-go" data-id="'+p.id+'"><b>'+esc(p.name)+'</b></button> <span class="small muted">'+esc(pfBirth2(p))+'</span>'+(p.status==="제안중"?' <span class="b sm p tip" tabindex="0" data-tip="'+esc("다른 곳에 제안 중: "+(p.proposed||""))+'">제안중</span>':"")+'</td><td class="small">'+esc(o.jobs.join(", "))+'</td><td class="small muted">'+esc(pfWhList(p.wish_hours).join(" / ")||"근무 미입력")+'</td><td class="nowrap">'+pfRecTag("근무시간",o.h)+' '+pfRecTag("급여",o.y)+'</td>'+
+      '<td class="nowrap">'+(last?'<button class="btn xs act" data-act="pfrec-add" data-id="'+last.id+'" data-p="'+p.id+'">'+last.seq+'차 후보로 추가</button>':'<span class="small muted">차수를 먼저 추가</span>')+'</td></tr>'}).join("")+'</tbody></table>'+
+      (R.length>5?'<button class="btn xs" style="margin-top:6px" data-act="pfrec-all" data-id="'+r.id+'">'+(all?"접기":"더 보기 ("+R.length+")")+'</button>':""):'<p class="hint">직무가 맞는 포트폴리오가 없어요.</p>')+'</div>'}
+var _pRr52=pRr;pRr=function(){var h=_pRr52();var r=S.rrSel&&S.rrSel!=="new"&&rcOf(S.rrSel);if(!r)return h;var b=pfRecHtml(r);if(!b)return h;var k=h.indexOf('<div class="ps wide"><h3>차수 · 후보자');return k>=0?h.slice(0,k)+b+h.slice(k):h};
+function pfRecAdd(rid,pid){var R=rdRead(rid);if(R)R.x.cands=R.C;var x=DB.rrr.find(function(y){return y.id===rid}),p=pfOf(pid);if(!x||!p)return;var r=rcOf(x.req),J={};(r.jobs||[]).forEach(function(j){if(j.job)J[j.job]=1});
+  var jn=(p.jobs||[]).find(function(j){return J[j]})||(r.jobs[0]||{}).job||"";
+  x.cands=(x.cands||[]).concat([{name:p.name,job:jn,sent:TODAY,doc:"",iv:"",final:"",why:"",pf:pid}]);
+  logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"",x.seq+"차 후보자 (포트폴리오 추천)","",p.name,"브이드림 내부");toast(p.name+"님을 "+x.seq+"차 후보로 추가했어요 · 포트폴리오는 ‘제안중’");render()}
+function v52Act(a,el){var D0=el.dataset;switch(a){
+  case"pfwh-b":S.pfWhB=S.pfWhB||{};S.pfWhB[D0.k]=S.pfWhB[D0.k]===D0.v?"":D0.v;if(S.pfF)pfRead(S.pfF);render();return true;
+  case"pfwh-add":(function(){var B=S.pfWhB||{},F=S.pfF;if(!F||!(B.d||B.h))return;pfRead(F);var lab=pfWhLab(B),L=pfWhList(F.wish_hours);if(L.indexOf(lab)<0)L.push(lab);F.wish_hours=L.join(" / ");S.pfWhB={};render()})();return true;
+  case"pfwh-rm":(function(){var F=S.pfF;if(!F)return;pfRead(F);var L=pfWhList(F.wish_hours);L.splice(+D0.i,1);F.wish_hours=L.join(" / ");render()})();return true;
+  case"pfrec-add":pfRecAdd(D0.id,D0.p);return true;
+  case"pfrec-all":S.pfRecAll=S.pfRecAll===D0.id?null:D0.id;render();return true}return false}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -8833,7 +8873,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
