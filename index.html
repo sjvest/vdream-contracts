@@ -6377,7 +6377,7 @@ function vPf(){S.pfTab=S.pfTab||"지원중";var q=(S.qw||"").trim();var base=DB.
     '<div class="tabs" role="tablist">'+PF_ST.concat(["all"]).map(function(s){return'<button class="'+(S.pfTab===s?"on":"")+'" data-act="pf-tab" data-v="'+s+'">'+(s==="all"?"전체":s)+'<span class="c">'+(cnt[s]||0)+'</span></button>'}).join("")+'</div>'+fbar({noScope:true});
   h+=dtable("pf",cols,rows,function(p){return'<tr class="'+(S.pfSel===p.id?"sel":"")+'" data-act="pf-open" data-id="'+p.id+'"><td>'+esc(p.name)+(p.worker?' <span class="b sm t" title="근로자 DB와 연결">DB</span>':"")+'</td><td class="c num">'+esc(pfBirth2(p))+'</td><td class="c">'+esc(p.gender||"")+'</td><td>'+esc([p.dis_type,p.dis_level].filter(Boolean).join(" · ")||"—")+'</td><td>'+esc((p.jobs||[]).join(", ")||"—")+'</td><td>'+esc(p.wish_hours||"—")+'</td><td>'+esc(p.wish_pay||"—")+'</td><td class="c">'+esc(p.level||"")+'</td><td class="c num">'+(p.files||[]).length+'</td><td>'+esc(p.proposed||"—")+'</td><td class="c"><span class="b '+(p.status==="취업완료"?"ok":/제안중|면접/.test(p.status)?"p":"")+'">'+esc(p.status)+'</span></td><td>'+esc(p.source||"—")+'</td></tr>'},"조건에 맞는 포트폴리오가 없어요.");
   if(S.pfSel)h+=pPf();return h}
-function pfNewF(wid){var w=wid&&wk(wid),e=w&&curEmpOfW(w.id),t=w&&talOfW(w.id)[0];return{id:"",worker:w?w.id:"",name:w?w.name:"",phone:w?w.phone:"",birth:w?w.birth:"",gender:"",dis_type:w?w.dis_type:"",dis_level:w?w.dis_level:"",jobs:t&&t.jobs?t.jobs.slice():[],job_detail:t?t.job_etc||"":"",wish_hours:t&&t.hrs?t.hrs.join(", "):"",wish_pay:"",level:"",files:[],note:"",proposed:"",status:"지원중",source:"",source_mgr:"",consent:false,consent_on:"",keep_until:""}}
+function pfNewF(wid){var w=wid&&wk(wid),e=w&&curEmpOfW(w.id),t=w&&talOfW(w.id)[0];return{id:"",worker:w?w.id:"",name:w?w.name:"",phone:w?w.phone:"",birth:w?w.birth:"",gender:"",dis_type:w?w.dis_type:"",dis_level:w?w.dis_level:"",jobs:t&&t.jobs?t.jobs.slice():[],job_detail:t?t.job_etc||"":"",wish_hours:t&&t.hrs?t.hrs.join(", "):"",wish_pay:"",level:"",files:[],note:"",proposed:"",status:"대기",source:"",source_mgr:"",consent:false,consent_on:"",keep_until:""}}
 function pPf(){var isNew=S.pfSel==="new",p=isNew?null:pfOf(S.pfSel);if(!isNew&&!p)return"";var F=S.pfF||(S.pfF=isNew?pfNewF(S.pfW||""):JSON.parse(JSON.stringify(p)));
   var h='<aside class="pnl pnl-w" aria-label="포트폴리오"><div class="ph"><div><div class="k">채용 관리 · 포트폴리오</div><h2>'+(isNew?"포트폴리오 등록":esc(p.name)+' <span class="small muted num">'+esc(pfBirth2(p))+'</span>')+'</h2>'+(isNew?"":'<div class="tags"><span class="b '+(p.status==="취업완료"?"ok":"p")+'">'+esc(p.status)+'</span>'+(p.worker?wlink(p.worker):'<span class="b">근로자 DB 미연결</span>')+(p.hired_emp&&emp(p.hired_emp)?'<span class="b ok">'+esc(comp(emp(p.hired_emp).company).name)+' 입사 '+esc(p.hired_on||"")+'</span>':"")+'</div>')+'</div>'+closeBtn("pf-close")+'</div>';
   if(isNew&&!F.worker)h+='<div class="ps wide"><div class="f full"><span>근로자 DB에서 가져오기 (선택)</span>'+comboHtml("pfw","이름 · 연락처 뒷자리 · 생년월일",360)+'<small>고르면 이름 · 연락처 · 생년월일 · 장애 정보 · 희망 직무가 채워져요</small></div></div>';
@@ -6949,7 +6949,7 @@ vRdash=function(){var L=rdRows(),act=L.filter(function(r){var s=rrState(r);retur
   var why={doc:{},fin:{}};C.forEach(function(o){if(o.c.doc==="불합격"&&o.c.why)why.doc[o.c.why]=(why.doc[o.c.why]||0)+1;if(o.c.final==="불합격"&&o.c.why)why.fin[o.c.why]=(why.fin[o.c.why]||0)+1});
   var ch={};C.forEach(function(o){var k=o.x.channel||"(미기재)";ch[k]=ch[k]||{s:0,o:0};if(o.c.sent)ch[k].s++;if(o.c.final==="합격")ch[k].o++});
   var need={};act.forEach(function(r){(r.jobs||[]).forEach(function(j){var u=Math.max(0,(+j.n||1)-rrCands(r.id).filter(function(c){return c.final==="합격"&&(!c.job||c.job===j.job)}).length);need[j.job]=(need[j.job]||0)+u})});
-  var pool={};DB.pf.forEach(function(p){if(p.status!=="지원중")return;(p.jobs||[]).forEach(function(j){pool[j]=(pool[j]||0)+1})});(DB.talent||[]).forEach(function(t){if(t.status!=="대기")return;(t.jobs||[]).forEach(function(j){pool[j]=(pool[j]||0)+1})});
+  var pool={};DB.pf.forEach(function(p){if(!/^(대기|제안중|면접)$/.test(p.status))return;(p.jobs||[]).forEach(function(j){pool[j]=(pool[j]||0)+1})});(DB.talent||[]).forEach(function(t){if(t.status!=="대기")return;(t.jobs||[]).forEach(function(j){pool[j]=(pool[j]||0)+1})});
   var coA={};L.forEach(function(r){var k=r.company;coA[k]=coA[k]||{n:0,s:0,o:0};coA[k].n++;rrCands(r.id).forEach(function(c){if(c.sent)coA[k].s++;if(c.final==="합격")coA[k].o++})});
   var byRec={};act.forEach(function(r){var k=st(r.recruiter).name||"미배정";byRec[k]=byRec[k]||{n:0,u:0,o:0};byRec[k].n++;byRec[k].u+=unf(r)});C.forEach(function(o){if(o.c.final==="합격"&&String(o.c.final_on||"").slice(0,7)===TODAY.slice(0,7)){var k=st(o.r.recruiter).name||"미배정";byRec[k]=byRec[k]||{n:0,u:0,o:0};byRec[k].o++}});
   var kv=function(t,rows,hd){return'<div class="dcard"><div class="dcard-h"><b>'+t+'</b></div>'+(rows.length?'<table class="mini">'+(hd?'<thead><tr>'+hd.map(function(x,i){return'<th'+(i?' class="r"':"")+'>'+x+'</th>'}).join("")+'</tr></thead>':"")+'<tbody>'+rows.map(function(r){return'<tr>'+r.map(function(x,i){return'<td'+(i?' class="r num"':"")+'>'+x+'</td>'}).join("")+'</tr>'}).join("")+'</tbody></table>':'<p class="hint">기록 없음</p>')+'</div>'};
@@ -6963,7 +6963,7 @@ vRdash=function(){var L=rdRows(),act=L.filter(function(r){var s=rrState(r);retur
     kv("채용 담당별",Object.keys(byRec).map(function(k){var o=byRec[k];return[esc(k),o.n,o.u,o.o]}),["담당","진행 중","미충원","이달 합격"])+'</div>';
   /* F. 인재풀 */
   var pfS={};DB.pf.forEach(function(p){pfS[p.status]=(pfS[p.status]||0)+1});var exp30=DB.pf.filter(function(p){return p.keep_until&&p.keep_until>=TODAY&&dd(TODAY,p.keep_until)<=30}).length;var tw=(DB.talent||[]).filter(function(t){return t.status==="대기"}).length,tl=(DB.talent||[]).filter(function(t){return t.status==="연계중"||t.status==="연계"}).length;
-  var pfJ={};DB.pf.forEach(function(p){if(p.status==="지원중")(p.jobs||[]).forEach(function(j){pfJ[j]=(pfJ[j]||0)+1})});
+  var pfJ={};DB.pf.forEach(function(p){if(/^(대기|제안중|면접)$/.test(p.status))(p.jobs||[]).forEach(function(j){pfJ[j]=(pfJ[j]||0)+1})});
   h+='<h3 class="rdh">인재풀</h3><div class="rdgrid">'+kv("포트폴리오",[["대기",pfS["대기"]||0],["제안중 · 면접",(pfS["제안중"]||0)+(pfS["면접"]||0)],["취업완료",pfS["취업완료"]||0],["보관기간 30일 안에 끝남",exp30]].concat(Object.keys(pfJ).map(function(j){return["· "+esc(j),pfJ[j]]})))+kv("추천인재",[["대기",tw],["연계중",tl]])+'</div>';
   return h};
 function rdWeekText(){var L=rdRows(),wm=wkMon(TODAY),e=addD(wm,7),C=[];L.forEach(function(r){rrCands(r.id).forEach(function(c){C.push({r:r,c:c})})});
@@ -8435,7 +8435,7 @@ try{window.migPickFilter=migPickFilter;window.migPickCount=migPickCount}catch(e)
    v48. 화면 상단 버전 표기 · 연락처·생년월일이 같고 이름만 다른 근로자 → 고르는 창
    ================================================================ */
 var APP_VER="v48",APP_VER_ON="10/10",APP_VER_NOTE="이름이 다른 같은 사람 연결 창 · 버전 표기 (v47: 급여은행 선택 항목 · 은행 포함 표시)";
-function verTag(){return'<span class="ver tip" tabindex="0" data-tip="'+esc(APP_VER_NOTE)+'">'+APP_VER+' · '+APP_VER_ON+'</span>'}
+function verTag(){return'<span class="ver">'+APP_VER+' · '+APP_VER_ON+'</span>'}
 var _linkIntake48=linkIntake;linkIntake=function(a){var o=a._nmOk;delete a._nmOk;var ex=o&&wk(o.w);
   if(!ex||(a.emp&&emp(a.emp)))return _linkIntake48(a);var nm=String(a.name).trim();
   if(o.m==="ren"){logChange("workers",ex.id,nm,"이름 (입구서 연결)",ex.name,nm,"브이드림 내부");ex.name=nm;return _linkIntake48(a)}
@@ -8455,7 +8455,7 @@ function v48Act(a,el){if(a!=="nm-link")return false;var q=inA(el.dataset.id);if(
    v49. 신규입사자: 기존 계약(다른 고용 건) · 기간 겹침/공백 · 브이워크 전환 배지 · 특이사항 열
         포트폴리오: 등록하면서 파일 올리기 · 등록자 · 상태/제안 기업 자동 · 채용 후보자에 포트폴리오 연결
    ================================================================ */
-APP_VER="v49";APP_VER_ON="10/10";APP_VER_NOTE="신규입사자 기존 계약 · 브이워크 전환 배지 · 특이사항 열 · 포트폴리오 자동 상태 (v48: 이름 다른 같은 사람 연결 창)";
+APP_VER="v51";APP_VER_ON="10/10";APP_VER_NOTE="신규입사자 기존 계약 · 브이워크 전환 배지 · 특이사항 열 · 포트폴리오 자동 상태 (v48: 이름 다른 같은 사람 연결 창)";
 function dGap(a,b){return Math.round((pd(b)-pd(a))/864e5)}
 function empStart(e){var t=termsOf(e.id)[0];return t?t.start||"":""}
 /* 이 고용 건 직전(또는 겹치는) 다른 기업 고용 건 */
@@ -8497,6 +8497,7 @@ var _pPf49=pPf;pPf=function(){var h=_pPf49(),F=S.pfF;if(!F)return h;var isNew=S.
   var P=p?pfProposed(p):[];
   h=h.replace(/<label class="f"><span>제안 기업<\/span><input data-pff="proposed"[^>]*><\/label>/,function(){return'<div class="f"><span>제안 기업 '+IH("채용 요청에서 이 포트폴리오를 후보로 연결하면 그 기업이 자동으로 쌓여요")+'</span><input value="'+esc(P.length?pfPropTxt(P):(F.proposed||""))+'" disabled placeholder="채용 요청 후보로 연결하면 자동"'+(P.length>2?' title="'+esc(P.join(", "))+'"':"")+'></div>'});
   h=h.replace(/(<input data-pff="source" value="[^"]*")>/,'$1 placeholder="예: 복지관 · 지인 추천 · 채용공고">');
+  h=h.replace(/<label class="ckl"><input type="checkbox" data-pff="consent"([^>]*)> 포트폴리오 보관 · 기업 제안 동의를 받았어요 \(필수\)<\/label><small>[\s\S]*?<\/small>/,function(m,a){return'<label class="ckl"><input type="checkbox" data-pff="consent"'+a+'> 기업 제안 동의 받음 *</label> '+IH("포트폴리오 보관 · 기업 제안 동의 · 보관기간: "+(F.keep_until?F.keep_until+"까지":"동의일 + 1년 (취업완료 시 그날 + 1년)"))});
   var by=F.source_mgr||(isNew?st(S.me).name:(p&&p.by)||"");
   h=h.replace(/<label class="f"><span>수급담당자<\/span><input data-pff="source_mgr"[^>]*><\/label>/,function(){return'<div class="f"><span>등록자</span><input value="'+esc(by)+'" disabled></div>'});
   if(isNew)h=h.replace('<div class="foot" style="margin-top:10px"><button class="btn pri" data-act="pf-save">','<div class="fg" style="margin-top:10px"><div class="f full"><span>파일 (선택 · 50MB 이하 · 여러 개)</span><input type="file" id="pf-file" multiple><small>등록하면 바로 구글 드라이브 포트폴리오 폴더로 올라가요</small></div><div class="f full"><span>큰 파일 · 영상은 링크로 (선택)</span><input id="pf-link" placeholder="https://drive.google.com/… 또는 https://youtu.be/…"></div></div><div class="foot" style="margin-top:10px"><button class="btn pri" data-act="pf-save">');
