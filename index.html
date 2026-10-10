@@ -1028,8 +1028,8 @@ function logChange(table,row,label,field,before,after,source,sdate){DB.logs.unsh
 function logsHtml(table,row){var LI=mergedIds(table,row),L=DB.logs.filter(function(l){return l.table===table&&LI.indexOf(l.row)>=0});if(!L.length)return'<p class="hint">변경 이력이 없습니다.</p>';return L.slice(0,12).map(function(l){return'<div class="log"><span class="num">'+esc(l.at.slice(5))+'</span><span><b>'+esc(l.field)+'</b> '+esc(l.before||"(빈값)")+' → '+esc(l.after||"(빈값)")+' · '+esc(l.source)+'('+esc(md(l.sdate))+') · '+esc(l.by)+'</span></div>'}).join("")}
 function memosHtml(table,id){var MI=mergedIds(table,id),M=DB.memos.filter(function(m){return m.table===table&&MI.indexOf(m.tid)>=0});return(M.length?M.map(function(m){return'<div class="memo">'+esc(m.body)+'<small>'+esc(m.author)+' · '+esc(m.at.slice(5))+'</small></div>'}).join(""):'<p class="hint">메모가 없습니다.</p>')+
   '<div style="display:flex;gap:6px;margin-top:8px"><input data-memo-in class="grow" style="border:1px solid #D9D6E6;border-radius:6px;padding:6px 8px;min-width:0" placeholder="메모 입력" aria-label="메모 입력"><button class="btn" data-act="memo-add" data-t="'+table+'" data-id="'+id+'">등록</button></div>'}
-function sourceBox(){return'<div class="fg" data-spec="SRC"><label class="f req"><span>요청 경로</span><select data-src="src">'+opt(SOURCES,"","선택")+'</select></label><input data-src="date" type="hidden" value="'+TODAY+'"><div class="f"><span>요청일</span><div class="ro">오늘 '+md(TODAY)+' 자동</div></div></div>'}
-function readSource(root){var s=root.querySelector('[data-src="src"]'),d=root.querySelector('[data-src="date"]');if(!s||!s.value){toast("변경 근거(요청 경로)를 선택해 주세요");if(s)s.focus();return null}if(!d.value){toast("요청일을 입력해 주세요");return null}return{src:s.value,date:d.value}}
+function sourceBox(){return"";return'<div class="fg" data-spec="SRC"><label class="f req"><span>요청 경로</span><select data-src="src">'+opt(SOURCES,"","선택")+'</select></label><input data-src="date" type="hidden" value="'+TODAY+'"><div class="f"><span>요청일</span><div class="ro">오늘 '+md(TODAY)+' 자동</div></div></div>'}
+function readSource(root){var s=root.querySelector('[data-src="src"]'),d=root.querySelector('[data-src="date"]');if(!s||!s.value)return{src:"브이드림 내부",date:TODAY};return{src:s.value,date:(d&&d.value)||TODAY}}
 function termTds(t){return'<td class="c">'+seqBadge(t&&t.seq)+'</td><td class="num">'+(t&&t.start||"—")+'</td><td class="num">'+(t?(t.end||"무기"):"—")+'</td>'}
 function disLabel(eid){var d=disOf(eid);if(!d)return'<span class="b warn">미입력</span>';return'<span class="b '+(d.result==="확인완료"?"ok":d.result.indexOf("거부")===0?"bad":"p")+'">'+esc(d.result)+'</span><span class="dt">'+(d.permanent?"영구장애":(d.recheck?"재판정 "+d.recheck:"재판정일 없음"))+'</span>'}
 function disText(eid){var d=disOf(eid);return d?d.result:"미입력"}
@@ -5612,7 +5612,7 @@ function wkSave2(el){var root=el.closest(".pnl"),w=wk(el.dataset.id),draft={};$$
   if("_org" in draft){var v=draft._org,o=v?orgFind(v):null;delete draft._org;if(v&&!o){toast("기관 DB에 없는 기관이에요 · 목록에서 고르거나 기관 DB에 먼저 추가해 주세요");return}draft.org_id=o?o.id:""}
   var m=Object.assign({},w,draft);
   if(!m.name||normPhone(m.phone).length<9){toast("성명과 본인 연락처는 비울 수 없어요");return}
-  if(!m.birth){toast("생년월일은 비울 수 없어요 (같은 사람 확인 기준)");return}
+  
   if(m.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m.email)){toast("이메일 형식을 확인해 주세요");return}
   if("non_dis" in draft){if(draft.non_dis&&!draft.non_dis_on){toast("비장애인 판정일을 입력해 주세요");return}if(!draft.non_dis)draft.non_dis_on=""}
   if(m.gphone&&normPhone(m.gphone).length<9){toast("보호자 연락처 형식을 확인해 주세요");return}
@@ -9121,6 +9121,7 @@ var _pOnb68=pOnb;pOnb=function(e){var h=_pOnb68(e),w=wk(e.worker);if(!w)return h
   var k=h.indexOf('<div class="ps" data-spec="6">');return k>=0?h.slice(0,k)+box+h.slice(k):h.replace(/<\/aside>$/,box+"</aside>")};
 function v68Change(t,d){if(d.ch!=="onb-wdis")return false;var w=wk(d.w);if(!w)return true;var b=w[d.k]||"";if(b===t.value)return true;logChange("workers",w.id,w.name,d.k==="dis_type"?"장애유형":"장애정도",b,t.value,"브이드림 내부");w[d.k]=t.value;toast("저장했어요");render();return true}
 
+APP_VER="v69";
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
