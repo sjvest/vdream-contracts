@@ -598,6 +598,7 @@ button.chip{cursor:pointer;font:inherit;font-size:12.5px}button.chip.on{backgrou
 .rrend{display:flex;align-items:center;gap:8px;background:#E6F4F1;border:1px solid #B5DDD6;color:#0F6B63;border-radius:8px;padding:7px 12px;margin:0 0 10px;font-size:13.5px;font-weight:600}
 .cichips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.cichips .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}.cichips .chip small{color:var(--ink-3);font-size:11px}.cichips .chip.on{border-color:var(--p);background:#F3F1FB;color:var(--p);font-weight:600}
 .ncbar{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 10px;background:#F7F6FC;border-radius:8px}.ncrow{display:flex!important;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;font-size:13.5px;line-height:1.5}
+.mgpl{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px}.mgpr{display:flex!important;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13.5px}.mgpr:hover{background:#F7F6FC}.mgpr small{margin-left:auto}.mgpr:has(input:checked){background:#F3F1FB}.mgpr[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -2917,7 +2918,7 @@ function migMapRows(){
   return L;
 }
 function migAutoMap(){
-  var M=S.mig;M.auto={};M.cands={};migMapRows().forEach(function(x){var n=mNorm(x.name);if(!n)return;var C=DB.companies.filter(function(c){return mNorm(c.name)===n||mNorm(c.display_name)===n||mNorm(c.group_name)===n});if(C.length>1)M.cands[x.code]=C.map(function(c){return c.id})});
+  var M=S.mig;M.auto={};M.cands={};migMapRows().forEach(function(x){var n=mNorm(x.name);if(!n)return;var C=DB.companies.filter(function(c){return mNorm(c.name)===n||mNorm(c.display_name)===n||mNorm(c.group_name)===n});if(C.length>1)M.cands[x.code]=C.map(function(c){return c.id});else{var N=migNear(n);if(N.length>1){M.cands[x.code]=N.map(function(c){return c.id});M.near=M.near||{};M.near[x.code]=1}}});Object.keys(M.manualC||{}).forEach(function(k){M.cands[k]=M.manualC[k]});
   migMapRows().forEach(function(x){if(M.map[x.code]!==undefined)return;var n=mNorm(x.name);if(!n){M.map[x.code]="";return}
     var C=DB.companies.filter(function(c){return mNorm(c.name)===n||mNorm(c.display_name)===n||mNorm(c.group_name)===n});
     if(C.length===1){M.map[x.code]=C[0].id;M.auto[x.code]=1}else{M.map[x.code]="";if(C.length>1)M.auto[x.code]=C.length}});
@@ -2928,7 +2929,7 @@ function migMapView(){
   h+='<div class="fbar"><span class="muted small">입구서 기업 '+L.length+'곳 · 연결 '+(L.length-un.length)+' · 미연결 <b style="color:'+(un.length?"var(--bad)":"inherit")+'">'+un.length+'</b></span><span class="grow"></span><label class="cb"><input type="checkbox" data-ch="mig-unmapped"'+(M.onlyUn?" checked":"")+'> 미연결만</label></div>';
   var opts=DB.companies.slice().sort(function(p,q){return p.name.localeCompare(q.name,"ko")}).map(function(c){return[c.id,c.name+(c.display_name&&c.display_name!==c.name?" ("+c.display_name+")":"")+" · "+(c.corp_code||"")]});
   h+='<div class="tw"><table class="t migt"><thead><tr><th>입구서 코드</th><th>입구서 기업명</th><th>실제 기업 (기업 DB)</th><th></th></tr></thead><tbody>'+
-    L.filter(function(x){return!M.onlyUn||!M.map[x.code]}).map(function(x){var a=M.auto[x.code];return'<tr class="'+(M.map[x.code]?"":"mig-err")+'"><td class="num">'+esc(x.code)+'</td><td>'+esc(x.name||"(기업발송정보에 없음)")+'</td><td><select data-mig-map="'+esc(x.code)+'" aria-label="'+esc(x.code)+' 연결 기업">'+opt(((M.cands||{})[x.code]?[["grp:"+x.code,"▣ "+(x.name||x.code)+" 그룹 전체 ("+M.cands[x.code].length+"곳) · 발송 정보를 모두에 넣음"]]:[]).concat(opts),M.map[x.code]||"","연결 안 함")+'</select></td><td class="small muted">'+(migIsGrp(M.map[x.code])?"그룹 "+((M.cands||{})[x.code]||[]).length+"곳에 발송 정보 · 입사자는 부서 자동 찾기":a===1&&M.map[x.code]?"이름으로 자동 연결":a>1?"같은 이름 후보 "+a+"곳 · 입구서가 그룹 하나면 '그룹 전체'":"")+'</td></tr>'}).join("")+'</tbody></table></div>';
+    L.filter(function(x){return!M.onlyUn||!M.map[x.code]}).map(function(x){var a=M.auto[x.code];return'<tr class="'+(M.map[x.code]?"":"mig-err")+'"><td class="num">'+esc(x.code)+'</td><td>'+esc(x.name||"(기업발송정보에 없음)")+'</td><td><select data-mig-map="'+esc(x.code)+'" aria-label="'+esc(x.code)+' 연결 기업">'+opt(((M.cands||{})[x.code]?[["grp:"+x.code,"▣ "+(x.name||x.code)+((M.manualC||{})[x.code]?" 직접 고른 ":(M.near||{})[x.code]?" 비슷한 이름 ":" 그룹 전체 ")+"("+M.cands[x.code].length+"곳) · 발송 정보를 모두에 넣음"]]:[]).concat(opts),M.map[x.code]||"","연결 안 함")+'</select> <button class="btn xs" data-act="mgp-open" data-code="'+esc(x.code)+'" title="체크박스로 여러 기업을 골라 연결">여러 기업 고르기</button></td><td class="small muted">'+(migIsGrp(M.map[x.code])?"그룹 "+((M.cands||{})[x.code]||[]).length+"곳"+((M.manualC||{})[x.code]?" (직접 선택)":"")+"에 발송 정보":a===1&&M.map[x.code]?"이름으로 자동 연결":a>1?"같은 이름 후보 "+a+"곳 · 입구서가 그룹 하나면 '그룹 전체'":"")+'</td></tr>'}).join("")+'</tbody></table></div>';
   return h;
 }
 
@@ -8397,11 +8398,34 @@ var _bt43=buildTodos;buildTodos=function(){var L=_bt43(),best={};L.forEach(funct
    v45. 입구서 이관: 그룹 전체 코드(입구서 코드 1개 = 같은 이름 부서 여러 곳) 연결
    ================================================================ */
 function migIsGrp(v){return String(v||"").indexOf("grp:")===0}
-function migMapName(v,code){if(migIsGrp(v))return"그룹 전체 ("+((S.mig.cands||{})[code]||[]).length+"곳)";var c=v&&comp(v);return c?c.name:"미연결"}
+function migMapName(v,code){if(migIsGrp(v))return((S.mig.manualC||{})[code]?"직접 고른 그룹 (":"그룹 전체 (")+((S.mig.cands||{})[code]||[]).length+"곳)";var c=v&&comp(v);return c?c.name:"미연결"}
 function migAppCid(d,x,I){var M=S.mig,code=mt(d.code),v=M.map[code];if(!migIsGrp(v))return v;var ids=(M.cands||{})[code]||[];if(!ids.length)return"";
   var w=x.phone&&x.birth?workerByKey(x.phone,x.birth):null;
   if(w){var es=empsOfW(w.id).filter(function(e){return ids.indexOf(e.company)>=0&&!e.cancelled}).sort(function(a,b){return((termsOf(b.id)[0]||{}).start||"").localeCompare((termsOf(a.id)[0]||{}).start||"")});if(es.length)return es[0].company}
   I.push(mi("_cid","warn","그룹 코드 ‘"+code+"’라 부서를 못 찾았어요 · ‘"+comp(ids[0]).name+(comp(ids[0]).display_name?" ("+comp(ids[0]).display_name+")":"")+"’로 넣어요 · 맞는 부서를 골라 주세요","comp"));return ids[0]}
+
+/* ================================================================
+   v46. 입구서 이관 기업 연결: 비슷한 이름 후보 · [여러 기업 고르기]
+   ================================================================ */
+function migNear(n){if(!n||n.length<2)return[];return DB.companies.filter(function(c){return[c.name,c.display_name,c.group_name].some(function(v){var m=mNorm(v);return m&&m.length>=2&&(m===n||m.indexOf(n)>=0||n.indexOf(m)>=0)})})}
+function migPickOpen(code){var M=S.mig,x=migMapRows().find(function(y){return y.code===code})||{code:code,name:""};
+  var cur=migIsGrp(M.map[code])?((M.cands||{})[code]||[]):M.map[code]?[M.map[code]]:migNear(mNorm(x.name)).map(function(c){return c.id});S.mgp={code:code,sel:{}};cur.forEach(function(id){S.mgp.sel[id]=1});
+  var L=DB.companies.slice().sort(function(a,b){var sa=S.mgp.sel[a.id]?0:1,sb=S.mgp.sel[b.id]?0:1;return sa-sb||a.name.localeCompare(b.name,"ko")});
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="여러 기업 고르기" style="width:min(620px,calc(100vw - 32px))"><div class="ph"><div><div class="k">입구서 이관 · 기업 연결</div><h2>'+esc(code)+(x.name?' · '+esc(x.name):"")+'</h2><p class="hint" style="margin-top:4px">체크한 기업 모두에 이 코드의 발송 정보(대표자 · 급여은행 · 메일 담당자 · 템플릿 · 서류그룹)를 넣어요</p></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><input id="mgp-q" placeholder="기업명 · 브이워크 기업명 · 코드 일부로 찾기" oninput="migPickFilter()" style="width:100%;margin-bottom:8px"><div class="mgpl">'+L.map(function(c){var lab=c.name+(c.display_name&&c.display_name!==c.name?" ("+c.display_name+")":"");
+      return'<label class="ckl mgpr" data-s="'+esc(mNorm(lab+" "+(c.corp_code||"")+" "+(c.group_name||"")))+'"><input type="checkbox" class="mgp-ck" data-id="'+c.id+'"'+(S.mgp.sel[c.id]?" checked":"")+' onchange="migPickCount()"> <span>'+esc(lab)+'</span><small class="muted">'+esc(c.corp_code||"")+'</small></label>'}).join("")+'</div></div>'+
+    '<div class="ps foot"><span class="small muted" id="mgp-n"></span><span class="grow"></span><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="mgp-ok">연결</button></div></div></div>';
+  migPickCount();setTimeout(function(){var q=$("#mgp-q");if(q)q.focus()},0)}
+function migPickFilter(){var q=mNorm(($("#mgp-q")||{}).value||"");$$(".mgpr").forEach(function(r){r.hidden=!!q&&r.dataset.s.indexOf(q)<0&&!r.querySelector("input").checked})}
+function migPickCount(){var n=$$(".mgp-ck:checked").length,e=$("#mgp-n");if(e)e.textContent=n+"곳 선택"}
+function migPickOk(){var F=S.mgp;if(!F)return;var ids=$$(".mgp-ck:checked").map(function(i){return i.dataset.id}),M=S.mig;M.manualC=M.manualC||{};
+  if(!ids.length){M.map[F.code]="";delete M.manualC[F.code]}else if(ids.length===1){M.map[F.code]=ids[0];delete M.manualC[F.code]}else{M.manualC[F.code]=ids;M.cands=M.cands||{};M.cands[F.code]=ids;M.map[F.code]="grp:"+F.code}
+  M.auto[F.code]=0;S.mgp=null;$("#modal").innerHTML="";migValidate();render()}
+function v46Act(a,el){var D0=el.dataset;switch(a){
+  case"mgp-open":migPickOpen(D0.code);return true;
+  case"mgp-ok":migPickOk();return true}
+  return false}
+try{window.migPickFilter=migPickFilter;window.migPickCount=migPickCount}catch(e){}
 
 /* ============ 렌더 ============ */
 function renderMain(){
@@ -8699,7 +8723,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
