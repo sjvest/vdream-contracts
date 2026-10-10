@@ -602,6 +602,8 @@ button.chip{cursor:pointer;font:inherit;font-size:12.5px}button.chip.on{backgrou
 .brand .ver{margin-left:8px;font-size:11.5px;color:rgba(255,255,255,.85);font-weight:500;letter-spacing:.2px;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:1px 8px;white-space:nowrap}
 .ntc{max-width:180px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-size:12.5px}.vwsw{margin-left:4px}.pfln{margin-left:4px;cursor:pointer;border:0}
 .pfwhl{display:flex;flex-wrap:wrap;gap:6px}.pfwh{display:inline-flex;align-items:center;gap:4px}.pfwh .x{font-size:14px;line-height:1}
+.pfsame{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:10px 16px 0;background:#FFF8E6;border-color:#F0D9A0}.pfsame .acts{margin-left:auto;display:flex;gap:6px}
+.onbtop{margin-bottom:10px}.onbtop .inwr{align-items:center}
 </style>
 </head>
 <body>
@@ -2524,7 +2526,7 @@ function renderNav(){
   var unsent=DB.intake.filter(function(a){return !a.completed&&!a.mail_sent}).length,tw=DB.talent.filter(function(t){return t.status==="대기"||t.status==="연계중"||t.status==="연계"}).length,rq=reqRows().filter(function(x){return x.c.status!=="완료"&&scopeOK(x.r.company)}).length;
   var h=sec("work",b("dash","재직자 대시보드")+b("rdash","채용 대시보드")+b("todo","내 할 일",0,S.role==="admin"?todos.length:mine)+b("calc","충족일 계산기"))+
     sec("worker",'<div class="lab">계약 진행</div><div class="subs">'+b("exp","계약만료",1)+b("lea","중도퇴사",1)+'</div>'+b("att","근태/업무관리",0,attOpenN()||null)+b("docm","서류 관리",0,docLateN()||null)+b("fillm","충족입사 관리",0,fillLateN()||null)+b("req","고객사 요청사항",0,rq||null)+b("wreq","근로자 요청사항",0,wrOpenN()||null)+b("dis","장애 재판정",0,disRows().filter(function(r){return r.g==="soon"||r.g==="past"}).length||null))+
-    sec("hire",b("rreq","채용 요청",0,rrOpenN()||null)+b("pf","포트폴리오")+b("intake","입구서 발송",0,unsent||null)+b("onb","신규입사자 관리")+b("talent","추천인재",0,tw||null))+
+    sec("hire",b("rreq","채용 요청",0,rrOpenN()||null)+b("onb","신규입사자 관리")+b("intake","입구서 발송",0,unsent||null)+b("pf","포트폴리오")+b("talent","추천인재",0,tw||null))+
     sec("db",b("wk","근로자 DB")+b("comp","기업 DB")+b("org","기관 DB"));
   if(S.role==="admin")h+=sec("admin",b("staffv","담당자 현황")+b("drteam","팀 업무보고")+b("issues","이슈보고",0,isOpenN()||null)+b("acct","계정 관리")+b("set","설정")+b("mig","데이터 업로드")+b("merge","병합 기록")+b("mailtpl","메일 · 쪽지 양식")+b("gas","메일 작업기"));
   if(!LIVE||CONFIG.showSpec)h+=sec("ref",b("dbmap","화면 · DB 연결표"));
@@ -6364,7 +6366,7 @@ function pfFileName(p,ext){var n=(p.files||[]).length+1;return(pfBirth2(p)+p.nam
 function pfMatchEmp(p){var W=p.worker?[wk(p.worker)].filter(Boolean):DB.workers.filter(function(w){return w.name===p.name&&(p.phone&&normPhone(w.phone)===normPhone(p.phone)||!p.phone&&p.birth&&w.birth===p.birth)});
   var since=String(p.created||"").slice(0,10)||"0000";var best=null;W.forEach(function(w){empsOfW(w.id).forEach(function(e){var t1=termsOf(e.id)[0];if(e.cancelled||!t1||!t1.start||t1.start<since)return;if(!best||t1.start<termsOf(best.id)[0].start)best=e})});return best}
 function pfSync(){var n=0;DB.pf.forEach(function(p){if(p.status==="기타")return;var e=pfMatchEmp(p);
-  if(e&&(p.status!=="취업완료"||p.hired_emp!==e.id)){var b=p.status;p.status="취업완료";p.hired_emp=e.id;p.hired_on=termsOf(e.id)[0].start;if(!p.worker)p.worker=e.worker;logChange("portfolios",p.id,p.name,"상태",b,"취업완료 · "+comp(e.company).name,"브이드림 내부");n++}
+  if(e&&(p.status!=="취업완료"||p.hired_emp!==e.id)){var b=p.status;p.status="취업완료";p.hired_emp=e.id;p.hired_on=termsOf(e.id)[0].start;if(!p.worker){p.worker=e.worker;logChange("portfolios",p.id,p.name,"자동 연결","",(wk(e.worker)||{}).name+" · "+(normPhone(p.phone||"").length>=9?"이름 · 연락처 일치":"이름 · 생년월일 일치"),"브이드림 내부")}logChange("portfolios",p.id,p.name,"상태",b,"취업완료 · "+comp(e.company).name,"브이드림 내부");n++}
   else if(!e&&p.status==="취업완료"&&p.hired_emp){var he=emp(p.hired_emp);if(!he||he.cancelled){p.status="대기";logChange("portfolios",p.id,p.name,"상태","취업완료","대기 (입사취소로 되돌림)","브이드림 내부");p.hired_emp="";p.hired_on="";n++}}});return n}
 var _render25pf=render;render=function(){try{pfSync();pfJobSync()}catch(err){console.error(err)}return _render25pf.apply(this,arguments)};
 /* 업로드 작업 결과 → 파일 링크 */
@@ -6420,16 +6422,16 @@ function pfImport(ws){var hr=0;for(var r=1;r<=8;r++){var v=ws.getRow(r).values.m
   for(var r2=hr+1;r2<=ws.rowCount;r2++){var row=ws.getRow(r2),nm=col(row,"근로자명");if(!nm)continue;var link=row.values[H["포트폴리오"]],url=link&&link.hyperlink?link.hyperlink:/^https?:/.test(col(row,"포트폴리오"))?col(row,"포트폴리오"):"";
     var jobs=[],jt=col(row,"희망직무유형");JOBS.forEach(function(j){if(jt.indexOf(j)>=0||(j==="미술"&&/미술/.test(jt))||(j==="음악"&&/음악/.test(jt)))jobs.push(j)});if(jt&&!jobs.length){jobs=["기타"];warn.push(r2+"행 "+nm+": 희망 직무 ‘"+jt+"’ → 기타")}
     var st0=col(row,"매칭완료여부");var s=/취업|완료/.test(st0)?"취업완료":/지원|대기/.test(st0)||!st0?"대기":"기타";var b=rrDate(col(row,"생년월일"));if(col(row,"생년월일")&&!b)warn.push(r2+"행 "+nm+": 생년월일 ‘"+col(row,"생년월일")+"’을 읽지 못했어요");
-    var w=DB.workers.find(function(x){return x.name===nm&&b&&x.birth===b});
-    var p={id:nid(),created:stamp(),by:"시트 이관",worker:w?w.id:"",name:nm,phone:w?w.phone:"",birth:b,gender:/^남/.test(col(row,"성별"))?"남":/^여/.test(col(row,"성별"))?"여":"",dis_type:(DIS_TYPES.find(function(t){return col(row,"장애유형").indexOf(t.replace(/장애$/,""))>=0})||""),dis_level:/중증|심한/.test(col(row,"장애등급"))?"중증":/경증|심하지/.test(col(row,"장애등급"))?"경증":"",jobs:jobs,job_detail:col(row,"직무상세"),wish_hours:col(row,"희망근무시간"),wish_pay:col(row,"희망급여"),level:(col(row,"직무레벨").match(/[상중하]/)||[""])[0],files:url?[{kind:"link",name:"기존 포트폴리오 링크",url:url,by:"시트 이관",at:""}]:[],note:col(row,"특이사항"),proposed:col(row,"제안기업"),status:s,source:col(row,"수급처"),source_mgr:col(row,"수급담당자"),consent:true,consent_on:TODAY,keep_until:addM(TODAY,12)};
+    var ph0=col(row,"연락처")||col(row,"휴대폰")||col(row,"전화번호"),rg=rrDate(col(row,"등록일"));var w=DB.workers.find(function(x){return x.name===nm&&(b&&x.birth===b||normPhone(ph0).length>=9&&normPhone(x.phone)===normPhone(ph0))});
+    var p={id:nid(),created:rg?rg+" 09:00":stamp(),by:"시트 이관",worker:w?w.id:"",name:nm,phone:ph0||(w?w.phone:""),birth:b||(w?w.birth:""),gender:/^남/.test(col(row,"성별"))?"남":/^여/.test(col(row,"성별"))?"여":"",dis_type:(DIS_TYPES.find(function(t){return col(row,"장애유형").indexOf(t.replace(/장애$/,""))>=0})||""),dis_level:/중증|심한/.test(col(row,"장애등급"))?"중증":/경증|심하지/.test(col(row,"장애등급"))?"경증":"",jobs:jobs,job_detail:col(row,"직무상세"),wish_hours:col(row,"희망근무시간").split(/\s*[\/,]\s*/).filter(Boolean).join(" / "),wish_pay:col(row,"희망급여"),level:(col(row,"직무레벨").match(/[상중하]/)||[""])[0],files:url?[{kind:"link",name:"기존 포트폴리오 링크",url:url,by:"시트 이관",at:""}]:[],note:col(row,"특이사항"),proposed:col(row,"제안기업"),status:s,source:col(row,"수급처"),source_mgr:col(row,"수급담당자"),consent:true,consent_on:TODAY,keep_until:addM(TODAY,12)};
     if(!url&&col(row,"포트폴리오"))warn.push(r2+"행 "+nm+": 포트폴리오 칸이 링크가 아니에요 (특이사항에 붙임)"),p.note=(p.note?p.note+"\n":"")+"포트폴리오: "+col(row,"포트폴리오");
-    if(DB.pf.some(function(x){return x.name===p.name&&x.birth===p.birth})){warn.push(r2+"행 "+nm+": 이미 있어 건너뜀");continue}DB.pf.push(p);made++}
+    if(DB.pf.some(function(x){return x.name===p.name&&(p.birth&&x.birth===p.birth||normPhone(p.phone||"").length>=9&&normPhone(x.phone||"")===normPhone(p.phone))})){warn.push(r2+"행 "+nm+": 이미 있어 건너뜀");continue}DB.pf.push(p);made++}
   return{made:made,warn:warn}}
 
 /* ---- 데이터 업로드: ④ 채용 요청 시트 · ⑤ 포트폴리오 시트 ---- */
 var _vMig25=vMig;vMig=function(){var h=_vMig25();if(S.role!=="admin")return h;var R=S.impRes;
   return h+'<div class="migcards" style="margin-top:12px"><div class="migcard"><b>④ 채용 요청 시트</b><p class="small muted">‘신규&추가’ · ‘대체’ 탭을 읽어 채용 요청 · 차수 · 후보자(이름)로 옮겨요. 해석하지 못한 값은 원문으로 남기고 ⚠ 표시해요. 지금 '+DB.rr.length+'건</p><input type="file" accept=".xlsx" data-ch="rr-imp"></div>'+
-    '<div class="migcard"><b>⑤ 포트폴리오 시트</b><p class="small muted">근로자명 · 장애 · 희망 직무 · 포트폴리오 링크 · 매칭 여부 · 수급처를 옮겨요. 이름 + 생년월일이 같은 근로자가 있으면 연결해요. 지금 '+DB.pf.length+'건</p><input type="file" accept=".xlsx" data-ch="pf-imp"></div></div>'+
+    '<div class="migcard"><b>⑤ 포트폴리오 시트</b><p class="small muted">근로자명 · 장애 · 희망 직무 · 포트폴리오 링크 · 매칭 여부 · 연락처 · 희망 근무(여러 개) · 수급처를 옮겨요. 이름 + 연락처(또는 생년월일)가 같은 근로자가 있으면 연결해요. 지금 '+DB.pf.length+'건</p><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="pf-tpl">양식 다운로드</button><input type="file" accept=".xlsx" data-ch="pf-imp"></div></div></div>'+
     (R?'<div class="dcard" style="margin-top:10px"><div class="dcard-h"><b>'+esc(R.t)+'</b><span class="small muted">'+esc(R.s)+'</span></div>'+(R.w.length?'<div class="small" style="max-height:220px;overflow:auto">'+R.w.map(function(x){return'⚠ '+esc(x)}).join("<br>")+'</div>':'<p class="hint">경고 없음</p>')+'</div>':"")};
 function impFile(file,kind){toast("읽는 중…");xlLoad().then(function(X){return file.arrayBuffer().then(function(buf){var wb=new X.Workbook();return wb.xlsx.load(buf).then(function(){return wb})})}).then(function(wb){
   if(kind==="rr"){var r=rrImport(wb.worksheets);S.impRes={t:"채용 요청 옮기기",s:"요청 "+r.made+"건 · 차수 "+r.rounds+"개",w:r.warn}}
@@ -8577,6 +8579,146 @@ function v52Act(a,el){var D0=el.dataset;switch(a){
   case"pfrec-add":pfRecAdd(D0.id,D0.p);return true;
   case"pfrec-all":S.pfRecAll=S.pfRecAll===D0.id?null:D0.id;render();return true}return false}
 
+/* ================================================================
+   v53. 채용 요청 ← 추천인재(후보 추가 · 추천 합치기) · 포트폴리오 동일인 합치기 · 포트폴리오 이관 양식
+   ================================================================ */
+APP_VER="v53";APP_VER_ON="10/10";
+/* ---------- 추천인재 → 채용 요청 후보 ---------- */
+function talName(t){var w=wk(t.worker);return w?w.name:""}
+function talFitHrs(t,r){var H=t.hrs||[];if(!H.length||!r.day_hours)return 0;if(H.indexOf((+r.day_hours)+"시간")>=0)return 1;return H.indexOf("기타")>=0?0:-1}
+function rqJ(r){var J={};(r.jobs||[]).forEach(function(j){if(j.job)J[j.job]=1});return J}
+function rqUsed(r){var mine={},bad={};DB.rrr.forEach(function(x){var q=rcOf(x.req);(x.cands||[]).forEach(function(c){var k=c.pf?"p:"+c.pf:c.tal?"t:"+c.tal:"";if(!k)return;if(x.req===r.id)mine[k]=1;if(q&&q.company===r.company&&PF_DEAD.test([c.doc,c.iv,c.final].join(" ")))bad[k]=1})});return{mine:mine,bad:bad}}
+function talRec(r){var J=rqJ(r);if(!Object.keys(J).length)return[];var U=rqUsed(r);
+  return DB.talent.filter(function(t){talNorm(t);var k="t:"+t.id;return TAL_OPEN[t.status]&&wk(t.worker)&&!U.mine[k]&&!U.bad[k]&&(t.jobs||[]).some(function(j){return J[j]})})
+    .map(function(t){var h=talFitHrs(t,r);return{k:"tal",t:t,h:h,y:0,jobs:(t.jobs||[]).filter(function(j){return J[j]}),sc:h*2}})}
+function recAll(r){return pfRec(r).map(function(o){o.k="pf";return o}).concat(talRec(r)).sort(function(a,b){return b.sc-a.sc||(a.k===b.k?0:a.k==="tal"?-1:1)})}
+pfRecHtml=function(r){if(!(r.jobs||[]).some(function(j){return j.job}))return"";var R=recAll(r),rs=rrRounds(r.id),all=S.pfRecAll===r.id,V=all?R:R.slice(0,5),last=rs.slice().sort(function(a,b){return b.seq-a.seq})[0];
+  var row=function(o){var nm,sub,extra="",src,btn;
+    if(o.k==="pf"){var p=o.p;src='<span class="b sm t">PF</span>';nm='<button class="linkbtn" data-act="pf-go" data-id="'+p.id+'"><b>'+esc(p.name)+'</b></button> <span class="small muted">'+esc(pfBirth2(p))+'</span>';sub=pfWhList(p.wish_hours).join(" / ")||"근무 미입력";
+      if(p.status==="제안중")extra=' <span class="b sm p tip" tabindex="0" data-tip="'+esc("다른 곳에 제안 중: "+(p.proposed||""))+'">제안중</span>';btn=last?'<button class="btn xs act" data-act="pfrec-add" data-id="'+last.id+'" data-p="'+p.id+'">'+last.seq+'차 후보로 추가</button>':"";}
+    else{var t=o.t,w=wk(t.worker),pe=t.emp&&emp(t.emp);src='<span class="b sm ok">추천</span>';nm='<button class="linkbtn" data-act="go-w" data-id="'+t.worker+'"><b>'+esc(w.name)+'</b></button> <span class="small muted">'+esc(String(w.birth||"").slice(2,4))+'</span>';sub=(t.hrs||[]).map(function(x){return x==="기타"&&t.hours_etc?t.hours_etc:x}).join(" / ")||"근로시간 미입력";
+      extra=' <span class="tip small muted" tabindex="0" data-tip="'+esc((pe?"이전 근무: "+((comp(pe.company)||{}).name||"")+" · ":"")+(t.reason||"사유 없음"))+'">ⓘ</span>'+(t.status==="연계중"?' <span class="b sm p tip" tabindex="0" data-tip="'+esc("연계중: "+((comp(t.lcid)||{}).name||""))+'">연계중</span>':"");
+      btn=last?'<button class="btn xs act" data-act="talrec-add" data-id="'+last.id+'" data-t="'+t.id+'">'+last.seq+'차 후보로 추가</button>':""}
+    return'<tr><td class="nowrap">'+src+'</td><td>'+nm+extra+'</td><td class="small">'+esc(o.jobs.join(", "))+'</td><td class="small muted">'+esc(sub)+'</td><td class="nowrap">'+pfRecTag("근무시간",o.h)+(o.k==="pf"?" "+pfRecTag("급여",o.y):"")+'</td><td class="nowrap">'+(btn||'<span class="small muted">차수를 먼저 추가</span>')+'</td></tr>'};
+  return'<div class="ps wide"><h3>후보 추천 <span class="small muted" style="font-weight:400;letter-spacing:0">'+R.length+'명 · 포트폴리오 · 추천인재 중 요청 직무와 겹치는 사람</span>'+IH("포트폴리오(대기 · 제안중)와 추천인재(대기 · 연계중)에서 직무가 맞는 사람 · 근무시간이 맞으면 위로 · 정보가 없으면 – · 이미 후보이거나 같은 기업에서 떨어진 사람은 빼요")+'</h3>'+
+    (R.length?'<table class="mini"><tbody>'+V.map(row).join("")+'</tbody></table>'+(R.length>5?'<button class="btn xs" style="margin-top:6px" data-act="pfrec-all" data-id="'+r.id+'">'+(all?"접기":"더 보기 ("+R.length+")")+'</button>':""):'<p class="hint">직무가 맞는 포트폴리오 · 추천인재가 없어요.</p>')+'</div>'};
+function talAsCand(x,tid){var t=DB.talent.find(function(y){return y.id===tid});if(!t)return null;var r=rcOf(x.req),J=rqJ(r);var jn=(t.jobs||[]).find(function(j){return J[j]})||(r.jobs[0]||{}).job||"";
+  if(t.status==="대기"){t.status="연계중";t.lcid=r.company;t.ldate=TODAY;t.lnote=x.seq+"차 후보 (채용 요청)";t.dby=st(S.me).name;t.dat=stamp();logChange("workers",t.worker,talName(t),"추천인재 연계","대기","연계중 · "+((comp(r.company)||{}).name||"")+" · 채용 요청 "+x.seq+"차 후보","브이드림 내부")}
+  return{name:talName(t),job:jn,sent:TODAY,doc:"",iv:"",final:"",why:"",tal:tid}}
+function talRecAdd(rid,tid){var R=rdRead(rid);if(R)R.x.cands=R.C;var x=DB.rrr.find(function(y){return y.id===rid});if(!x)return;var c=talAsCand(x,tid);if(!c)return;var r=rcOf(x.req);
+  x.cands=(x.cands||[]).concat([c]);logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"",x.seq+"차 후보자 (추천인재)","",c.name,"브이드림 내부");toast(c.name+"님을 "+x.seq+"차 후보로 추가했어요 · 추천인재는 ‘연계중’");render()}
+function talcOpen(rid){var R=rdRead(rid);if(R)R.x.cands=R.C;var x=DB.rrr.find(function(y){return y.id===rid});if(!x)return;S.talc={rid:rid};var has={};(x.cands||[]).forEach(function(c){if(c.tal)has[c.tal]=1});
+  var L=DB.talent.filter(function(t){talNorm(t);return TAL_OPEN[t.status]&&wk(t.worker)}).sort(function(a,b){return talName(a).localeCompare(talName(b))});
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="추천인재에서 후보 추가" style="width:min(560px,calc(100vw - 32px))"><div class="ph"><div><div class="k">'+x.seq+'차 후보자</div><h2>추천인재에서 고르기</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><input id="pfc-q" placeholder="이름 · 직무 검색" style="width:100%;margin-bottom:8px" oninput="pfcFilter()"><div class="mgpl">'+(L.length?L.map(function(t){var on=has[t.id],w=wk(t.worker);return'<label class="mgpr" data-q="'+esc((w.name+" "+talJobsText(t)).toLowerCase())+'"><input type="checkbox" class="talck" value="'+t.id+'"'+(on?" checked disabled":"")+'> <b>'+esc(w.name)+'</b> <span class="small muted">'+esc(String(w.birth||"").slice(2,4))+' · '+esc(talJobsText(t)||"직무 미입력")+'</span><small><span class="b sm '+(t.status==="대기"?"":"p")+'">'+esc(t.status)+'</span>'+(on?' 이미 추가':"")+'</small></label>'}).join(""):'<p class="hint">대기 · 연계중인 추천인재가 없어요</p>')+'</div><p class="hint" style="margin-top:8px">추가하면 대기였던 추천인재는 ‘연계중’(이 기업)으로 바뀌어요 · 입사 등록되면 자동으로 연계완료</p></div>'+
+    '<div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="talc-ok">후보로 추가</button></div></div></div>';setTimeout(function(){var q=$("#pfc-q");if(q)q.focus()},0)}
+function talcOk(){var F=S.talc;if(!F)return;var x=DB.rrr.find(function(y){return y.id===F.rid});if(!x)return;var I=$$(".talck:checked:not(:disabled)").map(function(c){return c.value});if(!I.length){toast("추천인재를 골라 주세요");return}
+  var C=I.map(function(id){return talAsCand(x,id)}).filter(Boolean),r=rcOf(x.req);x.cands=(x.cands||[]).concat(C);
+  logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"",x.seq+"차 후보자 (추천인재)","",C.map(function(c){return c.name}).join(", "),"브이드림 내부");S.talc=null;$("#modal").innerHTML="";toast(C.length+"명을 후보로 추가했어요");render()}
+var _rrRoundHtml53=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml53(x),C=x.cands||[];
+  C.forEach(function(c,i){if(!c.tal)return;var t=DB.talent.find(function(y){return y.id===c.tal});var re=new RegExp('(data-cd="'+x.id+'\\|'+i+'\\|name"[^>]*>)');h=h.replace(re,'$1<button class="b sm ok pfln" data-act="go-w" data-id="'+(t?t.worker:"")+'" title="추천인재 · 근로자 정보 열기">추천</button>')});
+  return h.replace('data-act="pfc-open" data-id="'+x.id+'"','data-act="pfc-open" data-id="'+x.id+'"').replace('+ 포트폴리오에서</button>','+ 포트폴리오에서</button><button class="btn xs" data-act="talc-open" data-id="'+x.id+'" title="추천인재(대기 · 연계중)를 후보로 추가">+ 추천인재에서</button>')};
+
+/* ---------- 포트폴리오 동일인 (애매한 경우만 묻기) ---------- */
+function nmKey(s){return String(s||"").replace(/\[[^\]]*\]|\([^)]*\)|\s/g,"")}
+function nmNear(a,b){a=nmKey(a);b=nmKey(b);return!!a&&!!b&&(a===b||a.length>=2&&b.length>=2&&(a.indexOf(b)>=0||b.indexOf(a)>=0))}
+function pfFuzzy(e){var w=wk(e.worker);if(!w||e.cancelled)return[];var ph=normPhone(w.phone||"");
+  return DB.pf.filter(function(p){if(p.worker||(p.notsame||[]).indexOf(w.id)>=0)return false;var pp=normPhone(p.phone||""),samePh=ph.length>=9&&pp===ph,sameB=!!(p.birth&&w.birth&&p.birth===w.birth),sameN=String(p.name).trim()===String(w.name).trim();
+    if(sameN&&(samePh||(!pp&&sameB)))return false; /* 정확히 같으면 자동 연결(기존 규칙) */
+    return samePh&&!sameN||sameB&&nmNear(p.name,w.name)})}
+function pfFuzzyWhy(p,w){var r=[];if(normPhone(p.phone||"").length>=9&&normPhone(p.phone)===normPhone(w.phone||""))r.push("연락처 같음");if(p.birth&&p.birth===w.birth)r.push("생년월일 같음");if(String(p.name).trim()!==String(w.name).trim())r.push("이름 다름 ("+p.name+" / "+w.name+")");return r.join(" · ")}
+function pfFuzzyBar(e){var L=pfFuzzy(e),w=wk(e.worker);if(!L.length)return"";
+  return L.map(function(p){return'<div class="notebox pfsame"><b>포트폴리오 \''+esc(p.name)+(pfBirth2(p)?"("+esc(pfBirth2(p))+")":"")+'\'과 같은 사람 같아요</b><span class="small">'+esc(pfFuzzyWhy(p,w))+'</span><span class="acts"><button class="btn xs pri" data-act="pfsame-ok" data-p="'+p.id+'" data-e="'+e.id+'">합치기</button><button class="btn xs" data-act="pfsame-no" data-p="'+p.id+'" data-e="'+e.id+'">다른 사람</button></span></div>'}).join("")}
+var _pOnb53=pOnb;pOnb=function(e){var h=_pOnb53(e),b=pfFuzzyBar(e);if(!b)return h;var k=h.indexOf('<div class="ps');return k>=0?h.slice(0,k)+b+h.slice(k):h};
+var _onbNowLine53=onbNowLine;onbNowLine=function(e){var s=_onbNowLine53(e);return pfFuzzy(e).length?s+' <span class="b sm warn tip" tabindex="0" data-tip="포트폴리오에 같은 사람으로 보이는 기록이 있어요 · 열어서 합치기 / 다른 사람을 골라 주세요">동일인 확인</span>':s};
+function pfSameOk(pid,eid){var p=pfOf(pid),e=emp(eid),w=e&&wk(e.worker);if(!p||!w)return;var t1=termsOf(e.id)[0]||{};p.worker=w.id;if(!normPhone(p.phone||""))p.phone=w.phone||"";if(!p.birth)p.birth=w.birth||"";
+  var b=p.status;p.status="취업완료";p.hired_emp=e.id;p.hired_on=t1.start||TODAY;logChange("portfolios",p.id,p.name,"동일인 합치기",b,"취업완료 · "+((comp(e.company)||{}).name||"")+" · 근로자 "+w.name,"브이드림 내부");toast("포트폴리오를 "+w.name+"님과 합쳤어요 · 취업완료");render()}
+function pfSameNo(pid,eid){var p=pfOf(pid),e=emp(eid);if(!p||!e)return;p.notsame=(p.notsame||[]).concat([e.worker]);logChange("portfolios",p.id,p.name,"동일인 아님","",(wk(e.worker)||{}).name||"","브이드림 내부");toast("다른 사람으로 기록했어요 · 다시 묻지 않아요");render()}
+
+/* ---------- 포트폴리오 이관 양식 ---------- */
+var PF_TPL_H=["근로자명","생년월일","연락처","성별","장애유형","장애등급","희망직무유형","직무상세","희망근무시간","희망급여","직무레벨","포트폴리오","수급처","수급담당자","특이사항","매칭완료여부","등록일"];
+function pfTpl(){xlLoad().then(function(X){var wb=new X.Workbook(),ws=wb.addWorksheet("포트폴리오");ws.addRow(PF_TPL_H);ws.addRow(["홍길동","1995-03-14","010-1234-5678","남","지체장애","중증","디자인, 사무행정","포스터 · 상세페이지","주 5일 · 일 4시간 / 주 3일 · 일 6시간","최저시급","중","https://drive.google.com/…","복지관","김담당","","대기","2026-09-01"]);
+  ws.getRow(1).font={bold:true};ws.columns.forEach(function(c){c.width=16});ws.views=[{state:"frozen",ySplit:1}];
+  var g=wb.addWorksheet("안내");[["2행은 예시예요. 지우고 3행부터 넣어도 되고, 2행을 덮어써도 돼요."],["근로자명 · 희망직무유형은 필수예요. 희망직무유형은 "+JOBS.join(" · ")+" 중에서 쉼표로 여러 개."],["생년월일 · 연락처 중 하나는 꼭 넣어 주세요. 근로자 DB에 이름 + 연락처(또는 생년월일)가 같은 사람이 있으면 자동으로 연결돼요."],["희망근무시간이 여러 개면 ‘ / ’로 나눠 주세요. 예: 주 5일 · 일 4시간 / 주 3일 · 일 6시간"],["포트폴리오 칸은 링크(https://…)만 넣어 주세요. 파일은 등록 뒤 화면에서 올려요."],["매칭완료여부: 비우거나 ‘대기’ → 대기, ‘취업 · 완료’ → 취업완료, 그 밖 → 기타. 제안중 · 면접은 채용 요청에 후보로 연결하면 자동으로 바뀌어요."],["수급담당자는 화면에서 ‘등록자’로 보여요. 등록일을 비우면 올린 날로 들어가요."],["이름 + 생년월일이 이미 있는 사람은 건너뛰어요."]].forEach(function(r){g.addRow(r)});g.getColumn(1).width=110;
+  return wb.xlsx.writeBuffer().then(function(buf){var n="포트폴리오_이관양식.xlsx";dlBlob(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),n);toast(n+"을 내려받았어요")})}).catch(function(e){toast("양식을 만들지 못했어요: "+(e&&e.message||e))})}
+function v53Act(a,el){var D0=el.dataset;switch(a){
+  case"talc-open":talcOpen(D0.id);return true;case"talc-ok":talcOk();return true;case"talrec-add":talRecAdd(D0.id,D0.t);return true;
+  case"pfsame-ok":pfSameOk(D0.p,D0.e);return true;case"pfsame-no":pfSameNo(D0.p,D0.e);return true;
+  case"pf-tpl":pfTpl();return true}return false}
+
+/* ================================================================
+   v54. 흐름 정리: 신규입사자 등록 → 입구서(그 사람에게 하는 일)
+        · 등록 길 2개(채용 합격자 등록 · 신규입사자 등록) + 예외(입구서 없이 등록)
+        · 입구서 저장 = 신규입사자 등록 (묻지 않음) · '연결' 개념 없앰
+        · 신규입사자 관리: 등록된 사람만 · 입사 예정(입사일 전) / 입사자(입사일 지남) · 입구서 칸
+   ================================================================ */
+APP_VER="v54";APP_VER_ON="10/10";
+function inOfE(eid){return DB.intake.find(function(a){return a.emp===eid})}
+function inHold(){return DB.intake.filter(function(a){return!a.emp&&!a.completed&&a.pass!=="FAIL"})}
+function inHoldWhy(a){var m=inRegMiss(a);return m.length?m.join(" · ")+" 없음":(a.link_note||"정보는 다 있음 · 등록만 남음")}
+/* 저장하면 바로 등록 (묻지 않음) */
+inRegAsk=function(ids){var L=(ids||[]).map(inA).filter(function(a){return a&&!a.emp&&!a.completed&&a.pass!=="FAIL"});if(!L.length)return;var ok=[],hold=[],nm=null;
+  L.forEach(function(a){if(inRegMiss(a).length){hold.push(a.name+"("+inHoldWhy(a)+")");return}if(linkIntake(a))ok.push(a.name);else{var ex=workerByKey(a.phone,a.birth);if(ex&&ex.name!==String(a.name).trim()&&!nm)nm=a.id;else hold.push(a.name+"("+(a.link_note||"확인 필요")+")")}});
+  render();if(nm){inLink48(nm);return}
+  toast((ok.length?"신규입사자 "+ok.length+"명 등록 · 입구서가 함께 만들어졌어요":"")+(hold.length?(ok.length?" · ":"")+"등록 보류 "+hold.length+"명: "+hold.slice(0,3).join(", "):""))};
+/* 입구서 줄: 등록 상태 */
+inLinkTag=function(a){var e=a.emp&&emp(a.emp);if(e)return'<span class="dt">'+(e.cancelled?'<span class="b sm bad">입사취소</span>':'<button class="linkbtn" data-act="onb-go" data-e="'+e.id+'">신규입사자 ✓</button>')+'</span>';
+  if(a.completed||a.pass==="FAIL")return"";return'<span class="dt" style="color:var(--warn)"><span class="tip" tabindex="0" data-tip="'+esc(inHoldWhy(a)+" · [수정]에서 채우면 바로 등록돼요")+'">등록 보류 · '+esc(inHoldWhy(a))+'</span> · <button class="linkbtn" data-act="in-link" data-id="'+a.id+'">등록</button></span>'};
+/* 발송은 등록된 신규입사자만 · 입사취소면 빼기 */
+var _inReady54=inReady;inReady=function(a){var e=a&&a.emp&&emp(a.emp);if(e&&e.cancelled)return{ok:false,G:[{k:"x",l:"입사취소",m:["입사취소된 신규입사자"]}]};var R=_inReady54(a);
+  if(a&&!a.emp){R={ok:false,G:[{k:"r",l:"신규입사자 미등록",m:[inHoldWhy(a)]}].concat(R.G)}}return R};
+var _canPick54=canPick;canPick=function(a){var e=a.emp&&emp(a.emp);return _canPick54(a)&&!(e&&e.cancelled)};
+/* 입구서 화면: 등록 버튼 빼기 · 설명 */
+var _vIntake54=vIntake;vIntake=function(){var h=_vIntake54();
+  return h.replace(/<button class="btn pri" data-act="in-new">\+ 신규 등록<\/button>/,"").replace(/<button class="btn" data-act="rl-open"[^>]*>채용 합격자 불러오기<\/button>/,"")
+    .replace(/<p>최종 합격자에게 입사 구비서류 안내 메일을 보내고[^<]*<\/p>/,"<p>신규입사자에게 입사 구비서류 안내 메일을 보내고 서류 수신을 관리해요 · 대상은 신규입사자 관리에서 등록하면 자동으로 들어와요</p>")
+    .replace("진행 중인 입사자가 없습니다. + 신규 등록으로 추가하세요.","진행 중인 입구서가 없어요 · 신규입사자 관리에서 등록하면 여기로 들어와요")};
+/* 등록 창 이름 */
+var _inFormPanel54=inFormPanel;inFormPanel=function(){var h=_inFormPanel54(),F=S.inForm;if(!F)return h;var reg=F.mode==="new"||F.rows.some(function(r){var a=r.id&&inA(r.id);return a&&!a.emp&&!a.completed});
+  if(!reg)return h;return h.replace(/<div class="k">입구서 발송 · 입사자<\/div><h2>(신규 등록|데이터 수정)<\/h2>/,'<div class="k">신규입사자 관리 · 저장하면 입구서가 함께 만들어져요</div><h2>신규입사자 등록</h2>').replace('data-act="in-save">저장하기<','data-act="in-save">등록하기<')};
+/* 채용 합격자 등록 (불러오기 창 이름) */
+var _rrLoadOpen54=rrLoadOpen;rrLoadOpen=function(){_rrLoadOpen54();var m=$("#modal");if(!m)return;m.innerHTML=m.innerHTML.replace('<div class="k">입구서 발송</div><h2>채용 합격자 불러오기</h2>','<div class="k">신규입사자 관리</div><h2>채용 합격자 등록</h2>').replace("이미 불러왔거나 입사 등록한 사람은 빠져요","이미 등록한 사람은 빠져요 · 고르면 연락처 · 생년월일 · 이메일 확인 창이 열려요").replace("선택한 합격자 불러오기","선택한 합격자 등록").replace(/불러올 수 있음/g,"등록 가능")};
+function rrReg1(xid,i){go("onb");S.onbTab="plan";$("#modal").innerHTML='<input type="checkbox" class="rlchk" data-k="'+esc(xid)+'|'+(+i)+'" checked>';rrLoadOk()}
+/* 채용 요청 후보 줄: [직접 등록] → [신규입사자 등록] */
+var _rrRoundHtml54=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml54(x);
+  h=h.replace(/<span class="b sm p">입구서 불러옴<\/span> (<button class="btn xs[^"]*" data-act="ci-open" data-id="([^"]+)" data-i="(\d+)">)/g,function(m,b,id,i){var a=cdIntake(id,i),e=a&&a.emp&&emp(a.emp);return(e?'<button class="b sm ok pfln" data-act="onb-go" data-e="'+e.id+'">신규입사자 등록됨</button> ':'<span class="b sm warn">등록 보류</span> ')+b});
+  return h.replace(/ <button class="btn xs" data-act="rr-hire" data-id="([^"]+)" data-i="(\d+)"[^>]*>직접 등록<\/button>/g,function(m,id,i){var c=(x.cands||[])[+i]||{};if(cdIntake(id,i)||c.hired)return"";return ciOk(c.ci)?' <button class="btn xs act" data-act="rr-reg" data-id="'+id+'" data-i="'+i+'">신규입사자 등록</button>':""})};
+/* ---- 신규입사자 관리 ---- */
+var _onbRows54=onbRows;onbRows=function(){return _onbRows54().filter(function(e){var t=termsOf(e.id)[0];return t&&t.start&&t.start<=TODAY})};
+onbPlanRows2=function(){var q=(S.qw||"").trim();return DB.employments.filter(function(e){if(e.cancelled)return false;var t=termsOf(e.id)[0];return t&&t.start&&t.start>TODAY})
+  .map(function(e){return{k:"em",id:e.id,e:e,name:(wk(e.worker)||{}).name||"",cid:e.company,reg:empReg(e),cs:termsOf(e.id)[0].start}})
+  .filter(function(x){return(!ONB_SCOPE||scopeOK(x.cid))&&qcOK(x.cid)&&(!q||String(x.name).indexOf(q)>=0)})};
+onbPlanRows=onbPlanRows2;
+function inCell(e){var a=inOfE(e.id);if(!a)return'<td class="c small muted">—</td>';var s=a.completed?'<span class="b sm ok">완료</span>':!a.mail_sent?'<span class="b sm warn">미발송</span>':rcvBadge(a);
+  return'<td class="nowrap">'+s+' <button class="btn xs" data-act="in-open" data-id="'+a.id+'">열기</button></td>'}
+var IN_COL={k:"inm",h:"입구서",t:"text",f:function(x){var e=x&&x.k==="em"?x.e:x,a=e&&inOfE(e.id);return!a?"":a.completed?"완료":!a.mail_sent?"미발송":RCV[a.receive||"pending"][0]}};
+onbPlanHtml=function(){var R=onbPlanRows2();if(!(tst("onbp").sort&&tst("onbp").sort.k))R.sort(function(a,b){return String(a.cs).localeCompare(String(b.cs))});
+  var cols=[{k:"rg",h:"등록일",t:"date",v:function(x){return String(x.reg).slice(0,10)}},{k:"w",h:"근로자",t:"text",f:function(x){return x.name}},{k:"ph",h:"연락처",t:"none"},{k:"c",h:"기업",t:"text",f:function(x){return(comp(x.cid)||{}).name||""}},
+    {k:"ty",h:"입사 구분",t:"text",f:function(x){return x.e.hire_type}},{k:"vs",h:"브이워크 시작일",al:"c",t:"date",v:function(x){return x.e.vwork_start}},{k:"cs",h:"입사일",t:"date",v:function(x){return x.cs}},{k:"ce",h:"계약만료일",t:"date",v:function(x){return(termsOf(x.id)[0]||{}).end}},
+    IN_COL,{k:"st",h:"상태",t:"text",f:function(x){return statusOf(x.e)}},{k:"dis",h:"장애 재판정",t:"none"},ONB_NT_COL,{k:"vw",h:"브이워크 가입",t:"none",al:"c"},{k:"vo",h:"브이원 등록",t:"none",al:"c"},{k:"cx",h:"입사취소",t:"none",al:"c"}];
+  return'<div class="applied">입사 예정 '+R.length+'명 · 등록했고 입사일이 아직 안 된 사람 (입사일 순)</div><div>'+dtable("onbp",cols,R,function(x){var e=x.e,t1=termsOf(e.id)[0],w=wk(e.worker);
+    return'<tr class="'+(S.onbSel===e.id?"sel":"")+'" data-act="onb-open" data-e="'+e.id+'"><td class="num small">'+esc(String(x.reg).slice(2,10))+'</td><td>'+wlink(e.worker)+onbNowLine(e)+'</td><td>'+mtel(w)+'</td><td>'+clink(e.company)+'</td><td>'+esc(e.hire_type)+jobWarn(e)+'</td>'+
+      '<td class="num">'+(e.vwork_start||"—")+'</td><td class="num">'+t1.start+'</td><td class="num">'+(t1.end||"무기")+'</td>'+inCell(e)+'<td>'+stBadge(statusOf(e))+'</td><td>'+disLabel(e.id)+'</td>'+
+      onbNoteCell(e)+'<td class="nowrap"><input type="checkbox" data-ch="onb-flip" data-e="'+e.id+'"'+(e.flip_joined?" checked":"")+' aria-label="브이워크 가입">'+vwBadge(e)+'</td><td><input type="checkbox" data-ch="onb-vone" data-e="'+e.id+'"'+(e.vone?" checked":"")+' aria-label="브이원 정보 등록"></td>'+
+      '<td><button class="btn xs danger" data-act="onb-cancel" data-e="'+e.id+'">입사취소</button></td></tr>'},"입사 예정자가 없어요 · [채용 합격자 등록] 또는 [신규입사자 등록]으로 추가해요")+'</div>'};
+/* 맨 위 안내: 등록 기다리는 합격자 · 등록 보류 · 입구서 미발송 */
+inWarnBox=function(){var P=rrLoadable().filter(function(o){return o.ok}),H=inHold(),U=DB.intake.filter(function(a){var e=a.emp&&emp(a.emp);return e&&!e.cancelled&&!a.mail_sent&&!a.completed}),out="";
+  if(P.length)out+='<div class="inwr"><span><b>채용 합격자 '+P.length+'명</b>이 등록을 기다려요 · '+esc(P.slice(0,3).map(function(o){return o.c.name}).join(", ")+(P.length>3?" 외 "+(P.length-3)+"명":""))+'</span><button class="btn xs act" data-act="rl-open">채용 합격자 등록</button></div>';
+  if(H.length)out+='<div class="inwr"><span><b>등록 보류 '+H.length+'건</b> · '+H.slice(0,3).map(function(a){return esc(a.name)+' <span class="small muted">('+esc(inHoldWhy(a))+')</span>'}).join(", ")+(H.length>3?" 외":"")+'</span><span style="display:flex;gap:6px">'+(H.some(function(a){return!inRegMiss(a).length})?'<button class="btn xs act" data-act="onb-regall">한 번에 등록</button>':"")+'<button class="btn xs" data-act="in-edit" data-id="'+H[0].id+'">'+esc(H[0].name)+' 수정</button></span></div>';
+  if(U.length)out+='<div class="inwr"><span><b>입구서 미발송 '+U.length+'명</b> · '+esc(U.slice(0,3).map(function(a){return a.name}).join(", ")+(U.length>3?" 외":""))+'</span><button class="btn xs" data-act="view" data-v="intake">입구서 발송으로</button></div>';
+  return out?'<div class="inwarn onbtop">'+out+'</div>':""};
+function onbRegAll(){var n=0,bad=[];inHold().forEach(function(a){if(inRegMiss(a).length)return;if(linkIntake(a))n++;else bad.push(a.name)});toast(n+"명 등록했어요"+(bad.length?" · 확인 필요: "+bad.join(", ")+" (입구서 줄의 [등록])":""));render()}
+var _vOnb54=vOnb;vOnb=function(){var h=_vOnb54();
+  h=h.replace(/<button class="btn pri" data-act="onb-new"[^>]*>신규 입사 직접 등록<\/button>/,'<button class="btn" data-act="rl-open" title="채용 요청의 최종 합격자(계약 정보 입력됨)를 등록해요">채용 합격자 등록</button><button class="btn pri" data-act="onb-reg" title="채용 요청 없이 오는 사람 · 저장하면 입구서가 함께 만들어져요">신규입사자 등록</button><button class="btn sm" data-act="onb-new" title="입구서가 필요 없는 예외(위탁 계약 · 대체 다건 등)">입구서 없이 등록</button>')
+   .replace(/<p>등록된 순서로 보여요[^<]*<\/p>/,"<p>채용 합격자 · 신규입사자를 등록하면 입구서가 함께 만들어져요 · 입사일 전은 ‘입사 예정’, 입사일이 지나면 ‘입사자’</p>")
+   .replace('data-v="emp">입사자','data-v="emp">입사자 (입사일 지남)').replace('data-v="plan">입사 예정','data-v="plan">입사 예정');
+  if(S.inForm&&!/aria-label="입사자 등록"/.test(h))h+=inFormPanel();return h};
+function v54Act(a,el){var D0=el.dataset;switch(a){
+  case"onb-reg":S.onbSel=null;S.onbRows=null;inFormOpen("new",[]);render();return true;
+  case"onb-regall":onbRegAll();return true;
+  case"rr-reg":rrReg1(D0.id,D0.i);return true;
+  case"onb-go":(function(){var e=emp(D0.e);if(!e)return;go("onb");var s=(termsOf(e.id)[0]||{}).start||"";S.onbTab=s>TODAY?"plan":"emp";S.onbFrom="";S.onbTo="";S.onbSel=e.id;render()})();return true}return false}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -8873,7 +9015,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
@@ -9016,7 +9158,7 @@ TB.push({k:"issues",t:"issue_reports",cols:[["id"],["table","case_table"],["tid"
   TB.push({k:"dreps",t:"daily_reports",cols:[["id"],["staff","staff_id"],["date","report_date","date"],["data",null,"obj"]]});
   TB.push({k:"rr",t:"recruit_requests",del:true,cols:[["id"],["company","company_id"],["kind"],["requested","requested_on","date"],["start_date",null,"date"],["start_note"],["due_date",null,"date"],["wk_days",null,"int"],["day_hours"],["break_min",null,"int"],["time_note"],["weekly_off"],["pay_type"],["pay_amount",null,"int"],["work_type"],["work_note"],["term_months",null,"int"],["probation_months",null,"int"],["dis_level"],["dis_exclude",null,"json"],["dis_require",null,"json"],["jobs",null,"json"],["headcount",null,"int"],["replaced",null,"json"],["replaced_names"],["extra"],["status"],["recruiter","recruiter_id"],["requester","requester_name"],["auto","auto_created","bool"],["raw"],["created","created_at","tsm"],["vm","vmatch_uploaded","bool"],["vm_on","vmatch_uploaded_on","date"]]});
   TB.push({k:"rrr",t:"recruit_rounds",del:true,cols:[["id"],["req","request_id"],["seq",null,"int"],["channel"],["notice"],["docs"],["comm",null,"json"],["cands",null,"json"],["raw"],["due","due_date","date"],["ho_on","handoff_on","date"],["ho_n","handoff_count","int"],["ho_by","handoff_by"]]});
-  TB.push({k:"pf",t:"portfolios",del:true,cols:[["id"],["worker","worker_id"],["name"],["phone"],["birth","birth_date","date"],["gender"],["dis_type"],["dis_level"],["jobs",null,"json"],["job_detail"],["wish_hours"],["wish_pay"],["level","job_level"],["files",null,"json"],["note"],["proposed"],["status"],["source"],["source_mgr"],["consent",null,"bool"],["consent_on",null,"date"],["keep_until",null,"date"],["hired_emp","hired_employment_id"],["hired_on",null,"date"],["by","created_by_name"],["created","created_at","tsm"]]});
+  TB.push({k:"pf",t:"portfolios",del:true,cols:[["id"],["worker","worker_id"],["name"],["phone"],["birth","birth_date","date"],["gender"],["dis_type"],["dis_level"],["jobs",null,"json"],["job_detail"],["wish_hours"],["wish_pay"],["level","job_level"],["files",null,"json"],["note"],["proposed"],["status"],["source"],["source_mgr"],["consent",null,"bool"],["consent_on",null,"date"],["keep_until",null,"date"],["hired_emp","hired_employment_id"],["hired_on",null,"date"],["notsame","not_same","json"],["by","created_by_name"],["created","created_at","tsm"]]});
 })();
 /* v24: 기관 · 보호자 관계 · 월간 레포트 · 진행 특이사항 · 메모 기준 기업 */
 (function(){var f=function(k){return TB.find(function(d){return d.k===k})};
