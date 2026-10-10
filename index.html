@@ -9174,7 +9174,7 @@ var _isDeco71=isDeco;isDeco=function(h){h=_isDeco71(h);if(S.view!=="todo"||h.ind
 /* ================================================================
    v72. 데이터 업로드 ⑥ 대체 대상 일괄 입력 (이름 + 계약시작일/플립시작일로 찾기 · 기업명은 안 씀 · 기존 값 덮어쓰지 않음)
    ================================================================ */
-APP_VER="v73";APP_VER_ON="10/11";
+APP_VER="v74";APP_VER_ON="10/11";
 function rplParse(ws){var hr=0,H={};for(var r=1;r<=8;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|");if(/이름/.test(v)&&/계약시작/.test(v)){hr=r;break}}if(!hr)return{err:"‘이름 · 계약시작일’ 머리글을 못 찾았어요"};
   var vals=ws.getRow(hr).values;vals.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});var gi=H["구분"],ti=H["대체대상"]||H["대체자"]||H["대체"];if(!ti&&gi)ti=gi+1;
   var g=function(row,i){return i?rrCellTxt(row.values[i]).trim():""},col=function(row,k){return g(row,H[k])},L=[];
@@ -9187,7 +9187,7 @@ function rplMatch(o){var W=DB.workers.filter(function(w){return String(w.name).t
 function rplJudge(res){var e=res.e,o=res.o;if(["신규","추가","대체"].indexOf(o.kind)<0&&o.kind){var mk=o.kind.match(/^(.*?)\(?대체\)?$/);if(mk){if(!o.target&&mk[1])o.target=mk[1].replace(/[\s·\-()]+$/,"").trim();o.kind="대체"}else if(/신규/.test(o.kind))o.kind="신규";else if(/추가/.test(o.kind))o.kind="추가"}if(["신규","추가","대체"].indexOf(o.kind)<0&&o.target)o.kind="대체";if(["신규","추가","대체"].indexOf(o.kind)<0){res.st="skip";res.msg="구분이 비어 있거나 알 수 없음 ("+(o.kind||"빈칸")+")";return res}
   if(o.kind!=="대체"){res.st=e.hire_type===o.kind?"same":"ok";res.msg=e.hire_type===o.kind?"이미 "+o.kind:"입사 구분 "+(e.hire_type||"없음")+" → "+o.kind;return res}
   if(!o.target){res.st="warn";res.msg="대체 대상 미지정 · 입사 구분만 '대체'로";return res}
-  res.tgL=DB.employments.filter(function(x){var w=wk(x.worker);return x.id!==e.id&&x.company===e.company&&w&&String(w.name).trim()===o.target});
+  var cs0=(termsOf(e.id)[0]||{}).start||"";res.tgL=DB.employments.filter(function(x){var w=wk(x.worker);if(x.id===e.id||x.worker===e.worker||x.company!==e.company||!w||String(w.name).trim()!==o.target||x.cancelled)return false;var en=effEnd(x);return!!en&&(!cs0||en<=addD(cs0,30))});
   if(res.tgL.length){res.tg=res.tgL.slice().sort(function(a,b){return String(effEnd(b)||"9999").localeCompare(String(effEnd(a)||"9999"))})[0]}
   if(e.replaced&&res.tg&&e.replaced!==res.tg.id||e.replaced&&!res.tg){res.st="keep";res.msg="이미 다른 대체 대상이 입력돼 있어 그대로 둠 ("+((wk((emp(e.replaced)||{}).worker)||{}).name||"")+")";return res}
   if(e.replaced&&res.tg&&e.replaced===res.tg.id&&e.hire_type==="대체"){res.st="same";res.msg="이미 입력됨";return res}
@@ -9210,7 +9210,12 @@ var _vMig72=vMig;vMig=function(){var h=_vMig72();if(S.role!=="admin")return h;va
 function v72Change(t,d){if(d.ch==="rpl-imp"&&t.files&&t.files[0]){rplFile(t.files[0]);t.value="";return true}
   if(d.ch==="rpl-pick"){var x=S.rplImp[+d.i],e=x&&emp(t.value);if(!e)return true;x.e=e;rplJudge(x);render();return true}
   if(d.ch==="rpl-tg"){var y=S.rplImp[+d.i],g=y&&emp(t.value);if(!g)return true;y.tg=g;render();return true}return false}
-function v72Act(a,el){if(a==="rpl-ok"){rplApply();return true}if(a==="rpl-cancel"){S.rplImp=null;render();return true}return false}
+function v72Act(a,el){if(a==="rpl-fix"){rplFix();return true}if(a==="rpl-ok"){rplApply();return true}if(a==="rpl-cancel"){S.rplImp=null;render();return true}return false}
+
+/* 잘못 연결된 대체 대상 정리: 대상이 같은 사람이거나, 새 계약 시작 뒤에도 계속 재직(종료일 없음 · 시작 30일 뒤까지 근무)이면 이름만 남기고 연결 해제 */
+function rplBad(){return DB.employments.filter(function(e){if(!e.replaced||e.cancelled)return false;var r=emp(e.replaced);if(!r)return true;var cs0=(termsOf(e.id)[0]||{}).start||"",en=effEnd(r);return r.worker===e.worker||r.company!==e.company||!en||(cs0&&en>addD(cs0,30))})}
+function rplFix(){var L=rplBad(),n=0;L.forEach(function(e){var r=emp(e.replaced),nm=r?(wk(r.worker)||{}).name||"":"";logChange("workers",e.worker,(wk(e.worker)||{}).name||"","대체 대상 연결 해제 (재직 중 동명이인 · 이름만 유지)",nm,nm?nm+" (이름만)":"","브이드림 내부");if(nm&&!e.replaced_name)e.replaced_name=nm;e.replaced="";n++});toast(n+"건 정리했어요 · 이름만 남겼어요");render()}
+var _vMig73=vMig;vMig=function(){var h=_vMig73();if(S.role!=="admin")return h;var B=rplBad();if(!B.length)return h;return h+'<div class="dcard" style="margin-top:10px;border-color:#F0D9A0;background:#FFF8E6"><div class="dcard-h"><b>잘못 연결된 대체 대상 '+B.length+'건</b><span class="small muted">대상이 지금도 재직 중이거나(동명이인) 같은 사람으로 연결된 건</span></div><div class="small" style="max-height:160px;overflow:auto">'+B.slice(0,40).map(function(e){var r=emp(e.replaced);return esc((wk(e.worker)||{}).name||"")+' · '+esc((comp(e.company)||{}).name||"")+' → '+esc(r?(wk(r.worker)||{}).name+" (종료 "+(effEnd(r)||"없음")+")":"없는 고용 건")}).join("<br>")+'</div><div class="foot" style="margin-top:8px;text-align:right"><button class="btn sm pri" data-act="rpl-fix">연결 해제하고 이름만 남기기</button></div></div>'};
 
 /* ============ 렌더 ============ */
 function renderMain(){
