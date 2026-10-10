@@ -618,6 +618,7 @@ td:has(>.nowb),td:has(>a+.nowb),td:has(.nowb){white-space:nowrap}.nowb .b{margin
 .btn.act.pri,.btn.pri.act{background:#E6F4F1;color:#0F6B63;border-color:#B5DDD6}.btn.act.pri:hover{background:#D7EEE9}
 .onbcols{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start;grid-column:1/-1}.onbc{min-width:0}.onbc>.ps{border-right:0}@media(max-width:900px){.onbcols{grid-template-columns:1fr}}
 .tlr{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:13px}.tlr:first-of-type{border-top:0}.tlr .grow{flex:1}.rplk{cursor:pointer;border:0;margin-left:6px}
+.rplk{text-decoration:underline;text-underline-offset:2px}.rptx{background:#F1F0F5;color:#6B6880}.emp.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px}
 </style>
 </head>
 <body>
@@ -9128,7 +9129,7 @@ APP_VER="v69";
    v70. 추천인재 연계 이력(여러 번) · 계약만료 종료 때 추천인재 유지 묻기 · 메뉴별 내 담당/전체 · 메뉴별 한 페이지 개수
         · 계약 정보 뒤 '채용파트 등록 대기' · 신규입사자 상세 2단 고정 · 대체 대상 링크
    ================================================================ */
-APP_VER="v70";APP_VER_ON="10/11";
+APP_VER="v75";APP_VER_ON="10/11";
 /* ---- 1. 연계 이력 ---- */
 var TAL_LRES=["진행 중","불합격","본인 포기","입사"];
 function talLinksSync(){(DB.talent||[]).forEach(function(t){if(!Array.isArray(t.links))t.links=[];
@@ -9156,13 +9157,13 @@ function v70Change(t,d){if(d.ch==="psize"){lsS("vw-ps-"+S.me+"-"+S.view,t.value)
 function isRrStaff(){return S.role==="admin"||(st(S.me)||{}).part==="채용파트"}
 var _rrRoundHtml70=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml70(x);if(isRrStaff())return h;return h.replace(/<button class="btn xs act" data-act="rr-reg"[^>]*>신규입사자 등록<\/button>/g,'<span class="b sm t tip" tabindex="0" data-tip="계약 정보가 입력됐어요 · 채용파트가 신규입사자로 등록해요">채용파트 등록 대기</span>')};
 /* ---- 4. 신규입사자 상세 2단 고정 · 5. 대체 대상 링크 ---- */
-function replLink(e){if(e.hire_type!=="대체")return"";var r=e.replaced&&emp(e.replaced),w=r&&wk(r.worker);if(w)return' <button class="b sm p rplk" data-act="rpl-go" data-e="'+r.id+'" title="대체 대상 계약 정보 보기">'+esc(w.name)+' 대체</button>';return e.replaced_name?' <span class="b sm p">'+esc(e.replaced_name)+' 대체</span>':' <span class="b sm warn">대체 대상 미지정</span>'}
+function replLink(e){if(e.hire_type!=="대체")return"";var r=e.replaced&&emp(e.replaced),w=r&&wk(r.worker);if(w)return' <button class="b sm p rplk" data-act="rpl-go" data-e="'+r.id+'" title="눌러서 대체 대상 계약 정보 보기">'+esc(w.name)+' 대체 ↗</button>';return e.replaced_name?' <span class="b sm tip rptx" tabindex="0" data-tip="DB에 없는 사람이라 이름만 기록돼 있어요 (이관 전 퇴사자 등)">'+esc(e.replaced_name)+' 대체 · 기록만</span>':' <span class="b sm warn">대체 대상 미지정</span>'}
 var _pOnb70=pOnb;pOnb=function(e){var h=_pOnb70(e);try{var d=document.createElement("div");d.innerHTML=h;var a=d.firstElementChild;if(!a)return h;var L=document.createElement("div"),R=document.createElement("div");L.className="onbc";R.className="onbc";
   [].slice.call(a.children).forEach(function(c){if(!c.classList.contains("ps"))return;var t=((c.querySelector("h3")||{}).textContent||"");if(/장애 정보|장애 재판정|특이사항/.test(t))R.appendChild(c);else L.appendChild(c)});
   var tl=L.querySelector("h3");if(tl&&/계약기간/.test(tl.textContent))tl.insertAdjacentHTML("beforeend",replLink(e));
   var w=document.createElement("div");w.className="onbcols";w.appendChild(L);w.appendChild(R);a.appendChild(w);return d.innerHTML}catch(err){return h}};
 var _dtableRpl70=dtable;dtable=function(k,cols,rows,rowFn,empty){if((k==="onb"||k==="onbp")&&rowFn){var rf=rowFn;rowFn=function(x){var s=rf(x),e=x&&x.k==="em"?x.e:x;if(!e||e.hire_type!=="대체")return s;return s.replace(">"+esc(e.hire_type)+jobWarn(e)+"<",">"+esc(e.hire_type)+jobWarn(e)+replLink(e)+"<")}}return _dtableRpl70(k,cols,rows,rowFn,empty)};
-function v70Act(a,el){if(a!=="rpl-go")return false;var r=emp(el.dataset.e);if(!r)return true;S.wm=r.worker;S.wkPT="emp";S.wkE=r.id;render();return true}
+function v70Act(a,el){if(a!=="rpl-go")return false;var r=emp(el.dataset.e);if(!r)return true;S.wm=r.worker;S._wmLast=r.worker;S.wkPT="emp";S.empOpen=S.empOpen||{};S.empOpen[r.id]=true;S.rplHi=r.id;render();setTimeout(function(){var c=document.querySelector('.emp [data-dk^="job:'+r.id+'|"]');c=c&&c.closest(".emp");if(c){c.scrollIntoView({block:"center"});c.classList.add("rplhi")}},60);return true}
 
 /* v71. '000 대체' 링크: 내 할 일(계약 건 할 일) · 근로자 DB 계약 정보에도 */
 APP_VER="v71";APP_VER_ON="10/11";
@@ -9174,7 +9175,7 @@ var _isDeco71=isDeco;isDeco=function(h){h=_isDeco71(h);if(S.view!=="todo"||h.ind
 /* ================================================================
    v72. 데이터 업로드 ⑥ 대체 대상 일괄 입력 (이름 + 계약시작일/플립시작일로 찾기 · 기업명은 안 씀 · 기존 값 덮어쓰지 않음)
    ================================================================ */
-APP_VER="v74";APP_VER_ON="10/11";
+APP_VER="v75";APP_VER_ON="10/11";
 function rplParse(ws){var hr=0,H={};for(var r=1;r<=8;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|");if(/이름/.test(v)&&/계약시작/.test(v)){hr=r;break}}if(!hr)return{err:"‘이름 · 계약시작일’ 머리글을 못 찾았어요"};
   var vals=ws.getRow(hr).values;vals.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});var gi=H["구분"],ti=H["대체대상"]||H["대체자"]||H["대체"];if(!ti&&gi)ti=gi+1;
   var g=function(row,i){return i?rrCellTxt(row.values[i]).trim():""},col=function(row,k){return g(row,H[k])},L=[];
