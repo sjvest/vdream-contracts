@@ -7768,7 +7768,7 @@ var _inLinkTag34=inLinkTag;inLinkTag=function(a){var h=_inLinkTag34(a),e=a.emp&&
 var _fromRow34=fromRow;fromRow=function(d,r){var o=_fromRow34(d,r);if(d.k==="employments")o._created=r.created_at?toLocalStamp(r.created_at):"";return o};
 function empReg(e){if(e._created==null){var t=termsOf(e.id)[0];e._created=LIVE?stamp():((t&&t.start)||TODAY)+" 09:00"}return e._created||""}
 onbRows=function(){var f=S.onbFrom,t=S.onbTo;return DB.employments.filter(function(e){var t1=termsOf(e.id)[0];if(!t1||!t1.start)return false;var d=empReg(e).slice(0,10);return(!f||d>=f)&&(!t||d<=t)}).filter(function(e){return(!ONB_SCOPE||scopeOK(e.company))&&qcOK(e.company)&&qwOK(e.worker)})};
-var _dtable34=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="onb"){cols=[{k:"rg",h:"등록일",t:"date",v:function(e){return empReg(e)}}].concat(cols);if(!(tst("onb").sort&&tst("onb").sort.k))rows=rows.slice().sort(function(a,b){return empReg(b).localeCompare(empReg(a))});var rf=rowFn;rowFn=function(e){var s=rf(e),i=s.indexOf(">");return i<0?s:s.slice(0,i+1)+'<td class="num small">'+esc(empReg(e).slice(2,16))+'</td>'+s.slice(i+1)}}return _dtable34(k,cols,rows,rowFn,empty)};
+var _dtable34=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="onb"){cols=[{k:"rg",h:"등록일",t:"date",v:function(e){return empReg(e)}}].concat(cols);if(!(tst("onb").sort&&tst("onb").sort.k))rows=rows.slice().sort(function(a,b){return empReg(b).localeCompare(empReg(a))});var rf=rowFn;rowFn=function(e){var s=rf(e),i=s.indexOf(">");return i<0?s:s.slice(0,i+1)+'<td class="num small">'+esc(empReg(e).slice(2,10))+'</td>'+s.slice(i+1)}}return _dtable34(k,cols,rows,rowFn,empty)};
 function onbPlanRows(){var L=[],seen={},q=(S.qw||"").trim();
   DB.intake.forEach(function(a){if(a.emp||a.pass==="FAIL")return;var c=rcCand(a),r=rcReq(a);if(a.rrr)seen[a.rrr+"|"+a.rri]=1;
     L.push({id:"in:"+a.id,name:a.name,cid:a.cid,src:c?"채용 합격 · 입구서":"입구서",date:a.cs||"",reg:a.created||"",step:a.mail_sent?"입구서 발송됨 · 연결 대기":"입구서 미발송",who:r?rrRecruiter(r):assignee(a.cid).who,act:'<button class="btn xs" data-act="in-open" data-id="'+a.id+'">입구서 열기</button>'})});
@@ -8274,6 +8274,33 @@ function v39Change(t,d){
   if(d.ch==="ci-flip"){if(S.ciF)S.ciF.flipT=true;ciSync();return true}
   if(d.ch==="ci-ce"){if(S.ciF)S.ciF.m=0;ciChips('[data-act="ci-term"]',function(){return false});return true}
   return false}
+
+/* ================================================================
+   v40. 신규입사자: 등록일 날짜만 · 입사 예정 탭을 입사자 탭과 같은 열로
+   ================================================================ */
+function onbPlanRows2(){var L=[],seen={},q=(S.qw||"").trim();
+  DB.intake.forEach(function(a){if(a.emp||a.pass==="FAIL"||a.completed)return;var r=rcReq(a);if(a.rrr)seen[a.rrr+"|"+a.rri]=1;
+    L.push({k:"in",id:a.id,name:a.name,phone:a.phone||"",cid:a.cid,ht:a.ht||"신규",vs:a.flip||"",cs:a.cs||"",ce:a.ce||"",reg:a.created||"",st:a.mail_sent?"입구서 발송됨 · 연결 대기":"입구서 미발송",sc:"",rr:r?r.id:""})});
+  DB.rrr.forEach(function(x){var r=rcOf(x.req);if(!r)return;(x.cands||[]).forEach(function(c,i){if(c.final!=="합격"||c.hired||seen[x.id+"|"+i])return;var ci=c.ci||{},ok=ciOk(ci);
+    L.push({k:"rc",id:x.id+":"+i,name:c.name||"",phone:"",cid:r.company,ht:r.kind||"신규",vs:ci.flip||"",cs:ci.cs||r.start_date||"",ce:ci.ce||"",reg:c.final_on||String(r.created||"").slice(0,10),st:ok?"채용 합격 · 불러오기 가능":"채용 합격 · 계약정보 미입력",sc:"p",rr:r.id})})});
+  DB.employments.forEach(function(e){if(e.cancelled)return;var t=termsOf(e.id)[0];if(!t||!t.start||t.start<=TODAY)return;L.push({k:"em",id:e.id,e:e,name:(wk(e.worker)||{}).name||"",cid:e.company,reg:empReg(e),cs:t.start})});
+  return L.filter(function(x){return(!ONB_SCOPE||scopeOK(x.cid))&&qcOK(x.cid)&&(!q||String(x.name).indexOf(q)>=0)})}
+onbPlanRows=onbPlanRows2;
+onbPlanHtml=function(){var R=onbPlanRows2();if(!(tst("onbp").sort&&tst("onbp").sort.k))R.sort(function(a,b){return String(b.reg).localeCompare(String(a.reg))});
+  var E=function(x){return x.k==="em"?x.e:null},T=function(x){var e=E(x);return e?termsOf(e.id)[0]:null};
+  var cols=[{k:"rg",h:"등록일",t:"date",v:function(x){return String(x.reg).slice(0,10)}},{k:"w",h:"근로자",t:"text",f:function(x){return x.name}},{k:"ph",h:"연락처",t:"none"},{k:"c",h:"기업",t:"text",f:function(x){return(comp(x.cid)||{}).name||""}},
+    {k:"ty",h:"입사 구분",t:"text",f:function(x){var e=E(x);return e?e.hire_type:x.ht}},{k:"vs",h:"브이워크 시작일",al:"c",t:"date",v:function(x){var e=E(x);return e?e.vwork_start:x.vs}},{k:"cs",h:"입사일",t:"date",v:function(x){return x.cs}},{k:"ce",h:"계약만료일",t:"date",v:function(x){var t=T(x);return t?t.end:x.ce}},
+    {k:"st",h:"상태",t:"text",f:function(x){var e=E(x);return e?statusOf(e):x.st}},{k:"dis",h:"장애 재판정",t:"none"},{k:"vw",h:"브이워크 가입",t:"none",al:"c"},{k:"vo",h:"브이원 등록",t:"none",al:"c"},{k:"cx",h:"입사취소",t:"none",al:"c"}];
+  var dash='<td class="c muted">—</td>';
+  return'<div class="applied">입사 예정 '+R.length+'명 · 입사일이 오늘 이후인 등록 건 + 아직 등록 전인 입구서 대상 · 채용 합격자</div><div>'+dtable("onbp",cols,R,function(x){var reg='<td class="num small">'+esc(String(x.reg).slice(2,10))+'</td>';
+    if(x.k==="em"){var e=x.e,t1=termsOf(e.id)[0],w=wk(e.worker);
+      return'<tr class="'+(S.onbSel===e.id?"sel":"")+'" data-act="onb-open" data-e="'+e.id+'">'+reg+'<td>'+wlink(e.worker)+(typeof onbUnsent==="function"&&onbUnsent(e.id)?' <span class="b sm warn">입구서 미발송</span>':"")+'</td><td>'+mtel(w)+'</td><td>'+clink(e.company)+'</td><td>'+esc(e.hire_type)+jobWarn(e)+'</td>'+
+        '<td class="num">'+(e.vwork_start||"—")+'</td><td class="num">'+t1.start+'</td><td class="num">'+(t1.end||"무기")+'</td><td>'+stBadge(statusOf(e))+'</td><td>'+disLabel(e.id)+'</td>'+
+        '<td><input type="checkbox" data-ch="onb-flip" data-e="'+e.id+'"'+(e.flip_joined?" checked":"")+' aria-label="브이워크 가입"></td><td><input type="checkbox" data-ch="onb-vone" data-e="'+e.id+'"'+(e.vone?" checked":"")+' aria-label="브이원 정보 등록"></td>'+
+        '<td><button class="btn xs danger" data-act="onb-cancel" data-e="'+e.id+'">입사취소</button></td></tr>'}
+    var late=x.cs&&x.cs<TODAY,act=x.k==="in"?'<button class="btn xs act" data-act="in-open" data-id="'+x.id+'">입구서 열기</button>':'<button class="btn xs" data-act="rr-go" data-id="'+x.rr+'">채용 요청</button>';
+    return'<tr>'+reg+'<td><b>'+esc(x.name)+'</b></td><td>'+(x.phone?telHtml(x.phone):'<span class="small muted">입구서에서 입력</span>')+'</td><td>'+(x.cid?clink(x.cid):"—")+'</td><td>'+esc(x.ht)+'</td>'+
+      '<td class="num">'+esc(x.vs||"—")+'</td><td class="num">'+esc(x.cs||"—")+(late?' <span class="b sm bad">입사일 지남</span>':"")+'</td><td class="num">'+esc(x.ce||"—")+'</td><td><span class="b sm '+x.sc+'">'+esc(x.st)+'</span></td>'+dash+dash+dash+'<td>'+act+'</td></tr>'},"입사 예정자가 없어요.")+'</div>'};
 
 /* ============ 렌더 ============ */
 function renderMain(){
