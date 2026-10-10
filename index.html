@@ -2875,7 +2875,7 @@ function migCols(set){
   var cn=function(r){var cid=r.x&&r.x.cid;return mt(r.d.code)+(cid?" → "+comp(cid).name:"")};
   return{app:[["이름",function(r){return r.d.name}],["연락처",function(r){return mt(r.d.phone)}],["이메일",function(r){return r.d.email}],["기업",cn],["계약시작일",function(r){return mt(r.d.cs)}],["발송",function(r){return mYes(r.d.sent)?"발송":"미발송"}],["완료",function(r){return mYes(r.d.done)?"완료":""}]],
     rr:[["입사자",function(r){return r.d.aname}],["요청일시",function(r){return mt(r.d.at)}],["사유",function(r){return r.d.reason}]],
-    comp:[["입구서 코드",function(r){return r.d.code}],["기업명",function(r){return r.d.name}],["연결 기업",function(r){var cid=M.map[mt(r.d.code)];return cid?comp(cid).name:"미연결"}],["템플릿 · 서류그룹",function(r){return mt(r.d.tpl)+" · "+mt(r.d.grp)}]],
+    comp:[["입구서 코드",function(r){return r.d.code}],["기업명",function(r){return r.d.name}],["연결 기업",function(r){return migMapName(M.map[mt(r.d.code)],mt(r.d.code))}],["템플릿 · 서류그룹",function(r){return mt(r.d.tpl)+" · "+mt(r.d.grp)}]],
     tpl:[["코드",function(r){return r.d.code}],["제목",function(r){return r.d.subject}]],
     doc:[["서류그룹",function(r){return r.d.group}],["서류명",function(r){return r.d.name}],["카테고리",function(r){return r.d.cat}],["타입",function(r){return r.d.type}]],
     dtpl:[["구분",function(r){return r.d.kind}],["서류 수",function(r){var j=mJson(r.d.docs,[]);return j?j.length:"?"}]],
@@ -2917,7 +2917,7 @@ function migMapRows(){
   return L;
 }
 function migAutoMap(){
-  var M=S.mig;M.auto={};
+  var M=S.mig;M.auto={};M.cands={};migMapRows().forEach(function(x){var n=mNorm(x.name);if(!n)return;var C=DB.companies.filter(function(c){return mNorm(c.name)===n||mNorm(c.display_name)===n||mNorm(c.group_name)===n});if(C.length>1)M.cands[x.code]=C.map(function(c){return c.id})});
   migMapRows().forEach(function(x){if(M.map[x.code]!==undefined)return;var n=mNorm(x.name);if(!n){M.map[x.code]="";return}
     var C=DB.companies.filter(function(c){return mNorm(c.name)===n||mNorm(c.display_name)===n||mNorm(c.group_name)===n});
     if(C.length===1){M.map[x.code]=C[0].id;M.auto[x.code]=1}else{M.map[x.code]="";if(C.length>1)M.auto[x.code]=C.length}});
@@ -2928,7 +2928,7 @@ function migMapView(){
   h+='<div class="fbar"><span class="muted small">입구서 기업 '+L.length+'곳 · 연결 '+(L.length-un.length)+' · 미연결 <b style="color:'+(un.length?"var(--bad)":"inherit")+'">'+un.length+'</b></span><span class="grow"></span><label class="cb"><input type="checkbox" data-ch="mig-unmapped"'+(M.onlyUn?" checked":"")+'> 미연결만</label></div>';
   var opts=DB.companies.slice().sort(function(p,q){return p.name.localeCompare(q.name,"ko")}).map(function(c){return[c.id,c.name+(c.display_name&&c.display_name!==c.name?" ("+c.display_name+")":"")+" · "+(c.corp_code||"")]});
   h+='<div class="tw"><table class="t migt"><thead><tr><th>입구서 코드</th><th>입구서 기업명</th><th>실제 기업 (기업 DB)</th><th></th></tr></thead><tbody>'+
-    L.filter(function(x){return!M.onlyUn||!M.map[x.code]}).map(function(x){var a=M.auto[x.code];return'<tr class="'+(M.map[x.code]?"":"mig-err")+'"><td class="num">'+esc(x.code)+'</td><td>'+esc(x.name||"(기업발송정보에 없음)")+'</td><td><select data-mig-map="'+esc(x.code)+'" aria-label="'+esc(x.code)+' 연결 기업">'+opt(opts,M.map[x.code]||"","연결 안 함")+'</select></td><td class="small muted">'+(a===1&&M.map[x.code]?"이름으로 자동 연결":a>1?"같은 이름 후보 "+a+"곳":"")+'</td></tr>'}).join("")+'</tbody></table></div>';
+    L.filter(function(x){return!M.onlyUn||!M.map[x.code]}).map(function(x){var a=M.auto[x.code];return'<tr class="'+(M.map[x.code]?"":"mig-err")+'"><td class="num">'+esc(x.code)+'</td><td>'+esc(x.name||"(기업발송정보에 없음)")+'</td><td><select data-mig-map="'+esc(x.code)+'" aria-label="'+esc(x.code)+' 연결 기업">'+opt(((M.cands||{})[x.code]?[["grp:"+x.code,"▣ "+(x.name||x.code)+" 그룹 전체 ("+M.cands[x.code].length+"곳) · 발송 정보를 모두에 넣음"]]:[]).concat(opts),M.map[x.code]||"","연결 안 함")+'</select></td><td class="small muted">'+(migIsGrp(M.map[x.code])?"그룹 "+((M.cands||{})[x.code]||[]).length+"곳에 발송 정보 · 입사자는 부서 자동 찾기":a===1&&M.map[x.code]?"이름으로 자동 연결":a>1?"같은 이름 후보 "+a+"곳 · 입구서가 그룹 하나면 '그룹 전체'":"")+'</td></tr>'}).join("")+'</tbody></table></div>';
   return h;
 }
 
@@ -3119,8 +3119,10 @@ function migVIn(){
     if(mJson(r.d.docs,[])===null)I.push(mi("docs","err","서류목록 형식(JSON)이 깨졌어요","text"));
     r.iss=I;mStatus(r)});
   /* 기업 발송 정보 */
-  var used={};(S2.comp||[]).forEach(function(r){var I=[],code=mt(r.d.code),cid=M.map[code],c=cid&&comp(cid);
-    if(!code)I.push(mi("code","rej","입구서 기업코드가 비어 있어요 · 반려"));
+  var used={};(S2.comp||[]).forEach(function(r){var I=[],code=mt(r.d.code),cid=M.map[code],c=cid&&!migIsGrp(cid)&&comp(cid);r.grpT=null;
+    if(code&&migIsGrp(cid)){var G=((M.cands||{})[code]||[]).map(comp).filter(Boolean),fr=G.filter(function(z){return!(z.ceo||z.pay_bank||z.mail_manager||z.mail_tpl||z.doc_group)&&!used[z.id]});
+      if(!fr.length)I.push(mi("code","rej","그룹 "+G.length+"곳 모두 이미 발송 정보가 있어요 · 반려"));else{if(fr.length<G.length)I.push(mi("code","warn","그룹 "+G.length+"곳 중 "+fr.length+"곳에 넣어요 (나머지는 이미 발송 정보가 있음)"));fr.forEach(function(z){used[z.id]=code});r.grpT=fr.map(function(z){return z.id})}}
+    else if(!code)I.push(mi("code","rej","입구서 기업코드가 비어 있어요 · 반려"));
     else if(!c)I.push(mi("code","rej","실제 기업에 연결하지 않았어요 · 발송 정보를 넣지 않아요(반려)"));
     else if(c.ceo||c.pay_bank||c.mail_manager||c.mail_tpl||c.doc_group)I.push(mi("code","rej","‘"+c.name+"’에 이미 발송 정보가 있어요 · 반려"));
     else if(used[cid])I.push(mi("code","rej","같은 기업에 이미 연결된 입구서 코드가 있어요("+used[cid]+") · 반려"));
@@ -3133,7 +3135,7 @@ function migVIn(){
     var pv=mt(d.phone);x.phone=mPhone(pv);if(!pv)I.push(mi("phone","err","연락처가 비어 있어요 · 입력이 필요해요","text"));else if(!x.phone)I.push(mi("phone","err","연락처 형식이 이상해요(‘"+pv+"’) · 수정이 필요해요","text"));
     var em=mt(d.email);if(!em)I.push(mi("email","err","이메일이 비어 있어요 · 입력이 필요해요","text"));else if(!EMAIL_RE.test(em))I.push(mi("email","err","이메일 형식이 이상해요(‘"+em+"’) · 수정이 필요해요","text"));
     var bv=mt(d.birth);x.birth=mDate(d.birth);if(!bv)I.push(mi("birth","err","생년월일이 비어 있어요 · 입력이 필요해요","date"));else if(!x.birth)I.push(mi("birth","err","생년월일 형식이 이상해요(‘"+bv+"’) · 수정이 필요해요","date"));
-    x.cid=d._cid||M.map[mt(d.code)]||"";
+    x.cid=d._cid||migAppCid(d,x,I)||"";
     if(!x.cid)I.push(mi("_cid","err","기업 연결이 필요해요(입구서 코드 ‘"+mt(d.code)+"’) · ‘기업 연결’ 탭에서 고르거나 여기서 골라 주세요","comp"));
     ["flip","cs","ce"].forEach(function(k){var v=mt(d[k]);x[k]=mDate(d[k]);if(v&&!x[k])I.push(mi(k,"err",{flip:"플립시작일",cs:"계약시작일",ce:"계약종료일"}[k]+" 형식이 이상해요(‘"+v+"’) · 수정이 필요해요","date"))});
     if(x.cs&&x.ce&&x.ce<x.cs)I.push(mi("ce","err","계약종료일이 계약시작일보다 빨라요 · 수정이 필요해요","date"));
@@ -3198,7 +3200,7 @@ function migRegIn(){
   regRows("tpl").forEach(function(r){DB.mtpl.push({id:nid(),code:mt(r.d.code),subject:mt(r.d.subject),body:mt(r.d.body)})});
   regRows("doc").forEach(function(r,i){var ct=mt(r.d.cat),ty=mt(r.d.type);DB.idocs.push({id:nid(),group:mt(r.d.group),name:mt(r.d.name),cat:IDOC_CATS.indexOf(ct)>=0?ct:"",file_id:mt(r.d.file),type:IDOC_TYPES.indexOf(ty)>=0?ty:"원본",ord:+mt(r.d.ord)||i+1})});
   regRows("dtpl").forEach(function(r){var k=mt(r.d.kind),t=DB.idtpl.find(function(z){return z.kind===k});var docs=mJson(r.d.docs,[])||[];if(t)t.docs=docs;else DB.idtpl.push({kind:k,docs:docs})});
-  regRows("comp").forEach(function(r){var c=comp(M.map[mt(r.d.code)]);c.ceo=mt(r.d.ceo);c.pay_bank=mt(r.d.bank);c.mail_manager=mt(r.d.mgr);c.mail_tpl=mt(r.d.tpl);c.doc_group=mt(r.d.grp);c.need_pdf=mYes(r.d.pdf)?"필요":"불필요";logChange("companies",c.id,c.name,"입구서 발송 정보 (이관)","","코드 "+mt(r.d.code)+" · 템플릿 "+(c.mail_tpl||"DEFAULT")+" · 서류그룹 "+(c.doc_group||"DEFAULT"),"브이드림 내부")});
+  regRows("comp").forEach(function(r){var v=M.map[mt(r.d.code)];(migIsGrp(v)?(r.grpT||[]):[v]).forEach(function(cid){var c=comp(cid);if(!c)return;c.ceo=mt(r.d.ceo);c.pay_bank=mt(r.d.bank);c.mail_manager=mt(r.d.mgr);c.mail_tpl=mt(r.d.tpl);c.doc_group=mt(r.d.grp);c.need_pdf=mYes(r.d.pdf)?"필요":"불필요";logChange("companies",c.id,c.name,"입구서 발송 정보 (이관)","","코드 "+mt(r.d.code)+(migIsGrp(v)?" (그룹 전체)":"")+" · 템플릿 "+(c.mail_tpl||"DEFAULT")+" · 서류그룹 "+(c.doc_group||"DEFAULT"),"브이드림 내부")})});
   var RCVK={"미수신":"pending","수신":"received","수신(메일)":"email_received","재요청중":"rerequest","우편발송완료":"postal"};
   regRows("app").forEach(function(r){var d=r.d,x=r.x,id=nid(),rv=mt(d.rcv);idMap[mt(d.fid)]=id;
     var sent=mYes(d.sent);
@@ -8390,6 +8392,16 @@ var _dtable43=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="dis"&&rowF
   return h.slice(0,i)+' <span class="b sm" title="'+esc(r.others.join(", "))+'">외 '+r.more+'곳</span>'+h.slice(i)}}return _dtable43(k,cols,rows,rowFn,empty)};
 var _bt43=buildTodos;buildTodos=function(){var L=_bt43(),best={};L.forEach(function(t){if(t.type!=="rech")return;var b=best[t.key],e=emp(t.emp),sc=e?(empStarted(e)?"1":"0")+((termsOf(e.id)[0]||{}).start||""):"";if(!b||sc>b.sc)best[t.key]={t:t,sc:sc}});
   return L.filter(function(t){return t.type!=="rech"||best[t.key].t===t})};
+
+/* ================================================================
+   v45. 입구서 이관: 그룹 전체 코드(입구서 코드 1개 = 같은 이름 부서 여러 곳) 연결
+   ================================================================ */
+function migIsGrp(v){return String(v||"").indexOf("grp:")===0}
+function migMapName(v,code){if(migIsGrp(v))return"그룹 전체 ("+((S.mig.cands||{})[code]||[]).length+"곳)";var c=v&&comp(v);return c?c.name:"미연결"}
+function migAppCid(d,x,I){var M=S.mig,code=mt(d.code),v=M.map[code];if(!migIsGrp(v))return v;var ids=(M.cands||{})[code]||[];if(!ids.length)return"";
+  var w=x.phone&&x.birth?workerByKey(x.phone,x.birth):null;
+  if(w){var es=empsOfW(w.id).filter(function(e){return ids.indexOf(e.company)>=0&&!e.cancelled}).sort(function(a,b){return((termsOf(b.id)[0]||{}).start||"").localeCompare((termsOf(a.id)[0]||{}).start||"")});if(es.length)return es[0].company}
+  I.push(mi("_cid","warn","그룹 코드 ‘"+code+"’라 부서를 못 찾았어요 · ‘"+comp(ids[0]).name+(comp(ids[0]).display_name?" ("+comp(ids[0]).display_name+")":"")+"’로 넣어요 · 맞는 부서를 골라 주세요","comp"));return ids[0]}
 
 /* ============ 렌더 ============ */
 function renderMain(){
