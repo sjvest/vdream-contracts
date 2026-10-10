@@ -6190,7 +6190,7 @@ document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.datase
    ================================================================ */
 if(!DB.rr)DB.rr=[];if(!DB.rrr)DB.rrr=[];
 var RR_KIND=["신규","추가","대체"],RR_ST=["진행중","보류","완료","취소"],RR_PAY=["최저시급","시급","월급"],RR_WT=["재택","내근","혼합"],RR_DIS=["중증","경증","무관"],RR_WHEN=["즉시","매칭되는 대로","날짜 지정","○월 내"];
-var RR_DOC=["","합격","불합격","보류"],RR_FIN=["","합격","불합격","타사 입사","지원 취소"],RR_WHY=["","장애유형","근무시간","역량","연락 두절","기타"],RR_CH=["브이매치 업로드","기업 직접","기타"];
+var RR_DOC=["","합격","불합격","보류","지원취소"],RR_FIN=["","합격","불합격","타사 입사","지원 취소"],RR_WHY=["","장애유형","근무시간","역량","연락 두절","기타"],RR_CH=["브이매치 업로드","기업 직접","기타"];
 function rcOf(id){return DB.rr.find(function(r){return r.id===id})}
 function rrRounds(id){return DB.rrr.filter(function(x){return x.req===id}).sort(function(a,b){return(a.seq||0)-(b.seq||0)})}
 function rrCands(id){var L=[];rrRounds(id).forEach(function(x){(x.cands||[]).forEach(function(c){L.push(Object.assign({round:x.seq},c))})});return L}
@@ -7867,7 +7867,7 @@ vIssues=function(){if(S.role!=="admin")return'<div class="empty">관리자만 �
 /* ---- 채용 요청: 진행 단계 ---- */
 RR_CH=RR_CH.filter(function(v){return v!=="브이매치 업로드"});
 var RR_IV=["","진행 예정","합격","불합격","지원취소"],RR_STG=["요청","이력서 전달","마감 초과","면접","채용 예정"];
-function cdClosed(c){return c.doc==="불합격"||c.iv==="불합격"||c.iv==="지원취소"||["불합격","타사 입사","지원 취소"].indexOf(c.final)>=0||(c.final==="합격"&&!!c.hired)}
+function cdClosed(c){return c.doc==="불합격"||c.doc==="지원취소"||c.iv==="불합격"||c.iv==="지원취소"||["불합격","타사 입사","지원 취소"].indexOf(c.final)>=0||(c.final==="합격"&&!!c.hired)}
 function rrStage(r){if(r.status==="완료"||r.status==="취소")return"완료";if(r.status==="보류")return"보류";var A=rrCands(r.id).filter(function(c){return!cdClosed(c)}),s="요청";
   if(A.some(function(c){return c.final==="합격"}))s="채용 예정";else if(A.some(function(c){return c.iv==="진행 예정"||c.iv==="합격"}))s="면접";else if(A.some(function(c){return c.sent}))s="이력서 전달";
   if((s==="요청"||s==="이력서 전달")&&r.due_date&&r.due_date<TODAY)s="마감 초과";return s}
@@ -8918,6 +8918,7 @@ function v59Act(a,el){var D0=el.dataset;switch(a){
   case"rr-foldall":rrRounds(D0.id).forEach(function(x){var R=rdRead(x.id);if(R)R.x.cands=R.C;S.rrFold[x.id]=D0.v!=="open"});render();return true;
   case"repl-more":if(S.rrF)rrFormRead(S.rrF);S.replMore=!S.replMore;render();return true}return false}
 
+APP_VER="v60";APP_VER_ON="10/10";
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
