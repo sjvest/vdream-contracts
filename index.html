@@ -8379,6 +8379,18 @@ function v41Change(t,d){
   if(d.ch==="nc-ce"){if(S.ncF)S.ncF.m=0;$$('[data-act="nc-term"]').forEach(function(b){b.classList.remove("on")});return true}
   return false}
 
+/* ================================================================
+   v43. 장애 재판정 = 사람 기준: 결과 없는 고용 건은 같은 사람의 최근 결과 · 목록 한 사람 한 줄 · 재판정 할 일 중복 없음
+   ================================================================ */
+var _disOf43=disOf;disOf=function(eid){var z=_disOf43(eid);if(z)return z;var e=emp(eid);return e?disOfW(e.worker):z};
+function disRepEmp(L){var on=L.filter(function(r){return empStarted(r.e)});var P=on.length?on:L;return P.slice().sort(function(a,b){var sa=(termsOf(a.e.id)[0]||{}).start||"",sb=(termsOf(b.e.id)[0]||{}).start||"";return on.length?sb.localeCompare(sa):sa.localeCompare(sb)})[0]}
+var _disRows43=disRows;disRows=function(){var G={},ord=[];_disRows43().forEach(function(r){var w=r.e.worker;if(!G[w]){G[w]=[];ord.push(w)}G[w].push(r)});
+  return ord.map(function(w){var L=G[w],r=disRepEmp(L);r.more=L.length-1;r.others=L.filter(function(x){return x!==r}).map(function(x){return comp(x.e.company).name});return r})};
+var _dtable43=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="dis"&&rowFn){var rf=rowFn;rowFn=function(r){var h=rf(r);if(!r.more)return h;var n=0,i=-1;while(n<3){i=h.indexOf("</td>",i+1);if(i<0)return h;n++}
+  return h.slice(0,i)+' <span class="b sm" title="'+esc(r.others.join(", "))+'">외 '+r.more+'곳</span>'+h.slice(i)}}return _dtable43(k,cols,rows,rowFn,empty)};
+var _bt43=buildTodos;buildTodos=function(){var L=_bt43(),best={};L.forEach(function(t){if(t.type!=="rech")return;var b=best[t.key],e=emp(t.emp),sc=e?(empStarted(e)?"1":"0")+((termsOf(e.id)[0]||{}).start||""):"";if(!b||sc>b.sc)best[t.key]={t:t,sc:sc}});
+  return L.filter(function(t){return t.type!=="rech"||best[t.key].t===t})};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
