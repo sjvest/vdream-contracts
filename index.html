@@ -615,6 +615,7 @@ td:has(>.nowb),td:has(>a+.nowb),td:has(.nowb){white-space:nowrap}.nowb .b{margin
 .rdcol{display:flex;flex-direction:column;gap:6px}.rdco{border:1px solid var(--line);border-radius:10px;background:var(--surface)}.rdcoh{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;padding:10px 12px;border:0;background:none;text-align:left;cursor:pointer;color:var(--ink)}.rdcoh:hover{background:#F7F6FB}.rdcoh .ar{color:#8A879B;width:12px}.rdcoh .grow{flex:1}
 .rdcob{padding:2px 12px 10px 32px;display:flex;flex-direction:column;gap:6px}.rdcr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;padding-top:6px;border-top:1px dashed var(--line)}.rdlong{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#FAFAFB}.rdlong summary{cursor:pointer;padding:4px 0}.rdlong .rdco{margin-top:6px}
 .salesbox .sbr{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:7px 0;border-top:1px dashed var(--line);font-size:13px;color:var(--ink-2)}.salesbox .sbr:first-of-type{border-top:0}.salesbox .sbr.seen{opacity:.6}.salesbox .grow{flex:1}
+.btn.act.pri,.btn.pri.act{background:#E6F4F1;color:#0F6B63;border-color:#B5DDD6}.btn.act.pri:hover{background:#D7EEE9}
 </style>
 </head>
 <body>
@@ -8847,7 +8848,7 @@ vRreq=function(){RR_DONE=null;var tab=S.rrTab;if(RR_TABS.indexOf(tab)<0&&tab!=="
   h+=fbar({extra:'<div class="seg" role="group" aria-label="구분">'+[["","전체"]].concat(RR_KIND.map(function(k){return[k,k]})).map(function(x){return'<button data-act="rr-kind" data-v="'+x[0]+'" class="'+((S.rrKind||"")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'+
     '<select data-ch="rr-job" aria-label="직무">'+opt(Object.keys(jobs).sort(),S.rrJob||"","직무 전체")+'</select><div class="seg" role="group" aria-label="근무형태">'+[["","전체"],["재택","재택"],["내근","출근"],["혼합","혼합"]].map(function(x){return'<button data-act="rr-wt" data-v="'+x[0]+'" class="'+((S.rrWt||"")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'}).replace('placeholder="근로자 이름 · 연락처" aria-label="근로자 이름 또는 연락처 검색"','placeholder="후보자 이름" aria-label="후보자 이름 검색"');
   if(pk.length)h+='<div class="rrbulk"><b>'+pk.length+'건 선택</b><span class="sep"></span><label>채용 담당 <select id="rrb-m">'+staffOpts("","선택")+'</select></label><button class="btn xs" data-act="rrb-m">적용</button><span class="sep"></span><label>상태 <select id="rrb-s">'+opt(RR_ST,"","선택")+'</select></label><input id="rrb-n" placeholder="사유 (완료 · 취소 · 보류)" style="width:200px"><button class="btn xs act" data-act="rrb-s">적용</button><span class="grow"></span><button class="btn xs" data-act="rrb-all">보이는 것 모두 선택</button><button class="btn xs" data-act="rrb-clr">선택 해제</button></div>';
-  if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){var oa=a.due_date&&a.due_date<TODAY?0:1,ob=b.due_date&&b.due_date<TODAY?0:1;if(oa!==ob)return oa-ob;var c=String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"));if(c)return c;return String(rrLastAct(a)).localeCompare(String(rrLastAct(b)))});
+  if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){return String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"))||String(a.requested||"").localeCompare(String(b.requested||""))});
   S.rrVis=rows.map(function(r){return r.id});
   h+=dtable("rreq",cols,rows,function(r){var s=rrStage(r),cur=rrCur(r),n=rrCnt(r),hd=rrHead(r),la=rrLastAct(r),ag=dAgo(la),done=tab==="완료";
     var cn='<span class="num rrcn'+(n.ok>=hd&&hd?" full":!n.a?" none":"")+'" title="지원 / 합격 / 불합격 · 채용 '+hd+'명">'+n.a+'/'+n.ok+'/'+n.no+'</span>';
@@ -9112,6 +9113,13 @@ var _admGaps66=admGaps;admGaps=function(){var G=_admGaps66(),act={};DB.employmen
 function v66Act(a,el){var D0=el.dataset;switch(a){
   case"rrn-ok":(function(){var o=salesNotes().find(function(x){return x.r.id===D0.id});if(o)try{localStorage.setItem("vw_rrn_"+D0.id,o.sig)}catch(e){}})();render();return true;
   case"rrn-all":S.rrnAll=!S.rrnAll;render();return true}return false}
+
+/* v68. 처리 버튼 초록 · 채용 요청 마감일 오래된 순 · 신규입사자 상세에서 장애유형/정도 입력 */
+APP_VER="v68";APP_VER_ON="10/10";
+var _pOnb68=pOnb;pOnb=function(e){var h=_pOnb68(e),w=wk(e.worker);if(!w)return h;
+  var box='<div class="ps"><h3>장애 정보 <span class="small muted" style="font-weight:400;letter-spacing:0">근로자 DB에 저장돼요</span></h3><div class="fg"><label class="f"><span>장애유형</span><select data-ch="onb-wdis" data-k="dis_type" data-w="'+w.id+'">'+opt(DIS_TYPES,w.dis_type||"","선택")+'</select></label><label class="f"><span>장애정도</span><select data-ch="onb-wdis" data-k="dis_level" data-w="'+w.id+'">'+opt(["중증","경증"],w.dis_level||"","선택")+'</select></label></div></div>';
+  var k=h.indexOf('<div class="ps" data-spec="6">');return k>=0?h.slice(0,k)+box+h.slice(k):h.replace(/<\/aside>$/,box+"</aside>")};
+function v68Change(t,d){if(d.ch!=="onb-wdis")return false;var w=wk(d.w);if(!w)return true;var b=w[d.k]||"";if(b===t.value)return true;logChange("workers",w.id,w.name,d.k==="dis_type"?"장애유형":"장애정도",b,t.value,"브이드림 내부");w[d.k]=t.value;toast("저장했어요");render();return true}
 
 /* ============ 렌더 ============ */
 function renderMain(){
@@ -9414,7 +9422,7 @@ document.addEventListener("click",function(ev){
 });
 document.addEventListener("change",function(ev){
   var t=ev.target,d=t.dataset||{};
-  if(v58Change(t,d))return;if(v49Change(t,d))return;if(v41Change(t,d))return;if(v39Change(t,d))return;if(v35Change(t,d))return;if(v29Change(t,d))return;if(v28Change(t,d))return;if(v26Change(t,d))return;if(v25Change(t,d))return;if(v24Change(t,d))return;if(v23Change(t,d))return;if(v20Change(t,d))return;if(v18Change(t,d))return;if(v12Change(t,d))return;if(mgChange(t,d))return;if(gasChange(t,d))return;if(v8Change(t,d))return;if(v7Change(t,d))return;if(v6Change(t,d))return;if(migChange(t,d))return;if(onbChange(t,d))return;if(reqChange(t,d))return;if(intakeChange(t,d,false))return;if(talentChange(t,d))return;
+  if(v68Change(t,d))return;if(v58Change(t,d))return;if(v49Change(t,d))return;if(v41Change(t,d))return;if(v39Change(t,d))return;if(v35Change(t,d))return;if(v29Change(t,d))return;if(v28Change(t,d))return;if(v26Change(t,d))return;if(v25Change(t,d))return;if(v24Change(t,d))return;if(v23Change(t,d))return;if(v20Change(t,d))return;if(v18Change(t,d))return;if(v12Change(t,d))return;if(mgChange(t,d))return;if(gasChange(t,d))return;if(v8Change(t,d))return;if(v7Change(t,d))return;if(v6Change(t,d))return;if(migChange(t,d))return;if(onbChange(t,d))return;if(reqChange(t,d))return;if(intakeChange(t,d,false))return;if(talentChange(t,d))return;
   if(d.trf&&S.trf){S.trf[d.trf]=t.value;if(d.trf!=="why")render();return}
   if(d.wf==="non_dis"){var rt=t.closest(".pnl");$$('[data-wf="dis_type"],[data-wf="dis_level"]',rt).forEach(function(i){i.disabled=t.checked});var nd=rt.querySelector('[data-wf="non_dis_on"]');nd.disabled=!t.checked;if(t.checked&&!nd.value)nd.value=TODAY;return}
   if(d.ch==="spec"){S.spec=t.checked;render();return}
