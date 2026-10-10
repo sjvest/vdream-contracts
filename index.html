@@ -4554,19 +4554,21 @@ function todoHintHtml(){var L=todoKeys(S.todoTab);return L.length?'<div class="h
    ================================================================ */
 function empStarted(e){var t=termsOf(e.id)[0];return!t||!t.start||t.start<=TODAY}
 /* 입사예정 = 재직(유효) 고용 건은 있지만 아직 첫 계약 시작 전인 건만 있음 */
+function workerPreAny(wid){return empsOfW(wid).some(function(e){return activeEmp(e)&&!empStarted(e)})}
+function preNowTag(wid,eid){var c=empsOfW(wid).filter(function(e){return e.id!==eid&&activeEmp(e)&&empStarted(e)});return c.length?'<span class="dt">지금 '+c.map(function(e){var en=effEnd(e);return esc(comp(e.company).name)+(en?' ~'+esc(md(en)):'')}).join(', ')+' 재직 중</span>':''}
 function workerPre(wid){var a=empsOfW(wid).filter(activeEmp);return a.length>0&&!a.some(empStarted)}
 function preEmpOfW(wid){return empsOfW(wid).filter(function(e){return activeEmp(e)&&!empStarted(e)}).sort(function(a,b){return(termsOf(a.id)[0]||{start:""}).start.localeCompare((termsOf(b.id)[0]||{start:""}).start)})[0]}
 function wkBaseV(){return DB.workers.filter(function(w){var e=curEmpOfW(w.id);return e&&scopeOK(e.company)&&qwOK(w.id)&&(!S.qc.trim()&&!S.qcId||empsOfW(w.id).some(function(x){return qcOK(x.company)}))})}
-wkTabsHtml=function(){var b=wkBaseV(),pre=b.filter(function(w){return workerPre(w.id)}).length,act=b.filter(function(w){return workerActive(w.id)}).length-pre,out=b.length-act-pre;
+wkTabsHtml=function(){var b=wkBaseV(),pre0=b.filter(function(w){return workerPre(w.id)}).length,pre=b.filter(function(w){return workerPreAny(w.id)}).length,act=b.filter(function(w){return workerActive(w.id)}).length-pre0,out=b.length-act-pre0;
   return'<div class="tabs" role="tablist" data-spec="1">'+[["act","재직자",act],["pre","입사예정",pre],["out","퇴사자",out],["all","전체",wkAllBase().length]].map(function(x){return'<button class="'+(S.wkTab===x[0]?"on":"")+'" data-act="wk-tab" data-v="'+x[0]+'">'+x[1]+'<span class="c">'+x[2]+'</span></button>'}).join("")+'</div>'};
 function wkDocProg(eid){var L=DB.casedocs.filter(function(d){return d.emp===eid&&!isExitCase(d)}),d=L.filter(function(c){return c.step>=docSteps(c.method).length}).length;return{n:L.length,d:d}}
 function vWkPre(){
-  var rows=wkBaseV().filter(function(w){return workerPre(w.id)}).map(function(w){var e=preEmpOfW(w.id);return{w:w,e:e,t:termsOf(e.id)[0]||{}}}).sort(function(a,b){return(a.t.start||"").localeCompare(b.t.start||"")});
+  var rows=wkBaseV().filter(function(w){return workerPreAny(w.id)}).map(function(w){var e=preEmpOfW(w.id);return{w:w,e:e,t:termsOf(e.id)[0]||{}}}).sort(function(a,b){return(a.t.start||"").localeCompare(b.t.start||"")});
   var cols=[{k:"n",h:"성명",t:"text",f:function(r){return r.w.name}},{k:"p",h:"연락처",t:"none",f:function(r){return mtelTxt(r.w)}},{k:"c",h:"기업",t:"text",f:function(r){return comp(r.e.company).name}},
     {k:"st",h:"입사 예정일",t:"date",al:"c",v:function(r){return r.t.start}},{k:"s",h:"상태",t:"text",f:function(r){return statusOf(r.e)}},{k:"dp",h:"입사서류",t:"none",al:"c",f:function(r){var p=wkDocProg(r.e.id);return p.n?p.d+"/"+p.n:"없음"}},{k:"m",h:"담당자",t:"text",f:function(r){return st(assignee(r.e.company).who).name}}];
   var h='<div class="hd"><div><h1>근로자 DB</h1><p>입사예정 = 고용 건은 등록됐지만 첫 계약 시작일이 오늘 이후인 근로자 · 조회용입니다(입사서류 처리는 <button class="linkbtn" data-act="view" data-v="onb">신규입사자 관리</button>에서)</p></div></div>'+wkTabsHtml()+fbar({});
   h+=dtable("wk-pre",cols,rows,function(r){var p=wkDocProg(r.e.id),d=dd(TODAY,r.t.start);
-    return'<tr class="'+(S.wm===r.w.id?"sel":"")+'" data-act="wk-open" data-id="'+r.w.id+'"><td>'+esc(r.w.name)+talBadge(r.w.id)+'</td><td>'+mtel(r.w)+'</td><td>'+clink(r.e.company)+proxyTag(r.e.company)+'</td><td class="num c">'+(r.t.start||"—")+' <span class="b '+(d<=3?"warn":"")+'">D-'+d+'</span></td><td>'+stBadge(statusOf(r.e))+'</td><td class="c">'+(p.n?'<span class="b '+(p.d===p.n?"ok":"warn")+'">'+p.d+"/"+p.n+'</span>':'<span class="muted">없음</span>')+'</td><td>'+esc(st(assignee(r.e.company).who).name)+'</td></tr>'},"입사예정 근로자가 없습니다.");
+    return'<tr class="'+(S.wm===r.w.id?"sel":"")+'" data-act="wk-open" data-id="'+r.w.id+'"><td>'+esc(r.w.name)+talBadge(r.w.id)+preNowTag(r.w.id,r.e.id)+'</td><td>'+mtel(r.w)+'</td><td>'+clink(r.e.company)+proxyTag(r.e.company)+'</td><td class="num c">'+(r.t.start||"—")+' <span class="b '+(d<=3?"warn":"")+'">D-'+d+'</span></td><td>'+stBadge(statusOf(r.e))+'</td><td class="c">'+(p.n?'<span class="b '+(p.d===p.n?"ok":"warn")+'">'+p.d+"/"+p.n+'</span>':'<span class="muted">없음</span>')+'</td><td>'+esc(st(assignee(r.e.company).who).name)+'</td></tr>'},"입사예정 근로자가 없습니다.");
   return h;
 }
 var _vWk17=vWk;vWk=function(){return S.wkTab==="pre"?vWkPre():_vWk17()};
@@ -8492,7 +8494,7 @@ function exportCsv(){
 /* ============ 이벤트 ============ */
 document.addEventListener("mousedown",function(ev){
   var p=ev.target.closest('[data-act="combo-pick"]');
-  if(p){ev.preventDefault();if(p.getAttribute("aria-disabled")){toast("이미 추천인재(대기)에 있는 근로자입니다");return}comboSet(p.dataset.k,p.dataset.id);render();return}
+  if(p){ev.preventDefault();if(p.getAttribute("aria-disabled")){toast("이미 추천인재(대기)에 있는 근로자입니다");return}var ci=document.getElementById("cb-"+p.dataset.k);if(ci&&document.activeElement===ci)ci.blur();S.comboHold={k:p.dataset.k,t:Date.now()};comboSet(p.dataset.k,p.dataset.id);render();return}
 });
 document.addEventListener("click",function(ev){
   if(S.pop&&!ev.target.closest("#pop")&&!ev.target.closest('[data-act="t-filter"]')){S.pop=null;S.popq="";renderLayers()}
@@ -8716,7 +8718,7 @@ document.addEventListener("change",function(ev){
 var SEARCH_IN={qw:"qw",inq:"inq",incq2:"incq2",grpq:"grpq",mlq:"mlq",talq:"talq"};
 function onInput(t,composing){
   var d=t.dataset||{};
-  if(d.combo){var k=d.combo;S.cq[k]=t.value;S.cid[k]=null;S.combo=k;S.cidx=0;
+  if(d.combo){var k=d.combo;if(S.comboHold&&S.comboHold.k===k&&Date.now()-S.comboHold.t<600&&S.cid[k]){var po=comboObj(k,S.cid[k]);if(po)t.value=po.name;return}S.cq[k]=t.value;S.cid[k]=null;S.combo=k;S.cidx=0;
     if(k==="fc"){S.qc=t.value;S.qcId=null;resetPages();if(composing){renderLayers();return}render()}else{comboSet(k,null);S.cq[k]=t.value;S.combo=k;renderLayers()}return}
   if(d.in&&SEARCH_IN[d.in]){S[SEARCH_IN[d.in]]=t.value;if(composing)return;resetPages();render();return}
   if(d.in==="incq"&&S.inComp){S.inComp.q=t.value;if(composing)return;render();return}
