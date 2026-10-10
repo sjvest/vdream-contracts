@@ -9084,8 +9084,8 @@ document.addEventListener("toggle",function(e){var t=e.target;if(t&&t.classList&
    v66. 영업팀 담당 기업: 고객사 쪽 단계는 채용파트 '영업 진행 알림' · 누구나 입력(영업 대리 입력 기록)
         · 영업파트 계정 로그인 차단 · 재직자가 생기면 관리자 확인 줄에 인계 알림
    ================================================================ */
-APP_VER="v66";APP_VER_ON="10/10";
-if(PARTS.indexOf("영업파트")<0)PARTS.push("영업파트");
+APP_VER="v67";APP_VER_ON="10/10";
+if(PARTS.indexOf("영업파트")<0)PARTS.push("영업파트");if(STAFF_PARTS.indexOf("영업파트")<0)STAFF_PARTS.push("영업파트");
 function isSalesStaff(id){var s=id&&st(id);return!!(s&&s.part==="영업파트")}
 function coSales(cid){var c=comp(cid);return!c||isSalesStaff(c.manager)}
 function rrSales(r){return!!r&&coSales(r.company)}
