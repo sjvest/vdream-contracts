@@ -9164,6 +9164,54 @@ var _pOnb70=pOnb;pOnb=function(e){var h=_pOnb70(e);try{var d=document.createElem
 var _dtableRpl70=dtable;dtable=function(k,cols,rows,rowFn,empty){if((k==="onb"||k==="onbp")&&rowFn){var rf=rowFn;rowFn=function(x){var s=rf(x),e=x&&x.k==="em"?x.e:x;if(!e||e.hire_type!=="대체")return s;return s.replace(">"+esc(e.hire_type)+jobWarn(e)+"<",">"+esc(e.hire_type)+jobWarn(e)+replLink(e)+"<")}}return _dtableRpl70(k,cols,rows,rowFn,empty)};
 function v70Act(a,el){if(a!=="rpl-go")return false;var r=emp(el.dataset.e);if(!r)return true;S.wm=r.worker;S.wkPT="emp";S.wkE=r.id;render();return true}
 
+/* v71. '000 대체' 링크: 내 할 일(계약 건 할 일) · 근로자 DB 계약 정보에도 */
+APP_VER="v71";APP_VER_ON="10/11";
+var _dtable71=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="todo"&&rowFn){var rf=rowFn;rowFn=function(t){var s=rf(t),e=t&&t.emp&&emp(t.emp);if(!e||e.hire_type!=="대체")return s;var tk=esc(t.task||"");var i=tk?s.indexOf(tk):-1;if(i<0)return s;return s.slice(0,i+tk.length)+replLink(e)+s.slice(i+tk.length)}}return _dtable71(k,cols,rows,rowFn,empty)};
+var _empCards71=empCardsHtml;empCardsHtml=function(w,es){var h=_empCards71(w,es);try{var d=document.createElement("div");d.innerHTML=h;d.querySelectorAll(".emp").forEach(function(c){var m=(c.innerHTML.match(/data-dk="[a-z]+:([^"|]+)\|/)||c.innerHTML.match(/data-e="([^"]+)"/)||[])[1],e=m&&emp(m);if(!e||e.hire_type!=="대체")return;var b=c.querySelector("b");if(b)b.insertAdjacentHTML("beforeend",replLink(e))});return d.innerHTML}catch(err){return h}};
+var _isDeco71=isDeco;isDeco=function(h){h=_isDeco71(h);if(S.view!=="todo"||h.indexOf('data-act="todo-open"')<0)return h;try{var M={};buildTodos().forEach(function(t){if(t.emp){var e=emp(t.emp);if(e&&e.hire_type==="대체")M[t.key]=t}});if(!Object.keys(M).length)return h;
+  var d=document.createElement("div");d.innerHTML=h;d.querySelectorAll('tr[data-k]').forEach(function(tr){var t=M[tr.dataset.k];if(!t||tr.querySelector(".rplk"))return;var tx=String(t.task||"");var td=[].slice.call(tr.children).find(function(c){return tx&&c.textContent.indexOf(tx.slice(0,8))>=0});if(td)td.insertAdjacentHTML("beforeend",replLink(emp(t.emp)))});return d.innerHTML}catch(err){return h}};
+
+/* ================================================================
+   v72. 데이터 업로드 ⑥ 대체 대상 일괄 입력 (이름 + 계약시작일/플립시작일로 찾기 · 기업명은 안 씀 · 기존 값 덮어쓰지 않음)
+   ================================================================ */
+APP_VER="v72";APP_VER_ON="10/11";
+function rplParse(ws){var hr=0,H={};for(var r=1;r<=8;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|");if(/이름/.test(v)&&/계약시작/.test(v)){hr=r;break}}if(!hr)return{err:"‘이름 · 계약시작일’ 머리글을 못 찾았어요"};
+  var vals=ws.getRow(hr).values;vals.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});var gi=H["구분"],ti=H["대체대상"]||H["대체자"]||H["대체"];if(!ti&&gi)ti=gi+1;
+  var g=function(row,i){return i?rrCellTxt(row.values[i]).trim():""},col=function(row,k){return g(row,H[k])},L=[];
+  for(var r2=hr+1;r2<=ws.rowCount;r2++){var row=ws.getRow(r2),nm=col(row,"이름");if(!nm)continue;L.push({r:r2,name:nm,flip:rrDate(col(row,"플립시작일")),cs:rrDate(col(row,"계약시작일")),ce:rrDate(col(row,"계약만료일")),kind:g(row,gi).replace(/\s/g,""),target:g(row,ti).replace(/\s*대체\s*$/,"").trim()})}return{L:L}}
+function rplMatch(o){var W=DB.workers.filter(function(w){return String(w.name).trim()===o.name});var E=[];W.forEach(function(w){empsOfW(w.id).forEach(function(e){if(e.cancelled)return;if(o.cs&&termsOf(e.id).some(function(t){return t.start===o.cs}))E.push(e)})});
+  if(!E.length&&o.flip)W.forEach(function(w){empsOfW(w.id).forEach(function(e){if(!e.cancelled&&e.vwork_start===o.flip)E.push(e)})});
+  var res={o:o,E:E,e:E.length===1?E[0]:null,st:"",msg:"",tg:null,tgL:[]};
+  if(!E.length){res.st="skip";res.msg="고용 건을 못 찾음 (이름 + 계약시작일/플립시작일)";return res}if(E.length>1){res.st="pick";res.msg="같은 조건 고용 건 "+E.length+"개 · 골라 주세요";return res}
+  return rplJudge(res)}
+function rplJudge(res){var e=res.e,o=res.o;if(["신규","추가","대체"].indexOf(o.kind)<0&&o.target)o.kind="대체";if(["신규","추가","대체"].indexOf(o.kind)<0){res.st="skip";res.msg="구분이 비어 있거나 알 수 없음 ("+(o.kind||"빈칸")+")";return res}
+  if(o.kind!=="대체"){res.st=e.hire_type===o.kind?"same":"ok";res.msg=e.hire_type===o.kind?"이미 "+o.kind:"입사 구분 "+(e.hire_type||"없음")+" → "+o.kind;return res}
+  if(!o.target){res.st="warn";res.msg="대체 대상 미지정 · 입사 구분만 '대체'로";return res}
+  res.tgL=DB.employments.filter(function(x){var w=wk(x.worker);return x.id!==e.id&&x.company===e.company&&w&&String(w.name).trim()===o.target});
+  if(res.tgL.length){res.tg=res.tgL.slice().sort(function(a,b){return String(effEnd(b)||"9999").localeCompare(String(effEnd(a)||"9999"))})[0]}
+  if(e.replaced&&res.tg&&e.replaced!==res.tg.id||e.replaced&&!res.tg){res.st="keep";res.msg="이미 다른 대체 대상이 입력돼 있어 그대로 둠 ("+((wk((emp(e.replaced)||{}).worker)||{}).name||"")+")";return res}
+  if(e.replaced&&res.tg&&e.replaced===res.tg.id&&e.hire_type==="대체"){res.st="same";res.msg="이미 입력됨";return res}
+  if(!res.tg&&e.replaced_name&&e.replaced_name!==o.target){res.st="keep";res.msg="이미 다른 대체 대상 이름이 있어 그대로 둠 ("+e.replaced_name+")";return res}
+  res.st="ok";res.msg=res.tg?o.target+" 대체 ✓ 찾음":o.target+" 대체 · DB에 없어 이름만 저장";return res}
+function rplFile(file){toast("읽는 중…");xlLoad().then(function(X){return file.arrayBuffer().then(function(buf){var wb=new X.Workbook();return wb.xlsx.load(buf).then(function(){return wb})})}).then(function(wb){var R=null;wb.worksheets.some(function(ws){var p=rplParse(ws);if(p.L){R=p;return true}R=R||p;return false});
+  if(!R||!R.L){toast(R&&R.err||"읽을 수 없는 파일이에요");return}S.rplImp=R.L.map(rplMatch);render()}).catch(function(e){toast("읽지 못했어요: "+(e&&e.message||e))})}
+function rplHtml(){var L=S.rplImp;if(!L)return"";var n=function(s){return L.filter(function(x){return x.st===s}).length};
+  return'<div class="dcard" style="margin-top:10px"><div class="dcard-h"><b>대체 대상 미리보기 · '+L.length+'줄</b><span class="small muted">반영 '+n("ok")+' · 대체 미지정 '+n("warn")+' · 그대로 '+(n("same")+n("keep"))+' · 확인 필요 '+(n("skip")+n("pick"))+'</span></div><div style="max-height:420px;overflow:auto"><table class="mini"><thead><tr><th>행</th><th>이름</th><th>계약시작</th><th>고용 건 (DB)</th><th>구분</th><th>대체 대상</th><th>결과</th></tr></thead><tbody>'+
+    L.map(function(x,i){var o=x.o,e=x.e,cl=x.st==="ok"?"ok":x.st==="warn"?"warn":x.st==="skip"||x.st==="pick"?"bad":"";
+      var ec=e?esc((comp(e.company)||{}).name||"")+' · '+esc((termsOf(e.id)[0]||{}).start||""):x.E.length>1?'<select data-ch="rpl-pick" data-i="'+i+'"><option value="">고르기</option>'+x.E.map(function(y){return'<option value="'+y.id+'">'+esc((comp(y.company)||{}).name||"")+' · '+esc((termsOf(y.id)[0]||{}).start||"")+'</option>'}).join("")+'</select>':"—";
+      var tg=x.tgL.length>1?'<select data-ch="rpl-tg" data-i="'+i+'">'+x.tgL.map(function(y){return'<option value="'+y.id+'"'+(x.tg&&x.tg.id===y.id?" selected":"")+'>'+esc(wk(y.worker).name)+' · 종료 '+esc(effEnd(y)||"—")+'</option>'}).join("")+'</select>':esc(o.target||"");
+      return'<tr><td class="num small">'+o.r+'</td><td>'+esc(o.name)+'</td><td class="num small">'+esc(o.cs||"")+'</td><td class="small">'+ec+'</td><td>'+esc(o.kind||"")+'</td><td>'+tg+'</td><td><span class="b sm '+cl+'">'+esc(x.msg)+'</span></td></tr>'}).join("")+'</tbody></table></div>'+
+    '<div class="foot" style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end"><button class="btn sm" data-act="rpl-cancel">취소</button><button class="btn sm pri" data-act="rpl-ok"'+(n("ok")+n("warn")?"":" disabled")+'>등록 ('+(n("ok")+n("warn"))+'건)</button></div><p class="hint">계약일 · 플립시작일 · 기업은 바꾸지 않아요 · 이미 다른 대체 대상이 있는 건은 그대로 둬요</p></div>'}
+function rplApply(){var L=S.rplImp||[],n=0;L.forEach(function(x){if(x.st!=="ok"&&x.st!=="warn")return;var e=x.e,o=x.o,w=wk(e.worker),b=e.hire_type||"";
+  if(b!==o.kind){e.hire_type=o.kind;logChange("workers",e.worker,w.name,"입사 구분 (일괄 입력)",b,o.kind,"브이드림 내부")}
+  if(o.kind==="대체"&&o.target){if(x.tg&&!e.replaced){e.replaced=x.tg.id;logChange("workers",e.worker,w.name,"대체 대상 (일괄 입력)","",wk(x.tg.worker).name,"브이드림 내부")}else if(!x.tg&&!e.replaced&&!e.replaced_name){e.replaced_name=o.target;logChange("workers",e.worker,w.name,"대체 대상 이름 (일괄 입력)","",o.target,"브이드림 내부")}}n++});
+  S.rplImp=null;toast(n+"건 반영했어요");render()}
+var _vMig72=vMig;vMig=function(){var h=_vMig72();if(S.role!=="admin")return h;var card='<div class="migcards" style="margin-top:12px"><div class="migcard"><b>⑥ 대체 대상 일괄 입력</b><p class="small muted">이름 · 플립시작일 · 계약시작일 · 계약만료일 · 구분 · 대체 대상 순서. 기업명은 보지 않고 이름 + 계약시작일(없으면 플립시작일)로 고용 건을 찾아요. 기존 값은 덮어쓰지 않아요.</p><input type="file" accept=".xlsx" data-ch="rpl-imp"></div></div>'+rplHtml();return h+card};
+function v72Change(t,d){if(d.ch==="rpl-imp"&&t.files&&t.files[0]){rplFile(t.files[0]);t.value="";return true}
+  if(d.ch==="rpl-pick"){var x=S.rplImp[+d.i],e=x&&emp(t.value);if(!e)return true;x.e=e;rplJudge(x);render();return true}
+  if(d.ch==="rpl-tg"){var y=S.rplImp[+d.i],g=y&&emp(t.value);if(!g)return true;y.tg=g;render();return true}return false}
+function v72Act(a,el){if(a==="rpl-ok"){rplApply();return true}if(a==="rpl-cancel"){S.rplImp=null;render();return true}return false}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -9460,12 +9508,12 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
   var t=ev.target,d=t.dataset||{};
-  if(v70Change(t,d))return;if(v68Change(t,d))return;if(v58Change(t,d))return;if(v49Change(t,d))return;if(v41Change(t,d))return;if(v39Change(t,d))return;if(v35Change(t,d))return;if(v29Change(t,d))return;if(v28Change(t,d))return;if(v26Change(t,d))return;if(v25Change(t,d))return;if(v24Change(t,d))return;if(v23Change(t,d))return;if(v20Change(t,d))return;if(v18Change(t,d))return;if(v12Change(t,d))return;if(mgChange(t,d))return;if(gasChange(t,d))return;if(v8Change(t,d))return;if(v7Change(t,d))return;if(v6Change(t,d))return;if(migChange(t,d))return;if(onbChange(t,d))return;if(reqChange(t,d))return;if(intakeChange(t,d,false))return;if(talentChange(t,d))return;
+  if(v72Change(t,d))return;if(v70Change(t,d))return;if(v68Change(t,d))return;if(v58Change(t,d))return;if(v49Change(t,d))return;if(v41Change(t,d))return;if(v39Change(t,d))return;if(v35Change(t,d))return;if(v29Change(t,d))return;if(v28Change(t,d))return;if(v26Change(t,d))return;if(v25Change(t,d))return;if(v24Change(t,d))return;if(v23Change(t,d))return;if(v20Change(t,d))return;if(v18Change(t,d))return;if(v12Change(t,d))return;if(mgChange(t,d))return;if(gasChange(t,d))return;if(v8Change(t,d))return;if(v7Change(t,d))return;if(v6Change(t,d))return;if(migChange(t,d))return;if(onbChange(t,d))return;if(reqChange(t,d))return;if(intakeChange(t,d,false))return;if(talentChange(t,d))return;
   if(d.trf&&S.trf){S.trf[d.trf]=t.value;if(d.trf!=="why")render();return}
   if(d.wf==="non_dis"){var rt=t.closest(".pnl");$$('[data-wf="dis_type"],[data-wf="dis_level"]',rt).forEach(function(i){i.disabled=t.checked});var nd=rt.querySelector('[data-wf="non_dis_on"]');nd.disabled=!t.checked;if(t.checked&&!nd.value)nd.value=TODAY;return}
   if(d.ch==="spec"){S.spec=t.checked;render();return}
