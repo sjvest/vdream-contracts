@@ -6939,7 +6939,7 @@ vRdash=function(){var L=rdRows(),act=L.filter(function(r){var s=rrState(r);retur
     fbar({noScope:true,extra:'<div class="seg" role="group" aria-label="기간">'+[["w","이번 주"],["m","이번 달"],["q","분기"]].map(function(x){return'<button data-act="rd-p" data-v="'+x[0]+'" class="'+((S.rdP||"m")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div><div class="seg" role="group" aria-label="구분">'+[["","전체"]].concat(RR_KIND.map(function(k){return[k,k]})).map(function(x){return'<button data-act="rd-k" data-v="'+x[0]+'" class="'+((S.rdKind||"")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div><select data-ch="rd-rec" aria-label="채용 담당">'+withCtx(staffOpts,"rreq")(S.rdRec||"","채용 담당 전체")+'</select>'});
   h+='<div class="rdcards">'+[["진행 중",act.length+"건",'미충원 '+act.reduce(function(s,r){return s+unf(r)},0)+'명',"open",""],["마감 초과",late.length,"","late","bad"],["이번 주 마감",wkDue.length,"","open","warn"],["회신 대기",slow.length,"이력서 전달 후 7일+","",slow.length?"warn":""],["합격 → 입사 대기",waitIn.length,"","soon","ok"],["이번 달 입사",monIn.length,monCx?"입사취소 "+monCx:"","","t"]].map(function(c){return'<button class="rdcard '+c[4]+'"'+(c[3]?' data-act="rd-go" data-v="'+c[3]+'"':"")+'><span>'+c[0]+'</span><b>'+c[1]+'</b>'+(c[2]?'<small>'+c[2]+'</small>':"")+'</button>'}).join("")+'</div>';
   /* B. 오늘 할 일 */
-  var soon=act.filter(function(r){return r.due_date&&dd(TODAY,r.due_date)<=3}).sort(function(a,b){return a.due_date.localeCompare(b.due_date)});
+  var soon=act.filter(function(r){return r.due_date&&dd(TODAY,r.due_date)<=3&&!rrSent(r)}).sort(function(a,b){return a.due_date.localeCompare(b.due_date)});
   var zero=act.filter(function(r){return!rrCands(r.id).some(function(c){return c.sent})&&r.requested&&dd(r.requested,TODAY)>=3});
   var ivs=C.filter(function(o){return o.c.iv&&o.c.iv>=TODAY&&o.c.iv<=addD(TODAY,7)}).sort(function(a,b){return a.c.iv.localeCompare(b.c.iv)});
   var noReg=C.filter(function(o){return o.c.final==="합격"&&!o.c.hired});
@@ -7898,7 +7898,7 @@ vRreq=function(){var tab=S.rrTab;if(["요청","이력서 전달","마감 초과"
   var h='<div class="hd"><div><h1>채용 요청</h1><p>고객사 채용 요청 · 차수별 후보자 진행'+IH("진행상태: 요청(후보자 없음 · 모두 종결) → 이력서 전달(전달일만 있음) → 면접(면접 '진행 예정') → 채용 예정(최종 합격 · 입사 등록 전). 요청 · 이력서 전달 단계에서 마감 요청일이 지나면 '마감 초과'. 단계마다 채용파트 할 일로 올라가요. 줄을 누르면 조회 화면, [수정]은 바로 수정 화면이에요.")+'</p></div><div class="acts"><button class="btn pri" data-act="rr-new">+ 채용 요청</button></div></div>'+
     '<div class="tabs" role="tablist">'+[["요청"],["이력서 전달"],["마감 초과"],["면접"],["|"],["채용 예정"],["|"],["보류"],["전체"]].map(function(x){if(x[0]==="|")return'<span class="tsep2"></span>';return'<button class="'+(tab===x[0]?"on":"")+'" data-act="rr-tab" data-v="'+x[0]+'">'+x[0]+(x[0]==="전체"?"":'<span class="c">'+(cnt[x[0]]||0)+'</span>')+'</button>'}).join("")+'<span class="tsep"></span><button class="tdone'+(tab==="완료"?" on":"")+'" data-act="rr-tab" data-v="완료">완료 조회</button></div>'+
     (tab==="완료"?dRBar("rreq","완료 · 취소일"):"")+fbar({extra:'<div class="seg" role="group" aria-label="구분">'+[["","전체"]].concat(RR_KIND.map(function(k){return[k,k]})).map(function(x){return'<button data-act="rr-kind" data-v="'+x[0]+'" class="'+((S.rrKind||"")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'});
-  var no=0;if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){return String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"))});
+  var no=0;if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){return(rrSent(a)?1:0)-(rrSent(b)?1:0)||String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"))});
   h+=dtable("rreq",cols,rows,function(r){var s=rrStage(r),cur=rrCur(r),n=rrCnt(r);no++;
     return'<tr class="'+(S.rrSel===r.id?"sel ":"")+(s==="완료"?"dim":"")+'" data-act="rr-open" data-id="'+r.id+'"><td class="c num">'+no+'</td><td class="c"><span class="b sm '+RR_STC[s]+'">'+s+'</span></td><td class="c">'+(cur?cur.seq+"차":"-")+'</td><td class="c">'+(r.vm?'<span class="b sm ok">✓ '+esc(md(r.vm_on||"").replace(/\(.\)/,""))+'</span>':'<span class="b sm warn">미업로드</span>')+'</td><td>'+clink(r.company)+'</td>'+
       '<td class="num small">'+esc(yymd(r.requested))+' ~ '+esc(yymd(r.due_date))+'</td><td class="small">'+esc(r.start_mode==="date"||r.start_date?(r.start_date?String(r.start_date).slice(5).replace("-","."):""):(rrStart(r)||"-"))+'</td><td class="c">'+esc(r.weekly_off==="모름"||!r.weekly_off?"확인중":r.weekly_off)+'</td><td class="small">'+esc(rrHrs(r))+'</td><td class="num" style="text-align:right">'+esc(rrPay(r))+'</td><td class="c">'+(r.term_months?esc(r.term_months)+"개월":"-")+'</td>'+
@@ -8842,7 +8842,7 @@ vRreq=function(){RR_DONE=null;var tab=S.rrTab;if(RR_TABS.indexOf(tab)<0&&tab!=="
   var pk=Object.keys(S.rrPick).filter(function(id){return S.rrPick[id]&&rcOf(id)});
   var h='<div class="hd"><div><h1>채용 요청</h1><p>고객사 채용 요청 · 차수별 후보자 진행'+IH("탭은 지금 누가 움직일 차례인지로 나눠요. 채용 할 일: 후보자 찾기 · 등록 등 채용파트 차례 / 운영 대기: 고객사 전달 · 회신 · 면접 등 운영파트 · 고객사 차례 / 채용 예정: 최종 합격 · 입사 대기. 마감이 지나면 빨간 '초과' 배지가 붙고 위로 올라와요. 현황 = 지원 / 합격 / 불합격.")+'</p></div><div class="acts"><button class="btn pri" data-act="rr-new">+ 채용 요청</button></div></div>';
   h+=rrCoBanner();
-  var sum=[["채용 할 일",cnt["채용 할 일"]||0],["마감 초과",base.filter(function(r){return rrTabOf(r)!=="완료"&&r.due_date&&r.due_date<TODAY}).length],["이번 주 입사 예정",base.filter(function(r){return r.start_date&&r.start_date>=TODAY&&r.start_date<=addD(TODAY,7)}).length]];
+  var sum=[["채용 할 일",cnt["채용 할 일"]||0],["마감 초과",base.filter(function(r){return rrTabOf(r)!=="완료"&&rrLate(r)}).length],["이번 주 입사 예정",base.filter(function(r){return r.start_date&&r.start_date>=TODAY&&r.start_date<=addD(TODAY,7)}).length]];
   h+='<div class="rrsum">'+sum.map(function(x){return'<span><b>'+x[1]+'</b> '+x[0]+'</span>'}).join("")+(stale?'<button class="linkbtn'+(S.rrStale?" on":"")+'" data-act="rr-stale">30일 넘게 진행 없음 '+stale+'건 '+(S.rrStale?"· 전체 보기":"만 보기")+'</button>':"")+'</div>';
   h+='<div class="tabs" role="tablist">'+RR_TABS.map(function(x){return'<button class="'+(tab===x?"on":"")+'" data-act="rr-tab" data-v="'+x+'">'+x+'<span class="c">'+(cnt[x]||0)+'</span></button>'}).join("")+'<span class="tsep"></span><button class="tdone'+(tab==="완료"?" on":"")+'" data-act="rr-tab" data-v="완료">완료 조회</button></div>';
   if(tab==="완료")h+=dRBar("rreq","완료 · 취소일");
@@ -8850,7 +8850,7 @@ vRreq=function(){RR_DONE=null;var tab=S.rrTab;if(RR_TABS.indexOf(tab)<0&&tab!=="
   h+=fbar({extra:'<div class="seg" role="group" aria-label="구분">'+[["","전체"]].concat(RR_KIND.map(function(k){return[k,k]})).map(function(x){return'<button data-act="rr-kind" data-v="'+x[0]+'" class="'+((S.rrKind||"")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'+
     '<select data-ch="rr-job" aria-label="직무">'+opt(Object.keys(jobs).sort(),S.rrJob||"","직무 전체")+'</select><div class="seg" role="group" aria-label="근무형태">'+[["","전체"],["재택","재택"],["내근","출근"],["혼합","혼합"]].map(function(x){return'<button data-act="rr-wt" data-v="'+x[0]+'" class="'+((S.rrWt||"")===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'}).replace('placeholder="근로자 이름 · 연락처" aria-label="근로자 이름 또는 연락처 검색"','placeholder="후보자 이름" aria-label="후보자 이름 검색"');
   if(pk.length)h+='<div class="rrbulk"><b>'+pk.length+'건 선택</b><span class="sep"></span><label>채용 담당 <select id="rrb-m">'+staffOpts("","선택")+'</select></label><button class="btn xs" data-act="rrb-m">적용</button><span class="sep"></span><label>상태 <select id="rrb-s">'+opt(RR_ST,"","선택")+'</select></label><input id="rrb-n" placeholder="사유 (완료 · 취소 · 보류)" style="width:200px"><button class="btn xs act" data-act="rrb-s">적용</button><span class="grow"></span><button class="btn xs" data-act="rrb-all">보이는 것 모두 선택</button><button class="btn xs" data-act="rrb-clr">선택 해제</button></div>';
-  if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){return String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"))||String(a.requested||"").localeCompare(String(b.requested||""))});
+  if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){return(rrSent(a)?1:0)-(rrSent(b)?1:0)||String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"))||String(a.requested||"").localeCompare(String(b.requested||""))});
   S.rrVis=rows.map(function(r){return r.id});
   h+=dtable("rreq",cols,rows,function(r){var s=rrStage(r),cur=rrCur(r),n=rrCnt(r),hd=rrHead(r),la=rrLastAct(r),ag=dAgo(la),done=tab==="완료";
     var cn='<span class="num rrcn'+(n.ok>=hd&&hd?" full":!n.a?" none":"")+'" title="지원 / 합격 / 불합격 · 채용 '+hd+'명">'+n.a+'/'+n.ok+'/'+n.no+'</span>';
@@ -9048,7 +9048,7 @@ function rdCoIssues(){var L=rdRows(),act=L.filter(function(r){var s=rrState(r);r
   var add=function(r,kind,lab,cls,score,cand,urgentEvenLong){var o=G[key(r)]||g(key(r),(comp(r.company)||{}).name||rrSheetName(r)||"(기업 없음)",r.company),q=rq(r);q.b.push({k:kind,l:lab,c:cls});if(cand)q.c.push(cand);o.iss[kind]=(o.iss[kind]||0)+1;
     if(!rrIsLong(r)||urgentEvenLong){o.long=false;o.sc=Math.max(o.sc,score)}};
   act.forEach(function(r){var ov=rrOver(r),dl=r.due_date?dd(TODAY,r.due_date):null;
-    if(ov>LT)add(r,"long","장기 "+ov+"일","",0);else if(ov>0)add(r,"late","마감 초과 "+ov+"일","bad",1000+ov);else if(dl!=null&&dl<=3)add(r,"soon","마감 D-"+dl,"warn",600-dl);
+    if(ov>LT&&!rrHired(r))add(r,"long","장기 "+ov+"일","",0);else if(ov>0&&!rrSent(r))add(r,"late","마감 초과 "+ov+"일","bad",1000+ov);else if(dl!=null&&dl>=0&&dl<=3&&!rrSent(r))add(r,"soon","마감 D-"+dl,"warn",600-dl);
     var ls=rrLastStart(r);if(ls&&dd(TODAY,ls)>=0&&dd(TODAY,ls)<=7&&!(r.start_date&&r.start_date<=ls))add(r,"ls","입사가능일 D-"+dd(TODAY,ls),"warn",500-dd(TODAY,ls));
     var C=rrCands(r.id);if(!C.some(function(c){return c.sent})&&r.requested&&dd(r.requested,TODAY)>=3)add(r,"zero","후보 0명","",10);
     C.forEach(function(c){if(c.sent&&!c.doc&&!c.final&&dd(c.sent,TODAY)>7){if(typeof rrSales==="function"&&rrSales(r))add(r,"slows","영업 회신 대기 +"+dd(c.sent,TODAY)+"일","",60,c.name+" +"+dd(c.sent,TODAY)+"일");else add(r,"slow","회신 지연 +"+dd(c.sent,TODAY)+"일","bad",800+Math.min(dd(c.sent,TODAY),199),c.name+" +"+dd(c.sent,TODAY)+"일",true)}
@@ -9234,6 +9234,25 @@ function cdocBox77(c,ds){var G=[["in","입사 서류 양식",ds.filter(function(
     '<table class="mini"><thead><tr><th>서류명</th><th>제출 방식 *</th><th>비고</th><th></th></tr></thead><tbody>'+(g[2].length?g[2].map(cdocRow77).join(""):'<tr><td colspan="4" class="muted">'+g[4]+'</td></tr>')+'</tbody></table></div>'}).join("")+
     '<p class="hint" style="margin-top:6px">제출 방식은 입사 · 퇴사 서류 진행 단계(원본 5단계 · PDF 모두싸인 3단계)를 정합니다. 퇴사 서류 양식은 신규 입사 때 입사서류 케이스를 만들지 않고, 퇴사 서류에만 쓰입니다. 서류명에 사직원 · 퇴직원이 들어가면 퇴사 서류로 봅니다.</p></div>'}
 function v77Act(a,el){if(a!=="cdoc-add77")return false;DB.cdocs.push({id:nid(),company:el.dataset.id,doc_type:el.dataset.k==="out"?"퇴사기타":"기타",doc_name:"",method:"",note:""});render();return true}
+
+/* ================================================================
+   v80. 채용 요청 마감일 = 마지막 차수 마감일(이력서 전달 마감) · 전달했으면 초과 아님 · 1차 기본 생성
+   ================================================================ */
+APP_VER="v80";APP_VER_ON="10/11";
+function rrLastRd(r){var R=rrRounds(r.id);return R[R.length-1]||null}
+function rrSent(r){var L=rrLastRd(r);return!!(L&&(L.cands||[]).length)}
+function rrLate(r){return!!(r.due_date&&r.due_date<TODAY&&!rrSent(r))}
+S._rrDue=S._rrDue||{};
+function rrDueSync(){(DB.rr||[]).forEach(function(r){var R=rrRounds(r.id);
+  if(!R.length){if(r.status==="취소")return;DB.rrr.push({id:nid(),req:r.id,seq:1,channel:RR_CH[0],notice:"",docs:"",comm:[],cands:[],raw:"",due:r.due_date||""});S._rrDue[r.id]=r.due_date||"";return}
+  var L=R[R.length-1],pv=S._rrDue[r.id],cur=r.due_date||"";
+  if(pv!==undefined&&cur!==pv){if((L.due||"")!==cur)L.due=cur}
+  else if(L.due&&L.due!==cur){r.due_date=L.due}
+  S._rrDue[r.id]=r.due_date||""})}
+var _render80=render;render=function(){try{rrDueSync()}catch(err){console.error(err)}return _render80.apply(this,arguments)};
+var _rrState80=rrState;rrState=function(r){var s=_rrState80(r);return s==="마감 초과"&&rrSent(r)?"진행중":s};
+rrIsLong=function(r){return rrOver(r)>rrLongDays()&&!rrHired(r)};
+var _rrDue80=rrDue;rrDue=function(r){if(r.due_date&&r.due_date<TODAY&&rrStage(r)!=="완료"&&!rrIsLong(r)&&rrSent(r))return'<span class="num small">'+yymd(r.due_date)+'</span> <span class="b sm ok tip" tabindex="0" data-tip="마지막 차수에 이력서를 전달했어요">전달</span>';return _rrDue80(r)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
