@@ -619,7 +619,7 @@ td:has(>.nowb),td:has(>a+.nowb),td:has(.nowb){white-space:nowrap}.nowb .b{margin
 .onbcols{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start;grid-column:1/-1}.onbc{min-width:0}.onbc>.ps{border-right:0}@media(max-width:900px){.onbcols{grid-template-columns:1fr}}
 .tlr{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:13px}.tlr:first-of-type{border-top:0}.tlr .grow{flex:1}.rplk{cursor:pointer;border:0;margin-left:6px}
 .rplk{text-decoration:underline;text-underline-offset:2px}.rptx{background:#F1F0F5;color:#6B6880}.emp.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px}
-td.cnm .linkbtn{display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}.nmmore{cursor:help}.ps.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px;transition:outline-color .3s}.rrgh td{background:#F4F2FB;cursor:pointer;font-size:13px;padding-top:6px;padding-bottom:6px}.rrgh .rrgar{display:inline-block;width:12px;color:#6B6880}.rrgm td:nth-child(2){padding-left:22px}.rrgoff{display:none}.rtcond{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}.rtcond select,.rtcond input{min-width:0}.rtrule select{margin-right:4px}</style>
+td.cnm .linkbtn{display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}.nmmore{cursor:help}.ps.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px;transition:outline-color .3s}.t tbody tr.rrgm td{border-top-color:var(--line-2)}.rtcond,.rtrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rtcond{margin-bottom:2px}.rtdlg .rtcond select,.rtdlg .rtcond input,.rtdlg .rtrow select,.rtdlg .rtrow input:not([type=checkbox]){width:auto}.rtdlg .rtcond select:first-child{width:220px}.rtdlg .rtcond input{flex:1;min-width:140px}.rtjoin{margin:2px 0 4px 12px}</style>
 </head>
 <body>
 <div id="top"></div>
@@ -8852,12 +8852,12 @@ vRreq=function(){RR_DONE=null;var tab=S.rrTab;if(RR_TABS.indexOf(tab)<0&&tab!=="
   if(pk.length)h+='<div class="rrbulk"><b>'+pk.length+'건 선택</b><span class="sep"></span><label>채용 담당 <select id="rrb-m">'+staffOpts("","선택")+'</select></label><button class="btn xs" data-act="rrb-m">적용</button><span class="sep"></span><label>상태 <select id="rrb-s">'+opt(RR_ST,"","선택")+'</select></label><input id="rrb-n" placeholder="사유 (완료 · 취소 · 보류)" style="width:200px"><button class="btn xs act" data-act="rrb-s">적용</button><span class="grow"></span><button class="btn xs" data-act="rrb-all">보이는 것 모두 선택</button><button class="btn xs" data-act="rrb-clr">선택 해제</button></div>';
   if(!(tst("rreq").sort&&tst("rreq").sort.k))rows.sort(function(a,b){return(rrSent(a)?1:0)-(rrSent(b)?1:0)||String(a.due_date||"9999").localeCompare(String(b.due_date||"9999"))||String(a.requested||"").localeCompare(String(b.requested||""))});
   rows=rrGroupOrder(rows);S.rrVis=rows.map(function(r){return r.id});
-  h+=dtable("rreq",cols,rows,function(r){var _gx=rrGPre(r,cols.length);var s=rrStage(r),cur=rrCur(r),n=rrCnt(r),hd=rrHead(r),la=rrLastAct(r),ag=dAgo(la),done=tab==="완료";
+  h+=dtable("rreq",cols,rows,function(r){var _gx=rrGPre(r);var s=rrStage(r),cur=rrCur(r),n=rrCnt(r),hd=rrHead(r),la=rrLastAct(r),ag=dAgo(la),done=tab==="완료";
     var cn='<span class="num rrcn'+(n.ok>=hd&&hd?" full":!n.a?" none":"")+'" title="지원 / 합격 / 불합격 · 채용 '+hd+'명">'+n.a+'/'+n.ok+'/'+n.no+'</span>';
     var pg=done?(r.status==="취소"?'<span class="b sm tip" tabindex="0" data-tip="'+esc("취소"+(r.status_note?" · "+r.status_note:""))+'">취소</span>':'<span class="b sm ok tip" tabindex="0" data-tip="'+esc("완료"+(r.status_note?" · "+r.status_note:""))+'">완료</span>'):(cur?'<span class="small">'+cur.seq+'차</span> ':"")+'<span class="b sm '+(RR_STC[s]||"")+'">'+esc(s)+'</span>';
-    return _gx+'<tr class="'+rrGCls(r)+(S.rrSel===r.id?"sel ":"")+(done?"dim ":"")+(!done&&ag>=30?"stale":"")+'" data-act="rr-open" data-id="'+r.id+'"><td class="c" data-act="noop"><input type="checkbox" data-ch="rr-pick" data-id="'+r.id+'"'+(S.rrPick[r.id]?" checked":"")+' aria-label="선택"></td><td class="nowrap">'+rrCoCell(r)+'</td>'+
+    return _gx+'<tr class="'+rrGCls(r)+(S.rrSel===r.id?"sel ":"")+(done?"dim ":"")+(!done&&ag>=30?"stale":"")+'" data-act="rr-open" data-id="'+r.id+'"><td class="c" data-act="noop"><input type="checkbox" data-ch="rr-pick" data-id="'+r.id+'"'+(S.rrPick[r.id]?" checked":"")+' aria-label="선택"></td>'+rrGCo(r)+
       '<td class="num small">'+esc(yymd(r.requested)||"-")+'</td><td class="nowrap">'+rrDue(r)+'</td><td class="small">'+esc(r.start_date?yymd(r.start_date):(rrStart(r)||"-"))+'</td>'+
-      '<td class="nowrap">'+rrJobsG(r)+'</td><td class="small"><span class="tip" tabindex="0" data-tip="'+esc(rrCondTip(r))+'">'+esc(rrCond(r)||"조건 확인")+'</span>'+(r.dis_level==="중증"?' <span class="b sm" style="color:#C2410C">중증</span>':"")+'</td>'+
+      '<td class="nowrap">'+rrGDept(r)+rrJobsG(r)+'</td><td class="small"><span class="tip" tabindex="0" data-tip="'+esc(rrCondTip(r))+'">'+esc(rrCond(r)||"조건 확인")+'</span>'+(r.dis_level==="중증"?' <span class="b sm" style="color:#C2410C">중증</span>':"")+'</td>'+
       '<td class="nowrap">'+pg+'</td><td class="c">'+cn+'</td><td class="small">'+(done?"":rrNext(r))+'</td><td class="c small'+(!done&&ag>=30?" late":"")+'">'+(ag==null?"-":ag===0?"오늘":ag+"일 전")+'</td><td>'+(rrRecruiter(r)?esc(st(rrRecruiter(r)).name):'<span class="b sm warn">미배정</span>')+'</td></tr>'},tab==="완료"?"기간 안에 완료 · 취소한 요청이 없어요.":"조건에 맞는 채용 요청이 없어요.");
   if(S.rrSel)h+=pRr();return h};
 /* ---- 일괄 변경 ---- */
@@ -9238,7 +9238,7 @@ function v77Act(a,el){if(a!=="cdoc-add77")return false;DB.cdocs.push({id:nid(),c
 /* ================================================================
    v80. 채용 요청 마감일 = 마지막 차수 마감일(이력서 전달 마감) · 전달했으면 초과 아님 · 1차 기본 생성
    ================================================================ */
-APP_VER="v82";APP_VER_ON="10/11";
+APP_VER="v84";APP_VER_ON="10/11";
 function rrLastRd(r){var R=rrRounds(r.id);return R[R.length-1]||null}
 function rrSent(r){var L=rrLastRd(r);return!!(L&&(L.cands||[]).length)}
 function rrLate(r){return!!(r.due_date&&r.due_date<TODAY&&!rrSent(r))}
@@ -9257,7 +9257,7 @@ var _rrDue80=rrDue;rrDue=function(r){if(r.due_date&&r.due_date<TODAY&&rrStage(r)
 /* ================================================================
    v81. 추천인재 = 케이스 · 채용 요청 후보 결과로 연계 판단 · 요청 밖 입사는 할 일로 확인 · 등록 팝업
    ================================================================ */
-APP_VER="v82";APP_VER_ON="10/11";
+APP_VER="v84";APP_VER_ON="10/11";
 function talCandsOf(tid){var L=[];DB.rrr.forEach(function(x){var r=rcOf(x.req);if(!r)return;(x.cands||[]).forEach(function(c){if(c.tal===tid)L.push({x:x,r:r,c:c})})});return L}
 function talCandRes(c){if(c.final==="합격")return"입사";var s=[c.doc,c.iv,c.final].join(" ");if(/지원\s?취소|포기/.test(s))return"본인 포기";if(PF_DEAD.test(s))return"불합격";return"진행 중"}
 function talDay(t){return String(t.created||"").slice(0,10)}
@@ -9320,7 +9320,7 @@ function v79Act(a,el){switch(a){case"talh-close":talhClose(el.dataset.k);return 
 /* ================================================================
    v82. 채용 요청 기업 묶음 · 근태/업무 할 일에 기한 표시 · 반복 업무(스케줄)
    ================================================================ */
-APP_VER="v82";APP_VER_ON="10/11";
+APP_VER="v84";APP_VER_ON="10/11";
 
 /* ---------- 1. 채용 요청: 같은 기업(그룹) 묶음 ---------- */
 S.rrGOff=S.rrGOff||{};
@@ -9330,10 +9330,13 @@ function rrGroupOrder(rows){S._rrG=null;if(tst("rreq").sort&&tst("rreq").sort.k)
   rows.forEach(function(r){var k=rrGKey(r);if(!G[k]){G[k]=[];ord.push(k)}G[k].push(r)});
   var out=[],info={};ord.forEach(function(k){var L=G[k];info[k]={n:L.length,ids:L.map(function(r){return r.id}),name:rrGName(L[0]),due:L.reduce(function(m,r){return r.due_date&&(!m||r.due_date<m)?r.due_date:m},""),late:L.filter(rrLate).length};out=out.concat(L)});
   S._rrG={info:info,last:null};return out}
-function rrGPre(r,nc){var G=S._rrG;if(!G)return"";var k=rrGKey(r),I=G.info[k];if(!I||I.n<2||G.last===k){G.last=k;return""}G.last=k;
-  var off=S.rrGOff[k],all=I.ids.every(function(id){return S.rrPick&&S.rrPick[id]});
-  return'<tr class="rrgh" data-act="rrg-tog" data-k="'+esc(k)+'"><td class="c" data-act="noop"><input type="checkbox" data-ch="rrg-pick" data-k="'+esc(k)+'"'+(all?" checked":"")+' aria-label="묶음 전체 선택"></td><td colspan="'+(nc-1)+'"><span class="rrgar">'+(off?"▸":"▾")+'</span> <b>'+esc(I.name)+'</b> <span class="b sm">'+I.n+'건</span> <span class="small muted">가장 빠른 마감 '+(I.due?esc(yymd(I.due)):"-")+'</span>'+(I.late?' <span class="b sm bad">초과 '+I.late+'</span>':"")+'</td></tr>'}
-function rrGCls(r){var G=S._rrG;if(!G)return"";var k=rrGKey(r),I=G.info[k];if(!I||I.n<2)return"";return"rrgm "+(S.rrGOff[k]?"rrgoff ":"")}
+function rrGPre(r){var G=S._rrG;if(!G)return"";var k=rrGKey(r),I=G.info[k];G.cur={k:k,I:I,first:G.last!==k};G.last=k;return""}
+function rrGOn(){var c=S._rrG&&S._rrG.cur;return c&&c.I&&c.I.n>1?c:null}
+function rrGCls(r){var c=rrGOn();return c?(c.first?"gs ":"rrgm "):""}
+function rrGCo(r){var c=rrGOn(),cell='<td class="nowrap">'+rrCoCell(r)+"</td>";if(!c)return cell;if(!c.first)return"";var I=c.I,all=I.ids.every(function(id){return S.rrPick&&S.rrPick[id]});
+  return'<td class="grp" rowspan="'+I.n+'" data-act="noop"><div class="gname">'+(comp(r.company)&&c.k.indexOf("g:")!==0?clink(r.company).replace(/<span class="cdept">[\s\S]*?<\/span>/,""):'<b>'+esc(I.name)+'</b>')+'<small>요청 '+I.n+'건 · 가장 빠른 마감 '+(I.due?esc(yymd(I.due)):"-")+(I.late?' · <b style="color:var(--bad)">초과 '+I.late+'</b>':"")+'</small><label class="small" style="margin-top:2px"><input type="checkbox" data-ch="rrg-pick" data-k="'+esc(c.k)+'"'+(all?" checked":"")+'> 묶음 선택</label></div></td>'}
+function rrGDept(r){if(!rrGOn())return"";var co=comp(r.company),d=co&&deptSibs(co).length?deptLab(co):"";
+  return'<span class="b sm '+(r.kind==="대체"?"p":r.kind==="추가"?"t":"")+'">'+esc(r.kind||"")+'</span> '+(d?'<span class="small muted">'+esc(d)+' · </span>':"")}
 
 /* ---------- 2. 근태/업무: 쪽지 전 할 일에도 소명 · 완료기한 ---------- */
 var _bt82=buildTodos;buildTodos=function(){var L=_bt82();L.forEach(function(t){if(t.type!=="att"||String(t.task).indexOf("기한 ")>=0)return;var a=DB.att.find(function(x){return x.id===t.att});if(a&&a.due&&a.status==="시작 전")t.task+=" · "+(a.kind==="근태"?"소명기한 ":"완료기한 ")+md(a.due)});var X;if(typeof RC!=="undefined"&&RC){X=RC.rt82||(RC.rt82=rtTodos())}else X=rtTodos();return L.concat(X)};
@@ -9470,28 +9473,28 @@ function rtTargetHtml(F){var T=F.target,h='<div class="f full"><span>대상</spa
     return h+'<div class="f full"><span>'+(T.kind==="comp"?"기업 DB":"근로자 DB")+'에서 고르기 · 선택 '+T.ids.length+'</span><input id="rt-q" placeholder="이름 검색" oninput="rtPickFilter()" style="width:100%;margin-bottom:6px"><div class="mgpl" style="max-height:220px">'+
       src.map(function(x){var lb=rtTName(T,x.id);return'<label class="mgpr rtpk" data-q="'+esc(lb.toLowerCase())+'"><input type="checkbox" data-act="rt-pick" value="'+esc(x.id)+'"'+(T.ids.indexOf(x.id)>=0?" checked":"")+'> '+esc(lb)+'</label>'}).join("")+'</div></div>'}
   var FL=rtFields(T.kind);
-  h+='<div class="f full"><span>조건 ('+(T.kind==="comp"?"기업 DB":"근로자 DB")+' 칸 기준)</span>'+T.conds.map(function(c,i){var f=FL.find(function(x){return x.k===c.f}),ty=f?f.ty:"text",nv=c.op==="empty"||c.op==="nempty",it=ty==="date"?"date":ty==="num"?"number":"";
-      return'<div class="rtcond">'+rtSel("target.conds."+i+".f",c.f,[["","칸 선택"]].concat(FL.map(function(x){return[x.k,x.l]})))+rtSel("target.conds."+i+".op",c.op,RT_OPS[ty])+(nv?"":rtInp("target.conds."+i+".v",c.v,it,"값"))+(c.op==="btw"?'<span class="small">~</span>'+rtInp("target.conds."+i+".v2",c.v2,it,"값"):"")+(T.conds.length>1?'<button type="button" class="btn xs" data-act="rt-cdel" data-i="'+i+'" aria-label="조건 빼기">×</button>':"")+'</div>'}).join("")+
-    '<div style="display:flex;gap:8px;align-items:center;margin-top:4px"><button type="button" class="btn xs" data-act="rt-cadd">+ 조건 추가</button>'+(T.conds.length>1?rtSeg("target.match",T.match,[["all","모두 만족"],["any","하나라도 만족"]]):"")+'</div><div id="rt-prev">'+rtPrevHtml()+'</div><p class="hint">저장 후 조건에 새로 맞는 대상이 생기면 담당자 할 일에 ‘추가할까요?’가 떠요 · 조건에서 벗어난 대상은 자동으로 빠져요</p></div>';return h}
-function rtRuleHtml(F){var r=F.rule,h='<div class="f full"><span>반복</span>'+rtSeg("rule.t",r.t,[["daily","매일"],["weekly","매주"],["monthly","매월"],["quarterly","분기"],["yearly","매년"]])+'</div><div class="f full rtrule">';
+  var cj=T.match==="any"?"또는":"그리고";h+='<div class="f full"><span>조건 ('+(T.kind==="comp"?"기업 DB":"근로자 DB")+' 칸 기준)</span><div>'+(T.conds.length>1?'<div class="rtrow" style="margin-bottom:6px"><span class="small muted">조건끼리</span>'+rtSeg("target.match",T.match||"all",[["all","모두 만족 (그리고 · AND)"],["any","하나라도 만족 (또는 · OR)"]])+'</div>':"")+T.conds.map(function(c,i){var f=FL.find(function(x){return x.k===c.f}),ty=f?f.ty:"text",nv=c.op==="empty"||c.op==="nempty",it=ty==="date"?"date":ty==="num"?"number":"";
+      return(i?'<div class="rtjoin"><span class="b sm '+(T.match==="any"?"t":"p")+'">'+cj+'</span></div>':"")+'<div class="rtcond">'+rtSel("target.conds."+i+".f",c.f,[["","칸 선택"]].concat(FL.map(function(x){return[x.k,x.l]})))+rtSel("target.conds."+i+".op",c.op,RT_OPS[ty])+(nv?"":rtInp("target.conds."+i+".v",c.v,it,"값"))+(c.op==="btw"?'<span class="small">~</span>'+rtInp("target.conds."+i+".v2",c.v2,it,"값"):"")+(T.conds.length>1?'<button type="button" class="btn xs" data-act="rt-cdel" data-i="'+i+'" aria-label="조건 빼기">×</button>':"")+'</div>'}).join("")+
+    '<div class="rtrow" style="margin-top:4px"><button type="button" class="btn xs" data-act="rt-cadd">+ 조건 추가</button></div><div id="rt-prev">'+rtPrevHtml()+'</div><p class="hint">저장 후 조건에 새로 맞는 대상이 생기면 할 일에 ‘추가할까요?’가 떠요 · 조건에서 벗어난 대상은 자동으로 빠져요</p></div></div>';return h}
+function rtRuleHtml(F){var r=F.rule,h='<div class="f full"><span>반복</span>'+rtSeg("rule.t",r.t,[["daily","매일"],["weekly","매주"],["monthly","매월"],["quarterly","분기"],["yearly","매년"]])+'</div><div class="f full"><span></span><div class="rtrow">';
   if(r.t==="daily")h+='<label class="small"><input type="checkbox" data-act="rt-biz"'+(r.biz?" checked":"")+'> 영업일만 (주말 · 공휴일 빼기)</label>';
-  if(r.t==="weekly")h+=rtSel("rule.every",r.every||1,[["1","매주"],["2","2주마다"],["3","3주마다"],["4","4주마다"]])+' '+rtSeg("rule.wp",r.wp||"",[["","요일 지정"],["first","그 주 첫 영업일"],["last","그 주 마지막 영업일"]])+(r.wp?"":'<div class="seg" style="margin-top:6px">'+[1,2,3,4,5,6,0].map(function(k){return'<button type="button" data-act="rt-wd" data-v="'+k+'" class="'+((r.wd||[]).indexOf(String(k))>=0?"on":"")+'">'+WDN[k]+'</button>'}).join("")+'</div>');
+  if(r.t==="weekly")h+=rtSel("rule.every",r.every||1,[["1","매주"],["2","2주마다"],["3","3주마다"],["4","4주마다"]])+rtSeg("rule.wp",r.wp||"",[["","요일 지정"],["first","그 주 첫 영업일"],["last","그 주 마지막 영업일"]])+(r.wp?"":'<div class="seg">'+[1,2,3,4,5,6,0].map(function(k){return'<button type="button" data-act="rt-wd" data-v="'+k+'" class="'+((r.wd||[]).indexOf(String(k))>=0?"on":"")+'">'+WDN[k]+'</button>'}).join("")+'</div>');
   if(r.t==="monthly"){h+=rtSel("rule.mm",r.mm||"day",[["day","n일"],["last","말일"],["nth","n번째 ○요일"],["lastwd","마지막 ○요일"],["firstBiz","첫 영업일"],["lastBiz","마지막 영업일"],["nthBiz","n번째 영업일"],["nthBizEnd","끝에서 n번째 영업일"]]);
-    if((r.mm||"day")==="day")h+=' '+rtInp("rule.md",r.md||1,"number","",'70px')+' 일';
-    if(r.mm==="nth")h+=' '+rtSel("rule.nth",r.nth||1,[["1","첫째"],["2","둘째"],["3","셋째"],["4","넷째"]])+' 주 ';
+    if((r.mm||"day")==="day")h+=rtInp("rule.md",r.md||1,"number","",'70px')+'<span class="small">일</span>';
+    if(r.mm==="nth")h+=rtSel("rule.nth",r.nth||1,[["1","첫째"],["2","둘째"],["3","셋째"],["4","넷째"]])+'<span class="small">주</span>';
     if(r.mm==="nth"||r.mm==="lastwd")h+=rtSel("rule.wdy",r.wdy||1,[1,2,3,4,5,6,0].map(function(k){return[String(k),WDN[k]+"요일"]}));
-    if(r.mm==="nthBiz"||r.mm==="nthBizEnd")h+=' '+rtInp("rule.n",r.n||1,"number","",'70px')+' 번째'}
+    if(r.mm==="nthBiz"||r.mm==="nthBizEnd")h+=rtInp("rule.n",r.n||1,"number","",'70px')+'<span class="small">번째</span>'}
   if(r.t==="quarterly")h+=rtSeg("rule.qm",r.qm||"first",[["first","분기 첫 영업일 (1·4·7·10월)"],["last","분기 마지막 영업일 (3·6·9·12월)"]]);
-  if(r.t==="yearly")h+=rtSel("rule.ym",r.ym||1,[1,2,3,4,5,6,7,8,9,10,11,12].map(function(m){return[String(m),m+"월"]}))+' '+rtInp("rule.yd",r.yd||1,"number","",'70px')+' 일';
+  if(r.t==="yearly")h+=rtSel("rule.ym",r.ym||1,[1,2,3,4,5,6,7,8,9,10,11,12].map(function(m){return[String(m),m+"월"]}))+rtInp("rule.yd",r.yd||1,"number","",'70px')+'<span class="small">일</span>';
   var adj=r.t==="yearly"||(r.t==="weekly"&&!r.wp)||(r.t==="monthly"&&RT_ADJ[r.mm||"day"]);
-  if(adj)h+='<div style="margin-top:6px"><span class="small muted">휴일 · 주말에 걸리면</span> '+rtSeg("rule.hol",r.hol||"keep",[["keep","그대로"],["prev","앞 영업일로"],["next","다음 영업일로"]])+'</div>';
-  return h+'</div><div class="f full"><span>다음 날짜 미리보기</span><div id="rt-next">'+rtNextHtml()+'</div></div>'}
+  h+='</div></div>';if(adj)h+='<div class="f full"><span>휴일 · 주말이면</span><div class="rtrow">'+rtSeg("rule.hol",r.hol||"keep",[["keep","그대로"],["prev","앞 영업일로"],["next","다음 영업일로"]])+'</div></div>';
+  return h+'<div class="f full"><span>다음 날짜 미리보기</span><div id="rt-next">'+rtNextHtml()+'</div></div>'}
 function rtFormHtml(){var F=S.rtF,T=F.target;
   return'<div class="ps"><div class="fg"><label class="f full"><span>할 일 제목 *</span>'+rtInp("title",F.title,"","예: 월말 근태 마감 확인")+'</label><label class="f full"><span>메모</span>'+rtInp("note",F.note,"","할 일에 같이 보일 내용")+'</label>'+
-    '<label class="f"><span>담당자</span><select onchange="rtCh(this)" data-rp="who"><option value="auto"'+(F.who==="auto"?" selected":"")+'>'+(T.kind==="none"?"등록한 사람 (나)":"기업 담당자 자동 (부재 시 대무자)")+'</option>'+staffOpts(F.who==="auto"?"":F.who,"").replace(/<option value="">[^<]*<\/option>/,"")+'</select></label>'+
+    '<div class="f"><span>담당자</span><div style="padding-top:6px"><b>'+esc((st(F.owner||S.me)||{}).name||"")+'</b> <span class="small muted">등록한 사람</span></div></div>'+
     rtTargetHtml(F)+rtRuleHtml(F)+
     '<label class="f"><span>시작일</span>'+rtInp("start",F.start,"date")+'</label><label class="f"><span>종료일 (없으면 계속)</span>'+rtInp("end",F.end,"date")+'</label>'+
-    '<label class="f"><span>내 할 일에 미리 보이기</span><span>'+rtInp("lead",F.lead,"number","",'70px')+' 일 전부터</span></label><label class="f"><span>상태</span>'+rtSeg("off",F.off?"1":"",[["","사용"],["1","일시중지"]])+'</label></div></div>'+
+    '<div class="f"><span>내 할 일에 미리 보이기</span><div class="rtrow">'+rtInp("lead",F.lead,"number","",'70px')+'<span class="small">일 전부터</span></div></div><label class="f"><span>상태</span>'+rtSeg("off",F.off?"1":"",[["","사용"],["1","일시중지"]])+'</label></div></div>'+
     '<div class="ps foot">'+(F.id?'<button class="btn danger" data-act="rt-del" style="margin-right:auto">'+(F._delAsk?"한 번 더 누르면 삭제":"삭제")+'</button>':"")+'<button class="btn" data-act="rt-back">목록으로</button><button class="btn pri" data-act="rt-save">저장</button></div>'}
 function rtListHtml(){var L=rtList();
   var rows=L.map(function(R){var T=R.target||{kind:"none"},n=rtTargets(T),from=[TODAY,R.start||TODAY].sort().pop(),nx=rtOcc(Object.assign({anchor:R.start},R.rule),from,addD(from,800)).filter(function(d){return!R.end||d<=R.end})[0];
@@ -9505,7 +9508,7 @@ function rtDoSave(){var F=S.rtF;if(!F)return;var T=F.target;F.title=String(F.tit
   if(T.kind!=="none"){if(T.mode==="pick"&&!T.ids.length){toast("대상을 하나 이상 골라 주세요");return}
     if(T.mode==="cond"){T.conds=T.conds.filter(function(c){return c.f&&c.op});if(!T.conds.length){T.conds=[{f:"",op:"eq",v:""}];toast("조건을 하나 이상 걸어 주세요");return}var M=rtMatch(T);if(!F.sel)rtPrevHtml();T.inc=M.filter(function(id){return F.sel[id]!==false});T.exc=M.filter(function(id){return F.sel[id]===false})}}
   if(F.end&&F.start&&F.end<F.start){toast("종료일이 시작일보다 빨라요");return}
-  var L=rtList(),R={id:F.id||nid(),title:F.title,note:String(F.note||"").trim(),who:F.who||"auto",owner:F.owner||S.me,target:T,rule:r,start:F.start||TODAY,end:F.end||"",lead:isNaN(+F.lead)?3:+F.lead,off:!!F.off,created:F.created||stamp(),by:F.by||st(S.me).name};
+  var L=rtList(),R={id:F.id||nid(),title:F.title,note:String(F.note||"").trim(),who:F.owner||S.me,owner:F.owner||S.me,target:T,rule:r,start:F.start||TODAY,end:F.end||"",lead:isNaN(+F.lead)?3:+F.lead,off:!!F.off,created:F.created||stamp(),by:F.by||st(S.me).name};
   var i=L.findIndex(function(x){return x.id===R.id});if(i>=0)L[i]=R;else L.push(R);rtSave(L);logChange("app_settings","rtodos",R.title,i>=0?"반복 업무 수정":"반복 업무 등록","",rtDesc(R.rule),"브이드림 내부");S.rtF=null;toast("저장했어요");render()}
 function rtNAdd(rid,id,ex){var L=rtList(),R=L.find(function(x){return x.id===rid});if(!R)return;var T=R.target;T.inc=(T.inc||[]).filter(function(x){return x!==id});T.exc=(T.exc||[]).filter(function(x){return x!==id});(ex?T.exc:T.inc).push(id);rtSave(L);toast(ex?"이번엔 제외했어요":"대상에 추가했어요");render()}
 var _vTodo82=vTodo;vTodo=function(){var h=_vTodo82();return h.replace('<button class="btn pri" data-act="todo-add">+ 할 일 등록</button>','<button class="btn" data-act="rt-open">반복 업무</button><button class="btn pri" data-act="todo-add">+ 할 일 등록</button>')};
@@ -9518,8 +9521,7 @@ var _render82=render;render=function(){var M=$("#modal");
     if(S.rtW){var x=rtWDlg();if(x){M.innerHTML=x;S._rtWOn=true}else{S.rtW=null;S._rtWOn=false;M.innerHTML=""}}else if(S._rtWOn){S._rtWOn=false;if(M.querySelector(".rtwdlg"))M.innerHTML=""}}
   return r};
 function v82Act(a,el){var D0=el.dataset,F=S.rtF;switch(a){
-  case"rrg-tog":S.rrGOff[D0.k]=!S.rrGOff[D0.k];render();return true;
-  case"rt-open":S.rtM=true;S.rtF=null;render();return true;
+    case"rt-open":S.rtM=true;S.rtF=null;render();return true;
   case"rt-close":S.rtM=false;S.rtF=null;render();return true;
   case"rt-new":S.rtF=rtNewF();render();return true;
   case"rt-edit":var R=rtList().find(function(x){return x.id===D0.id});if(R){S.rtF=rtEditF(R);render()}return true;
