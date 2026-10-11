@@ -1121,7 +1121,7 @@ function vTodo(){
         firstGroup=false;
       }
       h+='<td>'+esc(t.cat)+'</td><td class="wrap">'+(t.remind?'<span class="b bad" title="고객사 연장 결정 후 근로자 응답이 없어 다시 알립니다">재알림</span> ':"")+esc(t.task)+tdInline(t)+'</td><td class="c">'+tdBar(t)+'</td><td class="c">'+tdWhoHtml(t)+'</td><td class="c">'+(t.status==="진행 중"?'<span class="b p">진행 중</span>':'<span class="b">시작 전</span>')+'</td>'+
-        '<td class="c nowrap">'+(tdActBtn(t)||'<button class="btn sm'+(t.status==="진행 필요"?"":" pri")+'" data-act="todo-open" data-k="'+esc(t.key)+'" data-start="'+(t.status==="진행 필요"?1:"")+'" data-spec="'+(firstGroup?"":"")+'">'+(t.status==="진행 필요"?"시작":"처리")+'</button>')+'</td></tr>';
+        '<td class="c nowrap">'+(tdActBtn(t)||'<button class="btn sm'+(t.status==="진행 필요"?"":" act")+'" data-act="todo-open" data-k="'+esc(t.key)+'" data-start="'+(t.status==="진행 필요"?1:"")+'" data-spec="'+(firstGroup?"":"")+'">'+(t.status==="진행 필요"?"시작":"처리")+'</button>')+'</td></tr>';
     });
   });
   h+='</tbody></table></div>';
@@ -9129,7 +9129,7 @@ APP_VER="v69";
    v70. 추천인재 연계 이력(여러 번) · 계약만료 종료 때 추천인재 유지 묻기 · 메뉴별 내 담당/전체 · 메뉴별 한 페이지 개수
         · 계약 정보 뒤 '채용파트 등록 대기' · 신규입사자 상세 2단 고정 · 대체 대상 링크
    ================================================================ */
-APP_VER="v77";APP_VER_ON="10/11";
+APP_VER="v78";APP_VER_ON="10/11";
 /* ---- 1. 연계 이력 ---- */
 var TAL_LRES=["진행 중","불합격","본인 포기","입사"];
 function talLinksSync(){(DB.talent||[]).forEach(function(t){if(!Array.isArray(t.links))t.links=[];
@@ -9175,7 +9175,7 @@ var _isDeco71=isDeco;isDeco=function(h){h=_isDeco71(h);if(S.view!=="todo"||h.ind
 /* ================================================================
    v72. 데이터 업로드 ⑥ 대체 대상 일괄 입력 (이름 + 계약시작일/플립시작일로 찾기 · 기업명은 안 씀 · 기존 값 덮어쓰지 않음)
    ================================================================ */
-APP_VER="v77";APP_VER_ON="10/11";
+APP_VER="v78";APP_VER_ON="10/11";
 function rplParse(ws){var hr=0,H={};for(var r=1;r<=8;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|");if(/이름/.test(v)&&/계약시작/.test(v)){hr=r;break}}if(!hr)return{err:"‘이름 · 계약시작일’ 머리글을 못 찾았어요"};
   var vals=ws.getRow(hr).values;vals.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});var gi=H["구분"],ti=H["대체대상"]||H["대체자"]||H["대체"];if(!ti&&gi)ti=gi+1;
   var g=function(row,i){return i?rrCellTxt(row.values[i]).trim():""},col=function(row,k){return g(row,H[k])},L=[];
