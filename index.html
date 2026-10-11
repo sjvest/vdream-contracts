@@ -4863,7 +4863,7 @@ expColsV=function(){var L=EXP_MAIN.slice();if(S.expDetail)L=L.concat(EXP_COLS2.m
 function expRowCells(x,r){var n=expNow(r),e=r.e;
   var h='<td class="c">'+(x&&x.corp?'<span class="b '+(x.corp==="종료"?"":"p")+'">'+esc(expDecTxt(x))+'</span>':'<span class="muted">미정</span>')+'</td>'+
     '<td class="c">'+expBar(e.id)+'</td>'+
-    '<td><div class="now'+(n.bad?" bad":"")+(n.done?" done":"")+'">'+esc(n.t)+'</div>'+(n.done?"":n.a==="mail"?'<button class="btn xs" data-act="mail-open" data-c="'+e.company+'">메일</button>':'<button class="btn xs pri" data-act="exp-go" data-e="'+e.id+'">처리</button>')+'</td>'+
+    '<td><div class="now'+(n.bad?" bad":"")+(n.done?" done":"")+'">'+esc(n.t)+'</div>'+(n.done?"":n.a==="mail"?'<button class="btn xs" data-act="mail-open" data-c="'+e.company+'">메일</button>':'<button class="btn xs act" data-act="exp-go" data-e="'+e.id+'">처리</button>')+'</td>'+
     '<td class="c">'+tdWhoHtml(expWho(e.id))+'</td>';
   if(S.expDetail)h+=EXP_COLS2.map(function(c){return'<td class="c">'+expCell(x||{steps:{}},c[0],r)+'</td>'}).join("");
   return h}
@@ -5017,7 +5017,7 @@ expRowCells=function(x,r){var n=expNow(r),e=r.e;
     '<td><span class="now'+(n.bad?" bad":"")+(n.done?" done":"")+'">'+esc(n.t)+'</span></td>'+
     '<td class="c">'+tdWhoHtml(expWho(e.id))+'</td>';
   if(S.expDetail)h+=EXP_COLS2.map(function(c){return'<td class="c">'+expCell(x||{steps:{}},c[0],r)+'</td>'}).join("");
-  h+='<td class="c">'+(n.done?"":n.a==="mail"?'<button class="btn sm" data-act="mail-open" data-c="'+e.company+'">메일</button>':'<button class="btn sm pri" data-act="exp-go" data-e="'+e.id+'">처리</button>')+'</td>';
+  h+='<td class="c">'+(n.done?"":n.a==="mail"?'<button class="btn sm" data-act="mail-open" data-c="'+e.company+'">메일</button>':'<button class="btn sm act" data-act="exp-go" data-e="'+e.id+'">처리</button>')+'</td>';
   return h};
 
 /* ================================================================
@@ -5155,7 +5155,7 @@ var _tdFlow23=tdFlow;tdFlow=function(t){var had=t._f!==undefined,f=_tdFlow23(t);
 /* 버튼: [다음 ▶] + (① · ⑤ 단계면) [메일] · 단계 끝 + 서류 남음이면 [서류 열기] */
 function xmBtns(eid,sz){var x=xOf(eid),i=xmCur(x),e=emp(eid);
   if(i>=6){var L=xFollowLeft(eid);return L.length?'<button class="btn '+sz+'" data-act="fu-open" data-k="'+esc(L[0].k)+'">서류 열기</button>':""}
-  return'<button class="btn '+sz+' pri" data-act="exp-go" data-e="'+eid+'">다음 ▶</button>'+(i===0||i===4?' <button class="btn '+sz+'" data-act="xm-mail" data-e="'+eid+'" data-s="'+(i===0?"A":"B")+'">메일</button>':"")}
+  return'<button class="btn '+sz+' act" data-act="exp-go" data-e="'+eid+'">다음 ▶</button>'+(i===0||i===4?' <button class="btn '+sz+'" data-act="xm-mail" data-e="'+eid+'" data-s="'+(i===0?"A":"B")+'">메일</button>':"")}
 var _erc23=expRowCells;expRowCells=function(x,r){var h=_erc23(x,r),k=h.lastIndexOf('<td class="c">');return(k>=0?h.slice(0,k):h)+'<td class="c nowrap">'+xmBtns(r.e.id,"sm")+'</td>'};
 
 /* ---- 상세(오른쪽 창): 6단계 목록 · 지금 단계에 [다음 ▶] ---- */
@@ -9129,7 +9129,7 @@ APP_VER="v69";
    v70. 추천인재 연계 이력(여러 번) · 계약만료 종료 때 추천인재 유지 묻기 · 메뉴별 내 담당/전체 · 메뉴별 한 페이지 개수
         · 계약 정보 뒤 '채용파트 등록 대기' · 신규입사자 상세 2단 고정 · 대체 대상 링크
    ================================================================ */
-APP_VER="v76";APP_VER_ON="10/11";
+APP_VER="v77";APP_VER_ON="10/11";
 /* ---- 1. 연계 이력 ---- */
 var TAL_LRES=["진행 중","불합격","본인 포기","입사"];
 function talLinksSync(){(DB.talent||[]).forEach(function(t){if(!Array.isArray(t.links))t.links=[];
@@ -9175,7 +9175,7 @@ var _isDeco71=isDeco;isDeco=function(h){h=_isDeco71(h);if(S.view!=="todo"||h.ind
 /* ================================================================
    v72. 데이터 업로드 ⑥ 대체 대상 일괄 입력 (이름 + 계약시작일/플립시작일로 찾기 · 기업명은 안 씀 · 기존 값 덮어쓰지 않음)
    ================================================================ */
-APP_VER="v76";APP_VER_ON="10/11";
+APP_VER="v77";APP_VER_ON="10/11";
 function rplParse(ws){var hr=0,H={};for(var r=1;r<=8;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|");if(/이름/.test(v)&&/계약시작/.test(v)){hr=r;break}}if(!hr)return{err:"‘이름 · 계약시작일’ 머리글을 못 찾았어요"};
   var vals=ws.getRow(hr).values;vals.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});var gi=H["구분"],ti=H["대체대상"]||H["대체자"]||H["대체"];if(!ti&&gi)ti=gi+1;
   var g=function(row,i){return i?rrCellTxt(row.values[i]).trim():""},col=function(row,k){return g(row,H[k])},L=[];
