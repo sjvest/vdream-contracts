@@ -7001,7 +7001,7 @@ function cgLegend(){return'<div class="cgleg">'+CG_TYPES.map(function(x){return'
 function vCalc(){var ym=S.cgYm||TODAY.slice(0,7),M1={},M2={};CG_TYPES.forEach(function(x){["토","일"].forEach(function(o){cgAdd(M1,lastStart(ym,x[2],x[3],o,x[4]),x[0],o);cgAdd(M2,chungIn(ym+"-01",x[2],x[3],o,x[4]),x[0],o)})});
   var sd=S.cgStart||TODAY,sym=sd.slice(0,7),M3={};CG_TYPES.forEach(function(x){["토","일"].forEach(function(o){cgAdd(M3,chungIn(sd,x[2],x[3],o,x[4]),x[0],o)})});
   var prev=addM(ym+"-01",-1).slice(0,7),next=addM(ym+"-01",1).slice(0,7),Y=+ym.slice(0,4),Mo=+ym.slice(5,7);
-  var h='<div class="hd"><div><h1>충족일 계산기</h1><p>상시근로자 최소 근무(누적 60시간 · 근무일 16일)를 언제 채우는지 근무형태별로 계산해요'+IH("두 조건을 모두 채우는 날 중 늦은 날이 최소충족일이에요. 주 15시간 이상이고 그 주 소정근로일을 처음부터 다 근무한 주(주 중간 입사한 첫 주는 제외)에만 주휴시간(하루치)과 주휴일 1일이 더해지며, 그 주휴일까지 재직해야 반영돼요. 공휴일은 근무일로 인정, 5일 = 월~금, 4일 = 월~목 또는 화~금으로 계산해요.")+'</p></div></div>';
+  var h='<div class="hd"><div><h1>충족일 계산기</h1><p>상시근로자 최소 근무(누적 60시간 · 근무일 16일)를 언제 채우는지 근무형태별로 계산해요'+IH("두 조건을 모두 채우는 날 중 늦은 날이 최소충족일이에요. 주 15시간 이상이고 월요일부터 근무한 주(월요일이 아닌 날 입사한 첫 주는 제외)에만 주휴시간(하루치)과 주휴일 1일이 더해지며, 그 주휴일까지 재직해야 반영돼요. 공휴일은 근무일로 인정, 5일 = 월~금, 4일 = 월~목 또는 화~금으로 계산해요.")+'</p></div></div>';
   h+='<div class="dcard"><div class="dcard-h"><b>충족일 캘린더</b><span class="small muted">이 달 1일 입사 기준</span></div><div class="cgnav"><button class="btn sm" data-act="cg-m" data-v="'+prev+'">◀ 이전 달</button><b>'+Y+'년 '+Mo+'월</b><button class="btn sm" data-act="cg-m" data-v="'+next+'">다음 달 ▶</button></div>'+cgLegend()+
     '<div class="cg2"><div><h4>입사충족일 · 이 달 최종 입사가능일</h4>'+cgCal(ym,M1)+'</div><div><h4>퇴사충족일 · 이 달 1일 입사 기준</h4>'+cgCal(ym,M2)+'</div></div><p class="hint">토 · 일은 주휴일을 토요일로 볼 때와 일요일로 볼 때예요. 1일이 아닌 날 입사한 사람은 아래 퇴사일 계산기를 써 주세요.</p></div>';
   h+='<div class="dcard" style="margin-top:12px"><div class="dcard-h"><b>근무형태별 기준</b></div><table class="mini"><thead><tr><th>근무형태</th><th>주휴 포함 주간 근로시간</th></tr></thead><tbody>'+CG_TYPES.map(function(x){var w=x[2]*x[3];return'<tr><td>'+esc(x[1])+'</td><td>'+(w>=15?"주 근로 "+w+"시간 + 주휴 "+x[3]+"시간 = "+(w+x[3])+"시간/주":w+"시간/주 (주 15시간 미만 · 주휴 없음)")+'</td></tr>'}).join("")+'</tbody></table>'+
@@ -9239,7 +9239,7 @@ function v77Act(a,el){if(a!=="cdoc-add77")return false;DB.cdocs.push({id:nid(),c
 /* ================================================================
    v80. 채용 요청 마감일 = 마지막 차수 마감일(이력서 전달 마감) · 전달했으면 초과 아님 · 1차 기본 생성
    ================================================================ */
-APP_VER="v86";APP_VER_ON="10/11";
+APP_VER="v87";APP_VER_ON="10/11";
 function rrLastRd(r){var R=rrRounds(r.id);return R[R.length-1]||null}
 function rrSent(r){var L=rrLastRd(r);return!!(L&&(L.cands||[]).length)}
 function rrLate(r){return!!(r.due_date&&r.due_date<TODAY&&!rrSent(r))}
@@ -9258,7 +9258,7 @@ var _rrDue80=rrDue;rrDue=function(r){if(r.due_date&&r.due_date<TODAY&&rrStage(r)
 /* ================================================================
    v81. 추천인재 = 케이스 · 채용 요청 후보 결과로 연계 판단 · 요청 밖 입사는 할 일로 확인 · 등록 팝업
    ================================================================ */
-APP_VER="v86";APP_VER_ON="10/11";
+APP_VER="v87";APP_VER_ON="10/11";
 function talCandsOf(tid){var L=[];DB.rrr.forEach(function(x){var r=rcOf(x.req);if(!r)return;(x.cands||[]).forEach(function(c){if(c.tal===tid)L.push({x:x,r:r,c:c})})});return L}
 function talCandRes(c){if(c.final==="합격")return"입사";var s=[c.doc,c.iv,c.final].join(" ");if(/지원\s?취소|포기/.test(s))return"본인 포기";if(PF_DEAD.test(s))return"불합격";return"진행 중"}
 function talDay(t){return String(t.created||"").slice(0,10)}
@@ -9321,7 +9321,7 @@ function v79Act(a,el){switch(a){case"talh-close":talhClose(el.dataset.k);return 
 /* ================================================================
    v82. 채용 요청 기업 묶음 · 근태/업무 할 일에 기한 표시 · 반복 업무(스케줄)
    ================================================================ */
-APP_VER="v86";APP_VER_ON="10/11";
+APP_VER="v87";APP_VER_ON="10/11";
 
 /* ---------- 1. 채용 요청: 같은 기업(그룹) 묶음 ---------- */
 S.rrGOff=S.rrGOff||{};
@@ -9549,7 +9549,7 @@ function v82Change(t,d){if(d.ch!=="rrg-pick")return false;var I=S._rrG&&S._rrG.i
 window.rtCh=rtCh;window.rtIn=rtIn;window.rtPickFilter=rtPickFilter;window.rtSelCk=rtSelCk;
 
 /* v85. 충족일 계산: 주휴는 그 주 소정근로일을 다 채운 주(입사 전 날이 없는 주)에만 · 주 4일(화~금) 추가 */
-APP_VER="v86";APP_VER_ON="10/12";
+APP_VER="v87";APP_VER_ON="10/12";
 CG_TYPES=[["A","주 5일 × 3시간",5,3,1],["B","주 5일 × 4시간",5,4,1],["C","주 4일(월~목) × 4시간",4,4,1],["E","주 4일(화~금) × 4시간",4,4,2],["D","주 4일(월~목) × 3.5시간",4,3.5,1]];
 cgWork=function(dow,days,s0){s0=+s0||1;if(days>=7)return true;var x=(dow+7-s0)%7;return dow!==0||s0===0?x<days:false};
 chungFirst=function(start,days,hours,off,lim,s0){var cum=0,wd=0,d=start,offDow=off==="토"?6:0,wkH=days*hours;lim=lim||70;s0=+s0||1;
@@ -9560,6 +9560,46 @@ chungFirst=function(start,days,hours,off,lim,s0){var cum=0,wd=0,d=start,offDow=o
   return null};
 chungIn=function(start,days,hours,off,s0){var f=chungFirst(start,days,hours,off,70,s0),e=monEnd(start);return f&&f<=e?f:null};
 lastStart=function(ym,days,hours,off,s0){var d=ym+"-01",e=monEnd(d),best=null;while(d<=e){if(chungIn(d,days,hours,off,s0))best=d;d=addD(d,1)}return best};
+
+/* v87. 충족일: 시트 방식(월요일이 아닌 날 입사한 첫 주는 주휴 없음) · 계약 정보 수정 창에 [기업 정정] */
+APP_VER="v87";APP_VER_ON="10/12";
+chungFirst=function(start,days,hours,off,lim,s0){var cum=0,wd=0,d=start,offDow=off==="토"?6:0,wkH=days*hours;lim=lim||70;s0=+s0||1;
+  for(var i=0;i<lim;i++){var dow=pd(d).getDay(),mon=addD(d,-((dow+6)%7));
+    if(cgWork(dow,days,s0)){cum+=hours;wd++}
+    if(dow===offDow&&wkH>=15&&start<=mon){cum+=hours;wd++}
+    if(cum>=60-1e-9&&wd>=16)return d;d=addD(d,1)}
+  return null};
+/* ---- 기업 정정 ---- */
+function ccoCan(e,cid){if(S.role==="admin")return true;var a=comp(e.company),b=cid&&comp(cid),me=S.me;return!!((a&&(a.manager===me||a.backup===me))||(b&&(b.manager===me||b.backup===me)))}
+function ccoDocs(e){return DB.casedocs.filter(function(c){return c.emp===e.id&&!isExitCase(c)})}
+function ccoHtml(){var C=S.ce,e=C&&emp(C.eid);if(!e)return"";var O=S.cco||{};
+  if(!O.on)return'<div class="ps"><button class="btn sm" data-act="cco-open">기업 정정</button> <span class="small muted">기업을 잘못 넣었을 때 · 같은 고용 건에서 기업만 바꿔요 (날짜 · 차수는 그대로)</span></div>';
+  var ds=ccoDocs(e),moved=ds.some(function(c){return c.step>0||(c.dates||[]).length}),r=e.replaced&&emp(e.replaced),L=DB.companies.filter(function(c){return c.id!==e.company}).sort(function(a,b){return coLabel(a).localeCompare(coLabel(b),"ko")});
+  return'<div class="ps cco"><h3>기업 정정 <span class="small muted" style="font-weight:400">지금: '+esc(coLabel(comp(e.company)))+'</span></h3><div class="fg">'+
+    '<label class="f full"><span>바른 기업 *</span><select id="cco-c"><option value="">선택</option>'+L.map(function(c){return'<option value="'+c.id+'"'+(O.cid===c.id?" selected":"")+'>'+esc(coLabel(c))+(c.corp_code?" ("+esc(c.corp_code)+")":"")+'</option>'}).join("")+'</select></label>'+
+    '<label class="f full"><span>사유 *</span><input id="cco-why" value="'+esc(O.why||"")+'" placeholder="예: 신규입사 등록 때 같은 이름 다른 부서를 골랐음"></label>'+
+    (ds.length?'<div class="f full"><span>입사서류 케이스 '+ds.length+'건</span><div>'+(moved?'<label class="cb small"><input type="radio" name="cco-doc" value="keep" checked> 진행 내역 유지 (서류 그대로 두기)</label><br><label class="cb small"><input type="radio" name="cco-doc" value="redo"> 새 기업 양식으로 다시 만들기 (지금 진행 내역은 지워져요)</label>':'<span class="small">아직 진행 전이라 새 기업 양식으로 다시 만들어요</span>')+'</div></div>':"")+
+    (r?'<div class="f full"><span>대체 대상</span><div><span class="small">'+esc((wk(r.worker)||{}).name||"")+' · '+esc((comp(r.company)||{}).name||"")+'</span><br><label class="cb small"><input type="checkbox" id="cco-rpl" checked> 새 기업과 다르면 연결을 풀고 이름만 남기기</label></div></div>':"")+
+    '</div><div class="foot" style="margin-top:8px;text-align:right"><button class="btn sm" data-act="cco-close">닫기</button> <button class="btn sm pri" data-act="cco-save">기업 정정 저장</button></div><p class="hint">계약만료 · 할 일 · 담당자는 새 기업 기준으로 다시 계산돼요 · 이 근로자의 근태/업무 · 근로자 요청 건도 새 기업으로 옮겨요 · 변경 이력에 남아요</p></div>'}
+var _ceModal87=ceModal;ceModal=function(){_ceModal87();if(!S.ce)return;var M=$("#modal"),d=M&&M.querySelector(".dlg-ce");if(!d)return;var hs=[].slice.call(d.querySelectorAll(".ps h3")).find(function(h){return h.textContent.indexOf("변경 근거")>=0});var box=hs?hs.parentNode:d.querySelector(".ps.foot");if(box)box.insertAdjacentHTML("beforebegin",ccoHtml())};
+function ccoSave(){var C=S.ce,e=C&&emp(C.eid);if(!e)return;var cid=($("#cco-c")||{}).value,why=String(($("#cco-why")||{}).value||"").trim();
+  S.cco=Object.assign(S.cco||{},{cid:cid,why:why});
+  if(!cid){toast("바른 기업을 골라 주세요");return}if(!why){toast("정정 사유를 적어 주세요");return}
+  if(!ccoCan(e,cid)){toast("관리자 또는 이전 · 새 기업 담당자(대무자)만 정정할 수 있어요");return}
+  var old=e.company,on=coLabel(comp(old)),nn=coLabel(comp(cid)),w=wk(e.worker),ds=ccoDocs(e),moved=ds.some(function(c){return c.step>0||(c.dates||[]).length}),dm=(document.querySelector('input[name=cco-doc]:checked')||{}).value||"redo";
+  e.company=cid;
+  if(ds.length&&(!moved||dm==="redo")){var ids={};ds.forEach(function(c){ids[c.id]=1});DB.casedocs=DB.casedocs.filter(function(c){return!ids[c.id]});var t1=termsOf(e.id)[0]||{};
+    docsOf(cid).forEach(function(d){if(!isExitCdoc(d))DB.casedocs.push({id:nid(),emp:e.id,cdoc:d.id,name:d.doc_name,method:d.method||"확인중",step:0,base:t1.start,dates:[],bundle:d.method==="원본"?e.id+"-orig":"",info:{}})})}
+  var rp=$("#cco-rpl"),r=e.replaced&&emp(e.replaced);if(r&&rp&&rp.checked&&r.company!==cid){e.replaced_name=e.replaced_name||((wk(r.worker)||{}).name||"");e.replaced="";logChange("employments",e.id,w.name,"대체 대상 연결 해제 (기업 정정)",(wk(r.worker)||{}).name||"",e.replaced_name+" (이름만)","브이드림 내부")}
+  (DB.att||[]).forEach(function(a){if(a.emp===e.id&&a.company===old)a.company=cid});(DB.wreq||[]).forEach(function(q){if(q.emp===e.id&&q.company===old)q.company=cid});
+  (DB.talent||[]).forEach(function(t){if(t.hire_emp===e.id&&t.lcid===old)t.lcid=cid});(DB.intake||[]).forEach(function(a){if(a.emp===e.id&&a.cid===old)a.cid=cid});
+  logChange("employments",e.id,w.name,"기업 정정",on,nn+" · 사유: "+why,"브이드림 내부");
+  S.cco=null;S.ce=null;$("#modal").innerHTML="";toast("기업을 "+nn+"(으)로 정정했어요");render()}
+function v87Act(a,el){switch(a){
+  case"cco-open":S.cco={on:true};ceModal();return true;
+  case"cco-close":S.cco=null;ceModal();return true;
+  case"cco-save":ccoSave();return true}return false}
+var _ceOpen87=ceOpen;ceOpen=function(eid){S.cco=null;return _ceOpen87(eid)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
@@ -9857,7 +9897,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v82Act(a,el))return;if(v79Act(a,el))return;if(v77Act(a,el))return;if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v87Act(a,el))return;if(v82Act(a,el))return;if(v79Act(a,el))return;if(v77Act(a,el))return;if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
