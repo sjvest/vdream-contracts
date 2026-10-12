@@ -620,7 +620,7 @@ td:has(>.nowb),td:has(>a+.nowb),td:has(.nowb){white-space:nowrap}.nowb .b{margin
 .onbcols{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start;grid-column:1/-1}.onbc{min-width:0}.onbc>.ps{border-right:0}@media(max-width:900px){.onbcols{grid-template-columns:1fr}}
 .tlr{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:13px}.tlr:first-of-type{border-top:0}.tlr .grow{flex:1}.rplk{cursor:pointer;border:0;margin-left:6px}
 .rplk{text-decoration:underline;text-underline-offset:2px}.rptx{background:#F1F0F5;color:#6B6880}.emp.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px}
-td.cnm .linkbtn{display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}.nmmore{cursor:help}.ps.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px;transition:outline-color .3s}.t tbody tr.rrgm td{border-top-color:var(--line-2)}.rtcond,.rtrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rtcond{margin-bottom:2px}.rtdlg .rtcond select,.rtdlg .rtcond input,.rtdlg .rtrow select,.rtdlg .rtrow input:not([type=checkbox]){width:auto}.rtdlg .rtcond select:first-child{width:220px}.rtdlg .rtcond input{flex:1;min-width:140px}.rtjoin{margin:2px 0 4px 12px}.catg{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}.catg h4{margin:0 0 6px;font-size:13px}.catr{display:flex;gap:6px;align-items:center;margin-bottom:4px}.catr input:not([type=checkbox]){flex:1;min-width:0;border:1px solid #D9D6E6;border-radius:6px;padding:4px 8px;font-size:13px}.catr.cath input:not([type=checkbox]){color:#9A97AA;text-decoration:line-through}.catgrp{border:1px solid var(--line-2);border-radius:8px;padding:8px;margin-bottom:8px}.catsub{margin:6px 0 0 18px}.othbox{border:1px solid #F0D9A0;background:#FFF8E6;border-radius:10px;padding:10px 12px;margin:0 0 12px}.othh{display:flex;align-items:center;margin-bottom:6px}.othr{padding:3px 0;font-size:13px}</style>
+td.cnm .linkbtn{display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}.nmmore{cursor:help}.ps.rplhi{outline:2px solid #8B7FD6;outline-offset:2px;border-radius:8px;transition:outline-color .3s}.t tbody tr.rrgm td{border-top-color:var(--line-2)}.rtcond,.rtrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rtcond{margin-bottom:2px}.rtdlg .rtcond select,.rtdlg .rtcond input,.rtdlg .rtrow select,.rtdlg .rtrow input:not([type=checkbox]){width:auto}.rtdlg .rtcond select:first-child{width:220px}.rtdlg .rtcond input{flex:1;min-width:140px}.rtjoin{margin:2px 0 4px 12px}.catg{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}.catg h4{margin:0 0 6px;font-size:13px}.catr{display:flex;gap:6px;align-items:center;margin-bottom:4px}.catr input:not([type=checkbox]){flex:1;min-width:0;border:1px solid #D9D6E6;border-radius:6px;padding:4px 8px;font-size:13px}.catr.cath input:not([type=checkbox]){color:#9A97AA;text-decoration:line-through}.catgrp{border:1px solid var(--line-2);border-radius:8px;padding:8px;margin-bottom:8px}.catsub{margin:6px 0 0 18px}.othbox{border:1px solid #F0D9A0;background:#FFF8E6;border-radius:10px;padding:10px 12px;margin:0 0 12px}.othh{display:flex;align-items:center;margin-bottom:6px}.othr{padding:3px 0;font-size:13px}.tdhold{display:inline-flex;align-items:center;margin-right:6px;vertical-align:middle;cursor:pointer}.tdhold input{width:15px;height:15px;accent-color:var(--p)}.holdbar{display:flex;align-items:center;gap:8px;border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;margin:0 0 10px;font-size:13px;background:var(--surface)}.holdbar.on{background:#F4F2FB;border-color:#D6D0F0}</style>
 </head>
 <body>
 <div id="top"></div>
@@ -9239,7 +9239,7 @@ function v77Act(a,el){if(a!=="cdoc-add77")return false;DB.cdocs.push({id:nid(),c
 /* ================================================================
    v80. 채용 요청 마감일 = 마지막 차수 마감일(이력서 전달 마감) · 전달했으면 초과 아님 · 1차 기본 생성
    ================================================================ */
-APP_VER="v89";APP_VER_ON="10/11";
+APP_VER="v90";APP_VER_ON="10/11";
 function rrLastRd(r){var R=rrRounds(r.id);return R[R.length-1]||null}
 function rrSent(r){var L=rrLastRd(r);return!!(L&&(L.cands||[]).length)}
 function rrLate(r){return!!(r.due_date&&r.due_date<TODAY&&!rrSent(r))}
@@ -9258,7 +9258,7 @@ var _rrDue80=rrDue;rrDue=function(r){if(r.due_date&&r.due_date<TODAY&&rrStage(r)
 /* ================================================================
    v81. 추천인재 = 케이스 · 채용 요청 후보 결과로 연계 판단 · 요청 밖 입사는 할 일로 확인 · 등록 팝업
    ================================================================ */
-APP_VER="v89";APP_VER_ON="10/11";
+APP_VER="v90";APP_VER_ON="10/11";
 function talCandsOf(tid){var L=[];DB.rrr.forEach(function(x){var r=rcOf(x.req);if(!r)return;(x.cands||[]).forEach(function(c){if(c.tal===tid)L.push({x:x,r:r,c:c})})});return L}
 function talCandRes(c){if(c.final==="합격")return"입사";var s=[c.doc,c.iv,c.final].join(" ");if(/지원\s?취소|포기/.test(s))return"본인 포기";if(PF_DEAD.test(s))return"불합격";return"진행 중"}
 function talDay(t){return String(t.created||"").slice(0,10)}
@@ -9321,7 +9321,7 @@ function v79Act(a,el){switch(a){case"talh-close":talhClose(el.dataset.k);return 
 /* ================================================================
    v82. 채용 요청 기업 묶음 · 근태/업무 할 일에 기한 표시 · 반복 업무(스케줄)
    ================================================================ */
-APP_VER="v89";APP_VER_ON="10/11";
+APP_VER="v90";APP_VER_ON="10/11";
 
 /* ---------- 1. 채용 요청: 같은 기업(그룹) 묶음 ---------- */
 S.rrGOff=S.rrGOff||{};
@@ -9447,7 +9447,7 @@ var _tdAct82=tdActBtn;tdActBtn=function(t){
 function rtTodoByKey(k){return rtTodos().find(function(t){return t.key===k})}
 function rtWDlg(){var t=rtTodoByKey(S.rtW);if(!t)return"";var W=t.rtw||[];
   return'<div class="ov"><div class="dlg rtwdlg" role="dialog" aria-modal="true" aria-label="근로자별 체크" style="width:min(560px,calc(100vw - 32px))"><div class="ph"><div><div class="k">반복 업무 · '+esc(md(t.rd))+'</div><h2>'+esc((rtList().find(function(R){return R.id===t.rt})||{}).title||"")+'</h2></div><button class="close" data-act="rt-wclose" aria-label="닫기">×</button></div><div class="ps"><div class="mgpl">'+
-    W.map(function(w){var k=t.rtb+":w:"+w,on=(DB.meta[k]||{}).status==="완료";return'<label class="mgpr"><input type="checkbox" data-act="rt-wck" data-k="'+esc(k)+'"'+(on?" checked":"")+'> <b>'+esc((wk(w)||{}).name||"")+'</b> <span class="small muted">'+esc(rtTName({kind:"worker"},w).split(" · ")[1]||"")+'</span></label>'}).join("")+
+    W.map(function(w){var k=t.rtb+":w:"+w,on=(DB.meta[k]||{}).status==="완료";return'<label class="mgpr"><input type="checkbox" data-ch="rt-wck" data-k="'+esc(k)+'"'+(on?" checked":"")+'> <b>'+esc((wk(w)||{}).name||"")+'</b> <span class="small muted">'+esc(rtTName({kind:"worker"},w).split(" · ")[1]||"")+'</span></label>'}).join("")+
     '</div><p class="hint" style="margin-top:8px">모두 체크하면 이 회차가 끝나요.</p></div><div class="ps foot"><button class="btn" data-act="rt-wclose">닫기</button><button class="btn pri" data-act="rt-wall">모두 완료</button></div></div></div>'}
 /* ---- 관리 창 ---- */
 function rtNewF(){return{id:"",title:"",note:"",who:"auto",target:{kind:"none",mode:"pick",ids:[],conds:[{f:"",op:"eq",v:""}],match:"all",inc:[],exc:[],actOnly:true},rule:{t:"monthly",mm:"lastBiz",wd:["1"],every:1,hol:"prev"},start:TODAY,end:"",lead:3,off:false,sel:null}}
@@ -9469,16 +9469,16 @@ function rtPrevHtml(){var F=S.rtF,T=F&&F.target;if(!T||T.kind==="none"||T.mode!=
     (M.length?M.slice(0,300).map(function(id){return'<label class="mgpr"><input type="checkbox" onchange="rtSelCk(this)" value="'+esc(id)+'"'+(F.sel[id]!==false?" checked":"")+'> '+esc(rtTName(T,id))+'</label>'}).join(""):'<p class="hint">조건에 맞는 대상이 없어요</p>')+'</div>'}
 function rtSelCk(el){var F=S.rtF;if(!F)return;F.sel=F.sel||{};F.sel[el.value]=el.checked}
 function rtTargetHtml(F){var T=F.target,h='<div class="f full"><span>대상</span>'+rtSeg("target.kind",T.kind,[["none","대상 없음 (내 업무)"],["comp","기업"],["worker","근로자"]])+'</div>';if(T.kind==="none")return h;
-  h+='<div class="f full"><span>고르는 방식</span>'+rtSeg("target.mode",T.mode,[["pick","직접 고르기 (확정)"],["cond","조건으로 고르기"]])+(T.kind==="worker"?' <label class="small" style="margin-left:8px"><input type="checkbox" data-act="rt-act"'+(T.actOnly!==false?" checked":"")+'> 재직자만</label>':"")+'</div>';
+  h+='<div class="f full"><span>고르는 방식</span>'+rtSeg("target.mode",T.mode,[["pick","직접 고르기 (확정)"],["cond","조건으로 고르기"]])+(T.kind==="worker"?' <label class="small" style="margin-left:8px"><input type="checkbox" data-ch="rt-act"'+(T.actOnly!==false?" checked":"")+'> 재직자만</label>':"")+'</div>';
   if(T.mode==="pick"){var src=T.kind==="comp"?DB.companies.slice().sort(function(a,b){return a.name.localeCompare(b.name,"ko")}):DB.workers.filter(function(w){return T.actOnly===false||rtActW(w.id)}).sort(function(a,b){return a.name.localeCompare(b.name,"ko")});
     return h+'<div class="f full"><span>'+(T.kind==="comp"?"기업 DB":"근로자 DB")+'에서 고르기 · 선택 '+T.ids.length+'</span><input id="rt-q" placeholder="이름 검색" oninput="rtPickFilter()" style="width:100%;margin-bottom:6px"><div class="mgpl" style="max-height:220px">'+
-      src.map(function(x){var lb=rtTName(T,x.id);return'<label class="mgpr rtpk" data-q="'+esc(lb.toLowerCase())+'"><input type="checkbox" data-act="rt-pick" value="'+esc(x.id)+'"'+(T.ids.indexOf(x.id)>=0?" checked":"")+'> '+esc(lb)+'</label>'}).join("")+'</div></div>'}
+      src.map(function(x){var lb=rtTName(T,x.id);return'<label class="mgpr rtpk" data-q="'+esc(lb.toLowerCase())+'"><input type="checkbox" data-ch="rt-pick" value="'+esc(x.id)+'"'+(T.ids.indexOf(x.id)>=0?" checked":"")+'> '+esc(lb)+'</label>'}).join("")+'</div></div>'}
   var FL=rtFields(T.kind);
   var cj=T.match==="any"?"또는":"그리고";h+='<div class="f full"><span>조건 ('+(T.kind==="comp"?"기업 DB":"근로자 DB")+' 칸 기준)</span><div>'+(T.conds.length>1?'<div class="rtrow" style="margin-bottom:6px"><span class="small muted">조건끼리</span>'+rtSeg("target.match",T.match||"all",[["all","모두 만족 (그리고 · AND)"],["any","하나라도 만족 (또는 · OR)"]])+'</div>':"")+T.conds.map(function(c,i){var f=FL.find(function(x){return x.k===c.f}),ty=f?f.ty:"text",nv=c.op==="empty"||c.op==="nempty",it=ty==="date"?"date":ty==="num"?"number":"";
       return(i?'<div class="rtjoin"><span class="b sm '+(T.match==="any"?"t":"p")+'">'+cj+'</span></div>':"")+'<div class="rtcond">'+rtSel("target.conds."+i+".f",c.f,[["","칸 선택"]].concat(FL.map(function(x){return[x.k,x.l]})))+rtSel("target.conds."+i+".op",c.op,RT_OPS[ty])+(nv?"":rtInp("target.conds."+i+".v",c.v,it,"값"))+(c.op==="btw"?'<span class="small">~</span>'+rtInp("target.conds."+i+".v2",c.v2,it,"값"):"")+(T.conds.length>1?'<button type="button" class="btn xs" data-act="rt-cdel" data-i="'+i+'" aria-label="조건 빼기">×</button>':"")+'</div>'}).join("")+
     '<div class="rtrow" style="margin-top:4px"><button type="button" class="btn xs" data-act="rt-cadd">+ 조건 추가</button></div><div id="rt-prev">'+rtPrevHtml()+'</div><p class="hint">저장 후 조건에 새로 맞는 대상이 생기면 할 일에 ‘추가할까요?’가 떠요 · 조건에서 벗어난 대상은 자동으로 빠져요</p></div></div>';return h}
 function rtRuleHtml(F){var r=F.rule,h='<div class="f full"><span>반복</span>'+rtSeg("rule.t",r.t,[["daily","매일"],["weekly","매주"],["monthly","매월"],["quarterly","분기"],["yearly","매년"]])+'</div><div class="f full"><span></span><div class="rtrow">';
-  if(r.t==="daily")h+='<label class="small"><input type="checkbox" data-act="rt-biz"'+(r.biz?" checked":"")+'> 영업일만 (주말 · 공휴일 빼기)</label>';
+  if(r.t==="daily")h+='<label class="small"><input type="checkbox" data-ch="rt-biz"'+(r.biz?" checked":"")+'> 영업일만 (주말 · 공휴일 빼기)</label>';
   if(r.t==="weekly")h+=rtSel("rule.every",r.every||1,[["1","매주"],["2","2주마다"],["3","3주마다"],["4","4주마다"]])+rtSeg("rule.wp",r.wp||"",[["","요일 지정"],["first","그 주 첫 영업일"],["last","그 주 마지막 영업일"]])+(r.wp?"":'<div class="seg">'+[1,2,3,4,5,6,0].map(function(k){return'<button type="button" data-act="rt-wd" data-v="'+k+'" class="'+((r.wd||[]).indexOf(String(k))>=0?"on":"")+'">'+WDN[k]+'</button>'}).join("")+'</div>');
   if(r.t==="monthly"){h+=rtSel("rule.mm",r.mm||"day",[["day","n일"],["last","말일"],["nth","n번째 ○요일"],["lastwd","마지막 ○요일"],["firstBiz","첫 영업일"],["lastBiz","마지막 영업일"],["nthBiz","n번째 영업일"],["nthBizEnd","끝에서 n번째 영업일"]]);
     if((r.mm||"day")==="day")h+=rtInp("rule.md",r.md||1,"number","",'70px')+'<span class="small">일</span>';
@@ -9549,7 +9549,7 @@ function v82Change(t,d){if(d.ch!=="rrg-pick")return false;var I=S._rrG&&S._rrG.i
 window.rtCh=rtCh;window.rtIn=rtIn;window.rtPickFilter=rtPickFilter;window.rtSelCk=rtSelCk;
 
 /* v85. 충족일 계산: 주휴는 그 주 소정근로일을 다 채운 주(입사 전 날이 없는 주)에만 · 주 4일(화~금) 추가 */
-APP_VER="v89";APP_VER_ON="10/12";
+APP_VER="v90";APP_VER_ON="10/12";
 CG_TYPES=[["A","주 5일 × 3시간",5,3,1],["B","주 5일 × 4시간",5,4,1],["C","주 4일(월~목) × 4시간",4,4,1],["E","주 4일(화~금) × 4시간",4,4,2],["D","주 4일(월~목) × 3.5시간",4,3.5,1]];
 cgWork=function(dow,days,s0){s0=+s0||1;if(days>=7)return true;var x=(dow+7-s0)%7;return dow!==0||s0===0?x<days:false};
 chungFirst=function(start,days,hours,off,lim,s0){var cum=0,wd=0,d=start,offDow=off==="토"?6:0,wkH=days*hours;lim=lim||70;s0=+s0||1;
@@ -9562,7 +9562,7 @@ chungIn=function(start,days,hours,off,s0){var f=chungFirst(start,days,hours,off,
 lastStart=function(ym,days,hours,off,s0){var d=ym+"-01",e=monEnd(d),best=null;while(d<=e){if(chungIn(d,days,hours,off,s0))best=d;d=addD(d,1)}return best};
 
 /* v87. 충족일: 시트 방식(월요일이 아닌 날 입사한 첫 주는 주휴 없음) · 계약 정보 수정 창에 [기업 정정] */
-APP_VER="v89";APP_VER_ON="10/12";
+APP_VER="v90";APP_VER_ON="10/12";
 chungFirst=function(start,days,hours,off,lim,s0){var cum=0,wd=0,d=start,offDow=off==="토"?6:0,wkH=days*hours;lim=lim||70;s0=+s0||1;
   for(var i=0;i<lim;i++){var dow=pd(d).getDay(),mon=addD(d,-((dow+6)%7));
     if(cgWork(dow,days,s0)){cum+=hours;wd++}
@@ -9602,7 +9602,7 @@ function v87Act(a,el){switch(a){
 var _ceOpen87=ceOpen;ceOpen=function(eid){S.cco=null;return _ceOpen87(eid)};
 
 /* v88. 마지막 차수 만료일이 지났고 연장 · 무기 · 퇴사 처리가 없으면 자동으로 '계약만료' (처리 미완료 배지) */
-APP_VER="v89";APP_VER_ON="10/12";
+APP_VER="v90";APP_VER_ON="10/12";
 function lastTermOf(e){var L=termsOf(e.id);return L[L.length-1]||null}
 function expAuto(e){if(!e||e.cancelled||e.end_type)return false;var t=lastTermOf(e);return!!(t&&t.end&&t.end<TODAY)}
 function expUnproc(e){if(!expAuto(e))return false;var x=xOf(e.id);return!(x&&x.decision&&caseDone(x))}
@@ -9619,7 +9619,7 @@ var _vWk88=vWk;vWk=function(){var h=_vWk88(),n=wkAutoExpN();if(!n||S.wkTab==="pr
    v89. 입사취소자 대체 → 원래 대상 · 재요청 할 일(운영) · 캘린더 파트별 · 고객사 요청 마감일 수정
         고객사 · 근로자 요청 구분 관리자 설정 · 다른 사람이 올린 내 담당 업무를 내 할 일 맨 위에
    ================================================================ */
-APP_VER="v89";APP_VER_ON="10/12";
+APP_VER="v90";APP_VER_ON="10/12";
 
 /* ---------- 1. 입사취소자 대체 ---------- */
 function cxRoot(e){var cur=e,n=0;while(cur&&cur.cancelled&&cur.hire_type==="대체"&&n<10){if(cur.replaced&&emp(cur.replaced)){cur=emp(cur.replaced);n++}else return cur.replaced_name?{name:cur.replaced_name}:null}return cur&&!cur.cancelled&&cur!==e?{e:cur}:null}
@@ -9705,6 +9705,41 @@ function v89Change(t,d){
   if(d.ch==="reqr-due"){var r=reqOf(d.id);if(!r||!t.value)return true;if(t.value!==r.due){logChange("client_requests",r.id,(comp(r.company)||{}).name||"","마감일",r.due||"",t.value,"브이드림 내부");r.due=t.value;toast("마감일을 바꿨어요")}render();return true}
   if(d.ch==="cat-e"){var p=d.p.split("."),k=p.pop(),o=catArr(p.join("."));if(o)o[k]=t.type==="checkbox"?t.checked:t.value;if(t.type==="checkbox")render();return true}
   return false}
+
+/* v90. 내 할 일 보류: 왼쪽 체크박스 → 언제까지 보류할지 → 그날까지 목록에서 빠짐 (보류 중 목록에서 확인 · 해제) */
+APP_VER="v90";APP_VER_ON="10/12";
+function tdHoldOf(k){var m=DB.meta[k];return m&&m.hold?m.hold:""}
+var _metaRows90=metaRows;metaRows=function(){var L=_metaRows90();if(!DB._holdUsed)return L;return L.map(function(r){var m=DB.meta[r.todo_key]||{};r.hold_until=m.hold||null;r.hold_note=m.holdWhy||null;return r})};
+function holdUsedChk(){DB._holdUsed=Object.keys(DB.meta||{}).some(function(k){var m=DB.meta[k];return m&&(m.hold||m.holdWhy)})||!!DB._holdLoaded}
+var _bt90=buildTodos;buildTodos=function(){var L=_bt90();L.forEach(function(t){var h=tdHoldOf(t.key);t.hold=h&&h>TODAY?h:"";t.holdEnd=h&&h<=TODAY&&h>=addD(TODAY,-3)?h:""});return S.tdHoldV?L.filter(function(t){return t.hold}):L.filter(function(t){return!t.hold})};
+function tdHoldN(){var v=S.tdHoldV;S.tdHoldV=true;try{return buildTodos().filter(function(t){return S.scope!=="mine"||t.assignee===S.me}).length}finally{S.tdHoldV=v}}
+var _vTodo90=vTodo;vTodo=function(){var h=_vTodo90(),n=tdHoldN();
+  var bar=S.tdHoldV?'<div class="holdbar on"><b>보류 중인 할 일만 보는 중</b> · 체크를 풀거나 날짜를 바꿀 수 있어요<span class="grow"></span><button class="btn xs" data-act="td-holdv">돌아가기</button></div>':(n?'<div class="holdbar"><span>보류 중 <b>'+n+'건</b> · 보류한 날짜가 되면 다시 목록에 나와요</span><span class="grow"></span><button class="btn xs" data-act="td-holdv">보류 중 보기</button></div>':"");
+  try{var d=document.createElement("div");d.innerHTML=h;var M={};buildTodos().forEach(function(t){M[t.key]=t});
+    d.querySelectorAll('#maintable tr[data-k][data-act="todo-open"]').forEach(function(tr){var k=tr.dataset.k,t=M[k],td=tr.querySelector("td");if(!td||td.querySelector(".tdhold"))return;var hd=t&&t.hold;
+      td.insertAdjacentHTML("afterbegin",'<label class="tdhold" data-act="noop" title="'+(hd?esc(md(hd))+"까지 보류 중"+(tdHoldWhy(k)?" · "+esc(tdHoldWhy(k)):""):"보류하기")+'"><input type="checkbox" data-ch="td-hold" data-k="'+esc(k)+'"'+(hd?" checked":"")+' aria-label="보류"></label>'+(t&&t.holdEnd?'<span class="b sm t" title="'+esc(md(t.holdEnd))+'까지 보류했던 할 일">보류 끝</span> ':"")+(hd?'<span class="b sm">~'+esc(md(hd))+'</span> ':""))});
+    h=d.innerHTML}catch(err){console.error(err)}
+  if(!bar)return h;var k=h.indexOf('<div class="fbar">');return k<0?bar+h:h.slice(0,k)+bar+h.slice(k)};
+function tdHoldWhy(k){var m=DB.meta[k];return m&&m.holdWhy||""}
+function tdHoldDlg(){var H=S.tdHold;if(!H)return"";var t=null,v=S.tdHoldV;S.tdHoldV=false;try{t=buildTodos().find(function(x){return x.key===H.k})}finally{S.tdHoldV=v}if(!t){S.tdHoldV=true;try{t=buildTodos().find(function(x){return x.key===H.k})}finally{S.tdHoldV=v}}
+  var cur=tdHoldOf(H.k),d=H.d||(cur&&cur>TODAY?cur:addD(TODAY,7)),nm=addM(TODAY.slice(0,7)+"-01",1);
+  var Q=[["내일",addD(TODAY,1)],["3일 뒤",addD(TODAY,3)],["1주 뒤",addD(TODAY,7)],["2주 뒤",addD(TODAY,14)],["다음 달 1일",nm]];
+  return'<div class="ov"><div class="dlg tdholddlg" role="dialog" aria-modal="true" aria-label="할 일 보류" style="width:min(480px,calc(100vw - 32px))"><div class="ph"><div><div class="k">내 할 일 · 보류</div><h2>언제까지 보류하시겠습니까?</h2><p class="small muted" style="margin-top:4px">'+esc(t?String(t.task).slice(0,60):"")+(t&&t.company?" · "+esc((comp(t.company)||{}).name||""):"")+'</p></div><button class="close" data-act="td-hclose" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><div class="seg" role="group" style="margin-bottom:8px">'+Q.map(function(q){return'<button type="button" data-act="td-hd" data-v="'+q[1]+'" class="'+(d===q[1]?"on":"")+'">'+q[0]+'</button>'}).join("")+'</div>'+
+    '<div class="fg"><label class="f"><span>보류 끝나는 날</span><input type="date" id="td-hold-d" min="'+addD(TODAY,1)+'" value="'+esc(d)+'"></label><label class="f full"><span>사유 (선택)</span><input id="td-hold-w" value="'+esc(H.w!=null?H.w:tdHoldWhy(H.k))+'" placeholder="예: 고객사 회신 대기 · 담당자 휴가"></label></div>'+
+    '<p class="hint">그 날이 되면 내 할 일에 다시 나와요 · 마감일은 바뀌지 않아요</p></div><div class="ps foot">'+(cur&&cur>TODAY?'<button class="btn" data-act="td-hoff" style="margin-right:auto">보류 해제</button>':"")+'<button class="btn" data-act="td-hclose">취소</button><button class="btn pri" data-act="td-hsave">보류</button></div></div></div>'}
+var _render90=render;render=function(){var M=$("#modal");if(S.tdHold&&M&&S._tdhOn&&!M.querySelector(".tdholddlg"))S.tdHold=null;
+  var r=_render90.apply(this,arguments);if(M){if(S.tdHold){M.innerHTML=tdHoldDlg();S._tdhOn=true}else if(S._tdhOn){S._tdhOn=false;if(M.querySelector(".tdholddlg"))M.innerHTML=""}}return r};
+var _go90=go;go=function(v){if(v!=="todo")S.tdHoldV=false;return _go90.apply(this,arguments)};
+function v90Act(a,el){var D0=el.dataset;switch(a){
+  case"td-hold":S.tdHold={k:D0.k};render();return true;
+  case"td-hd":if(S.tdHold){S.tdHold.d=D0.v;S.tdHold.w=($("#td-hold-w")||{}).value;render()}return true;
+  case"td-hclose":S.tdHold=null;render();return true;
+  case"td-hsave":(function(){var H=S.tdHold;if(!H)return;var d=($("#td-hold-d")||{}).value,w=String(($("#td-hold-w")||{}).value||"").trim();if(!d||d<=TODAY){toast("내일 이후 날짜를 골라 주세요");return}DB._holdUsed=true;setMeta(H.k,{hold:d,holdWhy:w});S.tdHold=null;if(S.sel===H.k)S.sel=null;toast(md(d)+"까지 보류했어요");render()})();return true;
+  case"td-hoff":(function(){var H=S.tdHold;if(!H)return;DB._holdUsed=true;setMeta(H.k,{hold:"",holdWhy:""});S.tdHold=null;if(S.tdHoldV&&!tdHoldN())S.tdHoldV=false;toast("보류를 풀었어요");render()})();return true;
+  case"td-holdv":S.tdHoldV=!S.tdHoldV;S.sel=null;tst("todo").page=1;render();return true}return false}
+
+function v90Change(t,d){if(d.ch==="td-hold"){t.checked=!!tdHoldOf(d.k)&&tdHoldOf(d.k)>TODAY;S.tdHold={k:d.k};render();return true}if(/^rt-(pick|wck|biz|act)$/.test(d.ch||"")){v82Act(d.ch,t);return true}return false}
 
 /* ============ 렌더 ============ */
 function renderMain(){
@@ -10002,12 +10037,12 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v89Act(a,el))return;if(v87Act(a,el))return;if(v82Act(a,el))return;if(v79Act(a,el))return;if(v77Act(a,el))return;if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v90Act(a,el))return;if(v89Act(a,el))return;if(v87Act(a,el))return;if(v82Act(a,el))return;if(v79Act(a,el))return;if(v77Act(a,el))return;if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
   var t=ev.target,d=t.dataset||{};
-  if(v89Change(t,d))return;if(v82Change(t,d))return;if(v72Change(t,d))return;if(v70Change(t,d))return;if(v68Change(t,d))return;if(v58Change(t,d))return;if(v49Change(t,d))return;if(v41Change(t,d))return;if(v39Change(t,d))return;if(v35Change(t,d))return;if(v29Change(t,d))return;if(v28Change(t,d))return;if(v26Change(t,d))return;if(v25Change(t,d))return;if(v24Change(t,d))return;if(v23Change(t,d))return;if(v20Change(t,d))return;if(v18Change(t,d))return;if(v12Change(t,d))return;if(mgChange(t,d))return;if(gasChange(t,d))return;if(v8Change(t,d))return;if(v7Change(t,d))return;if(v6Change(t,d))return;if(migChange(t,d))return;if(onbChange(t,d))return;if(reqChange(t,d))return;if(intakeChange(t,d,false))return;if(talentChange(t,d))return;
+  if(v90Change(t,d))return;if(v89Change(t,d))return;if(v82Change(t,d))return;if(v72Change(t,d))return;if(v70Change(t,d))return;if(v68Change(t,d))return;if(v58Change(t,d))return;if(v49Change(t,d))return;if(v41Change(t,d))return;if(v39Change(t,d))return;if(v35Change(t,d))return;if(v29Change(t,d))return;if(v28Change(t,d))return;if(v26Change(t,d))return;if(v25Change(t,d))return;if(v24Change(t,d))return;if(v23Change(t,d))return;if(v20Change(t,d))return;if(v18Change(t,d))return;if(v12Change(t,d))return;if(mgChange(t,d))return;if(gasChange(t,d))return;if(v8Change(t,d))return;if(v7Change(t,d))return;if(v6Change(t,d))return;if(migChange(t,d))return;if(onbChange(t,d))return;if(reqChange(t,d))return;if(intakeChange(t,d,false))return;if(talentChange(t,d))return;
   if(d.trf&&S.trf){S.trf[d.trf]=t.value;if(d.trf!=="why")render();return}
   if(d.wf==="non_dis"){var rt=t.closest(".pnl");$$('[data-wf="dis_type"],[data-wf="dis_level"]',rt).forEach(function(i){i.disabled=t.checked});var nd=rt.querySelector('[data-wf="non_dis_on"]');nd.disabled=!t.checked;if(t.checked&&!nd.value)nd.value=TODAY;return}
   if(d.ch==="spec"){S.spec=t.checked;render();return}
@@ -10213,7 +10248,7 @@ function loadAll(){
   return Promise.all(names.map(fetchAll)).then(function(res){
     DB.staff=res[0].map(staffFrom);
     TB.forEach(function(d,i){DB[d.k]=res[i+1].map(function(r){return fromRow(d,r)})});
-    DB.meta={};res[res.length-1].forEach(function(r){DB.meta[r.todo_key]={status:r.status||"",final:r.final_due?String(r.final_due).slice(0,10):"",started:r.started_on?String(r.started_on).slice(0,10):""}});
+    DB.meta={};res[res.length-1].forEach(function(r){DB.meta[r.todo_key]={status:r.status||"",final:r.final_due?String(r.final_due).slice(0,10):"",started:r.started_on?String(r.started_on).slice(0,10):"",hold:r.hold_until?String(r.hold_until).slice(0,10):"",holdWhy:r.hold_note||""};if("hold_until" in r)DB._holdLoaded=true});
     DB.logs.sort(function(a,b){return b.at.localeCompare(a.at)});
     DB.memos.sort(function(a,b){return a.at.localeCompare(b.at)});
     if(!DB.settings.length)DB.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
