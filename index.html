@@ -5746,14 +5746,14 @@ function leaCanEdit(e){return!!(e&&e.end_type==="중도퇴사"&&e.end_date&&e.en
 function leaBtns(e,sz){return leaCanEdit(e)?'<button class="btn '+sz+'" data-act="lea-date" data-e="'+e.id+'">퇴사일 변경</button> <button class="btn '+sz+' danger" data-act="lea-wd" data-e="'+e.id+'">퇴사 의사 철회</button>':""}
 function leaModal(eid,kind){var e=emp(eid),w=wk(e.worker),t=curTerm(eid);S.leaM={eid:eid,kind:kind};
   $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="'+(kind==="wd"?"퇴사 의사 철회":"퇴사일 변경")+'"><div class="ph"><div><div class="k">중도퇴사 · '+esc(comp(e.company).name)+'</div><h2>'+esc(w.name)+' '+(kind==="wd"?"퇴사 의사 철회":"퇴사일 변경")+'</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps"><div class="kv" style="margin-bottom:10px"><div><span>마지막 근무일</span><b class="num">'+esc(e.end_date)+'</b></div><div><span>원래 계약만료일</span><b class="num">'+esc(t&&(t.oe||t.end)||"무기")+'</b></div></div>'+
-    (kind==="wd"?'<p class="small" style="margin:0 0 8px">철회하면 퇴사일 · 종료 유형 · 퇴사 사유가 지워지고 원래 계약만료일로 돌아가요. 시작 전인 퇴사 서류도 함께 지워져요.</p>':'<label class="f"><span>새 마지막 근무일</span><input type="date" id="lm-date" value="'+esc(e.end_date)+'"></label>')+
+    (kind==="wd"?leaWdInfo(e):'<label class="f"><span>새 마지막 근무일</span><input type="date" id="lm-date" value="'+esc(e.end_date)+'"></label>')+
     '<label class="f" style="margin-top:8px"><span>사유'+(kind==="wd"?" (필수)":" (선택)")+'</span><input id="lm-why" placeholder="'+(kind==="wd"?"예: 근로자 번복 · 보호자 통화 10/9":"예: 인수인계로 일주일 연장")+'"></label></div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn '+(kind==="wd"?"danger":"pri")+'" data-act="lea-m-ok">'+(kind==="wd"?"철회":"변경")+'</button></div></div></div>'}
 function leaMOk(){var M=S.leaM;if(!M)return;var e=emp(M.eid),w=wk(e.worker),why=(($("#lm-why")||{}).value||"").trim(),t=curTerm(e.id);
   if(M.kind==="date"){var d=($("#lm-date")||{}).value||"";if(!d){toast("날짜를 골라 주세요");return}if(d===e.end_date){toast("바뀐 날짜가 없어요");return}var oe=t?(t.oe?(t.oe==="무기"?"":t.oe):t.end):"";if(oe&&d>oe){toast("원래 계약만료일("+oe+")보다 늦을 수 없어요 · 연장은 계약만료에서 진행해요");return}
     var b=e.end_date;e.end_date=d;if(t&&t.oe&&t.end!==d){var tb0=t.end;t.end=d;logChange("workers",w.id,w.name,"계약 정보 · "+t.seq+"차 계약만료일",tb0,d+" (퇴사일 변경)","브이드림 내부")}DB.xdocs.forEach(function(x){if(x.emp===e.id&&x.status!=="완료"&&x.status!=="해당 없음")x.due=addD(d,setting("xdoc").offset)});
     logChange("workers",w.id,w.name,"퇴사일 변경",b,d+(why?" · "+why:""),"브이드림 내부");toast("마지막 근무일을 "+d+"로 바꿨어요")}
-  else{if(!why){toast("철회 사유를 입력해 주세요");return}var xs=DB.xdocs.filter(function(x){return x.emp===e.id});if(xs.some(function(x){return x.status==="진행 중"||x.status==="완료"})){toast("진행 중이거나 완료된 퇴사 서류가 있어 철회할 수 없어요 · 서류를 먼저 정리해 주세요");return}
-    var b2="중도퇴사 "+e.end_date+" · "+(e.leave_reason||"");DB.xdocs=DB.xdocs.filter(function(x){return x.emp!==e.id});e.end_type="";e.end_date="";e.leave_reason="";e.ins_reason="";e.leave_detail="";e.rehire=false;e.rehire_note="";leaTermRestore(e);
+  else{if(!why){toast("철회 사유를 입력해 주세요");return}
+    var b2="중도퇴사 "+e.end_date+" · "+(e.leave_reason||"");leaWdDocs(e,why);e.end_type="";e.end_date="";e.leave_reason="";e.ins_reason="";e.leave_detail="";e.rehire=false;e.rehire_note="";leaTermRestore(e);
     logChange("workers",w.id,w.name,"퇴사 의사 철회",b2,"철회 · "+why,"브이드림 내부");if(S.leaSel===e.id)S.leaSel=null;toast("퇴사 의사를 철회했어요 · 원래 계약만료일 "+(t&&t.end||"")+"로 돌아갔어요")}
   S.leaM=null;$("#modal").innerHTML="";render()}
 var _vLea24=vLea;vLea=function(){var h=_vLea24();var sel=S.leaSel;if(sel&&sel!=="new"){var e=emp(sel);if(e){h=h.replace('<div class="ps"><h3>퇴사 정보</h3>',function(m){return'<div class="ps"><h3>퇴사 정보 <span>'+leaBtns(e,"sm")+'</span></h3>'});
@@ -10139,6 +10139,27 @@ function v102Act(a,el){switch(a){
   case"rrorph-del":rrOrphDel();return true;
   case"vup-go":vupTry(true);return true}return false}
 
+/* ================================================================
+   v103. 퇴사 의사 철회: 퇴사 서류가 있어도 철회 (시작 전 = 삭제 · 진행 중 = 해당 없음 · 완료 = 기록으로 남김)
+         퇴사 서류 관리자 삭제 · 퇴사 서류 삭제가 DB에 반영되게
+   ================================================================ */
+APP_VER="v103";APP_VER_ON="10/13";APP_NOTE="퇴사 의사 철회 시 퇴사 서류 자동 정리 · 퇴사 서류 관리자 삭제";
+var _tbFix103=tbFix102;tbFix102=function(){_tbFix103();if(typeof TB==="undefined")return;var d=TB.find(function(x){return x.k==="xdocs"});if(d)d.del=true};
+function leaWdPlan(e){var L=DB.xdocs.filter(function(x){return x.emp===e.id});return{del:L.filter(function(x){return x.status==="요청됨"||!x.status}),close:L.filter(function(x){return x.status==="진행 중"}),keep:L.filter(function(x){return x.status==="완료"}),na:L.filter(function(x){return x.status==="해당 없음"})}}
+function leaWdInfo(e){var P=leaWdPlan(e),row=function(L,lab,c){return L.length?'<div style="margin-top:4px"><span class="b sm '+c+'">'+lab+'</span> '+L.map(function(x){return esc(x.name)}).join(", ")+'</div>':""};
+  return'<p class="small" style="margin:0 0 8px">철회하면 퇴사일 · 종료 유형 · 퇴사 사유가 지워지고 원래 계약만료일로 돌아가요.</p>'+
+    (P.del.length||P.close.length||P.keep.length?'<div class="small" style="margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px"><b>퇴사 서류는 이렇게 돼요</b>'+row(P.del,"시작 전 → 삭제","")+row(P.close,"진행 중 → 해당 없음으로 닫음","warn")+row(P.keep,"완료 → 기록으로 남김","ok")+'</div>':"")}
+function leaWdDocs(e,why){var P=leaWdPlan(e),w=wk(e.worker),nm=w?w.name:"",tag="퇴사 의사 철회"+(why?" ("+why+")":"");
+  P.close.forEach(function(x){var b=x.status;x.status="해당 없음";x.done="";x.note=(x.note?x.note+" · ":"")+tag;logChange("workers",e.worker,nm,"퇴사 서류 · "+x.name,b,"해당 없음 (퇴사 의사 철회로 닫음)","브이드림 내부")});
+  P.keep.forEach(function(x){x.note=(x.note?x.note+" · ":"")+"철회됨";logChange("workers",e.worker,nm,"퇴사 서류 · "+x.name,"완료","완료 유지 (퇴사 의사 철회 · 기록으로 남김)","브이드림 내부")});
+  if(P.del.length){var ids=P.del.map(function(x){return x.id});DB.xdocs=DB.xdocs.filter(function(x){return ids.indexOf(x.id)<0});P.del.forEach(function(x){logChange("workers",e.worker,nm,"퇴사 서류 · "+x.name,x.status||"요청됨","삭제 (퇴사 의사 철회 · 시작 전)","브이드림 내부")})}}
+var _xdocBody103=xdocBody;xdocBody=function(id){if(!DB.xdocs.some(function(y){return y.id===id}))return'<div class="ps"><p class="hint">삭제된 퇴사 서류예요.</p></div>';var h=_xdocBody103(id);
+  return S.role==="admin"?h.replace('data-act="xd-save" data-id="'+id+'">저장</button>','data-act="xd-save" data-id="'+id+'">저장</button> <button class="btn danger" data-act="xd-del" data-id="'+id+'">삭제 (관리자)</button>'):h};
+function xdDel(id){var x=DB.xdocs.find(function(y){return y.id===id});if(!x||S.role!=="admin")return;var e=emp(x.emp),w=e&&wk(e.worker);
+  askConfirm("퇴사 서류 삭제",(w?w.name+" · ":"")+x.name+" 서류를 지울까요? 되돌릴 수 없어요. 잘못 만든 서류만 지우고, 실제로 진행하지 않게 된 건 '해당 없음'으로 저장해 주세요.","삭제",function(){DB.xdocs=DB.xdocs.filter(function(y){return y.id!==id});
+    if(e)logChange("workers",e.worker,w?w.name:"","퇴사 서류 · "+x.name,x.status||"","삭제 (관리자)","브이드림 내부");toast("퇴사 서류를 지웠어요");render()})}
+function v103Act(a,el){if(a==="xd-del"){xdDel(el.dataset.id);return true}return false}
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -10436,7 +10457,7 @@ document.addEventListener("click",function(ev){
   case"abs-save":(function(){var F=S.absF;if(!F.start||!F.end||F.end<=F.start){toast("시작 · 종료 시각을 확인해 주세요");return}DB.absences.push({id:nid(),staff:F.staff,type:F.type,start:F.start,end:F.end,note:F.note});$("#modal").innerHTML="";toast(st(F.staff).name+" 부재를 등록했습니다");render()})();return;
   case"myinfo":if(LIVE){myInfo(false);return}toast("내 정보: 이름 · 비밀번호 변경 (실제 연결 시 동작)");return;
   case"logout":if(LIVE){sb.auth.signOut().then(function(){location.reload()});return}toast("예시 화면에서는 로그아웃하지 않습니다");return;
-  default:if(v102Act(a,el))return;if(v99Act(a,el))return;if(v98Act(a,el))return;if(v92Act(a,el))return;if(v91Act(a,el))return;if(v90Act(a,el))return;if(v89Act(a,el))return;if(v87Act(a,el))return;if(v82Act(a,el))return;if(v79Act(a,el))return;if(v77Act(a,el))return;if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
+  default:if(v103Act(a,el))return;if(v102Act(a,el))return;if(v99Act(a,el))return;if(v98Act(a,el))return;if(v92Act(a,el))return;if(v91Act(a,el))return;if(v90Act(a,el))return;if(v89Act(a,el))return;if(v87Act(a,el))return;if(v82Act(a,el))return;if(v79Act(a,el))return;if(v77Act(a,el))return;if(v72Act(a,el))return;if(v70Act(a,el))return;if(v66Act(a,el))return;if(v65Act(a,el))return;if(v64Act(a,el))return;if(v61Act(a,el))return;if(v59Act(a,el))return;if(v58Act(a,el))return;if(v57Act(a,el))return;if(v54Act(a,el))return;if(v53Act(a,el))return;if(v52Act(a,el))return;if(v49Act(a,el))return;if(v48Act(a,el))return;if(v46Act(a,el))return;if(v41Act(a,el))return;if(v39Act(a,el))return;if(v38Act(a,el))return;if(v36Act(a,el))return;if(v35Act(a,el))return;if(v34Act(a,el))return;if(v32Act(a,el))return;if(v31Act(a,el))return;if(v30Act(a,el))return;if(v29Act(a,el))return;if(v28Act(a,el))return;if(v27Act(a,el))return;if(v26Act(a,el))return;if(v25Act(a,el))return;if(v24Act(a,el))return;if(v23Act(a,el))return;if(v20Act(a,el))return;if(v18Act(a,el))return;if(v17Act(a,el))return;if(v15Act(a,el))return;if(v12Act(a,el))return;if(mgAct(a,el))return;if(gasAct(a,el))return;if(v8Act(a,el))return;if(v7Act(a,el))return;if(v6Act(a,el))return;if(migAct(a,el))return;if(onbAct(a,el))return;if(reqAct(a,el))return;if(intakeAct(a,el,ev))return;talentAct(a,el,ev);return;
   }
 });
 document.addEventListener("change",function(ev){
