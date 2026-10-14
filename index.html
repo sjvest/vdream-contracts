@@ -10865,10 +10865,10 @@ function pfOfW(wid){return DB.pf.filter(function(p){return p.worker===wid})}
 function wkDocExtra(w,es){var ids={};es.forEach(function(e){ids[e.id]=1});
   var A=(DB.intake||[]).filter(function(a){return ids[a.emp]||(!a.emp&&workerByKey(a.phone,a.birth)===w)}).sort(function(a,b){return String(b.created||"").localeCompare(String(a.created||""))});
   var h='<h3 style="margin-top:12px">입구서</h3>'+(A.length?A.map(function(a){var c=comp(a.cid),st=inDoneState(a),f=inDoneFiles(a),R={pending:"미수신",received:"수신",email_received:"수신(메일)",rerequest:"재요청중",postal:"우편발송완료"};
-      var meta=[a.mail_sent&&a.sent_at?"메일 "+String(a.sent_at).slice(5,10).replace("-","/")+" 발송":"메일 미발송",R[a.receive]||a.receive||"",a.completed&&a.done_at?"완료 "+String(a.done_at).slice(5,10).replace("-","/"):""].filter(Boolean).join(" · ");
+      var meta=[a.mail_sent&&a.sent_at?"메일 "+String(a.sent_at).slice(5,10).replace("-","/")+" 발송":"메일 미발송",a.completed?"":(R[a.receive]||a.receive||""),a.completed&&a.done_at?"완료 "+String(a.done_at).slice(5,10).replace("-","/"):""].filter(Boolean).join(" · ");
       var lk=a.completed?(st==="ok"?f.map(function(x){return dlink(x.url,"📄 "+esc(String(x.name||"파일").replace((c?c.name:"")+"_"+a.name+"_","")))}).join(""):st==="wait"?'<span class="small muted">완료 파일 Drive에 올리는 중…</span>':st==="fail"?'<span class="b sm bad">완료 파일 업로드 실패 · 메일 작업기 확인</span>':'<span class="small muted">완료 파일 없음</span>')
         :(a.folder?dlink(a.folder,"📁 받은 서류 폴더"):'<span class="small muted">받은 서류 폴더 아직 없음</span>');
-      return'<div class="wdoc"><div class="wdh">'+(c?'<span class="b sm">'+esc(c.name)+'</span> ':"")+'<span>입구서</span> <span class="small muted">'+esc(meta)+'</span><span class="grow"></span><button class="linkbtn small" data-act="in-open" data-id="'+esc(a.id)+'">입구서 보기</button></div><div class="wdl">'+lk+'</div></div>'}).join(""):'<p class="hint">연결된 입구서가 없어요</p>');
+      return'<div class="wdoc"><div class="wdh">'+(c?'<span class="b sm">'+esc(c.name)+'</span> ':"")+'<span class="small muted">'+esc(meta)+'</span></div><div class="wdl">'+lk+'</div></div>'}).join(""):'<p class="hint">연결된 입구서가 없어요</p>');
   var P=pfOfW(w.id);
   h+='<h3 style="margin-top:12px">포트폴리오</h3>'+(P.length?P.map(function(p){var F=p.files||[];
       var lk=F.length?F.map(function(f){if(f.url)return dlink(f.url,(f.kind==="link"?"🔗 ":"📄 ")+esc(f.name||f.url));if(f.err)return'<span class="b sm bad" title="'+esc(f.err)+'">'+esc(f.name||"파일")+' · 업로드 실패</span>';return'<span class="small muted">'+esc(f.name||"파일")+' · 올리는 중…</span>'}).join(""):'<span class="small muted">파일 없음</span>';
@@ -10886,6 +10886,29 @@ function v120Act(a,el){var D0=el.dataset;switch(a){
   case"rp-f":return true;
   case"pf-goto":S.wm=null;go("pf");S.pfSel=D0.id;render();return true}
   return false}
+
+/* ================================================================
+   v121. 연락처 000-0000-0000 형식 (입력칸 벗어날 때 · 화면 표시) · 근로자 DB 입구서 줄 정리
+   ================================================================ */
+APP_VER="v121";APP_VER_ON="10/14";APP_NOTE="연락처 하이픈 형식 · 근로자 DB 입구서 표시 정리";
+function fmtTel(s){var o=String(s==null?"":s).trim();if(!o||!/^[\d\s\-.()]+$/.test(o))return o;var d=o.replace(/\D/g,""),n=d.length;
+  if(/^02/.test(d)){if(n===9)return d.replace(/^(02)(\d{3})(\d{4})$/,"$1-$2-$3");if(n===10)return d.replace(/^(02)(\d{4})(\d{4})$/,"$1-$2-$3");return o}
+  if(/^1[5-9]\d{2}/.test(d)&&n===8)return d.replace(/^(\d{4})(\d{4})$/,"$1-$2");
+  if(/^050\d/.test(d)&&n===12)return d.replace(/^(\d{4})(\d{4})(\d{4})$/,"$1-$2-$3");
+  if(/^0\d{2}/.test(d)){if(n===10)return d.replace(/^(\d{3})(\d{3})(\d{4})$/,"$1-$2-$3");if(n===11)return d.replace(/^(\d{3})(\d{4})(\d{4})$/,"$1-$2-$3")}
+  return o}
+var _telHtml121=telHtml;telHtml=function(p){return _telHtml121(p?fmtTel(p):p)};
+var TEL_ATTR=/(^|[_\-])(g?phone|tel|mobile)([_\-]|$)|phone/i;
+function isTelIn(el){if(!el||el.tagName!=="INPUT"||/^(checkbox|radio|file|date|number|hidden|email)$/.test(el.type))return false;if(el.type==="tel")return true;
+  for(var i=0;i<el.attributes.length;i++){var a=el.attributes[i];if((/^data-/.test(a.name)||a.name==="id"||a.name==="name")&&TEL_ATTR.test(a.value))return true}return false}
+/* 입력칸을 벗어나면 형식 맞춤 (기존 입력 · 변경 처리도 그대로 타도록 input · change 발생) */
+document.addEventListener("focusout",function(ev){var t=ev.target;if(!isTelIn(t))return;var v=fmtTel(t.value);if(v===t.value)return;t.value=v;try{t.dispatchEvent(new Event("input",{bubbles:true}));t.dispatchEvent(new Event("change",{bubbles:true}))}catch(e){}},true);
+/* 화면: 하이픈 없이 저장된 번호도 보이는 곳에서는 형식 맞춤 (글자만 · 저장값은 그대로) */
+var TEL_RE=/^\s*(0\d{8,10}|1[5-9]\d{6}|050\d{9})\s*$/;
+function telPaint(root){if(!root||!document.createTreeWalker)return;var W=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),L=[],n;while((n=W.nextNode())){var v=n.nodeValue;if(v&&v.length<=16&&TEL_RE.test(v)){var p=n.parentNode;if(p&&!/^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(p.tagName))L.push(n)}}
+  L.forEach(function(t){var f=fmtTel(t.nodeValue);if(f!==t.nodeValue.trim())t.nodeValue=t.nodeValue.replace(t.nodeValue.trim(),f)})}
+function telInPaint(){document.querySelectorAll("#main input,#modal input,aside.pnl input").forEach(function(i){if(i===document.activeElement||!isTelIn(i))return;var f=fmtTel(i.value);if(f!==i.value&&/^\d+$/.test(i.value.trim()))i.value=f})}
+var _dlvAll121=dlvAll;dlvAll=function(){_dlvAll121();try{["#main","#modal","aside.pnl"].forEach(function(q){document.querySelectorAll(q).forEach(telPaint)});telInPaint()}catch(e){}};
 
 /* ============ 렌더 ============ */
 function renderMain(){
