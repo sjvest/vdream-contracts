@@ -11570,6 +11570,18 @@ function v133Act(a,el){switch(a){
   case"tdq-clr":S.qc="";S.qcId="";S.qw="";render();return true}
   return false}
 
+/* ================================================================
+   v134. 모두싸인 '입사구비서류' 문서는 입구서 전용 → 근로계약서 · 퇴직원 등 서류 매칭에서 제외
+   ================================================================ */
+APP_VER="v134";APP_VER_ON="10/15";APP_NOTE="모두싸인 입사구비서류 문서는 서류 매칭에서 제외";
+function msIntake(r){return/입사구비서류/.test(msNorm(r&&r.title))}
+/* ---------- 서류 매칭에서 입사구비서류 빼기 ---------- */
+var _msCands134=msCands;msCands=function(kind,o){var M=DB.msdocs,r;DB.msdocs=M.filter(function(x){return!msIntake(x)});try{r=_msCands134.apply(this,arguments)}finally{DB.msdocs=M}return r};
+var _msRe134=msRe;msRe=function(kind,o){var M=DB.msdocs,r;DB.msdocs=M.filter(function(x){return!msIntake(x)});try{r=_msRe134.apply(this,arguments)}finally{DB.msdocs=M}return r};
+/* 이미 입사구비서류 문서에 연결된 서류: 안내 + 연결 풀기 */
+var _msBox134=msBox;msBox=function(kind,o){var h=_msBox134(kind,o);if(!o||!o.ms||!/입사구비서류/.test(msNorm(o.ms.title)))return h;
+  return'<div class="ps msbx" style="border-color:#F1D39A;background:#FFF8EC"><div class="msrow"><b style="color:var(--warn)">입구서(입사구비서류)용 모두싸인 문서가 연결돼 있어요</b> '+msDoneHtml(o)+' <button type="button" class="linkbtn small" data-act="ms-un" data-k="'+kind+'" data-id="'+esc(o.id)+'">연결 풀기</button></div><p class="hint" style="margin:6px 0 0">입사구비서류는 입구서 발송에서만 쓰여요 · 연결을 풀면 이 서류의 모두싸인 문서를 다시 찾아요 (체크한 단계는 그대로)</p></div>'+h};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
