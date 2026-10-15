@@ -11118,12 +11118,14 @@ var WD_CAT0=["입사 서류","연장 서류","퇴사 서류","증명서","기타
 function wdCats(){var L=appSet("wdoc_cats",null);return Array.isArray(L)&&L.length?L:WD_CAT0.slice()}
 function wdSec(cat){cat=String(cat||"");return/퇴사|사직|퇴직/.test(cat)?"out":/입사|연장|계약/.test(cat)?"in":"etc"}
 /* ---------- 업로드 (공통) ---------- */
+/* 파일 이름용 서류명: 연장 근로계약서 (2차 · 무기) → 연장근로계약서_2차_무기 · 띄어쓰기 · 괄호 빼기 */
+function fnDoc(n){var s=String(n||"서류").replace(/\s*\((\d+)차(\s*·\s*무기)?\)/g,function(m,d,mu){return"_"+d+"차"+(mu?"_무기":"")}).replace(/[\\\/:*?"<>|()\[\]{}]/g,"").replace(/\s+/g,"").trim();return s||"서류"}
 /* 파일 이름: 첫 파일 = 기업명_근로자_서류명 · 나중에 더 올린 파일 = …_서류명_추가_YYMMDD (같은 날 여러 개면 _2 · _3) */
 function wdNm(base,cur,i,n0){if(n0===0&&i===0)return base;var d=TODAY.replace(/-/g,"").slice(2),pre=base+"_추가_"+d,c=(cur||[]).filter(function(f){return String(f.name||"").indexOf(pre)===0}).length;return pre+(c?"_"+(c+1):"")}
 var _wdObj127=wdObj;wdObj=function(kind,id){if(kind==="wd")return(DB.wdocs||[]).find(function(x){return x.id===id});return _wdObj127(kind,id)};
 wdUp=function(kind,id,fl){var o=wdObj(kind,id),inp=$("#wdf-"+kind+"-"+id),files=fl||(inp&&inp.files);if(!o||!files||!files.length){toast("파일을 골라 주세요");return Promise.resolve(false)}if(!upNeed("wdoc_folder","근로자 제출 서류 폴더"))return Promise.resolve(false);
   var e=o.emp&&emp(o.emp),c=e?comp(e.company):comp(o.company),w=e?wk(e.worker):wk(o.worker);if(!w){toast("근로자 정보가 없어요");return Promise.resolve(false)}
-  var dn=c?(coDocName(c)||c.name):"기업 미지정",base=dn+"_"+w.name+"_"+String(o.name||"서류").replace(/[\\\/:*?"<>|]/g," ").trim(),n0=(o.files||[]).length;
+  var dn=c?(coDocName(c)||c.name):"기업 미지정",base=dn+"_"+w.name+"_"+fnDoc(o.name),n0=(o.files||[]).length;
   toast("올리는 중…");return upFiles("wdocs/"+id,files).then(function(L){o.files=(o.files||[]).slice();L.forEach(function(f,i){var nm=wdNm(base,o.files,i,n0)+"."+fext(f.name),j=addJob("upload_wdoc",o.id,{file:f,file_name:nm,company:c?c.name:"기업 미지정"});o.files.push({name:nm,orig:f.name,job:j.id,url:"",by:st(S.me).name,at:stamp()})});
     logChange("workers",w.id,w.name,(kind==="cd"?"서류 · ":kind==="xd"?"퇴사 서류 · ":"직접 올린 서류 · ")+o.name,"","파일 "+L.length+"개 올림","브이드림 내부");toast(L.length+"개 올렸어요 · 작업기가 1분 안에 Drive로 옮겨요");render();return true}).catch(function(e2){toast("업로드 실패: "+(e2.message||e2));return false})};
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.type!=="file"||!t.id)return;var m=t.id.match(/^wdf-wd-(.+)$/);if(m)wdUp("wd",m[1])},true);
@@ -11178,6 +11180,9 @@ function v127Act(a,el){var D0=el.dataset;switch(a){
   case"wdc-save":(function(){var L=(S.wdCatF||[]).map(function(x){return{n:String(x.n||"").trim(),o:x.o}}).filter(function(x){return x.n});var seen={},bad="";L.forEach(function(x){if(seen[x.n])bad=x.n;seen[x.n]=1});if(bad){toast("‘"+bad+"’가 두 번 있어요");return}
     var nR=0;L.forEach(function(x){if(x.o&&x.o!==x.n)(DB.wdocs||[]).forEach(function(d){if(d.cat===x.o){d.cat=x.n;nR++}})});appSetPut("wdoc_cats",L.map(function(x){return x.n}));S.wdCatF=null;toast("서류 종류를 저장했어요"+(nR?" · 지난 기록 "+nR+"건도 바꿨어요":""));render()})();return true}
   return false}
+
+/* v128. 파일 이름용 서류명 정리 (띄어쓰기 · 괄호 빼기 · 차수는 _2차) */
+APP_VER="v128";APP_VER_ON="10/15";APP_NOTE="업로드 파일 이름 정리 (연장근로계약서_2차)";
 
 /* ============ 렌더 ============ */
 function renderMain(){
