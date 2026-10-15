@@ -11233,6 +11233,69 @@ document.addEventListener("input",function(ev){var t=ev.target;if(t&&t.id==="flq
 function v129Change(t,d){if(d.ch==="fl-w"){S.flW=t.value;render();return true}if(d.ch==="fl-pii"){S.flPii=t.checked;render();return true}return false}
 function v129Act(a,el){var D0=el.dataset;switch(a){case"fl-t":S.flT=D0.v;render();return true;case"fl-p":S.flP=D0.v;render();return true;case"fl-re":S.flRows=null;flLoad(true);render();return true}return false}
 
+/* ================================================================
+   v130. 전송량 줄이기 (SQL 55 필요 · 없으면 예전처럼 동작)
+   - 새로고침 · 새 탭: 브라우저에 저장해 둔 데이터로 바로 열고 '바뀐 행만' 받음 (전체 읽기는 24시간에 1번)
+   - 실시간 재연결 · 3분 대비 조회 · 입구서 20초 조회: 전체 다시 읽기 대신 바뀐 행만 · 숨은 탭은 받지 않음
+   - 변경 이력(change_logs)은 처음 불러올 때 최근 60일만
+   ================================================================ */
+APP_VER="v130";APP_VER_ON="10/15";APP_NOTE="전송량 줄이기 (바뀐 행만 받기)";
+var SYNC={ok:false,probed:false,last:0,full:0,since:"",run:false,pend:false},AUTH_UID="",SYNC_DAY=24*3600e3,LOG_DAYS=60;
+var _afterLogin130=afterLogin;afterLogin=function(session){AUTH_UID=session&&session.user&&session.user.id||"";return _afterLogin130.apply(this,arguments)};
+function syncTables(){var L=["staff","todos"];TB.forEach(function(d){if(L.indexOf(d.t)<0)L.push(d.t)});return L}
+function syncProbe(){if(SYNC.probed||!LIVE||typeof sb==="undefined"||!sb)return Promise.resolve(SYNC.ok);SYNC.probed=true;
+  return Promise.all([sb.from("vw_deletes").select("at").limit(1),sb.from("change_logs").select("updated_at").limit(1)]).then(function(R){SYNC.ok=!R[0].error&&!R[1].error;return SYNC.ok},function(){SYNC.ok=false;return false})}
+/* ---------- 브라우저 저장 (IndexedDB · 키 'cache') ---------- */
+function idbGetK(k){return idbOpen().then(function(db){return new Promise(function(ok){var g=db.transaction("s","readonly").objectStore("s").get(k);g.onsuccess=function(){ok(g.result||null)};g.onerror=function(){ok(null)}})}).catch(function(){return null})}
+function idbSetK(k,v){return idbOpen().then(function(db){return new Promise(function(ok){var x=db.transaction("s","readwrite");if(v==null)x.objectStore("s").delete(k);else x.objectStore("s").put(v,k);x.oncomplete=function(){ok()};x.onerror=function(){ok()}})}).catch(function(){})}
+var CACHE_T=0;function cacheSave(){if(!LIVE||!READY||!SYNC.ok||!AUTH_UID)return;clearTimeout(CACHE_T);CACHE_T=setTimeout(function(){try{idbSetK("cache",{uid:AUTH_UID,full:SYNC.full,since:SYNC.since,at:Date.now(),tables:vupTables()})}catch(e){}},3000)}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="logout"]');if(b)idbSetK("cache",null)},true);
+/* ---------- 변경 이력은 최근 60일만 (네트워크로 받을 때) ---------- */
+var _fetchAll130=fetchAll;fetchAll=function(t){if(t!=="change_logs"||(RESTORE&&RESTORE.tables&&RESTORE.tables[t]))return _fetchAll130.apply(this,arguments);
+  var cut=new Date(Date.now()-LOG_DAYS*864e5).toISOString(),out=[];
+  function page(f){return sb.from(t).select("*").gte("changed_at",cut).order("changed_at",{ascending:true}).range(f,f+999).then(function(r){if(r.error)throw r.error;out=out.concat(r.data||[]);if((r.data||[]).length===1000)return page(f+1000)})}
+  return page(0).then(function(){RAWC[t]=out;return out})};
+/* ---------- loadAll: 저장된 데이터 + 바뀐 행만 / 24시간마다 전체 ---------- */
+var _loadAll130=loadAll;loadAll=function(){var a=arguments,self=this;if(!LIVE)return _loadAll130.apply(self,a);var t0=Date.now();
+  return syncProbe().then(function(ok){if(!ok)return _loadAll130.apply(self,a);
+    return idbGetK("cache").then(function(c){var use=c&&c.tables&&c.uid&&c.uid===AUTH_UID&&Date.now()-(c.full||0)<SYNC_DAY&&c.since&&!RESTORE;
+      if(use)RESTORE={at:Date.now(),tables:c.tables};
+      return _loadAll130.apply(self,a).then(function(r){if(use){SYNC.full=c.full;SYNC.since=c.since;return syncNow(true,true).then(function(){return r})}SYNC.full=t0;SYNC.since=new Date(t0-5*60e3).toISOString();SYNC.last=Date.now();cacheSave();return r})})})};
+/* ---------- 바뀐 행만 받기 ---------- */
+function syncNow(force,quiet){if(!SYNC.ok||!LIVE||typeof sb==="undefined"||!sb)return Promise.resolve(false);if(SYNC.run)return Promise.resolve(false);if(!force&&Date.now()-SYNC.last<60000)return Promise.resolve(false);
+  if(Date.now()-(SYNC.full||0)>=SYNC_DAY&&READY&&!persisting&&!pending){SYNC.run=true;return _maybeReloadFull().then(function(){SYNC.run=false;return true},function(){SYNC.run=false;return false})}
+  SYNC.run=true;var t0=Date.now(),since=SYNC.since||new Date(t0-10*60e3).toISOString(),big=false,n=0;
+  var L=syncTables().map(function(t){return sb.from(t).select("*").gt("updated_at",since).limit(1000).then(function(r){if(r.error)return{t:t,rows:[]};if((r.data||[]).length>=1000)big=true;return{t:t,rows:r.data||[]}},function(){return{t:t,rows:[]}})});
+  L.push(sb.from("vw_deletes").select("tbl,row_id,at").gt("at",since).limit(5000).then(function(r){return{del:r.error?[]:r.data||[]}},function(){return{del:[]}}));
+  return Promise.all(L).then(function(R){if(big){SYNC.run=false;return _maybeReloadFull().then(function(){return true})}
+    var wait=function(){return persisting||pending?new Promise(function(ok){setTimeout(ok,400)}).then(wait):Promise.resolve()};
+    return wait().then(function(){R.forEach(function(x){if(x.del){x.del.forEach(function(d){var tb=TB.find(function(z){return z.t===d.tbl}),pk=d.tbl==="todos"?"todo_key":tb?colName(tb.cols[0]):"id",o={};o[pk]=d.row_id;try{if(rtApply({table:d.tbl,eventType:"DELETE",new:{},old:o}))n++}catch(e){}});return}
+        x.rows.forEach(function(row){if(x.t==="change_logs"&&DB.logs.some(function(l){return l.id===row.id}))return;try{if(rtApply({table:x.t,eventType:"UPDATE",new:row,old:{}}))n++}catch(e){console.warn("sync",x.t,e)}})});
+      if(DB.logs&&DB.logs.length)DB.logs.sort(function(a,b){return String(b.at).localeCompare(String(a.at))});
+      SYNC.since=new Date(t0-2*60e3).toISOString();SYNC.last=Date.now();SYNC.run=false;SYNC.pend=false;if(n&&READY){RT.dirty=true;if(quiet)render();else rtRender()}cacheSave();return true})}).catch(function(e){SYNC.run=false;console.warn("sync",e);return false})}
+function _maybeReloadFull(){var t0=Date.now();return loadAllNet().then(function(){SYNC.full=t0;SYNC.since=new Date(t0-5*60e3).toISOString();SYNC.last=Date.now();autoLinkMine();render();cacheSave()})}
+function loadAllNet(){RESTORE=null;FETCH_MEMO={};return Promise.resolve(_loadAll130.apply(this)).then(function(x){FETCH_MEMO=null;return x},function(e){FETCH_MEMO=null;throw e})}
+/* 전체 다시 읽기 → 바뀐 행만 (재연결 · 3분 대비 조회 · 탭 돌아올 때) */
+var _maybeReload130=maybeReload;maybeReload=function(force){if(!SYNC.ok)return _maybeReload130.apply(this,arguments);if(!LIVE||!READY)return;
+  if(document.hidden){SYNC.pend=true;return}if(RT.live&&RT.sub&&!RT.down&&!SYNC.pend)return;var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!SYNC.pend)return;syncNow(!!SYNC.pend||force===true&&!RT.live)};
+var _pollIntake130=pollIntake;pollIntake=function(){if(!SYNC.ok)return _pollIntake130.apply(this,arguments);if(document.hidden||(RT.live&&RT.sub))return;syncNow(false)};
+document.addEventListener("visibilitychange",function(){if(document.hidden){cacheSave();return}if(SYNC.ok&&SYNC.pend)syncNow(true)});
+/* 저장할 때마다 브라우저 저장본도 갱신 (실시간으로 받은 변경 포함) */
+var _rtFlush130=rtFlush;rtFlush=function(){var r=_rtFlush130.apply(this,arguments);cacheSave();return r};
+var _persist130=persist;persist=function(){var r=_persist130.apply(this,arguments);cacheSave();return r};
+/* ---------- 병합 숨김용 TB 항목(workersM · companiesM) 정리 ----------
+   1) 한 번 불러올 때 같은 표(workers · companies)를 두 번 받던 것 → 한 번만
+   2) 실시간 · 바뀐 행 반영 때 같은 행이 숨김 목록에 한 번 더 생기던 것 방지
+   3) 브라우저 저장본에 병합된 행이 두 번 들어가던 것 방지 */
+function tbNoM(){return TB.filter(function(d){return!(d.k==="workersM"||d.k==="companiesM")})}
+var FETCH_MEMO=null;
+var _fetchAll130b=fetchAll;fetchAll=function(t){if(FETCH_MEMO){if(!FETCH_MEMO[t])FETCH_MEMO[t]=_fetchAll130b.apply(this,arguments);return FETCH_MEMO[t]}return _fetchAll130b.apply(this,arguments)};
+var _loadAll130b=loadAll;loadAll=function(){FETCH_MEMO={};var r;try{r=_loadAll130b.apply(this,arguments)}catch(e){FETCH_MEMO=null;throw e}return Promise.resolve(r).then(function(x){FETCH_MEMO=null;return x},function(e){FETCH_MEMO=null;throw e})};
+var _rtApply130=rtApply;rtApply=function(p){var save=TB;TB=tbNoM();try{return _rtApply130.apply(this,arguments)}finally{TB=save}};
+var _vupTables130=vupTables;vupTables=function(){var save=TB;TB=tbNoM();try{return _vupTables130.apply(this,arguments)}finally{TB=save}};
+/* 메뉴를 옮길 때 1분에 한 번 정도 바뀐 행 확인 (실시간에서 뺀 변경 이력 등도 반영) */
+var SYNC_V="";var _render130=render;render=function(){var r=_render130.apply(this,arguments);try{if(SYNC.ok&&READY&&S.view!==SYNC_V){SYNC_V=S.view;setTimeout(function(){if(!document.hidden)syncNow(false)},300)}}catch(e){}return r};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
