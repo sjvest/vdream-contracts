@@ -11043,6 +11043,17 @@ APP_VER="v124";APP_VER_ON="10/15";APP_NOTE="한글 서류그룹 양식 파일 �
 function safeKeySeg(s){s=String(s||"");if(/^[A-Za-z0-9._-]+$/.test(s))return s;return"g_"+encodeURIComponent(s).replace(/%/g,"").replace(/[^A-Za-z0-9._-]/g,"_").toLowerCase().slice(0,80)}
 var _upFiles124=upFiles;upFiles=function(prefix,files){return _upFiles124(String(prefix||"").split("/").map(safeKeySeg).join("/"),files)};
 
+/* v125. 부재 등록 · 할 일 등록 같은 공용 창: 담당자 목록 = 메뉴와 상관없이 활성 담당자 전원 (파트별로 묶음) */
+APP_VER="v125";APP_VER_ON="10/15";APP_NOTE="부재 등록 · 할 일 등록 담당자 전원 표시";
+var _staffOpts125=staffOpts;staffOpts=function(val,blank){if(STF_CTX!=="__grp")return _staffOpts125.apply(this,arguments);
+  var A=DB.staff.filter(function(s){return s.active!==false}),P=STAFF_PARTS.slice();A.forEach(function(s){if(s.part&&P.indexOf(s.part)<0)P.push(s.part)});
+  var g=function(L){return L.map(function(s){return'<option value="'+esc(s.id)+'"'+(s.id===val?" selected":"")+'>'+esc(s.name)+'</option>'}).join("")};
+  var h=blank!==null&&blank!==undefined?'<option value="">'+esc(blank)+'</option>':(val?"":'<option value="">선택</option>');
+  P.forEach(function(p){var L=A.filter(function(s){return s.part===p});if(L.length)h+='<optgroup label="'+esc(p)+'">'+g(L)+'</optgroup>'});
+  var R=A.filter(function(s){return!s.part||P.indexOf(s.part)<0});if(R.length)h+='<optgroup label="파트 없음">'+g(R)+'</optgroup>';
+  if(val&&!A.some(function(s){return s.id===val})){var s0=DB.staff.find(function(x){return x.id===val});if(s0)h+='<option value="'+esc(val)+'" selected>(비활성) '+esc(s0.name)+'</option>'}return h};
+absModal=withCtx(absModal,"__grp");ctModal=withCtx(ctModal,"__grp");
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
