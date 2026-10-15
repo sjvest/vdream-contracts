@@ -11038,6 +11038,11 @@ function v123Act(a,el){var D0=el.dataset;switch(a){
   case"wdf-rm":(function(){var p=String(D0.id).split(":"),o=wdObj(p[0],p[1]);if(!o)return;o.files=(o.files||[]).filter(function(f,i){return i!==+D0.i});render()})();return true}
   return false}
 
+/* v124. 파일 임시 저장 경로에 한글 등이 있으면 Supabase가 거절(Invalid key) → 경로 칸만 영문 · 숫자로 바꿔 올림 (Drive 파일 이름은 그대로) */
+APP_VER="v124";APP_VER_ON="10/15";APP_NOTE="한글 서류그룹 양식 파일 업로드 오류 수정";
+function safeKeySeg(s){s=String(s||"");if(/^[A-Za-z0-9._-]+$/.test(s))return s;return"g_"+encodeURIComponent(s).replace(/%/g,"").replace(/[^A-Za-z0-9._-]/g,"_").toLowerCase().slice(0,80)}
+var _upFiles124=upFiles;upFiles=function(prefix,files){return _upFiles124(String(prefix||"").split("/").map(safeKeySeg).join("/"),files)};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
