@@ -11722,6 +11722,33 @@ function v135Act(a,el){var D0=el.dataset;switch(a){
   case"comm-all":S.commAll=true;render();return true}
   return false}
 
+/* ================================================================
+   v136. 요청 수 줄이기 (Log Ingestion): 바뀐 행 확인을 '바뀐 표 목록' 한 번으로 (SQL 58 · 없으면 예전처럼)
+         바뀐 표가 없으면 요청 1번으로 끝 · 바뀐 표만 받음
+   ================================================================ */
+APP_VER="v136";APP_VER_ON="10/15";APP_NOTE="요청 수 줄이기 (바뀐 표만 확인)";
+var _syncNow136=syncNow;
+syncNow=function(force,quiet){if(SYNC.rpc===false)return _syncNow136.apply(this,arguments);
+  if(!SYNC.ok||!LIVE||typeof sb==="undefined"||!sb)return Promise.resolve(false);if(SYNC.run)return Promise.resolve(false);if(!force&&Date.now()-SYNC.last<60000)return Promise.resolve(false);
+  if(Date.now()-(SYNC.full||0)>=SYNC_DAY&&READY&&!persisting&&!pending)return _syncNow136.apply(this,arguments);
+  var t0=Date.now(),since=SYNC.since||new Date(t0-10*60e3).toISOString();SYNC.run=true;
+  var back=function(){SYNC.run=false;return _syncNow136(force,quiet)};
+  return Promise.resolve(sb.rpc("vw_changed_since",{p_since:since})).then(function(r){
+    if(!r||r.error){var m=String(r&&r.error&&(r.error.message||r.error.code)||"");if(/vw_changed_since|PGRST202|does not exist|not find|404/i.test(m))SYNC.rpc=false;return back()}
+    SYNC.rpc=true;var d=r.data||{},T=d.tables||[],mine=syncTables().filter(function(t){return T.indexOf(t)>=0}),dels=d.deletes||[];
+    if(!mine.length&&!dels.length){SYNC.since=new Date(t0-2*60e3).toISOString();SYNC.last=Date.now();SYNC.run=false;SYNC.pend=false;return false}
+    var big=false,n=0;
+    var L=mine.map(function(t){return Promise.resolve(sb.from(t).select("*").gt("updated_at",since).limit(1000)).then(function(x){if(x.error)return{t:t,rows:[]};if((x.data||[]).length>=1000)big=true;return{t:t,rows:x.data||[]}},function(){return{t:t,rows:[]}})});
+    return Promise.all(L).then(function(R){R.push({del:dels});if(big){SYNC.run=false;return _maybeReloadFull().then(function(){return true})}
+      var wait=function(){return persisting||pending?new Promise(function(ok){setTimeout(ok,400)}).then(wait):Promise.resolve()};
+      return wait().then(function(){R.forEach(function(x){if(x.del){x.del.forEach(function(dd0){var tb=TB.find(function(z){return z.t===dd0.tbl}),pk=dd0.tbl==="todos"?"todo_key":tb?colName(tb.cols[0]):"id",o={};o[pk]=dd0.row_id;try{if(rtApply({table:dd0.tbl,eventType:"DELETE",new:{},old:o}))n++}catch(e){}});return}
+          x.rows.forEach(function(row){if(x.t==="change_logs"&&DB.logs.some(function(l){return l.id===row.id}))return;try{if(rtApply({table:x.t,eventType:"UPDATE",new:row,old:{}}))n++}catch(e){console.warn("sync",x.t,e)}})});
+        if(DB.logs&&DB.logs.length)DB.logs.sort(function(a,b){return String(b.at).localeCompare(String(a.at))});
+        SYNC.since=new Date(t0-2*60e3).toISOString();SYNC.last=Date.now();SYNC.run=false;SYNC.pend=false;if(n&&READY){RT.dirty=true;if(quiet)render();else rtRender()}cacheSave();return true})})
+  },function(){return back()})};
+/* 관리자 › 메일 작업기: 동작 기록은 5분마다 */
+var _vGas136=vGas;vGas=function(){return _vGas136().replace("1분마다 동작","1분마다 동작 · 기록은 5분마다").replace("보통 1~2분 안에 처리","보통 1~2분 안에 처리 · 설정 반영은 최대 5분")};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
