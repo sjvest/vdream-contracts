@@ -776,6 +776,14 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 .oldmore{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:12px;border:1px dashed var(--line);border-radius:10px;margin-top:8px}
 
 @media (max-width:900px){body.mob [data-act="bk-open"],body.mob [data-act="oi-open"]{display:none}}
+.osum{display:flex;flex-direction:column;gap:12px}.osum-k{display:grid;grid-template-columns:1fr 1fr;gap:8px}.osum-k>div{background:#F7F5FD;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}.osum-k b{font-size:14px;overflow-wrap:anywhere}
+.osum-sec{display:flex;flex-direction:column;gap:6px}.osum-sec>b{font-size:13px;color:var(--ink-2)}.osum-ct{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.osum-r{font-size:13px;line-height:1.45;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.osum-b{display:grid;grid-template-columns:1fr 1fr;gap:8px}.osum-b .btn{min-height:44px;justify-content:center}
+.cfbusy{padding:24px 6px;text-align:center;font-size:15px}.cfread{display:grid;grid-template-columns:1fr;gap:6px}.cfread>div{display:flex;gap:10px;align-items:baseline}.cfread .muted{min-width:54px}
+.cfo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:6px;cursor:pointer}.cfo.on{border-color:var(--p);background:#F4F2FC}
+.tdsh{background:#EEF6FF!important;color:#1D4E89!important}.tdcl{background:#F1EEFB!important;color:#4A3AA7!important}
+.banph{margin-left:4px;cursor:help;padding:1px 6px!important}
+.keyloc{margin-top:12px}.keyloc ul{margin:8px 0 0 18px;padding:0;line-height:1.8}.keyloc code{background:#F4F2FC;border-radius:4px;padding:1px 5px}
 </style>
 </head>
 <body>
@@ -13845,6 +13853,119 @@ function discLazy(){if(!SKIP_DISC||DISC_LAZY.busy||!LIVE)return;DISC_LAZY.busy=t
       x.rows.forEach(function(row){var o=fromRow(d,row),r=toRow(d,o);if(have[r[pk]])return;DB[d.k].push(o);SNAP[d.k][r[pk]]=JSON.stringify(r)});if(typeof RAWC!=="undefined")RAWC[d.t]=x.rows});
     SKIP_DISC=false;DISC_LAZY.busy=false;render()},function(){DISC_LAZY.busy=false})}
 var _render144b=render;render=function(){if(SKIP_DISC&&READY&&(DISC_VIEWS[S.view]||S.om))discLazy();return _render144b.apply(this,arguments)};
+
+/* ================================================================
+   v146 5가지 역할 의견 반영
+   발굴: 휴대폰 기관 창 '요약' 첫 화면 · 사진 먼저 기관 추가(기존 기관 자동 찾기)
+   채용: 내 할 일 목록 공동 · 맡은 사람 칩 · 밀린 재소통 하루 N건씩
+   운영 외: 연락처 옆 🚫 · 복사할 때 안내 / 기관 경유 전달 완료 → 요청 등록자에게 결과 확인
+   인재경영: 근로자 인적정보 확인 끝난 칸 접기 · 관리자: 키가 있는 곳 안내
+   ================================================================ */
+APP_VER="v146";APP_VER_ON="10/18";APP_NOTE="역할별 의견 반영 · 휴대폰 기관 요약 · 사진 먼저 기관 추가";
+/* ---------- 1. 휴대폰 기관 창: 요약 탭 ---------- */
+var OM_LAST=null;
+function oSumHtml(o){var win=ctWin(o),L=oLogs(o.id).slice(0,3),A=oActs(o.id,true).sort(function(a,b){return String(a.due).localeCompare(String(b.due))}).slice(0,3),last=oLast(o);
+  return'<div class="ps wide osum"><div class="osum-k"><div><span class="small muted">단계</span><b>'+oStB(o.stage)+'</b></div><div><span class="small muted">담당</span><b>'+oMem(o.mem)+(o.sub?' <span class="small muted">· 부 '+oMem(o.sub)+'</span>':"")+'</b></div><div><span class="small muted">마지막 연락</span><b>'+(last?md(last):"—")+'</b></div><div><span class="small muted">관계 점수</span><b>'+oScoreB(o)+'</b></div></div>'+
+    '<div class="osum-sec"><b>연락창구</b>'+(win?'<div class="osum-ct"><b>'+esc(win.name)+'</b> <span class="small muted">'+esc([win.title,win.dept].filter(Boolean).join(" · "))+'</span><div>'+telHtml(win.mobile||win.phone)+(win.mobile&&win.phone?' '+telHtml(win.phone):"")+'</div></div>':'<div class="small muted">연락창구가 없어요 · 전체 정보 › 기관 담당자에서 지정해 주세요</div>')+'</div>'+
+    '<div class="osum-sec"><b>최근 기록</b>'+(L.length?L.map(function(l){return'<div class="osum-r"><span class="num small muted">'+esc(String(l.at).slice(5,10).replace("-","/"))+'</span><span class="b sm">'+esc(l.quick?"빠른 접촉":l.type)+'</span> '+esc(String(l.sum||"").slice(0,60))+'</div>'}).join(""):'<div class="small muted">아직 없어요</div>')+'</div>'+
+    '<div class="osum-sec"><b>열린 후속 액션</b>'+(A.length?A.map(function(a){return'<div class="osum-r"><span class="b sm '+(a.due<TODAY?"bad":a.due===TODAY?"warn":"")+'">'+md(a.due).replace(/\(.\)/,"")+'</span> '+esc(String(a.text).slice(0,60))+'</div>'}).join(""):'<div class="small muted">없어요</div>')+'</div>'+
+    '<div class="osum-b"><button class="btn pri" data-act="q-log">📝 컨택 기록</button><button class="btn" data-act="q-act">⏰ 다음 할 일</button><button class="btn" data-act="oc-scan" data-o="'+o.id+'">📷 명함으로 담당자 추가</button><button class="btn" data-act="org-pt" data-v="basic">전체 정보 보기</button></div></div>'}
+var _pOrg146=pOrg;pOrg=function(){if(!isMob()||!S.om||S.om==="new")return _pOrg146.apply(this,arguments);
+  if(OM_LAST!==S.om){OM_LAST=S.om;S.orgPT="sum"}var o=orgOf(S.om);if(!o)return _pOrg146.apply(this,arguments);
+  var sum=S.orgPT==="sum";if(sum)S.orgPT="basic";var h;try{h=_pOrg146.apply(this,arguments)}finally{if(sum)S.orgPT="sum"}
+  var k=h.indexOf('class="ptabs"');if(k<0)return h;var ns=h.indexOf(">",k)+1;h=h.slice(0,ns)+'<button class="'+(sum?"on":"")+'" data-act="org-pt" data-v="sum">요약</button>'+h.slice(ns);if(sum)h=h.replace(/(class="ptabs"[^>]*>[\s\S]*?)<button class="on"([^>]*data-v="basic")/,'$1<button class=""$2');
+  if(!sum)return h;var e=h.indexOf("</nav>",k);if(e<0)return h;e+=6;var z=h.lastIndexOf("</aside>");return h.slice(0,e)+oSumHtml(o)+h.slice(z)};
+var _render146o=render;render=function(){if(!S.om)OM_LAST=null;return _render146o.apply(this,arguments)};
+/* ---------- 2. 휴대폰: 사진 먼저 기관 추가 · 기존 기관 자동 찾기 ---------- */
+function cfKey(n){return oiNorm(n).replace(/^(서울특별시|서울시|서울|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|강원도|충청북도|충청남도|전라북도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도|인천|부산|대구|광주|대전|울산|경기)/,"").replace(/^([가-힣]{1,3}?)(구|군|시)(?=[가-힣]{3})/,"$1")}
+function cfDice(a,b){if(a.length<2||b.length<2)return 0;var A={},n=0,m=0,i;for(i=0;i<a.length-1;i++){A[a.substr(i,2)]=(A[a.substr(i,2)]||0)+1;n++}for(i=0;i<b.length-1;i++){var g=b.substr(i,2);m++;if(A[g]){A[g]--;A.__h=(A.__h||0)+1}}return 2*(A.__h||0)/(n+m)}
+function cfMatch(name){var k=cfKey(name);if(!k||k.length<2)return[];
+  var L=(DB.orgs||[]).map(function(o){var f=cfKey(o.full),s=cfKey(o.short),sc=0;
+    if(f===k||s===k)sc=3;else if(k.length>=4&&f.length>=4&&(f.indexOf(k)>=0||k.indexOf(f)>=0))sc=2;else{var d=cfDice(k,f);if(d>=.88)sc=1+d/2}
+    return{o:o,sc:sc}}).filter(function(x){return x.sc});
+  L.sort(function(a,b){return b.sc-a.sc});if(L.length>1&&L[0].sc>=3&&L[1].sc<3)L=L.slice(0,1);return L.slice(0,5).map(function(x){return x.o})}
+function cfStart(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.style.display="none";document.body.appendChild(i);var picked=false;
+  i.addEventListener("change",function(){picked=true;var f=i.files&&i.files[0];i.remove();if(!f)return;S.cfF={file:null,busy:true,r:null};cfModal();
+    imgShrink(f).then(function(sh){if(!S.cfF)return;S.cfF.file=sh.file;return ocrRun(sh.file)}).then(function(r){if(!S.cfF)return;S.cfF.busy=false;S.cfF.r=ocrClean(r);S.cfF.C=S.cfF.r?cfMatch(S.cfF.r.org):[];S.cfF.pick=S.cfF.C.length===1?S.cfF.C[0].id:"";cfModal()})});i.click()}
+function cfModal(){var F=S.cfF;if(!F)return;var R=F.r||{},body;
+  if(F.busy)body='<div class="cfbusy">📇 명함 읽는 중… <span class="small muted">3~5초</span></div>';
+  else if(!F.r)body='<p>글자를 읽지 못했어요. 기관을 직접 고르거나 새로 등록해 주세요 (명함 사진은 함께 저장돼요)</p>';
+  else body='<div class="cfread"><div><span class="small muted">기관</span><b>'+esc(R.org||"—")+'</b></div><div><span class="small muted">담당자</span><b>'+esc([R.name,R.title].filter(Boolean).join(" ")||"—")+'</b></div><div><span class="small muted">연락처</span><b>'+esc(R.mobile||R.phone||"—")+'</b></div></div>'+
+    (F.C&&F.C.length?'<p style="margin:10px 0 6px"><b>'+(F.C.length===1?"이미 있는 기관이에요":"비슷한 기관이 "+F.C.length+"곳 있어요")+'</b></p>'+F.C.map(function(o){return'<label class="cfo'+(F.pick===o.id?" on":"")+'"><input type="radio" name="cfo" data-cfo="'+o.id+'"'+(F.pick===o.id?" checked":"")+'> <b>'+esc(o.short)+'</b> <span class="small muted">'+esc(o.full)+'</span></label>'}).join(""):'<p style="margin:10px 0 6px">기관 DB에서 같은 기관을 못 찾았어요</p>');
+  var pickSel=!F.busy?'<label class="f full" style="margin-top:8px"><span class="small muted">다른 기관이면 고르기</span><select data-cfsel data-sbx>'+orgOpts(F.C&&F.C.some(function(o){return o.id===F.pick})?"":F.pick)+'</select></label>':"";
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="명함으로 기관 추가"><div class="ph"><div><div class="k">사진 먼저</div><h2>명함으로 추가</h2></div><button class="close" data-act="cf-x">×</button></div><div class="ps">'+body+pickSel+'</div>'+
+    (F.busy?'<div class="ps foot"><button class="btn" data-act="cf-manual">명함 없이 입력</button></div>':'<div class="ps foot"><button class="btn" data-act="cf-new">새 기관으로 등록</button><button class="btn pri" data-act="cf-add"'+(F.pick?"":" disabled")+'>이 기관에 '+(R.name?"담당자로 ":"명함 ")+'추가</button></div>')+'</div></div>'}
+function cfAdd(){var F=S.cfF,o=F&&oOf(F.pick);if(!o){toast("기관을 골라 주세요");return}var R=F.r||{},cid="",c=null;
+  if(R.name){c=(o.contacts||[]).find(function(x){return x.name===R.name});if(!c){c={id:o.id+"c"+nid().slice(0,6),name:R.name,title:R.title||"",dept:R.dept||"",phone:R.phone||"",mobile:R.mobile||"",email:R.email||"",memo:"명함으로 등록"};o.contacts=(o.contacts||[]).concat([c]);if(!o.mc&&ctTel(c))o.mc=c.id;logChange("organizations",o.id,o.short,"기관 담당자 추가","",c.name+" (명함)","브이드림 내부")}cid=c.id;if(c.card&&cardLive(c.card)&&c.card.url)cid=""}
+  var file=F.file;$("#modal").innerHTML="";S.cfF=null;go("org");S.om=o.id;render();
+  if(file)cardSave(o.id,cid,file).then(function(){toast(o.short+(c?" · "+c.name+" 님":"")+" 명함을 저장했어요");render()},function(e){toast("명함 사진을 올리지 못했어요: "+(e&&e.message||e))});else toast(o.short+" · 담당자를 추가했어요")}
+function cfNew(){var F=S.cfF;$("#modal").innerHTML="";S.cfF=null;go("org");S.om="new";S.orgF=null;if(F&&F.file){S.onPend={file:F.file,busy:false,r:F.r||null,filled:false}}render()}
+/* 휴대폰에서 [+ 기관 등록] → 카메라 먼저 */
+document.addEventListener("click",function(ev){if(!isMob())return;var b=ev.target.closest&&ev.target.closest('[data-act="org-new"]');if(!b||b.dataset.cfpass)return;if(!ocrOn())return;ev.stopImmediatePropagation();ev.preventDefault();cfStart()},true);
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!S.cfF)return;if(t.dataset.cfo!=null){S.cfF.pick=t.dataset.cfo;cfModal()}else if(t.dataset.cfsel!=null&&t.value){S.cfF.pick=t.value;cfModal()}},true);
+ESC_ACTS.push("cf-x");
+/* ---------- 3. 내 할 일 목록: 공동 과업 · 맡은 사람 칩 ---------- */
+function tdChips(){if(S.view!=="todo")return;var rows=document.querySelectorAll('#main tr[data-act="todo-open"][data-k]');if(!rows.length)return;var M={};buildTodos().forEach(function(t){M[t.key]=t});
+  [].forEach.call(rows,function(tr){if(tr.dataset.tc)return;tr.dataset.tc="1";var t=M[tr.dataset.k];if(!t)return;var td=tr.querySelector("td.wrap");if(!td)return;var h="";
+    if(isShared(t.assignee))h='<span class="b sm tdsh" title="누구나 [내가 맡기]">👥 '+esc(st(t.assignee).name)+'</span>';else if(t.claimed||t.cont)h='<span class="b sm tdcl">👤 '+esc(st(t.assignee).name)+(t.assignee===S.me?" (내가 맡음)":" 맡음")+'</span>';
+    if(h)td.insertAdjacentHTML("afterbegin",h+" ")})}
+/* ---------- 4. 밀린 재소통: 하루 N건씩 (오래 연락 안 한 사람부터) ---------- */
+function reconPerDay(){return Math.max(1,+appSet("recon_per_day",10)||10)}
+var _reconTodos146=reconTodos;reconTodos=function(){var L=_reconTodos146.apply(this,arguments),N=reconPerDay();
+  var B=L.filter(function(t){return t.type==="recon"&&String(t.fixedDue||t.due)===RECON_START}).sort(function(a,b){var x=(a.recK==="pf"?pfOf(a.recId):(DB.talent||[]).find(function(y){return y.id===a.recId}))||{},y=(b.recK==="pf"?pfOf(b.recId):(DB.talent||[]).find(function(z){return z.id===b.recId}))||{};return lastContact(x).localeCompare(lastContact(y))});
+  B.forEach(function(t,i){var d=addD(RECON_START,Math.floor(i/N));t.fixedDue=d;t.due=d});return L};
+function rpdPaint(){if(S.view!=="set"||S.role!=="admin")return;var i=document.getElementById("set-rcd");if(!i||document.getElementById("set-rpd"))return;var box=i.parentNode;
+  box.insertAdjacentHTML("beforeend",'<span class="small muted" style="margin-left:10px">밀린 건은 하루</span><input id="set-rpd" inputmode="numeric" value="'+reconPerDay()+'" style="width:60px"'+(dutyEditable()?"":" disabled")+'>건씩'+(dutyEditable()?'<button class="btn sm" data-act="rpd-save">저장</button>':""))}
+/* ---------- 5. 연락처 옆 🚫 · 복사할 때 안내 ---------- */
+function pnum(v){return String(v||"").replace(/\D/g,"")}
+function banMap(){var M={};(DB.workers||[]).forEach(function(w){var o=w.org_id&&oOf(w.org_id);if(!o||!oBan(o))return;[w.phone,w.gphone].forEach(function(p){var k=pnum(p);if(k.length>=9)M[k]={w:w,o:o}})});return M}
+function banTip(x){var c=ctWin(x.o);return x.o.short+" 소속 · 근로자 직접 연락 금지 · 기관을 통해서만"+(c?"\n기관 연락창구: "+c.name+" "+(c.mobile||c.phone||""):"")}
+function banPaint(){var M=banMap();if(!Object.keys(M).length)return;[].forEach.call(document.querySelectorAll('button.tel[data-act="copy"][data-v]'),function(b){var x=M[pnum(b.dataset.v)];if(!x)return;var host=b.closest(".mtel")||b;if(host.nextElementSibling&&host.nextElementSibling.classList.contains("banph"))return;
+    host.insertAdjacentHTML("afterend",'<span class="b sm bad tip banph" tabindex="0" data-tip="'+esc(banTip(x))+'" aria-label="'+esc(banTip(x))+'">🚫</span>')})}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="copy"][data-v]');if(!b)return;var x=banMap()[pnum(b.dataset.v)];if(!x)return;setTimeout(function(){toast("🚫 "+banTip(x).replace("\n"," · "))},700)},true);
+/* 이름 옆 🏛 칩은 발굴파트 · 관리자만 (나머지는 연락처 옆 🚫만) */
+var _tPaint146=tPaint;tPaint=function(){var me=st(S.me)||{};if(partOf()==="발굴파트"||isAdminSt(me)||S.role==="admin")return _tPaint146.apply(this,arguments);
+  if(/^(req|wreq|wk)$/.test(S.view)&&partOf()==="발굴파트")return _tPaint146.apply(this,arguments)};
+/* ---------- 6. 기관 경유 전달 완료 → 요청 등록자에게 결과 확인 ---------- */
+function oviaReq(key){var p=key.split(":"),kind=p[1],id=p.slice(2).join(":");
+  if(kind==="reqw"){var c=(DB.reqw||[]).find(function(x){return x.id===id}),r=c&&(DB.requests||[]).find(function(x){return x.id===c.req});var who=r&&r.manager||(r&&comp(r.company)||{}).manager||"";return{who:who,w:c?c.worker:"",company:r?r.company:"",label:"고객사 요청 · "+(r?(r.category||"")+" "+String(r.content||"").slice(0,24):""),open:"req-open",oid:r?r.id:""}}
+  var r2=(DB.wreq||[]).find(function(x){return x.id===id});var s0=r2&&DB.staff.find(function(s){return s.name===r2.by});var who2=s0?s0.id:(r2&&comp(r2.company)||{}).manager||"";return{who:who2,w:r2?r2.worker:"",company:r2?r2.company:"",label:"근로자 요청 · "+(r2?(r2.cat||"")+" "+String(r2.content||"").slice(0,24):""),open:"wr-open",oid:r2?r2.id:""}}
+var _bt146=buildTodos;buildTodos=function(){var L=_bt146.apply(this,arguments),X=[];
+  L=L.filter(function(t){if(t.type!=="ovia")return true;return((DB.meta||{})[t.key]||{}).status!=="완료"});
+  Object.keys(DB.meta||{}).forEach(function(k){if(k.indexOf("ovia:")!==0||DB.meta[k].status!=="완료")return;var bk="oviab:"+k.slice(5);if((DB.meta[bk]||{}).status==="완료")return;var q=oviaReq(k);if(!q.who)return;
+    tdPush(X,{key:bk,type:"oviab",cat:"근로자",task:"[기관 경유 전달 완료] "+((wk(q.w)||{}).name||"")+" · "+q.label+" · 결과 확인",worker:q.w,company:q.company,base:TODAY,fixedDue:addD(TODAY,1),auto:false,vk:k,vopen:q.open,vid:q.oid});var x=X[X.length-1];x.assignee=q.who});
+  return L.concat(X)};
+var _pTodo146=pTodo;pTodo=function(t){var h=_pTodo146(t);if(!h)return h;var box="";
+  if(t.type==="ovia")box='<div class="ps wide"><h3>기관에 전달했나요?</h3><textarea data-ovn rows="2" placeholder="전달 결과 (선택) · 예: 기관 담당자가 근로자에게 전달 · 다음 주 회신 예정"></textarea><div class="obt"><button class="btn pri" data-act="ovia-done" data-k="'+esc(t.key)+'">기관에 전달 완료</button><span class="small muted">요청을 등록한 담당자 내 할 일에 \'결과 확인\'이 생겨요</span></div></div>';
+  if(t.type==="oviab")box='<div class="ps wide"><h3>기관 경유 전달 결과</h3><p class="small" style="margin:0 0 8px">발굴파트가 기관에 전달했어요 · 결과는 요청 창 처리 내용 · 변경 이력에서 볼 수 있어요</p><div class="obt"><button class="btn" data-act="oviab-open" data-v="'+esc(t.vopen)+'" data-id="'+esc(t.vid)+'">요청 열기</button><button class="btn pri" data-act="oviab-ok" data-k="'+esc(t.key)+'">확인했어요</button></div></div>';
+  if(!box)return h;return/<\/div><\/aside>$/.test(h)?h.replace(/<\/div><\/aside>$/,box+'</div></aside>'):h.replace(/<\/aside>$/,box+'</aside>')};
+/* ---------- 7. 근로자 창 인적정보: 확인 끝난 칸 접기 ---------- */
+S.wkOpen=S.wkOpen||{};
+function wkFoldPaint(){var pn=document.querySelector("aside.pnl");if(!pn||!S.wm||S.wkPT!=="person")return;var w=wk(S.wm);if(!w)return;
+  var info=[].find.call(pn.querySelectorAll(".ps"),function(p){var h=p.querySelector("h3");return h&&/^인적 정보/.test(h.textContent)});
+  if(info&&!info.querySelector(".onbsum")&&!S.wkOpen["i:"+w.id]){var ok=w.name&&w.birth&&(w.non_dis||(w.dis_type&&w.dis_level))&&w.basic_living&&w.basic_living!=="모름";
+    if(ok){[].forEach.call(info.children,function(c){if(c.tagName!=="H3")c.hidden=true});info.classList.add("onbfold");
+      info.insertAdjacentHTML("beforeend",'<div class="onbsum"><span class="b ok">✓ 확인됨</span> <b>'+esc(w.name)+'</b> <span class="small">'+esc(w.birth)+ageTag(w.birth)+' · '+esc(w.non_dis?"비장애인 판정":[w.dis_type,w.dis_level].join(" "))+' · 기초생활수급자 '+esc(w.basic_living)+'</span><span class="grow"></span><button class="btn xs" data-act="wk-unfold" data-k="i:'+w.id+'">수정</button></div>')}}
+  var rp=[].find.call(pn.querySelectorAll(".ps"),function(p){var h=p.querySelector("h3");return h&&/^장애 재판정 확인/.test(h.textContent)}),sel=rp&&rp.querySelector('[data-dis="result"]');
+  if(rp&&sel&&sel.value==="확인완료"&&!S.wkOpen["d:"+w.id]&&!rp.querySelector(".onbsum")){var rc=rp.querySelector('[data-dis="recheck"]'),pm=rp.querySelector('[data-dis="permanent"]');[].forEach.call(rp.children,function(c){if(c.tagName!=="H3")c.hidden=true});rp.classList.add("onbfold");
+    rp.insertAdjacentHTML("beforeend",'<div class="onbsum"><span class="b ok">✓ 확인완료</span> <span>'+(pm&&pm.checked?"영구장애 (재판정 없음)":"재판정일 <b class=\"num\">"+esc(rc&&rc.value||"—")+"</b>")+'</span><span class="grow"></span><button class="btn xs" data-act="wk-unfold" data-k="d:'+w.id+'">수정</button></div>')}}
+/* ---------- 8. 관리자 › 기본 설정: 키가 있는 곳 (값은 적지 않음) ---------- */
+var _vSet146=vSet;vSet=function(){var h=_vSet146.apply(this,arguments);if(S.role!=="admin")return h;
+  return h+'<div class="card keyloc"><b>키 · 비밀값이 있는 곳</b> <span class="small muted">값은 화면 · DB · 메신저에 적지 않아요 · 담당자가 바뀌면 이 위치를 넘겨 주세요</span><ul class="small"><li><b>Supabase service_role 키</b> · Apps Script › 프로젝트 설정 › 스크립트 속성 <code>SUPABASE_SERVICE_KEY</code> (Edge Function은 Supabase가 자동으로 넣어 줌)</li><li><b>구글 챗 웹훅</b> · Apps Script › 스크립트 속성 <code>GCHAT_WEBHOOK</code></li><li><b>Gemini 키 (명함 글자 읽기)</b> · Supabase 잠긴 표 <code>server_secrets</code> (name = GEMINI_API_KEY) · Edge Function Secrets에 같은 이름이 있으면 그걸 먼저 써요</li></ul></div>'};
+/* ---------- 그린 뒤 ---------- */
+var _render146=render;render=function(){var r=_render146.apply(this,arguments);try{tdChips();banPaint();wkFoldPaint();rpdPaint()}catch(e){console.warn(e)}return r};
+var _v139Act146=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
+  case"cf-x":$("#modal").innerHTML="";S.cfF=null;return true;
+  case"cf-manual":$("#modal").innerHTML="";S.cfF=null;go("org");S.om="new";S.orgF=null;render();return true;
+  case"cf-new":cfNew();return true;case"cf-add":cfAdd();return true;
+  case"q-card":if(isMob()){$("#modal").innerHTML="";cfStart();return true}break;
+  case"rpd-save":(function(){if(!dutyEditable())return;var v=Math.round(+(($("#set-rpd")||{}).value||0));if(!(v>=1&&v<=200)){toast("1~200 사이로 넣어 주세요");return}var b=reconPerDay();if(v===b)return;appSetPut("recon_per_day",v);logChange("app_settings","recon_per_day","재소통 나눠 올리기","하루 건수",b,v,"브이드림 내부");toast("밀린 재소통을 하루 "+v+"건씩 올려요");render()})();return true;
+  case"ovia-done":(function(){var k=D0.k,n=(document.querySelector("[data-ovn]")||{}).value||"",q=oviaReq(k),p=k.split(":");setMeta(k,{status:"완료"});
+    logChange(p[1]==="reqw"?"client_request_workers":"worker_requests",p.slice(2).join(":"),(wk(q.w)||{}).name||"","기관 경유 전달 완료","",String(n).trim()||"기관에 전달함","브이드림 내부");S.sel=null;S.ovTd=null;toast("전달 완료로 기록했어요 · "+(q.who?st(q.who).name+"님에게 결과 확인이 가요":"요청 등록자를 못 찾았어요"));render()})();return true;
+  case"oviab-ok":setMeta(D0.k,{status:"완료"});S.sel=null;S.ovTd=null;toast("확인했어요");render();return true;
+  case"oviab-open":if(D0.v==="req-open"){go("req");S.reqSel=D0.id}else{go("wreq");S.wreqSel=D0.id}render();return true;
+  case"wk-unfold":S.wkOpen[D0.k]=1;render();return true}
+  return _v139Act146(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
