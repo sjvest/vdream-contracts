@@ -805,6 +805,12 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 .dreq,.rdrc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#FBFAFF}.rdrc .grow{flex:1}.rdrc .bad{color:#9B1C1C}
 .upbox input{width:120px}.upcard{margin-top:12px}.adrk{padding:6px 0;border-bottom:1px dashed var(--line)}
 @media (max-width:900px){.odchip{max-width:100%;flex:1 1 140px}.odtr{height:140px;gap:3px}.pqd input{width:128px}}
+.ofeed{flex-wrap:wrap;row-gap:2px;align-items:baseline}.ofeed>.linkbtn,.ofeed>.b,.ofeed>.d{flex-shrink:0;white-space:nowrap}.ofeed>.x{flex:1 1 150px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dpth{cursor:pointer;user-select:none}.dpth:hover{background:#F4F2FC}.dpth.on{color:var(--p)}
+.pqlg{margin:-4px 0 10px;font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:4px;flex-wrap:wrap}.pqlg b{color:var(--ink)}
+.adk{padding:12px}.adk .prdt,.dcard .prdt{border:1px solid var(--line)}.prdt{background:#fff;border:1px solid var(--line)}.prdt.now{background:#FFF9EA}.prdt.money{background:#F2FAF5}
+#main h2.osec+.pqbar{margin-top:2px}
+.ofeed>.small:last-child{margin-left:auto;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -12173,7 +12179,7 @@ function vOLogs(){var tab=S.olTab||"org",h=S._noHd?"":oHd("소통 히스토리",
     h+='<div class="box"><table class="t"><thead><tr><th>일시</th><th>방법</th><th>기관명</th><th>담당자 · 연락처</th><th>내용</th><th>기록</th><th></th></tr></thead><tbody>'+C.map(function(c){return'<tr><td class="num">'+esc(c.at.slice(5,16).replace("-","/"))+'</td><td><span class="b sm">'+esc(c.type)+'</span></td><td><b>'+esc(c.org)+'</b></td><td class="small">'+esc(c.person)+' '+telHtml(c.phone)+'</td><td class="small">'+esc(c.memo)+'</td><td class="small">'+esc(c.by)+'</td><td>'+(c.conv?oLink(oOf(c.conv))+' <span class="small muted">등록됨</span>':'<button class="btn xs" data-act="cold-conv" data-id="'+c.id+'">기관으로 등록</button>')+'</td></tr>'}).join("")+'</tbody></table></div>';return h}
   var ty=S.olType||"",O=oOrgs(),L=(DB.olog||[]).filter(function(l){return O.some(function(o){return o.id===l.org})&&(!ty||(ty==="빠른 소통"?l.quick:l.type===ty&&!l.quick)||(ty==="재연락"&&l.status==="재연락 필요"))}).sort(function(a,b){return String(b.at).localeCompare(String(a.at))});
   h+='<div class="fbar">'+oMineSeg()+'<div class="seg">'+["","통화","이메일","문자","미팅","빠른 소통","재연락"].map(function(x){return'<button class="'+(ty===x?"on":"")+'" data-act="ol-type" data-v="'+x+'">'+(x||"전체")+'</button>'}).join("")+'</div><span class="grow"></span><span class="small muted">'+L.length+'건</span></div>';
-  h+='<div class="box"><table class="t"><thead><tr><th>일시</th><th>기관</th><th>종류</th><th>내용</th><th>상태</th><th>우리</th><th>기관 측</th></tr></thead><tbody>'+L.slice(0,120).map(function(l){var o=oOf(l.org);return'<tr data-act="go-o" data-id="'+l.org+'" data-tab="comm"><td class="num">'+esc(l.at.slice(5,16).replace("-","/"))+'</td><td>'+(o?oStB(o.stage)+" <b>"+esc(o.short)+"</b>":"")+'</td><td><span class="b sm '+(l.type==="미팅"?"ok":l.quick?"g":"")+'">'+esc(l.quick?"빠른 소통 · "+l.qkind:l.type)+'</span>'+(l.ch?' <span class="small muted">'+esc(l.ch)+'</span>':"")+'</td><td>'+esc(l.sum)+'</td><td><span class="b sm '+(l.status==="재연락 필요"?"warn":l.status==="진행중"?"p":"")+'">'+esc(l.status)+(l.recall?" · "+md(l.recall):"")+'</span></td><td class="small">'+esc(l.by)+'</td><td class="small">'+esc(l.theirs||"")+'</td></tr>'}).join("")+'</tbody></table></div>';return h}
+  h+='<div class="box"><table class="t"><thead><tr><th>일시</th><th>기관</th><th>종류</th><th>내용</th><th>상태</th><th>우리</th><th>기관 측</th></tr></thead><tbody>'+L.map(function(l){var o=oOf(l.org);return'<tr data-act="go-o" data-id="'+l.org+'" data-tab="comm"><td class="num">'+esc(l.at.slice(5,16).replace("-","/"))+'</td><td>'+(o?oStB(o.stage)+" <b>"+esc(o.short)+"</b>":"")+'</td><td><span class="b sm '+(l.type==="미팅"?"ok":l.quick?"g":"")+'">'+esc(l.quick?"빠른 소통 · "+l.qkind:l.type)+'</span>'+(l.ch?' <span class="small muted">'+esc(l.ch)+'</span>':"")+'</td><td>'+esc(l.sum)+'</td><td><span class="b sm '+(l.status==="재연락 필요"?"warn":l.status==="진행중"?"p":"")+'">'+esc(l.status)+(l.recall?" · "+md(l.recall):"")+'</span></td><td class="small">'+esc(l.by)+'</td><td class="small">'+esc(l.theirs||"")+'</td></tr>'}).join("")+'</tbody></table></div>';return h}
 /* ---------- 5. 관계 관리 ---------- */
 function vORel(){var y=+(S.relY||TODAY.slice(0,4)),kind=S.relK||"명절 선물",O=(DB.orgs||[]).filter(function(o){return o.stage>=3&&o.stage!==9}),h=oHd("관계 관리","명절 선물 · 행사 초청 대상과 발송 이력 · 관계 형성 이후 기관 기준");
   h+='<div class="fbar"><div class="seg">'+[2025,2026].map(function(x){return'<button class="'+(y===x?"on":"")+'" data-act="rel-y" data-v="'+x+'">'+x+'년</button>'}).join("")+'</div><div class="seg">'+["명절 선물","행사 초청"].map(function(x){return'<button class="'+(kind===x?"on":"")+'" data-act="rel-k" data-v="'+x+'">'+x+'</button>'}).join("")+'</div><span class="grow"></span></div>';
@@ -12411,7 +12417,7 @@ function vODash2(){var h=vODash(),O=oOrgs(),ox=(DB.oex||[]).filter(function(x){r
   return h+cards+'<h2 class="osec">실적 · 분석</h2>'+st0}
 /* ---------- 후속 액션 (소통 히스토리 · 신규 컨택 탭) ---------- */
 function vOActs(){var tab=S.oaTab||(S.view==="ologs"?"org":"act"),A=(DB.oact||[]);
-  var h=oHd("후속 액션","기관별 후속 액션 · 한 줄 = 액션 1건 · 내 할 일과 연결 · 소통 히스토리과 등록 전 신규 컨택도 여기서");
+  var h=oHd("후속 액션","기관별 후속 액션 · 한 줄 = 액션 1건 · 내 할 일과 연결 · 소통 히스토리와 등록 전 신규 컨택도 여기서");
   var mineA=A.filter(function(a){var o=oOf(a.org);return o&&(!oMine()||o.mem===S.me||o.sub===S.me||a.who===S.me)});
   h+='<div class="tabs">'+[["act","후속 액션",mineA.filter(function(a){return!a.done}).length],["org","소통 히스토리"],["cold","신규 컨택 (기관 등록 전)"]].map(function(t){return'<button class="'+(tab===t[0]?"on":"")+'" data-act="oa-tab" data-v="'+t[0]+'">'+t[1]+(t[2]?' <span class="cnt">'+t[2]+'</span>':"")+'</button>'}).join("")+'</div>';
   if(tab!=="act"){S.olTab=tab;S._noHd=1;try{return h+vOLogs()}finally{S._noHd=0}}
@@ -14228,6 +14234,54 @@ var _mpSee149=mpSee;mpSee=function(v){if(isAdminSt(st(S.me)))return true;var v2=
 /* 왼쪽 메뉴 맨 위: 재직자 → 채용 → 발굴 대시보드 */
 var _renderNav149=renderNav;renderNav=function(){_renderNav149.apply(this,arguments);if(S.role==="admin"&&ADM_V.indexOf(S.view)>=0)return;var N=$("#nav");if(!N)return;var od=N.querySelector('[data-act="view"][data-v="odash"]');if(!od){if(!mpSee("odash"))return;var tmp=document.createElement("div");tmp.innerHTML='<button class="'+(S.view==="odash"?"on":"")+'" data-act="view" data-v="odash">발굴 대시보드</button>';od=tmp.firstChild}
   var anc=N.querySelector('[data-act="view"][data-v="rdash"]')||N.querySelector('[data-act="view"][data-v="dash"]');if(anc){if(anc.nextElementSibling!==od)anc.insertAdjacentElement("afterend",od)}else{var t=N.querySelector('[data-act="view"][data-v="todo"]');if(t)t.insertAdjacentElement("beforebegin",od)}};
+
+/* ================================================================
+   v152 발굴 목록 페이지 나누기 · 헤더 정렬 / 발굴 표 받기 정리
+        최근 소통 히스토리 줄 깨짐 / 대시보드 비교 기간 한 번만 · 관리자 대시보드 카드
+   ================================================================ */
+APP_VER="v152";APP_VER_ON="10/18";APP_NOTE="발굴 목록 페이지 나누기 · 대시보드 비교 기간 표시";
+/* ---------- 1. 발굴 목록: 페이지 번호 · 헤더 눌러 정렬 ---------- */
+var DSORT={};
+function dpTxt(x){return String(x||"").replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\s+/g," ").trim()}
+function dpRows(body){var R=[],re=/<tr[\s>]/g,m,ix=[];while((m=re.exec(body)))ix.push(m.index);ix.forEach(function(s,i){R.push(body.slice(s,i+1<ix.length?ix[i+1]:body.length))});return R}
+function dpCells(row){var C=[],re=/<td\b[^>]*>([\s\S]*?)<\/td>/g,m;while((m=re.exec(row)))C.push(dpTxt(m[1]));return C}
+function dpCmp(a,b){var na=a.replace(/[,\s원명건곳%]/g,""),nb=b.replace(/[,\s원명건곳%]/g,"");if(na!==""&&nb!==""&&!isNaN(+na)&&!isNaN(+nb))return(+na)-(+nb);return a.localeCompare(b,"ko",{numeric:true})}
+function dpTabKey(){return S.view+"_"+(S.oaTab||"")+(S.olTab||"")+(S.sqTab||"")+(S.oxTab||"")+(S.orTab||"")}
+function dpPaginate(h){var open='<div class="box"><table class="t">',i=0,n=0,out="",pos=0;
+  while((i=h.indexOf(open,pos))>=0){var e=h.indexOf("</tbody></table></div>",i);if(e<0)break;var seg=h.slice(i,e),tb=seg.indexOf("<tbody>");if(tb<0){pos=e;continue}
+    var k="dp_"+dpTabKey()+"_"+n,head=seg.slice(open.length,tb),body=seg.slice(tb+7),rows=dpRows(body),sdef=DSORT[k];
+    var real=rows;if(rows.length===1&&/colspan=/.test(rows[0]))sdef=null;
+    if(sdef){var cache=real.map(function(r){return{r:r,c:dpCells(r)}});cache.sort(function(x,y){return dpCmp(x.c[sdef.c]||"",y.c[sdef.c]||"")*(sdef.d==="desc"?-1:1)});real=cache.map(function(x){return x.r})}
+    var ci=-1;head=head.replace(/<th\b([^>]*)>/g,function(all,at){ci++;var on=sdef&&sdef.c===ci;return'<th'+at+' data-act="dsort" data-t="'+k+'" data-c="'+ci+'" class="dpth'+(on?" on":"")+'" title="눌러서 정렬">'}).replace(/(<th[^>]*class="dpth on"[^>]*>)([\s\S]*?)<\/th>/,function(a,o,t){return o+t+(sdef.d==="desc"?" ▼":" ▲")+"</th>"});
+    var pg=real.length>pageSize()?tPageSlice(k,real):real;
+    out+=h.slice(pos,i)+'<div class="box dpbox"><table class="t"'+(n?"":' id="maintable"')+'>'+head+"<tbody>"+pg.join("")+"</tbody></table></div>"+(real.length>pageSize()?pager(k,real.length):"");
+    pos=e+"</tbody></table></div>".length;n++}
+  return out+h.slice(pos)}
+var DP_V={ologs:1,oacts:1,osupq:1,oex:1,oreq:1,oevt:1,ogoods:1,orel:1};
+var _vDbmap152=vDbmap;vDbmap=function(){var h=_vDbmap152.apply(this,arguments);if(!DP_V[S.view]||typeof h!=="string")return h;try{return dpPaginate(h)}catch(e){console.warn(e);return h}};
+/* ---------- 2. 발굴 표 받기: 발굴 메뉴가 보이는 사람은 다른 표처럼 (저장된 데이터 + 바뀐 행만) ---------- */
+mePart=function(){if(ME_P)return ME_P;if(!LIVE||!AUTH_UID||typeof sb==="undefined"||!sb)return Promise.resolve(null);
+  ME_P=Promise.all([Promise.resolve(sb.from("staff").select("part,role").eq("id",AUTH_UID).maybeSingle()),Promise.resolve(sb.from("app_settings").select("value").eq("key","menu_parts").maybeSingle())]).then(function(R){var me=R[0]&&R[0].data||null;if(me){var v=R[1]&&R[1].data&&R[1].data.value;if(typeof v==="string"){try{v=JSON.parse(v)}catch(e){v=null}}me._mp=v||null}return me},function(){return null});return ME_P};
+discSkip=function(me){if(!me)return false;if(me.part==="발굴파트"||me.role==="관리자"||me.role==="최고관리자")return false;var M=me._mp;if(!M||!M.see)return false;
+  return!DISC_MENU.some(function(x){var L=M.see[x[0]];return!L||L.indexOf(me.part)>=0})};
+/* ---------- 3. 대시보드 비교 표시: 칸에는 ▲▼만, 비교 기간은 위에 한 번 ---------- */
+var CMP_LAB="";
+function cmpName(q,a,b){var P=pqPrev(q,a,b),pa=P[0],pb=P[1];var mon=function(d){return(+d.slice(5,7))+"월"};
+  var nm=q==="lmonth"||(q==="tmonth"&&pa.slice(8)==="01")?mon(pa)+(q==="tmonth"?" 같은 날짜까지":""):q==="tweek"?"저번 주 같은 요일까지":q==="lweek"?"그 전 주":q==="today"?"어제":q==="yday"?"그 전날":"바로 앞 같은 길이 기간";
+  return{nm:nm,rg:pqTxt(pa,pb)}}
+pqBar=function(k,def){var P=pqGet(k,def),c=cmpName(P.q,P.a,P.b);CMP_LAB=c.nm+"("+c.rg+")";
+  return'<div class="pqbar"><div class="seg" role="group" aria-label="기간">'+PQ.map(function(x){return'<button data-act="pq-set" data-k="'+k+'" data-v="'+x[0]+'" class="'+(P.q===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div><span class="pqd"><input type="date" data-pqd="'+k+':a" value="'+P.a+'"> ~ <input type="date" data-pqd="'+k+':b" value="'+P.b+'"></span></div>'+
+    '<p class="pqlg"><span class="prdd up">▲</span><span class="prdd dn">▼</span> 숫자는 <b>'+esc(c.nm)+'</b> <span class="num">('+c.rg+')</span> 대비예요 · 칸에 마우스를 올리면 그때 숫자가 보여요</p>'};
+dlt=function(c,p,money){var v=c-p;return'<span class="prdd '+(v>0?"up":v<0?"dn":"")+'" title="'+esc(CMP_LAB||"비교 기간")+': '+(money?wonK(p):p)+'">'+(v>0?"▲"+(money?wonK(v):v):v<0?"▼"+(money?wonK(-v):-v):"―")+'</span>'};
+ktile=function(lab,c,p,sub,money,cls){var tt=p==null?"":' title="'+esc(CMP_LAB||"비교 기간")+': '+(money?wonK(p):p)+'"';return'<div class="prdt '+(cls||"")+'"'+tt+'><span class="small muted">'+lab+'</span><b class="num">'+(money?wonK(c):c)+'</b>'+(p==null?"":dlt(c,p,money))+(sub?'<span class="small muted">'+sub+'</span>':"")+'</div>'};
+/* 바탕에 바로 놓인 숫자 칸 줄은 흰 카드로 감싸기 */
+function prdWrap(h){var key='<div class="prdk">',pos=0,out="",i;while((i=h.indexOf(key,pos))>=0){var pre=h.slice(Math.max(0,i-5),i);var e=divEnd(h,i);if(e<0)break;
+    if(pre==="</h2>"||pre.slice(-4)==="</p>")out+=h.slice(pos,i)+'<div class="dcard adk">'+h.slice(i,e)+'</div>';else out+=h.slice(pos,e);pos=e}return out+h.slice(pos)}
+var _vAdash152=vAdash;vAdash=function(){var h=prdWrap(_vAdash152.apply(this,arguments));
+  return h.replace("<b>재직 인원 추이</b><span class=\"small muted\">월말 기준 (이번 달은 오늘)</span>","<b>재직 인원 추이</b><span class=\"small muted\">월말 기준 (이번 달은 오늘) · 막대 아래 +/− = 전월 말 대비</span>")};
+var _vODash2152=vODash2;vODash2=function(){return prdWrap(_vODash2152.apply(this,arguments))};
+/* ---------- 그린 뒤 · 버튼 ---------- */
+var _v139Act152=v139Act;v139Act=function(a,el){var D0=el.dataset||{};if(a==="dsort"){var k=D0.t,c=+D0.c,s=DSORT[k];DSORT[k]=s&&s.c===c?(s.d==="asc"?{c:c,d:"desc"}:null):{c:c,d:"asc"};if(!DSORT[k])delete DSORT[k];tst(k).page=1;render();return true}return _v139Act152(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
