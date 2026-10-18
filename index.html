@@ -651,6 +651,10 @@ td.late{color:#9B1C1C;font-weight:700}
 .ocr-b a.btn{text-decoration:none}
 .cllist{display:flex;flex-direction:column;gap:6px}.clrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}.clrow .grow{flex:1}
 .oscore{cursor:help}
+.ofrow{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}.ofrow .l{min-width:56px;color:var(--ink-2);font-size:12.5px}
+.ocpend{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.onscan{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:8px 12px;border:1px dashed #C9C1F2;border-radius:10px;background:#F7F5FD}
+.chatcard{margin-top:12px}.cc-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.cc-h .grow{flex:1}.cc-list{margin-top:8px}.cc-list.off{opacity:.5}.ccrow{display:flex;gap:8px;align-items:baseline;padding:5px 0}.cc-hours{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:8px}
 </style>
 </head>
 <body>
@@ -13454,6 +13458,90 @@ var _v139Act141=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
   case"cl-link":S.clF.i=D0.i;clLink();return true;
   case"card-unlink":clUnlink(D0.o,D0.c);return true;
   case"org-del2":orgDel2(D0.id);return true}return _v139Act141(a,el)};
+
+/* ================================================================
+   v142 명함 글자 읽기(OCR · Edge Function card-ocr) · 사진 줄여서 올리기 · 구글 챗 알림 설정
+   - Gemini 키는 Edge Function 비밀값(GEMINI_API_KEY)에만 · 화면 · DB에는 없음
+   - 구글 챗 웹훅은 Apps Script 스크립트 속성(GCHAT_WEBHOOK)에만 · 보내는 건 작업기
+   ================================================================ */
+APP_VER="v142";APP_VER_ON="10/18";APP_NOTE="명함 글자 읽기 · 구글 챗 알림";
+if(!CONFIG.ocrFunction)CONFIG.ocrFunction="card-ocr";
+JOB_KIND.chat_test="구글 챗 테스트 알림";
+/* ---------- 1. 사진 줄이기 (긴 변 1600px · JPEG) ---------- */
+function imgShrink(file){return new Promise(function(res){if(!file||!/^image\/(jpe?g|png|webp|bmp|gif)$/i.test(file.type||"")){res({file:file,ok:false});return}
+  var u=URL.createObjectURL(file),im=new Image();im.onload=function(){try{var M=1600,w=im.naturalWidth,h=im.naturalHeight,r=Math.min(1,M/Math.max(w,h)),cv=document.createElement("canvas");cv.width=Math.round(w*r);cv.height=Math.round(h*r);var cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
+    cv.toBlob(function(b){URL.revokeObjectURL(u);if(!b||b.size>=file.size){res({file:file,ok:true});return}res({file:new File([b],String(file.name||"card").replace(/\.[^.]+$/,"")+".jpg",{type:"image/jpeg"}),ok:true})},"image/jpeg",0.85)}catch(e){URL.revokeObjectURL(u);res({file:file,ok:false})}};
+  im.onerror=function(){URL.revokeObjectURL(u);res({file:file,ok:false})};im.src=u})}
+/* ---------- 2. 명함 글자 읽기 ---------- */
+var OCR_F=[["name","이름"],["title","직책"],["dept","부서"],["phone","전화"],["mobile","휴대폰"],["email","이메일"]];
+function ocrRun(file){if(!file||!/^image\//.test(file.type||""))return Promise.resolve(null);
+  if(!LIVE)return new Promise(function(r){setTimeout(function(){r({org:"서울특별시 강서구 장애인종합복지관",name:"홍길동",title:"팀장",dept:"직업지원팀",phone:"02-2600-1234",mobile:"010-1234-5678",email:"hong@example.or.kr",fax:"",address:"서울특별시 강서구 공항대로 1",website:"https://example.or.kr"})},500)});
+  return new Promise(function(res){var rd=new FileReader();rd.onload=function(){var b64=String(rd.result).split(",")[1]||"";
+    sb.functions.invoke(CONFIG.ocrFunction,{body:{image:b64,mime:file.type||"image/jpeg"}}).then(function(r){if(r.error||!r.data||!r.data.ok){console.warn("명함 읽기",r.error||r.data);res(null);return}res(r.data.card||null)},function(e){console.warn(e);res(null)})};rd.onerror=function(){res(null)};rd.readAsDataURL(file)})}
+function ocrClean(c){if(!c)return null;var o={};["org","name","title","dept","phone","mobile","email","fax","address","website"].forEach(function(k){var v=String(c[k]||"").trim();if(/^(null|없음|-|n\/a)$/i.test(v))v="";if((k==="phone"||k==="mobile"||k==="fax")&&v&&typeof hyph==="function"&&/^[\d\s().+-]+$/.test(v))v=hyph(v.replace(/^\+82\s*/,"0"));o[k]=v});
+  if(!o.mobile&&/^01/.test((o.phone||"").replace(/\D/g,""))){o.mobile=o.phone;o.phone=""}return o}
+/* 명함 한 장 저장 (줄인 사진 → Storage → 작업기가 드라이브로) */
+function cardSave(oid,cid,file,src){var o=oOf(oid);if(!o)return Promise.resolve();var c=cid?ctOf(o,cid):null;
+  return upFiles("card/"+o.id,[file]).then(function(L){var f=L[0],ext=(f.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg",nm=cardName(o,c,ext),j=addJob("upload_card",o.id,{file:f,file_name:nm,org_name:o.full||o.short,folder_id:o.card_folder||"",contact_id:cid||""});
+    var cd={job:j.id,url:"",name:nm,by:st(S.me).name,at:stamp()};if(src)cd.src=src;if(c)c.card=cd;else o.ocard=ocards(o).filter(cardLive).concat([cd]);o.card=true;o.contacts=(o.contacts||[]).slice();logChange("organizations",o.id,o.short,"명함 올림",c?c.name:"기관 명함","드라이브 › "+(o.full||o.short)+" › "+nm,"브이드림 내부")})}
+cardUp=function(oid,cid,files){var o=oOf(oid);if(!o||!files||!files.length)return;var f0=files[0];if(!/^image\/|pdf$/.test(f0.type||"")&&!/\.(jpe?g|png|heic|webp|pdf)$/i.test(f0.name)){toast("사진이나 PDF만 올릴 수 있어요");return}if(f0.size>20*1024*1024){toast("20MB 이하만 올릴 수 있어요");return}
+  toast("명함 올리는 중…");imgShrink(f0).then(function(sh){var f=sh.file;var c=cid?ctOf(o,cid):null;
+    var oc=c&&ocrOn()?ocrRun(f):Promise.resolve(null);
+    cardSave(oid,cid,f).then(function(){toast("명함을 올렸어요 · 1~2분 뒤 드라이브 링크가 생겨요");render();return oc}).then(function(r){r=ocrClean(r);if(!r||!c)return;var F=OCR_F.filter(function(x){return r[x[0]]&&!String(c[x[0]]||"").trim()&&x[0]!=="name"});if(!F.length)return;S.ofF={o:oid,c:cid,r:r,keys:F.map(function(x){return x[0]})};ofModal()},function(e){toast("올리지 못했어요: "+(e&&e.message||e))})})};
+function ocrOn(){return appSet("ocr_on",true)!==false}
+/* 이미 있는 담당자: 빈 칸만 채울지 묻기 */
+function ofModal(){var F=S.ofF,o=F&&oOf(F.o),c=o&&ctOf(o,F.c);if(!c)return;
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="명함에서 읽은 내용" style="max-width:480px"><div class="ph"><div><div class="k">'+esc(o.short)+' · '+esc(c.name)+'</div><h2>명함에서 읽은 내용</h2></div><button class="close" data-act="of-x">×</button></div><div class="ps"><p style="margin:0 0 8px">비어 있는 칸을 명함 내용으로 채울까요?</p>'+
+    OCR_F.filter(function(x){return F.keys.indexOf(x[0])>=0}).map(function(x){return'<label class="ckl ofrow"><input type="checkbox" data-ofk="'+x[0]+'" checked> <span class="l">'+x[1]+'</span> <b>'+esc(F.r[x[0]])+'</b></label>'}).join("")+'<p class="hint" style="margin-top:8px">글자를 잘못 읽었을 수 있어요 · 채운 뒤 [수정]으로 고칠 수 있어요</p></div><div class="ps foot"><span class="grow"></span><button class="btn" data-act="of-x">그대로 두기</button><button class="btn pri" data-act="of-ok">채우기</button></div></div></div>'}
+function ofOk(){var F=S.ofF,o=F&&oOf(F.o),c=o&&ctOf(o,F.c);if(!c)return;var n=0;[].forEach.call(document.querySelectorAll("#modal [data-ofk]"),function(i){if(!i.checked)return;var k=i.dataset.ofk;if(String(c[k]||"").trim())return;c[k]=F.r[k];n++;logChange("organizations",o.id,o.short,"기관 담당자 "+c.name+" · "+(OCR_F.find(function(x){return x[0]===k})||[k,k])[1],"",F.r[k]+" (명함)","브이드림 내부")});
+  if(n){o.contacts=(o.contacts||[]).slice();if(!o.mc&&ctTel(c))o.mc=c.id}$("#modal").innerHTML="";S.ofF=null;toast(n?n+"칸을 채웠어요":"바꾸지 않았어요");render()}
+ESC_ACTS.push("of-x");
+/* 명함으로 담당자 추가 (사진 → 읽기 → 아래 추가 줄에 채움 → [+ 담당자 추가]하면 명함도 그 사람에게) */
+function ocNewPick(oid){var i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.style.display="none";document.body.appendChild(i);
+  i.addEventListener("change",function(){var f=i.files&&i.files[0];i.remove();if(!f)return;toast("명함 읽는 중…");imgShrink(f).then(function(sh){S.ocPend={o:oid,file:sh.file,v:null,busy:true};render();return ocrRun(sh.file)}).then(function(r){if(!S.ocPend)return;r=ocrClean(r);S.ocPend.busy=false;var v={};if(r)OCR_F.forEach(function(x){v[x[0]]=r[x[0]]||""});S.ocPend.v=v;
+    toast(r?"읽었어요 · 확인하고 [+ 담당자 추가]를 눌러 주세요":"글자를 읽지 못했어요 · 직접 입력해 주세요 (명함 사진은 함께 저장돼요)");render()})});i.click()}
+function ocPaint(){var P=S.ocPend,box=document.querySelector(".ocadd");if(!box)return;var b=box.querySelector('[data-act="oc-add3"]');
+  if(b&&!box.querySelector('[data-act="oc-scan"]'))b.insertAdjacentHTML("beforebegin",'<button class="btn xs" data-act="oc-scan" data-o="'+esc(S.om||"")+'" title="명함 사진을 찍으면 이름 · 연락처를 읽어서 채워요">📷 명함으로 추가</button>');
+  if(!P||P.o!==S.om)return;if(P.v&&!box.dataset.ocFilled){box.dataset.ocFilled="1";Object.keys(P.v).forEach(function(k){var inp=box.querySelector('[data-ocn="'+k+'"]');if(inp&&!inp.value)inp.value=P.v[k]})}
+  if(!box.parentNode.querySelector(".ocpend"))box.insertAdjacentHTML("afterend",'<div class="ocpend">'+(P.busy?'<span class="b sm">📇 명함 읽는 중…</span>':'<span class="b sm ok">📇 명함 사진 대기 중</span> <span class="small muted">[+ 담당자 추가]를 누르면 이 사진이 그 담당자 명함으로 저장돼요</span>')+'<button class="linkbtn small" data-act="oc-scan-x">취소</button></div>')}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="oc-add3"]');if(!b||!S.ocPend||S.ocPend.o!==S.om)return;var o=oOf(S.om);if(!o)return;var ids=(o.contacts||[]).map(function(c){return c.id}),P=S.ocPend;
+  setTimeout(function(){var o2=oOf(P.o),nc=o2&&(o2.contacts||[]).find(function(c){return ids.indexOf(c.id)<0});if(!nc)return;S.ocPend=null;cardSave(P.o,nc.id,P.file).then(function(){toast(nc.name+" 님을 추가했어요 · 명함 사진도 함께 저장했어요");render()},function(e){toast("명함 사진을 올리지 못했어요: "+(e&&e.message||e))})},0)},true);
+/* 기관 등록: 명함으로 시작하기 */
+function onPaint(){if(S.om!=="new")return;var pn=document.querySelector("aside.pnl-org");if(!pn)return;var fg=pn.querySelector('[data-oo="full"]');if(!fg)return;var wrap=fg.closest(".ps");if(!wrap||wrap.querySelector(".onscan"))return;var P=S.onPend;
+  wrap.insertAdjacentHTML("afterbegin",'<div class="onscan">'+(P?(P.busy?'<span class="b sm">📇 명함 읽는 중…</span>':'<span class="b sm ok">📇 명함 반영됨</span> <span class="small muted">'+(P.r&&P.r.name?"저장하면 담당자 <b>"+esc(P.r.name+(P.r.title?" "+P.r.title:""))+"</b> 님과 명함 사진도 함께 등록돼요":"저장하면 명함 사진이 기관 명함으로 함께 등록돼요")+'</span><button class="linkbtn small" data-act="on-scan-x">명함 빼기</button>'):'<button class="btn sm" data-act="on-scan">📷 명함으로 시작하기</button><span class="small muted">명함 사진을 찍으면 기관명 · 주소 · 웹사이트 · 담당자를 채워요</span>')+'</div>');
+  if(P&&P.r&&!P.filled){P.filled=true;var set=function(k,v){var i=pn.querySelector('[data-oo="'+k+'"]');if(i&&v&&!i.value){i.value=v;i.dispatchEvent(new Event("input",{bubbles:true}))}};set("full",P.r.org);set("addr",P.r.address);set("web",P.r.website)}}
+function onNewPick(){var i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.style.display="none";document.body.appendChild(i);
+  i.addEventListener("change",function(){var f=i.files&&i.files[0];i.remove();if(!f)return;imgShrink(f).then(function(sh){S.onPend={file:sh.file,busy:true,r:null};render();return ocrRun(sh.file)}).then(function(r){if(!S.onPend)return;S.onPend.busy=false;S.onPend.r=ocrClean(r);S.onPend.filled=false;if(S.orgF&&S.onPend.r){var R=S.onPend.r;if(!S.orgF.full&&R.org)S.orgF.full=R.org;if(!S.orgF.addr&&R.address)S.orgF.addr=R.address;if(!S.orgF.web&&R.website)S.orgF.web=R.website}
+    toast(S.onPend.r?"명함을 읽었어요 · 확인하고 저장해 주세요":"글자를 읽지 못했어요 · 직접 입력해 주세요");render()})});i.click()}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="o-save"]');if(!b||S.om!=="new"||!S.onPend||S.onPend.busy)return;var P=S.onPend,n0=(DB.orgs||[]).length;
+  setTimeout(function(){if((DB.orgs||[]).length<=n0||S.om==="new")return;var o=oOf(S.om);if(!o)return;S.onPend=null;var cid="",R=P.r;
+    if(R&&R.name&&!(o.contacts||[]).some(function(c){return c.name===R.name})){var c={id:o.id+"c"+nid().slice(0,6),name:R.name,title:R.title||"",dept:R.dept||"",phone:R.phone||"",mobile:R.mobile||"",email:R.email||"",memo:"명함으로 등록"};o.contacts=(o.contacts||[]).concat([c]);if(!o.mc&&ctTel(c))o.mc=c.id;cid=c.id}
+    cardSave(o.id,cid,P.file).then(function(){toast("기관과 명함을 등록했어요"+(cid?" · 담당자 "+R.name+" 님도 추가":""));render()},function(e){toast("명함 사진을 올리지 못했어요: "+(e&&e.message||e))})},0)},true);
+var _render142=render;render=function(){var r=_render142.apply(this,arguments);try{ocPaint();onPaint()}catch(e){console.warn(e)}return r};
+/* ---------- 3. 관리자 › 설정: 구글 챗 알림 · 명함 글자 읽기 ---------- */
+var CHAT_T=[["org","신규 기관 등록","기관 DB에서 기관을 등록하면 (일괄 업로드 · 예전 앱 가져오기는 제외)"],["mou","MOU 체결","단계가 MOU 완료로 바뀌면"],["hire","기관 출신 입사","소속 기관이 있는 근로자가 입사 등록되면"],["stock","물품 재고 부족 · 소진","출고로 재고가 안전 재고 아래로 내려가면 (같은 상태로는 한 번만)"],["daily","일일 리포트","정해진 시각에 발굴 현황 요약"]];
+function chatCfg(){var d={on:false,org:true,mou:true,hire:true,stock:true,daily:true,hours:[9,14,16],weekdays:true},v=appSet("chat_alerts",{})||{};Object.keys(d).forEach(function(k){if(v[k]!==undefined)d[k]=v[k]});return d}
+function chatPut(k,v){var C=chatCfg(),b=JSON.stringify(C[k]);C[k]=v;appSetPut("chat_alerts",C);logChange("app_settings","chat_alerts","구글 챗 알림",k,b,JSON.stringify(v),"브이드림 내부")}
+var _vSet142=vSet;vSet=function(){var h=_vSet142.apply(this,arguments);if(S.role!=="admin")return h;var C=chatCfg();
+  return h+'<div class="card chatcard"><div class="cc-h"><b>구글 챗 알림</b><span class="small muted">작업기(Apps Script)가 보내요 · 웹훅 주소는 스크립트 속성 <code>GCHAT_WEBHOOK</code>에만 넣어요 (화면 · DB에는 없음)</span><span class="grow"></span><span class="seg sm"><button class="'+(C.on?"on":"")+'" data-act="chat-set" data-k="on" data-v="1">켬</button><button class="'+(C.on?"":"on")+'" data-act="chat-set" data-k="on" data-v="0">끔</button></span><button class="btn sm" data-act="chat-test">테스트 알림 보내기</button></div>'+
+    '<div class="cc-list'+(C.on?"":" off")+'">'+CHAT_T.map(function(x){return'<label class="ckl ccrow"><input type="checkbox" data-chat="'+x[0]+'"'+(C[x[0]]?" checked":"")+'> <b>'+x[1]+'</b> <span class="small muted">'+x[2]+'</span></label>'}).join("")+
+    '<div class="cc-hours"><span class="small muted">일일 리포트 시각</span>'+[8,9,10,11,12,13,14,15,16,17,18].map(function(hh){var on=C.hours.indexOf(hh)>=0;return'<button type="button" class="ock'+(on?" on":"")+'" data-act="chat-hour" data-v="'+hh+'">'+hh+'시</button>'}).join("")+'<label class="ckl small" style="margin-left:8px"><input type="checkbox" data-chat="weekdays"'+(C.weekdays?" checked":"")+'> 평일만</label></div></div></div>'+
+    '<div class="card chatcard"><div class="cc-h"><b>명함 글자 읽기</b><span class="small muted">명함 사진에서 이름 · 연락처를 읽어 채워요 · Edge Function <code>'+esc(CONFIG.ocrFunction)+'</code> · Gemini 키는 그 함수의 비밀값에만</span><span class="grow"></span><span class="seg sm"><button class="'+(ocrOn()?"on":"")+'" data-act="ocr-set" data-v="1">켬</button><button class="'+(ocrOn()?"":"on")+'" data-act="ocr-set" data-v="0">끔</button></span><button class="btn sm" data-act="ocr-ping">연결 확인</button></div></div>'};
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.chat==null||S.role!=="admin")return;chatPut(t.dataset.chat,!!t.checked);toast("저장했어요");render()},true);
+var _v139Act142=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
+  case"of-x":$("#modal").innerHTML="";S.ofF=null;return true;
+  case"of-ok":ofOk();return true;
+  case"oc-scan":if(!ocrOn()){toast("명함 글자 읽기가 꺼져 있어요 (관리자 › 설정)");return true}ocNewPick(D0.o||S.om);return true;
+  case"oc-scan-x":S.ocPend=null;var bx=document.querySelector(".ocadd");if(bx)delete bx.dataset.ocFilled;render();return true;
+  case"on-scan":if(!ocrOn()){toast("명함 글자 읽기가 꺼져 있어요 (관리자 › 설정)");return true}onNewPick();return true;
+  case"on-scan-x":S.onPend=null;render();return true;
+  case"chat-set":if(S.role!=="admin")return true;chatPut("on",D0.v==="1");toast(D0.v==="1"?"구글 챗 알림을 켰어요":"구글 챗 알림을 껐어요");render();return true;
+  case"chat-hour":(function(){if(S.role!=="admin")return;var H=chatCfg().hours.slice(),v=+D0.v,i=H.indexOf(v);if(i>=0)H.splice(i,1);else H.push(v);H.sort(function(a,b){return a-b});chatPut("hours",H);render()})();return true;
+  case"chat-test":if(S.role!=="admin")return true;addJob("chat_test","chat",{by:st(S.me).name});toast("테스트 알림을 작업 대기열에 넣었어요 · 1분 안에 구글 챗에 와요");return true;
+  case"ocr-set":if(S.role!=="admin")return true;appSetPut("ocr_on",D0.v==="1");logChange("app_settings","ocr_on","명함 글자 읽기","사용",ocrOn()?"켬":"끔",D0.v==="1"?"켬":"끔","브이드림 내부");render();return true;
+  case"ocr-ping":(function(){if(!LIVE){toast("예시 데이터 화면이라 확인할 수 없어요");return}toast("확인 중…");sb.functions.invoke(CONFIG.ocrFunction,{body:{ping:true}}).then(function(r){var d=r.data||{};toast(r.error?"연결 안 됨: "+(r.error.message||r.error)+" · Edge Function을 배포했는지 확인해 주세요":d.hasKey?"연결됐어요 · Gemini 키도 있어요":"함수는 연결됐지만 GEMINI_API_KEY 비밀값이 없어요")},function(e){toast("연결 안 됨: "+(e&&e.message||e))})})();return true}
+  return _v139Act142(a,el)};
+var _simJob142=simJob;simJob=function(j){if(j.kind==="chat_test"){j.result={sent:true};return}return _simJob142(j)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
