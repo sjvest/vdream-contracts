@@ -643,6 +643,9 @@ td.late{color:#9B1C1C;font-weight:700}
 .pfoot{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line);background:#fff;box-shadow:0 -6px 14px rgba(0,0,0,.04);margin-top:8px}.pfoot .grow{flex:1}
 @media (max-width:1100px){.pfcols{grid-template-columns:1fr}}
 .pfcols,.pfoot,.stbox,.tdclaim{grid-column:1/-1}
+.agei{font-size:.86em;font-weight:500;color:var(--ink-2);white-space:nowrap;margin-left:2px}h2 .agei{font-size:14px}
+.oientry{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#F4F2FC;border:1px solid #D9D3F3;border-radius:10px;padding:8px 12px;margin-bottom:10px}.oientry .btn{margin-left:auto}
+.oisteps{margin:0 0 10px;padding-left:18px;line-height:1.7}.oirow{padding:3px 0;border-bottom:1px dashed var(--line)}.oisum td{vertical-align:middle}
 </style>
 </head>
 <body>
@@ -13195,6 +13198,163 @@ document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.datase
   var d=t.dataset.duty,C=JSON.parse(JSON.stringify(dutyCfgAll())),c=C[d]||{mode:DUTY_DEF[d]||"part",staff:[]},b=JSON.stringify(c);c.staff=c.staff||[];
   if(t.dataset.k==="mode")c.mode=t.value;else if(t.dataset.k==="staff"){var v=t.dataset.v;c.staff=c.staff.filter(function(x){return x!==v});if(t.checked)c.staff.push(v)}
   C[d]=c;appSetPut("rr_duty",C);var lab=function(x){x=JSON.parse(x);return(x.mode==="case"?"케이스 담당자":x.mode==="staff"?"직원 지정 "+(x.staff||[]).map(function(i){return st(i).name}).join(","):"채용파트 (공동)")};logChange("app_settings","rr_duty","채용파트 업무 분장",d,lab(b),lab(JSON.stringify(c)),"브이드림 내부");toast("업무 분장을 바꿨어요 · "+d);render()},true);
+
+/* ================================================================
+   v140 (1) 이름 옆 (만 n세) · 기관 인재 등록에 생년월일
+        (2) 예전 발굴 앱 '전체 백업' 파일 통째로 가져오기 (새 행만 추가 · 기존 데이터는 그대로)
+   ================================================================ */
+APP_VER="v140";APP_VER_ON="10/18";APP_NOTE="예전 발굴 앱 통째로 가져오기 · 이름 옆 만 나이";
+/* ---------- SQL 61: 추천인재 생년월일 ---------- */
+var V61={ok:false,probed:false};
+var _loadAll140=loadAll;loadAll=function(){var a=arguments,self=this;var pr=(!LIVE||V61.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(V61.probed=true,sb.from("talent_picks").select("birth_date").limit(1).then(function(r){V61.ok=!r.error;if(V61.ok)colxAdd("talent",[["birth","birth_date","date"]])},function(){}));
+  return pr.then(function(){return _loadAll140.apply(self,a)})};
+/* ---------- 만 나이 ---------- */
+function ageOf(b){b=String(b||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(b))return"";var n=(+TODAY.slice(0,4))-(+b.slice(0,4))-(TODAY.slice(5)<b.slice(5)?1:0);return n>=0&&n<120?n:""}
+function ageTag(b){var n=ageOf(b);return n===""?"":' <span class="agei">(만 '+n+'세)</span>'}
+function talBirth(t){return t&&(t.birth||((t.worker&&wk(t.worker))||{}).birth)||""}
+/* 목록: 이름 칸 뒤 */
+var _dtable140=dtable;dtable=function(k,cols,rows,rowFn,empty){if((k!=="pf"&&k!=="tal")||!rowFn)return _dtable140.apply(this,arguments);var rf=rowFn;
+  rowFn=function(r){var h=rf(r),x=r&&r.t&&r.t.id?r.t:r,b=k==="pf"?x.birth:talBirth(x),tag=ageTag(b);if(!tag)return h;var i=h.indexOf("</td>");return i>0?h.slice(0,i)+tag+h.slice(i):h};return _dtable140(k,cols,rows,rowFn,empty)};
+/* 포트폴리오 창 · 추천인재 창 머리 */
+var _pPf140=pPf;pPf=function(){var h=_pPf140.apply(this,arguments);if(!h||S.pfSel==="new")return h;var p=pfOf(S.pfSel);if(!p)return h;
+  return h.replace(/(<h2>[\s\S]*?) <span class="small muted num">[^<]*<\/span><\/h2>/,function(m,a){return a+ageTag(p.birth)+"</h2>"})};
+var _talPanel140=talPanel;talPanel=function(t){var h=_talPanel140.apply(this,arguments);if(!h||!t)return h;var tag=ageTag(talBirth(t));if(!tag)return h;var i=h.indexOf("</h2>");return i>0?h.slice(0,i)+tag+h.slice(i):h};
+/* 채용 요청 › 후보 추천 */
+var _pfRecHtml140=pfRecHtml;pfRecHtml=function(r){var h=_pfRecHtml140.apply(this,arguments);if(!h)return h;
+  h=h.replace(/(data-act="pf-go" data-id="([^"]+)"><b>[^<]*<\/b><\/button>) <span class="small muted">[^<]*<\/span>/g,function(m,a,id){return a+ageTag((pfOf(id)||{}).birth)});
+  h=h.replace(/(data-act="(?:go-w|rc-tal)" data-id="([^"]+)"><b>[^<]*<\/b><\/button>) <span class="small muted">[^<]*<\/span>/g,function(m,a,id){var t=(DB.talent||[]).find(function(x){return x.id===id});var b=t?talBirth(t):(wk(id)||{}).birth;return a+ageTag(b)});return h};
+/* 기관 창 › 인재 탭 (그린 뒤 붙이기) */
+function agePaint(){[].forEach.call(document.querySelectorAll('button[data-act="ot-open"][data-k][data-id]'),function(b){if(b.dataset.age)return;b.dataset.age="1";var x=b.dataset.k==="pf"?pfOf(b.dataset.id):(DB.talent||[]).find(function(t){return t.id===b.dataset.id});var tag=x?ageTag(b.dataset.k==="pf"?x.birth:talBirth(x)):"";if(tag)b.insertAdjacentHTML("afterend",tag)})}
+var _render140=render;render=function(){var r=_render140.apply(this,arguments);try{agePaint()}catch(e){console.warn(e)}return r};
+/* 기관 인재 등록: 생년월일 (선택) */
+var _otModal140=otModal;otModal=function(){_otModal140.apply(this,arguments);var F=S.otF,m=$("#modal .dlg");if(!F||!m||m.querySelector("[data-otb]"))return;var nm=m.querySelector('[data-otf="name"]'),L=nm&&nm.closest("label");if(!L)return;
+  L.insertAdjacentHTML("afterend",'<label class="f"><span>생년월일 <small class="muted">선택 · 이름 옆에 (만 n세)</small></span><input type="date" data-otb value="'+esc(F.birth||"")+'" max="'+TODAY+'"></label>')};
+document.addEventListener("input",function(ev){var t=ev.target;if(t&&t.dataset&&t.dataset.otb!=null&&S.otF)S.otF.birth=t.value},true);
+var _otSave140=otSave;otSave=function(){var b=S.otF&&S.otF.birth||"",np=(DB.pf||[]).length,nt=(DB.talent||[]).length;var r=_otSave140.apply(this,arguments);
+  if(b){(DB.pf||[]).slice(np).forEach(function(p){if(!p.birth)p.birth=b});(DB.talent||[]).slice(nt).forEach(function(t){if(!t.birth)t.birth=b})}return r};
+/* ================================================================
+   예전 발굴 앱 → V-Work
+   예전 앱 › 데이터 관리 › [전체 백업]으로 받은 vscout_backup_날짜.xlsx 를 그대로 올림
+   ================================================================ */
+var OI_SHEETS={orgs:"기관",cards:"명함정보",logs:"컨택이력",acts:"할일",evts:"행사",rels:"관계이력",gi:"물품품목",gl:"물품입출고",cold:"콜드컨택",tal:"인재",apps:"지원현황"};
+var OI_SEC=[["orgs","기관"],["cts","기관 담당자"],["logs","컨택 기록"],["acts","후속 액션"],["evts","행사"],["inv","행사 초청 기관"],["rels","기관 교류 (명절 선물 등)"],["goods","물품"],["glog","물품 입출고"],["cold","신규 컨택"],["tal","추천인재"]];
+var OI_JSON={contacts:1,member_history:1,status_history:1,mou_checklist:1};
+function oiCell(v){if(v==null)return"";if(v instanceof Date)return isNaN(v)?"":v.toISOString();if(typeof v==="object"){if(v.text!=null)return String(v.text);if(v.richText)return v.richText.map(function(x){return x.text}).join("");if(v.result!=null)return oiCell(v.result);if(v.hyperlink)return String(v.hyperlink);return""}return v}
+function oiS(v){return v==null?"":String(v).trim()}
+function oiKst(v){v=oiS(v);if(!v)return null;if(/^\d{4}-\d{2}-\d{2}$/.test(v))return{d:v,t:""};var d=new Date(v);if(isNaN(d)){var m=v.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);return m?{d:m[1]+"-"+pad(+m[2])+"-"+pad(+m[3]),t:""}:null}
+  var k=new Date(d.getTime()+9*3600*1000);return{d:k.toISOString().slice(0,10),t:k.toISOString().slice(11,16)}}
+function oiD(v){var x=oiKst(v);return x?x.d:""}
+function oiDT(v){var x=oiKst(v);return x?x.d+" "+(x.t||"09:00"):""}
+function oiNorm(n){return String(n||"").replace(/\((사|재|사단법인|재단법인)\)|^(사|재)\)|사단법인|재단법인|\s|·|\./g,"").toLowerCase()}
+function oiJson(v){if(v==null||v==="")return null;if(typeof v==="object")return v;try{return JSON.parse(v)}catch(e){return null}}
+function oiYes(v){return v===true||/^(true|1|y|yes|예|TRUE)$/i.test(oiS(v))}
+function oiRead(file){if(!file)return;if(!/\.xlsx$/i.test(file.name)){toast("엑셀(.xlsx) 파일만 올릴 수 있어요");return}toast("파일을 읽는 중… (큰 파일은 몇 초 걸려요)");
+  xlLoad().then(function(X){return file.arrayBuffer().then(function(buf){var wb=new X.Workbook();return wb.xlsx.load(buf).then(function(){return wb})})}).then(function(wb){var T={},found=0;
+    Object.keys(OI_SHEETS).forEach(function(k){var ws=wb.getWorksheet(OI_SHEETS[k]);T[k]=[];if(!ws)return;found++;var H=[];ws.getRow(1).eachCell({includeEmpty:true},function(c,i){H[i]=oiS(oiCell(c.value))});
+      ws.eachRow({includeEmpty:false},function(row,n){if(n===1)return;var o={},any=false;H.forEach(function(h,i){if(!h)return;var v=oiCell(row.getCell(i).value);if(OI_JSON[h])v=oiJson(v);o[h]=v;if(v!==""&&v!=null)any=true});if(any&&!("(데이터 없음)" in o))T[k].push(o)})});
+    if(!found||!T.orgs.length&&!T.tal.length){toast("예전 앱 전체 백업 파일이 아닌 것 같아요 ('기관' · '인재' 시트가 없어요)");return}
+    S.oi={file:file.name,P:oiPlan(T),open:""};oiModal()}).catch(function(e){toast("파일을 읽지 못했어요: "+(e&&e.message||e))})}
+/* 계획 만들기 (아직 아무것도 바꾸지 않음) */
+function oiPlan(T){var P={sec:{},ids:{org:{},ev:{},gi:{},tal:{}},miss:{},skipTest:0},me=st(S.me).name;OI_SEC.forEach(function(s){P.sec[s[0]]=[]});
+  var push=function(k,st0,key,x,err){P.sec[k].push({st:st0,key:key,x:x,err:err||""})};
+  var stf=function(n){n=oiS(n).split(/[,·\/]/)[0].trim();if(!n)return"";var s=DB.staff.find(function(x){return x.name===n||x.email===n});if(s)return s.id;P.miss[n]=(P.miss[n]||0)+1;return""};
+  var NM={};(DB.orgs||[]).forEach(function(o){[o.full,o.short].forEach(function(n){var k=oiNorm(n);if(k&&!NM[k])NM[k]=o})});
+  var newOrg={},testOrg={};
+  /* 1. 기관 */
+  T.orgs.forEach(function(r){var name=oiS(r.name);if(!name)return;if(oiYes(r.is_test)){testOrg[r.id]=1;P.skipTest++;return}var k=oiNorm(name),ex=NM[k];
+    if(ex){P.ids.org[r.id]=ex.id;push("orgs","dup",name+(ex.full!==name?" → "+ex.short:""));return}
+    var id=nid(),src={"서칭":"콜드 컨택","행사·전시회":"행사","명함·소개":"소개"}[oiS(r.source)]||oiS(r.source),mem=stf(r.member),sub=stf(r.accompany);
+    var C=[],seen={},addC=function(c){var n=oiS(c.name);if(!n||seen[n])return;seen[n]=1;var tel=oiS(c.phone),mob=oiS(c.mobile);if(!mob&&/^01/.test(tel.replace(/\D/g,""))){mob=tel;tel=""}C.push({id:id+"c"+C.length,name:n,title:oiS(c.title),dept:"",phone:tel,mobile:mob,email:oiS(c.email),memo:oiS(c.memo),out:c.out||""})};
+    if(oiS(r.contact))addC({name:r.contact,title:r.contact_title,phone:r.phone,mobile:r.mobile,email:r.email});
+    (Array.isArray(r.contacts)?r.contacts:[]).forEach(function(c){if(c&&typeof c==="object")addC({name:c.name,title:c.title||c.position,phone:c.phone,email:c.email,memo:c.status&&c.status!=="현재"?"예전 담당자":"",out:c.status&&c.status!=="현재"?(oiD(c.addedDate)||TODAY):""})});
+    var win=C.find(function(c){return!c.out&&(c.phone||c.mobile)});
+    var memo=[oiS(r.memo),oiS(r.fax)?"팩스 "+oiS(r.fax):""].filter(Boolean).join("\n");
+    var x={id:id,full:name,short:orgShort(name.replace(/^\s*\(?(사|재)\)\s*|^\s*(사단법인|재단법인)\s*/,"")||name),manager:oiS(r.contact),phone:oiS(r.phone)||oiS(r.mobile),email:oiS(r.email),memo:memo,stage:+r.stage>=0&&OST[+r.stage]?+r.stage:0,cat:oiS(r.cat),region:oiS(r.region),src:src,mem:mem,sub:sub&&sub!==mem?sub:"",tier:oiS(r.contact_tier),meet1:oiD(r.date),mou:oiD(r.mou_date),pin:oiYes(r.is_starred),edu:{1:"필요",2:"완료"}[+r.school]||"",premail:{1:"완료",2:"요구"}[+r.premeil]||"",addr:oiS(r.address),web:oiS(r.website),card:false,contacts:C,mc:win?win.id:"",ban_direct:false,ban_mgr:false,created:oiD(r.created_at)||TODAY};
+    P.ids.org[r.id]=id;NM[k]=x;newOrg[id]=x;push("orgs","add",name,x)});
+  var orgOfOld=function(oid){return oiS(oid)?P.ids.org[oiS(oid)]||P.ids.org[+oid]||"":""};
+  var orgX=function(id){return newOrg[id]||oOf(id)};
+  /* 2. 명함 정보 → 기관 담당자 */
+  var ctSeen={};(T.cards||[]).forEach(function(r){var oid=orgOfOld(r.org_id),n=oiS(r.contact_name);if(testOrg[r.org_id])return;if(!oid){push("cts","err",n||"(이름 없음)",null,"기관을 못 찾았어요");return}if(!n)return;var o=orgX(oid);var k=oid+"|"+n;
+    if(ctSeen[k]||(o.contacts||[]).some(function(c){return c.name===n})){push("cts","dup",(o.short||"")+" · "+n);return}ctSeen[k]=1;var tel=oiS(r.phone),mob=/^01/.test(tel.replace(/\D/g,""))?tel:"";
+    push("cts","add",(o.short||"")+" · "+n,{org:oid,c:{id:oid+"c"+nid().slice(0,6),name:n,title:oiS(r.position),dept:"",phone:mob?"":tel,mobile:mob,email:oiS(r.email),memo:"예전 앱 명함"}})});
+  /* 3. 컨택 기록 */
+  (T.logs||[]).forEach(function(r){if(testOrg[r.org_id])return;var oid=orgOfOld(r.org_id),sm=oiS(r.summary);if(!oid){push("logs","err",sm,null,"기관을 못 찾았어요");return}var o=orgX(oid),at=oiDT(r.logged_at||r.date||r.created_at);if(oiS(r.date)&&oiD(r.date)!==at.slice(0,10))at=oiD(r.date)+" "+(at.slice(11)||"09:00");
+    var ty=oiS(r.contact_type),q=oiYes(r.is_quick),sum=[sm,oiS(r.memo)].filter(Boolean).join(" · ")||ty||"컨택";var x={id:nid(),org:oid,at:at,type:q?"기타":(OLT.indexOf(ty)>=0?ty:"기타"),quick:q,qkind:q?(ty||"기타"):"",ch:"",status:OLS.indexOf(oiS(r.status))>=0?oiS(r.status):"완료",recall:"",sum:sum,ours:stf(r.our_members)||(o.mem||""),theirs:oiS(r.their_members),by:oiS(r.created_by_name)};
+    var key=(o.short||"")+" · "+at+" · "+sum.slice(0,30);if((DB.olog||[]).some(function(l){return l.org===oid&&l.at===at&&l.sum===sum})){push("logs","dup",key);return}push("logs","add",key,x)});
+  /* 4. 후속 액션 (할일) */
+  (T.acts||[]).forEach(function(r){if(testOrg[r.org_id])return;var t=oiS(r.text)||oiS(r.content);if(!t)return;var oid=orgOfOld(r.org_id);if(!oid){push("acts","skip",t.slice(0,40),null,"기관 없는 할 일 (팀 할 일) · 옮기지 않음");return}var o=orgX(oid),due=oiD(r.due)||oiD(r.created_at)||TODAY,dn=oiYes(r.done);
+    var x={id:nid(),org:oid,text:t,due:due,done:dn,doneOn:dn?(oiD(r.updated_at)||due):"",who:stf(r.member)||o.mem||"",by:oiS(r.created_by_name),at:oiD(r.created_at)||TODAY};
+    var key=(o.short||"")+" · "+t.slice(0,40)+" · "+due;if((DB.oact||[]).some(function(a){return a.org===oid&&a.text===t&&a.due===due})){push("acts","dup",key);return}push("acts","add",key,x)});
+  /* 5. 행사 */
+  var evNew={};(T.evts||[]).forEach(function(r){var n=oiS(r.name),d=oiD(r.date);if(!n||!d)return;var ex=(DB.oevt||[]).find(function(e){return e.name===n&&e.date===d});if(ex){P.ids.ev[r.id]=ex.id;push("evts","dup",n+" · "+d);return}
+    var sf=[];oiS(r.members).split(/[,·\/]/).forEach(function(m){var s=stf(m);if(s&&!sf.some(function(y){return y.id===s}))sf.push({id:s,ab:""})});
+    var memo=[oiS(r.host)?"주최 "+oiS(r.host):"",oiS(r.scale)?"규모 "+oiS(r.scale):"",oiS(r.notes),oiS(r.improvement)?"개선: "+oiS(r.improvement):"",r.result_cards!==""&&r.result_cards!=null?"명함 "+r.result_cards+(r.goal_cards?"/"+r.goal_cards:""):"",r.result_meetings!==""&&r.result_meetings!=null?"미팅 "+r.result_meetings+(r.goal_meetings?"/"+r.goal_meetings:""):""].filter(Boolean).join(" · ");
+    var x={id:nid(),name:n,date:d,time:"",time_end:"",region:"",place:oiS(r.location),kind:/박람회/.test(oiS(r.category))?"박람회":oiS(r.category)||"기타",memo:memo,inv:[],staff:sf};P.ids.ev[r.id]=x.id;evNew[x.id]=x;push("evts","add",n+" · "+d,x)});
+  /* 6. 관계 이력 → 행사 초청 기관 · 기관 교류 */
+  var invSeen={};(T.rels||[]).forEach(function(r){if(testOrg[r.org_id])return;var oid=orgOfOld(r.org_id),kd=oiS(r.kind)||"명절 선물";if(!oid){push("rels","err",kd+" · "+oiS(r.item),null,"기관을 못 찾았어요");return}var o=orgX(oid);
+    if(kd==="행사 초청"&&oiS(r.event_id)&&P.ids.ev[r.event_id]){var eid=P.ids.ev[r.event_id],e=evNew[eid]||oFind(DB.oevt,eid),at=oiS(r.attendance),stt=/불참/.test(at)?"불참":/참석/.test(at)?"참석 완료":"초청 발송",k=eid+"|"+oid;
+      if(invSeen[k]||(e.inv||[]).some(function(y){return y.org===oid})){push("inv","dup",e.name+" · "+(o.short||""));return}invSeen[k]=1;push("inv","add",e.name+" · "+(o.short||"")+" · "+stt,{ev:eid,inv:{org:oid,st:stt,notes:at&&!/^(참석|불참)$/.test(at)?[{t:at,by:"예전 앱",d:oiD(r.created_at)||TODAY}]:[]}});return}
+    var y=oiS(r.year),mo=oiS(r.month),rd=oiS(r.item)||(y?y+"년"+(mo?" "+mo+"월":""):kd),sent=oiD(r.sent_date),ds=oiS(r.delivery_status),stt2=/완료|전달|수령/.test(ds)?"완료":(sent||/발송/.test(ds))?"발송":"준비";
+    var due=sent||(y?y+"-"+pad(+mo||1)+"-01":oiD(r.created_at)||TODAY);
+    var memo=[oiS(r.gift_name),r.quantity!==""&&r.quantity!=null?r.quantity+"개":"",oiS(r.delivery_method),ds,oiS(r.recipient_name)?"받는 분 "+oiS(r.recipient_name):"",oiS(r.note||r.memo)].filter(Boolean).join(" · ");
+    var x={id:nid(),org:oid,kind:OEX_K.indexOf(kd)>=0?kd:"기타",round:rd,item:"",qty:0,due:due,status:stt2,who:stf(r.handler)||o.mem||"",by:oiS(r.created_by_name),at:oiD(r.created_at)||TODAY,sent:stt2!=="준비"?(sent||due):"",done:stt2==="완료"?(sent||due):"",memo:memo,evt:"",emp:"",auto:false};
+    var key=(o.short||"")+" · "+kd+" · "+rd;if((DB.oex||[]).some(function(e){return e.org===oid&&e.round===rd&&e.kind===x.kind})||P.sec.rels.some(function(z){return z.x&&z.x.org===oid&&z.x.round===rd&&z.x.kind===x.kind})){push("rels","dup",key);return}push("rels","add",key,x)});
+  /* 7. 물품 · 입출고 */
+  var gNew={};(T.gi||[]).forEach(function(r){var n=oiS(r.name);if(!n)return;var ex=(DB.goods||[]).find(function(g){return g.name===n});if(ex){P.ids.gi[r.id]=ex.id;push("goods","dup",n);return}
+    var stock=+r.initial_qty||0;(T.gl||[]).forEach(function(l){if(String(l.item_id)!==String(r.id))return;var q=+l.qty||0;stock+=oiS(l.kind)==="입고"?q:oiS(l.kind)==="사용"||oiS(l.kind)==="출고"?-q:0});
+    var x={id:"g"+nid().slice(0,6),name:n,cat:oiS(r.category),unit:"개",stock:Math.max(0,stock),safe:+r.safe_qty||0,memo:[oiS(r.location)?"보관 "+oiS(r.location):"",oiS(r.note),oiYes(r.is_active)||r.is_active===""||r.is_active==null?"":"사용 안 함"].filter(Boolean).join(" · ")};P.ids.gi[r.id]=x.id;gNew[x.id]=x;push("goods","add",n+" · 재고 "+x.stock,x)});
+  (T.gl||[]).forEach(function(r){var gid=P.ids.gi[r.item_id],q=+r.qty||0;if(!gid||!q){push("glog","err",oiS(r["품목명"])||oiS(r.item_id),null,"품목을 못 찾았어요");return}var g=gNew[gid]||(DB.goods||[]).find(function(x){return x.id===gid}),kd=oiS(r.kind),k2=kd==="입고"?"입고":kd==="사용"||kd==="출고"?"출고":"조정",d=oiD(r.log_date)||oiD(r.created_at)||TODAY;
+    var memo=[oiS(r.place),oiS(r.note)].filter(Boolean).join(" · ");var x={id:nid(),item:gid,kind:k2,qty:q,org:"",date:d,by:oiS(r.user_name)||oiS(r.created_by_name),memo:memo};var key=d+" · "+g.name+" "+k2+" "+q;
+    if((DB.glog||[]).some(function(l){return l.item===gid&&l.date===d&&l.kind===k2&&l.qty===q&&(l.memo||"")===memo})){push("glog","dup",key);return}push("glog","add",key,x)});
+  /* 8. 신규 컨택 (콜드컨택) */
+  (T.cold||[]).forEach(function(r){var n=oiS(r.org_name)||oiS(r.org);if(!n)return;var at=oiDT(r.logged_at||r.created_at);var x={id:nid(),at:at,type:oiS(r.method)||oiS(r.contact_type)||"전화",org:n,person:oiS(r.contact_person),phone:oiS(r.phone),memo:[oiS(r.result),oiS(r.summary),oiS(r.memo)].filter(Boolean).join(" · "),by:oiS(r.member)||oiS(r.created_by_name),conv:orgOfOld(r.converted_org_id)};
+    var key=n+" · "+at;if((DB.ocold||[]).some(function(c){return c.org===n&&c.at===at})||P.sec.cold.some(function(z){return z.x&&z.x.org===n&&z.x.at===at})){push("cold","dup",key);return}push("cold","add",key,x)});
+  /* 9. 인재 → 추천인재 (지원 이력은 메모로) */
+  var APP={};(T.apps||[]).forEach(function(a){var k=String(a.talent_id);(APP[k]=APP[k]||[]).push(a)});
+  (T.tal||[]).forEach(function(r){var n=oiS(r.name);if(!n)return;if(oiYes(r.is_test)||testOrg[r.source_org_id||r.org_id]){P.skipTest++;return}var ph=oiS(r.phone),b=oiD(r.birth_date),pn0=ph.replace(/\D/g,"");
+    var cr=oiKst(r.created_at),created=cr?cr.d+" "+(cr.t||"09:00"):stamp();
+    var same=function(nm,p2,b2,c2){if(nm!==n)return false;if(pn0.length>=9&&String(p2||"").replace(/\D/g,"")===pn0)return true;if(b&&b2&&b===b2)return true;return pn0.length<9&&!b&&!String(p2||"").replace(/\D/g,"")&&!b2&&String(c2||"").slice(0,10)===created.slice(0,10)};
+    if((DB.talent||[]).some(function(t){return same(t.name||((wk(t.worker)||{}).name),t.phone||((wk(t.worker)||{}).phone),talBirth(t),t.created)})||(DB.pf||[]).some(function(p){return same(p.name,p.phone,p.birth,p.created)})||P.sec.tal.some(function(z){return z.x&&same(z.x.name,z.x.phone,z.x.birth,z.x.created)})){push("tal","dup",n+(ph?" · "+ph:""));return}
+    var oid=orgOfOld(r.source_org_id||r.org_id),o=oid?orgX(oid):null,w=b?DB.workers.find(function(x){return x.name===n&&x.birth===b}):null;
+    var A=(APP[String(r.id)]||[]).slice().sort(function(a,c){return String(c.created_at||"").localeCompare(String(a.created_at||""))}),last=A[0],stt=oiS(last&&last.status)||oiS(r.status)||"인재등록";
+    var jobRaw=oiS(r.job),jobs=JOBS.filter(function(j){return j!=="기타"&&jobRaw.indexOf(j)>=0});if(!jobs.length&&jobRaw)jobs=["기타"];
+    var hist=A.map(function(a){return[oiS(a.hire_company)||oiS(a["공고명"]),oiS(a.status),oiD(a.updated_at||a.created_at)].filter(Boolean).join(" ")}).filter(Boolean);
+    var note=["예전 앱",!b&&oiS(r.birth_year)?oiS(r.birth_year).slice(0,4)+"년생":"",jobRaw?"직무 "+jobRaw:"",[oiS(r.disability_type),oiS(r.disability_grade)].filter(Boolean).join(" ")?"장애 "+[oiS(r.disability_type),oiS(r.disability_grade)].filter(Boolean).join(" "):"",oiS(r.channel)?"경로 "+oiS(r.channel):"",oiS(r.referrer)?"소개 "+oiS(r.referrer):"",oiS(r.member)?"담당 "+oiS(r.member):"",oiS(r.memo),hist.length?"지원 이력: "+hist.join(" / "):""].filter(Boolean).join(" · ");
+    var won=/최종합격|계약종료/.test(stt);
+    var x={id:nid(),emp:"",source:o?"기관 추천":"담당자 추천",origin:o?"기관 추천":"담당자 추천",job:jobs[0]||"",region:o?o.region||"":"",reason:note,status:won?"연계완료":"대기",lcid:"",ldate:won?oiD(last&&(last.join_date||last.updated_at))||oiD(r.join_date)||"":"",lnote:won?(oiS(last&&last.hire_company)||oiS(r.hire_company)):"",rej:"",dby:"",dat:"",by:oiS(r.created_by_name)||oiS(r.member)||"예전 앱",created:created,
+      worker:w?w.id:"",name:n,phone:ph,birth:b,hours:"",ps:"",pe:"",jobs:jobs,job_etc:jobs[0]==="기타"?jobRaw:"",hrs:[],ev:{s:0,a:0,c:0},inst:"",hours_etc:"",ev_note:"",close_type:won?"예전 앱":"",close_reason:won?(oiS(last&&last.hire_company)||oiS(r.hire_company)||stt):"",closed_at:won?created:"",hire_emp:"",links:[],src_org:oid||"",main_contact:"본인",last_contact:oiD(r.updated_at)||(cr?cr.d:TODAY)};
+    push("tal","add",n+ageTag(b).replace(/<[^>]+>/g,"")+(o?" · 🏛 "+(o.short||""):"")+" · "+(won?"연계완료 ("+stt+")":"대기"),x)});
+  return P}
+/* 추가 (순서대로) */
+function oiAdd(){var F=S.oi;if(!F||!F.P)return;var P=F.P,n={},me=st(S.me).name;var go=function(k,fn){n[k]=0;P.sec[k].forEach(function(z){if(z.st!=="add")return;try{fn(z.x);z.st="done";n[k]++}catch(e){z.st="err";z.err=String(e&&e.message||e)}})};
+  ["olog","oact","oex","oevt","goods","glog","ocold"].forEach(function(k){if(!Array.isArray(DB[k]))DB[k]=[]});
+  go("orgs",function(x){DB.orgs.push(x)});
+  go("cts",function(x){var o=oOf(x.org);if(!o)throw new Error("기관 없음");if((o.contacts||[]).some(function(c){return c.name===x.c.name}))return;o.contacts=(o.contacts||[]).concat([x.c]);if(!o.mc&&ctTel(x.c))o.mc=x.c.id});
+  go("logs",function(x){DB.olog.push(x)});go("acts",function(x){DB.oact.push(x)});go("evts",function(x){DB.oevt.push(x)});
+  go("inv",function(x){var e=oFind(DB.oevt,x.ev);if(!e)throw new Error("행사 없음");e.inv=e.inv||[];if(e.inv.some(function(y){return y.org===x.inv.org}))return;e.inv.push(x.inv);e.inv=e.inv.slice()});
+  go("rels",function(x){DB.oex.push(x)});go("goods",function(x){DB.goods.push(x)});go("glog",function(x){DB.glog.push(x)});go("cold",function(x){DB.ocold.push(x)});go("tal",function(x){if(!V61.ok&&LIVE)delete x.birth;DB.talent.push(x)});
+  var tot=Object.keys(n).reduce(function(s,k){return s+n[k]},0);logChange("organizations","oldapp","예전 발굴 앱","통째로 가져오기","",OI_SEC.map(function(s){return n[s[0]]?s[1]+" "+n[s[0]]:""}).filter(Boolean).join(" · ")+" ("+F.file+")","예전 앱");
+  F.done=true;toast("예전 앱 데이터 "+tot+"건을 추가했어요");render();oiModal()}
+function oiModal(){var F=S.oi;if(!F)return;var P=F.P,cnt=function(k,s){return P?P.sec[k].filter(function(z){return z.st===s}).length:0},addN=P?OI_SEC.reduce(function(s,x){return s+cnt(x[0],"add")},0):0,miss=P?Object.keys(P.miss):[];
+  $("#modal").innerHTML='<div class="ov"><div class="dlg otm" role="dialog" aria-modal="true" aria-label="예전 앱 통째로 가져오기" style="max-width:860px"><div class="ph"><div><div class="k">기관 발굴 · 예전 발굴 앱에서</div><h2>예전 앱 통째로 가져오기</h2></div><button class="close" data-act="oi-x">×</button></div><div class="ps">'+
+    '<ol class="small oisteps"><li>예전 발굴 앱 › <b>데이터 관리</b> › <b>전체 백업</b>을 눌러 <code>vscout_backup_날짜.xlsx</code>를 받아요</li><li>그 파일을 그대로 아래에 올려요 → 표마다 미리보기 (추가 · 이미 있음 · 오류)</li><li>[추가]를 누르면 기관 → 담당자 → 기록 순서로 들어가요 · <b>이미 있는 데이터는 바꾸지 않아요</b> · 같은 파일을 다시 올려도 이미 있음으로 나와요</li></ol>'+
+    '<div class="obt"><label class="btn sm pri">⬆ 전체 백업 파일 올리기<input type="file" accept=".xlsx" data-oifile hidden></label>'+(F.file?'<span class="small muted">'+esc(F.file)+'</span>':"")+'</div>'+
+    '<p class="hint" style="margin-top:6px">명함 사진은 백업 파일에 없어서, 기관 DB › 일괄 업로드 › \'명함 (예전 앱)\'으로 따로 옮겨요 · 인재 첨부파일 · 공고 · 팀 할 일 · 소싱 · 변경 로그는 옮기지 않아요 (지원 이력은 추천인재 메모에 한 줄로)</p>'+
+    (P?'<table class="mini oisum" style="margin-top:8px"><thead><tr><th>항목</th><th class="c">추가</th><th class="c">이미 있음</th><th class="c">건너뜀</th><th class="c">오류</th><th></th></tr></thead><tbody>'+OI_SEC.map(function(s){var L=P.sec[s[0]];if(!L.length)return"";var op=F.open===s[0];
+      return'<tr><td><b>'+s[1]+'</b></td><td class="c num">'+(F.done?cnt(s[0],"done"):cnt(s[0],"add"))+'</td><td class="c num">'+cnt(s[0],"dup")+'</td><td class="c num">'+cnt(s[0],"skip")+'</td><td class="c num'+(cnt(s[0],"err")?" bad":"")+'">'+cnt(s[0],"err")+'</td><td><button class="linkbtn small" data-act="oi-open-sec" data-v="'+s[0]+'">'+(op?"접기":"보기")+'</button></td></tr>'+
+        (op?'<tr><td colspan="6"><div style="max-height:34vh;overflow:auto">'+L.slice(0,400).map(function(z){return'<div class="small oirow"><span class="b sm '+(z.st==="add"||z.st==="done"?"ok":z.st==="dup"?"g":z.st==="skip"?"":"bad")+'">'+({add:"추가",done:"추가됨",dup:"이미 있음",skip:"건너뜀",err:"오류"}[z.st])+'</span> '+esc(z.key||"")+(z.err?' <span class="muted">· '+esc(z.err)+'</span>':"")+'</div>'}).join("")+(L.length>400?'<p class="hint">… '+(L.length-400)+'건 더</p>':"")+'</div></td></tr>':"")}).join("")+'</tbody></table>'+
+      (P.skipTest?'<p class="hint">테스트 데이터(is_test) '+P.skipTest+'건은 뺐어요</p>':"")+
+      (miss.length?'<div class="odup" style="margin-top:8px"><b>V-Work 직원에서 못 찾은 이름 '+miss.length+'명</b><span class="small">'+esc(miss.slice(0,12).join(", "))+(miss.length>12?" 외":"")+' · 담당이 비거나 기관 담당자로 들어가요 (직원 이름이 다르면 먼저 계정 관리에서 맞춘 뒤 올리면 연결돼요)</span></div>':""):"")+
+    '</div><div class="ps foot"><span class="small muted">'+(F.done?"추가를 마쳤어요 · 변경 이력에 남았어요":"")+'</span><span class="grow"></span><button class="btn" data-act="oi-x">닫기</button>'+(P&&addN&&!F.done?'<button class="btn pri" data-act="oi-add">'+addN+'건 추가</button>':"")+'</div></div></div>'}
+var _vBulkAct140=vBulkAct;vBulkAct=function(a,el){var D0=el.dataset||{};switch(a){
+  case"oi-open":S.oi={file:"",P:null,open:""};oiModal();return true;
+  case"oi-x":$("#modal").innerHTML="";S.oi=null;return true;
+  case"oi-open-sec":S.oi.open=S.oi.open===D0.v?"":D0.v;oiModal();return true;
+  case"oi-add":if(confirm("예전 앱 데이터를 추가할까요?\n이미 있는 데이터는 바꾸지 않고 새 행만 추가해요."))oiAdd();return true}return _vBulkAct140(a,el)};
+document.addEventListener("change",function(ev){var t=ev.target;if(t&&t.dataset&&t.dataset.oifile!=null){oiRead(t.files&&t.files[0]);t.value=""}},true);
+ESC_ACTS.push("oi-x");
+/* 일괄 업로드 창 · 기관 DB에 입구 */
+var _bkModal140=bkModal;bkModal=function(){_bkModal140.apply(this,arguments);var m=$("#modal .dlg .ps");if(m&&!m.querySelector(".oientry"))m.insertAdjacentHTML("afterbegin",'<div class="oientry"><b>예전 발굴 앱 데이터를 한 번에?</b> <span class="small muted">전체 백업 파일 하나로 기관 · 담당자 · 컨택 · 액션 · 행사 · 교류 · 물품 · 신규 컨택 · 인재를 같이 옮겨요</span><button class="btn sm pri" data-act="oi-open">예전 앱 통째로 가져오기</button></div>')};
 
 /* ============ 렌더 ============ */
 function renderMain(){
