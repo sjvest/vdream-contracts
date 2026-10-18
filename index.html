@@ -12100,7 +12100,7 @@ var _pTodo_disc=pTodo;pTodo=function(t){var h=_pTodo_disc(t);if(!/^(oact|orecall
   if(t.type==="osup")b+='<div class="obt"><button class="btn pri" data-act="sq-open" data-id="'+t.sq+'">수급 요청 열기</button></div>';
   return h.replace(/<\/div><\/aside>$/,b+'</div></div></aside>')};
 /* ---------- 메뉴 ---------- */
-var _renderNav_disc=renderNav;renderNav=function(){_renderNav_disc.apply(this,arguments);if(S.role==="admin")return;var N=$("#nav");if(!N||N.querySelector('[data-v="opipe"]'))return;
+var _renderNav_disc=renderNav;renderNav=function(){_renderNav_disc.apply(this,arguments);if(S.role==="admin"&&ADM_V.indexOf(S.view)>=0)return;var N=$("#nav");if(!N||N.querySelector('[data-v="opipe"]'))return;
   var b=function(v,l,cnt){return'<button class="'+(S.view===v?"on":"")+'" data-act="view" data-v="'+v+'">'+l+(cnt?' <span class="cnt">'+cnt+'</span>':"")+'</button>'};
   var rd=N.querySelector('[data-act="view"][data-v="rdash"]');if(rd)rd.insertAdjacentHTML("afterend",b("odash","발굴 대시보드"));
   var sq=(DB.supq||[]).filter(function(q){return q.status==="요청"}).length,on=VIEW_CAT[S.view]&&VIEW_CAT[S.view][0]==="find";
@@ -14223,10 +14223,10 @@ var _v139Act148=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
   case"up-save":(function(){var v=+String(($("#set-up")||{}).value||"").replace(/[^\d]/g,"");if(!(v>=0)){toast("숫자로 넣어 주세요");return}var b=upDef();if(v===b)return;appSetPut("unit_price_default",v);logChange("app_settings","unit_price_default","기본 단가","원",b,v,"브이드림 내부");toast("기본 단가를 "+won(v)+"원으로 바꿨어요");render()})();return true}
   return _v139Act148(a,el)};
 /* ---------- 6. 발굴 메뉴도 다른 메뉴와 같은 규칙 (메뉴 · 파트 설정 저장 전엔 모두 보임) ---------- */
-APP_VER="v150";APP_NOTE="관리자는 담당자 화면에서도 모든 메뉴";
+APP_VER="v151";APP_NOTE="관리자 [이름] 메뉴에도 발굴 메뉴";
 var _mpSee149=mpSee;mpSee=function(v){if(isAdminSt(st(S.me)))return true;var v2=DISC_ALIAS[v]||v;if(!DISC_MENU.some(function(x){return x[0]===v2}))return _mpSee149(v);if(S.role==="admin"||isSuperMe())return true;var M=mpGet();if(M&&M.see&&M.see[v2])return M.see[v2].indexOf(partOf())>=0;return true};
 /* 왼쪽 메뉴 맨 위: 재직자 → 채용 → 발굴 대시보드 */
-var _renderNav149=renderNav;renderNav=function(){_renderNav149.apply(this,arguments);if(S.role==="admin")return;var N=$("#nav");if(!N)return;var od=N.querySelector('[data-act="view"][data-v="odash"]');if(!od){if(!mpSee("odash"))return;var tmp=document.createElement("div");tmp.innerHTML='<button class="'+(S.view==="odash"?"on":"")+'" data-act="view" data-v="odash">발굴 대시보드</button>';od=tmp.firstChild}
+var _renderNav149=renderNav;renderNav=function(){_renderNav149.apply(this,arguments);if(S.role==="admin"&&ADM_V.indexOf(S.view)>=0)return;var N=$("#nav");if(!N)return;var od=N.querySelector('[data-act="view"][data-v="odash"]');if(!od){if(!mpSee("odash"))return;var tmp=document.createElement("div");tmp.innerHTML='<button class="'+(S.view==="odash"?"on":"")+'" data-act="view" data-v="odash">발굴 대시보드</button>';od=tmp.firstChild}
   var anc=N.querySelector('[data-act="view"][data-v="rdash"]')||N.querySelector('[data-act="view"][data-v="dash"]');if(anc){if(anc.nextElementSibling!==od)anc.insertAdjacentElement("afterend",od)}else{var t=N.querySelector('[data-act="view"][data-v="todo"]');if(t)t.insertAdjacentElement("beforebegin",od)}};
 
 /* ============ 렌더 ============ */
