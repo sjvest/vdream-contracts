@@ -773,6 +773,9 @@ body.mob #vtip{max-width:calc(100vw - 24px)}
 body.mob .sbx-dd{max-height:50vh}
 body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 }
+.oldmore{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:12px;border:1px dashed var(--line);border-radius:10px;margin-top:8px}
+
+@media (max-width:900px){body.mob [data-act="bk-open"],body.mob [data-act="oi-open"]{display:none}}
 </style>
 </head>
 <body>
@@ -13796,6 +13799,52 @@ var _persistMob=persist;persist=function(){if(LIVE&&navigator.onLine===false){MQ
 window.addEventListener("offline",function(){if(!LIVE)return;MQW.wait=true;mqPaint()});
 window.addEventListener("online",function(){if(!MQW.wait)return;MQW.wait=false;mqPaint();toast("다시 연결됐어요 · 저장하는 중");schedulePersist()});
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="mq-retry"]');if(!b)return;ev.stopPropagation();if(navigator.onLine===false){toast("아직 연결이 없어요");return}MQW.wait=false;mqPaint();schedulePersist()},true);
+
+/* ================================================================
+   v144 데이터 사용량 줄이기
+   1) 전체 다시 받기: 하루 1번 → 일주일 1번 (바뀐 행 · 지운 행은 지금처럼 바로 따라옴)
+   2) 작업 대기열 · 발송 로그 · 메일 수신 기록: 처음엔 최근 90일만 · [이전 기록 더 보기]
+   3) 발굴파트가 아닌 사람은 발굴 전용 표 7개를 받지 않음
+   ================================================================ */
+APP_VER="v145";APP_VER_ON="10/18";APP_NOTE="일괄 업로드는 PC에서만";
+SYNC_DAY=7*24*3600e3;
+var OLD_DAYS=90,OLD_T={gas_jobs:"created_at",mail_logs:"logged_at",email_uploads:"processed_at"},OLD_LOADED={};
+function oldCut(){return new Date(Date.now()-OLD_DAYS*864e5).toISOString()}
+/* 발굴 전용 표 · 내 파트 (로그인 계정 한 줄만 확인) */
+var DISC_ONLY={org_contact_logs:1,org_actions:1,org_exchanges:1,org_events:1,goods:1,goods_logs:1,org_cold_contacts:1};
+var ME_P=null;
+function mePart(){if(ME_P)return ME_P;if(!LIVE||!AUTH_UID||typeof sb==="undefined"||!sb)return Promise.resolve(null);
+  ME_P=Promise.resolve(sb.from("staff").select("part,role").eq("id",AUTH_UID).maybeSingle()).then(function(r){return r&&r.data||null},function(){return null});return ME_P}
+function discSkip(me){if(!me)return false;return me.part!=="발굴파트"&&me.role!=="관리자"&&me.role!=="최고관리자"}
+var SKIP_DISC=false;
+var _fetchAll144=fetchAll;fetchAll=function(t){var a=arguments,self=this;if(!LIVE)return _fetchAll144.apply(self,a);
+  if(DISC_ONLY[t])return mePart().then(function(me){SKIP_DISC=discSkip(me);if(SKIP_DISC)return[];return _fetchAll144.apply(self,a)});
+  if(!OLD_T[t]||OLD_LOADED[t]||(RESTORE&&RESTORE.tables&&RESTORE.tables[t]))return _fetchAll144.apply(self,a);
+  var col=OLD_T[t],cut=oldCut(),out=[];
+  function page(f){return sb.from(t).select("*").gte(col,cut).order(col,{ascending:true}).range(f,f+999).then(function(r){if(r.error)throw r.error;out=out.concat(r.data||[]);if((r.data||[]).length===1000)return page(f+1000)})}
+  return page(0).then(function(){if(typeof RAWC!=="undefined")RAWC[t]=out;return out})};
+var _syncTables144=syncTables;syncTables=function(){var L=_syncTables144.apply(this,arguments);return SKIP_DISC?L.filter(function(t){return!DISC_ONLY[t]}):L};
+/* 실시간 알림으로 들어오는 발굴 전용 표 변경도 건너뜀 (받지 않은 표라 화면에 반쪽만 생기지 않게) */
+if(typeof rtApply==="function"){var _rtApply144=rtApply;rtApply=function(p){if(SKIP_DISC&&p&&DISC_ONLY[p.table])return false;return _rtApply144.apply(this,arguments)}}
+/* 90일보다 오래된 기록 더 보기 */
+function oldLoad(){if(!LIVE){toast("예시 데이터 화면이에요");return}var T=Object.keys(OLD_T).filter(function(t){return!OLD_LOADED[t]});if(!T.length)return;toast("이전 기록을 불러오는 중…");var cut=oldCut();
+  Promise.all(T.map(function(t){var col=OLD_T[t],out=[];function page(f){return sb.from(t).select("*").lt(col,cut).order(col,{ascending:false}).range(f,f+999).then(function(r){if(r.error)throw r.error;out=out.concat(r.data||[]);if((r.data||[]).length===1000)return page(f+1000)})}return page(0).then(function(){return{t:t,rows:out}})}))
+  .then(function(R){var n=0;R.forEach(function(x){var d=TB.find(function(z){return z.t===x.t});if(!d)return;var pk=colName(d.cols[0]),have={};(DB[d.k]||[]).forEach(function(o){var r=toRow(d,o);have[r[pk]]=1});SNAP[d.k]=SNAP[d.k]||{};
+      x.rows.forEach(function(row){var o=fromRow(d,row),r=toRow(d,o);if(have[r[pk]])return;DB[d.k].push(o);SNAP[d.k][r[pk]]=JSON.stringify(r);n++});OLD_LOADED[x.t]=true});
+    if(DB.mlogs)DB.mlogs.sort(function(a,b){return String(b.at).localeCompare(String(a.at))});toast(n?"이전 기록 "+n+"건을 더 불러왔어요":"더 오래된 기록이 없어요");render()},function(e){toast("불러오지 못했어요: "+(e&&e.message||e))})}
+function oldPaint(){if(!LIVE)return;var on=(S.view==="intake"&&S.inTab==="log")||S.view==="gas";if(!on)return;var m=$("#main");if(!m||m.querySelector(".oldmore"))return;var left=Object.keys(OLD_T).some(function(t){return!OLD_LOADED[t]});if(!left)return;
+  m.insertAdjacentHTML("beforeend",'<div class="oldmore"><span class="small muted">작업 대기열 · 발송 로그 · 메일 수신 기록은 최근 '+OLD_DAYS+'일만 보여요</span><button class="btn sm" data-act="old-more">이전 기록 더 보기</button></div>')}
+var _render144=render;render=function(){var r=_render144.apply(this,arguments);try{oldPaint()}catch(e){console.warn(e)}return r};
+var _v139Act144=v139Act;v139Act=function(a,el){if(a==="old-more"){oldLoad();return true}return _v139Act144(a,el)};
+/* 발굴 전용 표를 안 받은 사람이 기관 창 · 기관 DB · 발굴 메뉴를 열면 그때 한 번만 받아요 (소통 히스토리 · 마지막 연락이 비지 않게) */
+var DISC_LAZY={busy:false};
+var DISC_VIEWS={org:1,odash:1,opipe:1,osupq:1,oacts:1,oex:1,oreq:1,oevt:1,ogoods:1,ologs:1,orel:1,ostat:1};
+function discLazy(){if(!SKIP_DISC||DISC_LAZY.busy||!LIVE)return;DISC_LAZY.busy=true;var D=TB.filter(function(d){return DISC_ONLY[d.t]});
+  Promise.all(D.map(function(d){return _fetchAll144(d.t).then(function(rows){return{d:d,rows:rows}})})).then(function(R){
+    R.forEach(function(x){var d=x.d,pk=colName(d.cols[0]),have={};(DB[d.k]||[]).forEach(function(o){var r=toRow(d,o);have[r[pk]]=1});SNAP[d.k]=SNAP[d.k]||{};
+      x.rows.forEach(function(row){var o=fromRow(d,row),r=toRow(d,o);if(have[r[pk]])return;DB[d.k].push(o);SNAP[d.k][r[pk]]=JSON.stringify(r)});if(typeof RAWC!=="undefined")RAWC[d.t]=x.rows});
+    SKIP_DISC=false;DISC_LAZY.busy=false;render()},function(){DISC_LAZY.busy=false})}
+var _render144b=render;render=function(){if(SKIP_DISC&&READY&&(DISC_VIEWS[S.view]||S.om))discLazy();return _render144b.apply(this,arguments)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
