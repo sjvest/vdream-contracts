@@ -631,7 +631,7 @@ td.cnm .linkbtn{display:inline-block;max-width:220px;overflow:hidden;text-overfl
 .evsave{display:flex;align-items:center;gap:8px;margin-top:10px}.evsave .grow{flex:1}.dirty{font-size:12.5px;color:#9A5B13;background:#FFF3E6;border-radius:999px;padding:3px 10px;font-weight:600}.dirty[hidden]{display:none}
 .evstaff table td{vertical-align:middle}.evstaff .obt{align-items:center}.evstaff .sbx{min-width:220px}
 .ocardrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
-.blrow{display:flex;align-items:center;gap:10px;margin-top:10px}.blrow .l{font-size:12.5px;color:var(--ink-2);min-width:96px}
+.blrow{margin-top:12px}.blrow .seg{align-self:flex-start}.blrow .l{font-size:12.5px;color:var(--ink-2);min-width:96px}
 .onbsum{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.onbsum .grow{flex:1}.onbfold h3{margin-bottom:6px}
 .pflcard td{vertical-align:middle}.pfbad{background:#FFF5F5;border-color:#F2B8B8!important}.small.bad,.bad.small{color:#9B1C1C}
 .stbox{background:#FBFAFF}.stt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.stt .grow{flex:1}.stseg{flex-wrap:wrap}.stseg button.auto{box-shadow:inset 0 -3px 0 #9B8FE0}.stseg button.on.auto{box-shadow:inset 0 -3px 0 #C9C1F2}
@@ -13046,8 +13046,9 @@ BK.push({k:"ocard",lab:"명함 (예전 앱)",cols:[["기관*","org","약칭 또�
   note:"예전 앱의 명함 사진을 드라이브 › 명함 폴더 › 기관 정식명 폴더로 옮겨요 · 담당자가 없으면 새로 추가 · 이미 명함이 있는 사람은 건너뜀"});
 /* ---------- 9. 기초생활수급자 (대상 · 비대상 · 모름) ---------- */
 var BL_V=["대상","비대상","모름"];
-function blSeg(w){var v=w.basic_living||"모름";return'<div class="blrow"><span class="l">기초생활수급자</span><span class="seg sm">'+BL_V.map(function(x){return'<button type="button" class="'+(v===x?"on":"")+'" data-act="bl-set" data-w="'+w.id+'" data-v="'+x+'">'+x+'</button>'}).join("")+'</span></div>'}
-var _pWk139=pWk24;pWk24=function(w){var h=_pWk139.apply(this,arguments);if(!w||String(w.id).indexOf("tlw_")===0)return h;var a='<p class="hint" style="margin-top:4px">비장애인 판정이면';return h.indexOf(a)>=0?h.replace(a,blSeg(w)+a):h};
+function blSeg(w){var v=w.basic_living||"모름";return'<div class="blrow"><span>기초생활수급자</span><span class="seg sm">'+BL_V.map(function(x){return'<button type="button" class="'+(v===x?"on":"")+'" data-act="bl-set" data-w="'+w.id+'" data-v="'+x+'">'+x+'</button>'}).join("")+'</span></div>'}
+var _pWk139=pWk24;pWk24=function(w){var h=_pWk139.apply(this,arguments);if(!w||String(w.id).indexOf("tlw_")===0)return h;var a='<p class="hint" style="margin-top:4px">비장애인 판정이면';var i=h.indexOf(a),e=i>=0?h.indexOf("</p>",i):-1;
+return e>0?h.slice(0,e+4)+blSeg(w)+h.slice(e+4):h};
 /* ---------- 10. 신규입사자 창: 재판정 확인완료 · 직무 확정이면 한 줄로 접기 ---------- */
 S.onbOpen=S.onbOpen||{};
 function onbPaint(){var pn=document.querySelector('aside.pnl[aria-label="입사 상세"]');if(!pn||!S.onbSel)return;var e=emp(S.onbSel);if(!e)return;var w=wk(e.worker);
