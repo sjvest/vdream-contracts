@@ -820,6 +820,8 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 #nav section.fold .ngh::after{transform:rotate(-90deg)}#nav section.fold>button,#nav section.fold .subs,#nav section.fold .lab{display:none}.ngc{margin-left:4px}
 #nav .navfav .grp{color:#9A6B00}
 #nav .plnav{display:flex;align-items:center;gap:6px;margin:2px 8px 6px;padding:8px 12px;border-radius:10px;background:#FFF4EC;color:#9A3412;font-weight:700;text-decoration:none;border:1px solid #F8D3B8}#nav .plnav:hover{background:#FDE8D7}#nav .plnav span{margin-left:auto}
+#main .plnote{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:12px 16px;border-radius:12px;background:#FFF4EC;border:1px solid #F8D3B8;color:#7C2D12}#main .plnote>div{display:flex;flex-direction:column;gap:2px}#main .plnote .plnote-i{font-size:22px}#main .plnote .small{color:#9A3412}
+.pnl .tdel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line,#e5e7eb)}
 </style>
 </head>
 <body>
@@ -14444,6 +14446,60 @@ var _mobTabs154=mobTabs;mobTabs=function(){var T=_mobTabs154.apply(this,argument
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="mt-go"][data-v="__pl"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();window.open(PL_URL,"_blank","noopener")},true);
 /* 할 일 · 기관 창에서 발굴 메뉴로 가던 버튼 → 파이프라인 */
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="view"][data-v]');if(!b)return;var v=b.dataset.v;if(DISC_MENU.some(function(x){return x[0]===v})||/^(ologs|orel|ostat)$/.test(v)){ev.preventDefault();ev.stopImmediatePropagation();window.open(PL_URL,"_blank","noopener")}},true);
+
+/* ================================================================
+   v155 발굴파트 첫 화면 안내 · 필터를 바꾸면 흐린 줄 없이 바로 거르기 (모든 표)
+        추천인재 [필터 초기화] · 추천인재 삭제 · 파이프라인 '입사 소식 공유' 완료 반영
+   ================================================================ */
+APP_VER="v155";APP_VER_ON="10/19";APP_NOTE="추천인재 삭제 · 필터 초기화 · 필터 흐림 수정 · 발굴 안내";
+/* ---------- 1. 발굴파트 첫 화면: 파이프라인 안내 ---------- */
+var PLN_V=null;
+function plNoteOff(){try{return localStorage.getItem("vw_plnote")===TODAY}catch(e){return false}}
+function plNotePaint(){var me=st(S.me)||{};if(me.part!=="발굴파트"||isAdminSt(me)||S.role==="admin")return;if(PLN_V==null)PLN_V=S.view;if(S.view!==PLN_V||plNoteOff())return;var M=$("#main");if(!M||M.querySelector(".plnote"))return;
+  M.insertAdjacentHTML("afterbegin",'<div class="plnote" role="note"><span class="plnote-i" aria-hidden="true">🏛</span><div><b>발굴 업무는 발굴 파이프라인에서 해요</b><span class="small">기관 · 소통 히스토리 · 후속 액션 · 채용 건 인재 매칭 · 행사 · 물품 · V-Work에서 온 일(기관 경유 전달 · 수급 요청 · 추천 보류)</span></div><span class="grow"></span><a class="btn pri" href="'+PL_URL+'" target="_blank" rel="noopener">파이프라인 열기 ↗</a><button class="btn" data-act="plnote-x" title="오늘은 그만 보기">닫기</button></div>')}
+/* ---------- 2. 표 순서 고정(흐린 줄)은 저장 · 처리 때만 · 필터를 바꾸면 새로 ---------- */
+var FRZ_FLT=0;
+var FLT_SEL="#main .fbar,#main .tabs,#main .pqbar,#main .seg,#pop,#cdrop,#main .colbar";
+function fltEl(t){return!!(t&&t.closest&&t.closest(FLT_SEL)&&!t.closest("aside,.pnl,#modal"))}
+document.addEventListener("input",function(ev){if(fltEl(ev.target))FRZ_FLT=1},true);
+document.addEventListener("change",function(ev){if(fltEl(ev.target)||(ev.target&&ev.target.dataset&&ev.target.dataset.ch==="t-fv"))FRZ_FLT=1},true);
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-act]");if(!b)return;var a=b.dataset.act;if(a==="excel"||a==="frz-reset")return;
+  if(/^(f-reset|t-fclear|combo-clear|tal-tab)$/.test(a)||/(^|-)tab$/.test(a)||fltEl(b))FRZ_FLT=1},true);
+var _render155=render;render=function(){if(FRZ_FLT){FRZ={};TFRZ=null;FRZ_FLT=0}var r=_render155.apply(this,arguments);try{plNotePaint()}catch(e){console.warn(e)}return r};
+/* ---------- 3. 추천인재 [필터 초기화] (검색 · 직무 · 근로시간 · 출처 · 표 머리 필터) ---------- */
+var _fa155=filtersApplied;filtersApplied=function(){var n=_fa155.apply(this,arguments);if(S.view==="talent"){if(S.talJob)n++;if(S.talHr)n++;if(S.srcF)n++}return n};
+var _rf155=resetFilters;resetFilters=function(){if(S.view==="talent"){S.talJob="";S.talHr="";S.srcF=""}FRZ={};TFRZ=null;return _rf155.apply(this,arguments)};
+var _vTalent155=vTalent;vTalent=function(){var h=_vTalent155.apply(this,arguments);if(typeof h!=="string")return h;var k='<span class="grow"></span><button class="btn" data-act="excel">';var i=h.indexOf(k);return i<0?h:h.slice(0,i)+'<span class="grow"></span>'+resetBtn()+h.slice(i+'<span class="grow"></span>'.length)};
+/* ---------- 4. 추천인재 삭제 (등록자 · 채용파트 · 관리자) ---------- */
+function talDelCan(t){var me=st(S.me)||{};return S.role==="admin"||isAdminSt(me)||me.part==="채용파트"||(!!t.by&&t.by===me.name)}
+function talNm(t){var w=t.worker&&wk(t.worker);return(w&&w.name)||t.name||"추천인재"}
+function talLinks(t){var C=typeof talCandsOf==="function"?talCandsOf(t.id):[],O=(DB.orec||[]).filter(function(x){return x.k==="tl"&&x.pid===t.id}),Q=(DB.supq||[]).filter(function(q){return(q.links||[]).some(function(l){return l.k==="tl"&&l.id===t.id})});return{C:C,O:O,Q:Q}}
+var _talPanel155=talPanel;talPanel=function(t){var h=_talPanel155.apply(this,arguments);if(!h||!t||!t.id||!talDelCan(t))return h;
+  var b='<div class="ps tdel"><button class="btn danger sm" data-act="tal-del" data-id="'+esc(t.id)+'">추천인재 삭제</button><span class="small muted">'+(t.hire_emp?"입사 기록과 연결돼 있어 지울 수 없어요 · 상태를 '종료'로 바꿔 주세요":"잘못 · 중복 등록했을 때만 · 연결된 후보 · 추천 · 수급 연결도 같이 정리돼요")+'</span></div>';
+  var i=h.lastIndexOf("</aside>");return i<0?h:h.slice(0,i)+b+h.slice(i)};
+function talDel(t,why){var id=t.id,nm=talNm(t),L=talLinks(t);
+  L.C.forEach(function(x){if(x.c.tal===id)delete x.c.tal});
+  if(L.O.length){var oid={};L.O.forEach(function(x){oid[x.id]=1});DB.orec=DB.orec.filter(function(x){return!oid[x.id]})}
+  L.Q.forEach(function(q){q.links=q.links.filter(function(l){return!(l.k==="tl"&&l.id===id)})});
+  DB.talent=DB.talent.filter(function(x){return x.id!==id});if(SNAP&&SNAP.talent)delete SNAP.talent[id];
+  logChange("talent_picks",id,nm,"추천인재 삭제",t.status||"",why,"브이드림 내부");
+  S.talSel=null;S.talE=null;
+  if(LIVE&&sb)sb.from("talent_picks").delete().eq("id",id).then(function(r){if(r&&r.error){toast("서버에서 지우지 못했어요: "+r.error.message+" · 다시 불러올게요");loadAll().then(render)}});
+  toast(nm+" 추천인재를 지웠어요"+(L.C.length+L.O.length+L.Q.length?" · 연결 "+(L.C.length+L.O.length+L.Q.length)+"건 정리":""));render()}
+function talDelAsk(t){var L=talLinks(t),li=[];
+  L.C.forEach(function(x){li.push("채용 후보 · "+esc((comp(x.r.company)||{}).name||"")+" "+(x.x.seq||"")+"차")});
+  L.O.forEach(function(x){var r=rcOf(x.rr);li.push("발굴 추천 · "+esc(r?(comp(r.company)||{}).name||"":"")+" · "+esc(x.status||""))});
+  L.Q.forEach(function(q){li.push("수급 요청 연결 · "+esc(q.job||"")+" "+(q.n||"")+"명")});
+  askIn("추천인재 삭제",'<p style="margin:0"><b>'+esc(talNm(t))+'</b> 추천인재를 지울까요? 되돌릴 수 없어요</p>'+(li.length?'<p class="small" style="margin:8px 0 4px">같이 정리되는 연결 '+li.length+'건</p><ul class="small" style="margin:0;padding-left:18px">'+li.map(function(x){return"<li>"+x+"</li>"}).join("")+'</ul><p class="small muted" style="margin:6px 0 0">채용 후보 기록은 남기고 추천인재 연결만 끊어요 · 근로자 DB는 그대로예요</p>':'<p class="small muted" style="margin:6px 0 0">연결된 후보 · 추천 · 수급 요청이 없어요 · 근로자 DB는 그대로예요</p>'),
+    "필수 · 예: 중복 등록 · 본인이 원하지 않음","삭제",function(v){var why=String(v||"").trim();if(!why){toast("삭제 사유를 적어 주세요");talDelAsk(t);return}talDel(t,why)})}
+/* ---------- 5. 파이프라인에서 '입사 소식 공유'를 끝낸 건은 내 할 일에서 빼기 ---------- */
+var _bt155=buildTodos;buildTodos=function(){var L=_bt155.apply(this,arguments);return L.filter(function(t){return t.type!=="ohire"||((DB.meta||{})[t.key]||{}).status!=="완료"})};
+/* ---------- 버튼 ---------- */
+var _v139Act155=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
+  if(a==="plnote-x"){try{localStorage.setItem("vw_plnote",TODAY)}catch(e){}var n=document.querySelector("#main .plnote");if(n)n.remove();return true}
+  if(a==="tal-del"){var t=DB.talent.find(function(x){return x.id===D0.id});if(!t)return true;if(!talDelCan(t)){toast("등록자 · 채용파트 · 관리자만 지울 수 있어요");return true}
+    if(t.hire_emp){toast("입사 기록과 연결된 추천인재는 지울 수 없어요 · 상태를 '종료'로 바꿔 주세요");return true}talDelAsk(t);return true}
+  return _v139Act155(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
