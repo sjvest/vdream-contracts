@@ -826,6 +826,8 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 .wrman .fg{margin-top:6px}.wrdup{margin-top:8px;padding:8px 10px;border-radius:8px;background:#FFF7E6;border:1px solid #F5D08A;font-size:12px;color:#7A4A00}.wrdup-r{display:flex;align-items:center;gap:8px;margin-top:6px}
 .wrlink .obt{display:flex;gap:8px;align-items:center}
 .rrcolink{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;border-radius:8px;background:#EEF4FF;border:1px solid #C9D8FB;font-size:12.5px;color:#1E3A8A}
+.cdtel{font-size:11px;margin-top:3px;white-space:nowrap;color:var(--ink-2,#555)}.cdtel small{color:var(--muted,#888)}.cdtel.ban{color:#B42318}
+.tlman .fg{margin-top:6px}
 </style>
 </head>
 <body>
@@ -14661,6 +14663,53 @@ rrNoCoGroups=function(){var g={},o=[];rrNoCo().forEach(function(r){var n=rrSheet
 var _v139Act157=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
   if(a==="rr-colink"){var r=rcOf(D0.id),c=comp(D0.c);if(r&&c){var nm=r.company_label||rrSheetName(r);r.company=c.id;logChange("recruit_requests",r.id,c.name,"기업 연결 (미등록 → 기업 DB)",nm||"",c.name,"브이드림 내부");S.rrF=null;toast(c.name+"과(와) 연결했어요");render()}return true}
   return _v139Act157(a,el)};
+
+/* ================================================================
+   v158 추천인재: 근로자 DB에 없는 구직자도 직접 입력으로 등록 (소통 연락처 포함)
+        채용 요청 후보 · 발굴 추천에 소통 연락처 (기관 '근로자 연락은 기관 통해서만'이면 기관 담당자)
+   ================================================================ */
+APP_VER="v158";APP_VER_ON="10/20";APP_NOTE="추천인재 직접 입력 등록 · 후보 소통 연락처";
+/* ---------- 1. 후보 · 추천의 소통 연락처 ---------- */
+function personCt(t,p,w){var o=oOf((t&&t.src_org)||(p&&p.src_org)||(w&&w.org_id));
+  if(o&&o.ban_direct){var c=ctOf(o,(t&&t.mc_ct)||(p&&p.mc_ct)||(w&&w.org_ct))||ctWin(o)||null;return{l:o.short+" · "+(c?c.name:"담당자")+" · 기관 통해서만",p:(c&&ctTel(c))||o.phone||"",ban:true}}
+  var src=t&&!(t.worker&&wk(t.worker))?t:p&&!(p.worker&&wk(p.worker))?p:null;
+  if(src&&src.main_contact&&src.main_contact!=="본인")return pMainC(src);if(w)return mainC(w);if(src)return pMainC(src);return null}
+function candCt(c){var t=c.tal&&(DB.talent||[]).find(function(y){return y.id===c.tal}),p=c.pf&&pfOf(c.pf),w=(t&&t.worker&&wk(t.worker))||(p&&p.worker&&wk(p.worker))||null;
+  var r=personCt(t,p,w);if(!r&&c.phone)r={l:"본인",p:c.phone};return r}
+function ctLine(r){if(!r||!r.p)return r?'<div class="cdtel'+(r.ban?" ban":"")+'"><small>('+esc(r.l)+')</small> <span class="muted">번호 없음</span></div>':"";return'<div class="cdtel'+(r.ban?" ban":"")+'"><small>('+esc(r.l)+')</small> '+telHtml(r.p)+'</div>'}
+var _rrRoundHtml158=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml158.apply(this,arguments);if(typeof h!=="string")return h;
+  (x.cands||[]).forEach(function(c,i){var k='data-cd="'+x.id+'|'+i+'|name"',a=h.indexOf(k);if(a<0)return;var e=h.indexOf("</td>",a);if(e<0)return;var ln=ctLine(candCt(c));if(ln)h=h.slice(0,e)+ln+h.slice(e)});return h};
+var _pRr158=pRr;pRr=function(){var h=_pRr158.apply(this,arguments);if(typeof h!=="string"||S.rrSel==="new")return h;var r=rcOf(S.rrSel);if(!r)return h;var b=h.indexOf('<div class="ps wide orecbox">');if(b<0)return h;var be=divEnd(h,b);
+  var L=(DB.orec||[]).filter(function(x){return x.rr===r.id}).filter(function(x){return x.k==="pf"?pfOf(x.pid):oFind(DB.talent,x.pid)});var seg=h.slice(b,be),pos=0;
+  L.forEach(function(x){var i=seg.indexOf("<tr><td><span class=\"b sm",pos);if(i<0)return;var j=seg.indexOf("</b>",i);if(j<0)return;var t=x.k==="pf"?null:oFind(DB.talent,x.pid),p=x.k==="pf"?pfOf(x.pid):null,w=(t&&t.worker&&wk(t.worker))||(p&&p.worker&&wk(p.worker))||null;var ln=ctLine(personCt(t,p,w));seg=seg.slice(0,j+4)+ln+seg.slice(j+4);pos=j+4+ln.length});
+  return h.slice(0,b)+seg+h.slice(be)};
+/* ---------- 2. 추천인재 등록: 근로자 DB에 없음 · 직접 입력 ---------- */
+var _wItems158=wItems;wItems=function(k,q){var L=_wItems158.apply(this,arguments);if(k!=="tw")return L;return L.concat([{id:"__manual",label:"근로자 DB에 없음 · 직접 입력",sub:"처음 온 구직자 등 · 연락처 · 소통 방법을 직접 넣어요",k:"~"}])};
+var _comboObj158=comboObj;comboObj=function(k,id){if(k==="tw"&&id==="__manual")return{name:"직접 입력"};return _comboObj158.apply(this,arguments)};
+var _comboSet158=comboSet;comboSet=function(k,id){if(k==="tw"&&id==="__manual"&&S.talF&&S.talSel==="new"){S.talF.manual=true;S.talF.worker="";S.talF.m=S.talF.m||{main_contact:"본인"};S.combo=null;render();return}if(k==="tw"&&id&&S.talF)S.talF.manual=false;return _comboSet158.apply(this,arguments)};
+function tlmHtml(F){var M=F.m||{},o=M.src_org&&oOf(M.src_org),ban=o&&o.ban_direct,mc=ban?"기관":(M.main_contact||"본인"),C=o?(o.contacts||[]).filter(function(c){return!c.out}):[];
+  var fi=function(k,l,ph,type,req){return'<label class="f'+(req?" req":"")+'"><span>'+l+'</span><input data-tlm="'+k+'"'+(type?' type="'+type+'"':"")+' value="'+esc(M[k]||"")+'"'+(ph?' placeholder="'+esc(ph)+'"':"")+'></label>'};
+  return'<div class="f full tlman"><span>구직자 (직접 입력 · 근로자 DB에 없음) <button class="linkbtn" data-act="tlm-back">← 근로자 검색으로</button></span><div class="fg">'+fi("name","이름","","",1)+fi("phone","본인 연락처","010-")+fi("birth","생년월일","","date")+
+    '<label class="f"><span>소속 기관 (있으면)</span><select data-tlm="src_org"><option value="">없음</option>'+(DB.orgs||[]).filter(function(x){return x.stage!=null}).sort(function(a,b){return a.short.localeCompare(b.short,"ko")}).map(function(x){return'<option value="'+x.id+'"'+(M.src_org===x.id?" selected":"")+'>'+esc(x.short)+'</option>'}).join("")+'</select></label>'+
+    '<label class="f"><span>소통 방법</span><select data-tlm="main_contact"'+(ban?" disabled":"")+'>'+["본인","보호자","기관"].map(function(m){return'<option'+(m===mc?" selected":"")+(m==="기관"&&!o?" disabled":"")+'>'+m+'</option>'}).join("")+'</select></label>'+
+    fi("guardian_rel","보호자 관계","예: 모")+fi("gphone","보호자 연락처","010-")+(o?'<label class="f"><span>기관 담당자</span><select data-tlm="mc_ct"><option value="">연락창구 (기본)</option>'+C.map(function(c){return'<option value="'+c.id+'"'+(M.mc_ct===c.id?" selected":"")+'>'+esc(c.name)+(c.title?" · "+esc(c.title):"")+'</option>'}).join("")+'</select></label>':"")+'</div>'+
+    (ban?'<p class="hint" style="margin:6px 0 0">🚫 '+esc(o.short)+'은(는) 근로자 연락을 기관 통해서만 해요 · 소통 방법이 기관 담당자로 고정돼요</p>':'<p class="hint" style="margin:6px 0 0">본인 연락처나 보호자 연락처 중 하나는 꼭 넣어 주세요 · 생년월일을 넣어 두면 입사 등록 때 같은 사람을 찾기 쉬워요</p>')+
+    (F.dup?'<div class="wrdup"><b>⚠ 이미 있는 사람일 수 있어요</b> · '+F.dup.map(esc).join(" · ")+' · 다른 사람이면 [등록]을 한 번 더 눌러 주세요</div>':"")+'</div>'}
+var _talNewPanel158=talNewPanel;talNewPanel=function(){var h=_talNewPanel158.apply(this,arguments),F=S.talF;if(!F||!F.manual||typeof h!=="string")return h;
+  var a=h.indexOf('<div class="f req full"><span>근로자</span>'),b=a<0?-1:h.indexOf('<div style="margin-top:10px">',a);if(a<0||b<0)return h;var e=h.lastIndexOf("</div>",b);return h.slice(0,a)+tlmHtml(F)+h.slice(e)};
+document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.tlm||!S.talF)return;S.talF.m=S.talF.m||{};S.talF.m[t.dataset.tlm]=t.value;S.talF.dup=null;S.talF.dupOk=false},true);
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.tlm||!S.talF)return;S.talF.m=S.talF.m||{};S.talF.m[t.dataset.tlm]=t.value;if(t.dataset.tlm==="src_org"||t.dataset.tlm==="main_contact")render()},true);
+function tlmDup(nm,bd){var L=[];DB.workers.forEach(function(w){if(w.name===nm&&(!bd||!w.birth||w.birth===bd))L.push("근로자 DB "+w.name+(w.birth?" ("+w.birth+")":""))});(DB.talent||[]).forEach(function(t){if(!t.worker&&t.name===nm&&(!bd||!t.birth||t.birth===bd))L.push("추천인재 "+t.name)});(DB.pf||[]).forEach(function(p){if(p.name===nm&&(!bd||!p.birth||p.birth===bd))L.push("포트폴리오 "+p.name)});return L.slice(0,4)}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="tal-create"]');if(!b||!S.talF||!S.talF.manual)return;ev.preventDefault();ev.stopImmediatePropagation();
+  var F=S.talF,M=F.m||{},nm=String(M.name||"").trim(),o=M.src_org&&oOf(M.src_org);if(!nm){toast("이름을 넣어 주세요");return}
+  var mc=o&&o.ban_direct?"기관":(M.main_contact||"본인");if(mc==="본인"&&!String(M.phone||"").trim()){toast("본인 연락처를 넣거나 소통 방법을 바꿔 주세요");return}if(mc==="보호자"&&!String(M.gphone||"").trim()){toast("보호자 연락처를 넣어 주세요");return}if(mc==="기관"&&!o){toast("소속 기관을 골라 주세요");return}
+  var V=talFields(F);if(V.err){toast(V.err);return}
+  if(!F.dupOk){var D=tlmDup(nm,M.birth);if(D.length){F.dup=D;F.dupOk=true;render();toast("이미 있는 사람일 수 있어요 · 확인해 주세요");return}}
+  var ct=o&&M.mc_ct&&ctOf(o,M.mc_ct);
+  var t=Object.assign({id:nid(),worker:"",emp:"",source:F.source||"담당자 추천",origin:"직접 입력",job:"",hours:"",ps:"",pe:"",region:"",reason:"",status:"대기",lcid:"",ldate:"",lnote:"",rej:"",dby:"",dat:"",by:st(S.me).name,created:stamp(),
+    name:nm,phone:String(M.phone||"").trim(),birth:M.birth||"",src_org:M.src_org||"",main_contact:mc,guardian_rel:String(M.guardian_rel||"").trim(),gphone:String(M.gphone||"").trim(),mc_ct:M.mc_ct||"",mc_name:ct?ct.name:""},V);
+  DB.talent.push(t);logChange("talent_picks",t.id,nm,"추천인재 등록 (직접 입력 · 근로자 DB에 없음)","",t.source+" · "+mc+(t.reason?" · "+t.reason:""),"브이드림 내부");S.talSel=t.id;S.talF=null;toast("추천인재로 등록했어요"+(t.birth?"":" · 생년월일을 넣어 두면 입사 등록 때 같은 사람을 찾기 쉬워요"));render()},true);
+var _v139Act158=v139Act;v139Act=function(a,el){if(a==="tlm-back"){if(S.talF){S.talF.manual=false;S.talF.dup=null;S.talF.dupOk=false}render();return true}return _v139Act158(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
