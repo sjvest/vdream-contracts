@@ -819,6 +819,7 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 #nav .ngh{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px}#nav .ngh::after{content:"▾";margin-left:auto;font-size:11px;color:var(--ink-3);transition:transform .15s}
 #nav section.fold .ngh::after{transform:rotate(-90deg)}#nav section.fold>button,#nav section.fold .subs,#nav section.fold .lab{display:none}.ngc{margin-left:4px}
 #nav .navfav .grp{color:#9A6B00}
+#nav .plnav{display:flex;align-items:center;gap:6px;margin:2px 8px 6px;padding:8px 12px;border-radius:10px;background:#FFF4EC;color:#9A3412;font-weight:700;text-decoration:none;border:1px solid #F8D3B8}#nav .plnav:hover{background:#FDE8D7}#nav .plnav span{margin-left:auto}
 </style>
 </head>
 <body>
@@ -14421,6 +14422,28 @@ var _v139Act153=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
   case"ngfold":(function(){var M=navFoldGet(),s=el.closest("section.ng");M[D0.v]=!(s&&s.classList.contains("fold"));navFoldSet(M);renderNav()})();return true;
   case"navfav":(function(){var L=navFavGet().slice(),i=L.indexOf(D0.v);if(i>=0)L.splice(i,1);else L.push(D0.v);navFavSet(L);toast(i>=0?"즐겨찾기에서 뺐어요":"즐겨찾기에 넣었어요");renderNav()})();return true}
   return _v139Act153(a,el)};
+
+/* ================================================================
+   v154 발굴 업무는 예전 발굴 파이프라인 화면(/pipeline)에서 · V-Work 발굴 메뉴 숨김
+        두 화면이 같은 DB(기관 · 소통 히스토리 · 추천인재 · 포트폴리오 · 채용 요청)를 써요
+   ================================================================ */
+APP_VER="v154";APP_VER_ON="10/19";APP_NOTE="발굴 파이프라인 연결 (/pipeline) · V-Work 발굴 메뉴 숨김";
+var PL_URL="pipeline/";
+function plCan(){var me=st(S.me)||{};return me.part==="발굴파트"||isAdminSt(me)||S.role==="admin"}
+/* 발굴 메뉴는 V-Work에서 숨겨요 (기관 DB · 추천인재 · 포트폴리오는 그대로) */
+var _mpSee154=mpSee;mpSee=function(v){var v2=(typeof DISC_ALIAS!=="undefined"&&DISC_ALIAS[v])||v;if(DISC_MENU.some(function(x){return x[0]===v2}))return false;return _mpSee154(v)};
+var _renderNav154=renderNav;renderNav=function(){_renderNav154.apply(this,arguments);if(S.role==="admin"&&ADM_V.indexOf(S.view)>=0)return;var N=$("#nav");if(!N)return;
+  [].forEach.call(N.querySelectorAll('[data-act="view"]'),function(b){var v=b.dataset.v;if(DISC_MENU.some(function(x){return x[0]===v})||v==="ologs"||v==="orel"||v==="ostat")b.remove()});
+  [].forEach.call(N.querySelectorAll("section.ng"),function(s){if(!s.querySelector('[data-act="view"]'))s.remove()});
+  if(!plCan()||N.querySelector(".plnav"))return;var t=N.querySelector('[data-act="view"][data-v="todo"]');var h='<a class="plnav" href="'+PL_URL+'" target="_blank" rel="noopener">🏛 발굴 파이프라인 <span aria-hidden="true">↗</span></a>';
+  if(t)t.insertAdjacentHTML("beforebegin",h);else N.insertAdjacentHTML("afterbegin",h)};
+/* 숨긴 화면으로 바로 들어오면 내 할 일로 */
+var _renderMain154=renderMain;renderMain=function(){if(DISC_MENU.some(function(x){return x[0]===S.view})||/^(ologs|orel|ostat)$/.test(S.view)){S.view="todo"}return _renderMain154.apply(this,arguments)};
+/* 휴대폰 아래 탭: 발굴파트 '행사' 자리 → 파이프라인 */
+var _mobTabs154=mobTabs;mobTabs=function(){var T=_mobTabs154.apply(this,arguments);if(S.role!=="admin"&&partOf()==="발굴파트")T=T.map(function(x){return x&&x[0]==="oevt"?["__pl","파이프라인","🏛"]:x});return T};
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="mt-go"][data-v="__pl"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();window.open(PL_URL,"_blank","noopener")},true);
+/* 할 일 · 기관 창에서 발굴 메뉴로 가던 버튼 → 파이프라인 */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="view"][data-v]');if(!b)return;var v=b.dataset.v;if(DISC_MENU.some(function(x){return x[0]===v})||/^(ologs|orel|ostat)$/.test(v)){ev.preventDefault();ev.stopImmediatePropagation();window.open(PL_URL,"_blank","noopener")}},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
