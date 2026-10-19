@@ -825,6 +825,7 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 .rrbusy{margin:6px 0 0;padding:6px 10px;border-radius:8px;background:#FFF7E6;border:1px solid #F5D08A;color:#8A5300;font-size:12px}
 .wrman .fg{margin-top:6px}.wrdup{margin-top:8px;padding:8px 10px;border-radius:8px;background:#FFF7E6;border:1px solid #F5D08A;font-size:12px;color:#7A4A00}.wrdup-r{display:flex;align-items:center;gap:8px;margin-top:6px}
 .wrlink .obt{display:flex;gap:8px;align-items:center}
+.rrcolink{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;border-radius:8px;background:#EEF4FF;border:1px solid #C9D8FB;font-size:12.5px;color:#1E3A8A}
 </style>
 </head>
 <body>
@@ -14611,6 +14612,55 @@ var _v139Act156=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
   if(a==="wrm-back"){if(S.wreqF){S.wreqF.manual=false;S.wreqF.dup=null;S.wreqF.dupOk=false}render();return true}
   if(a==="wrm-link"){if(S.wreqF&&D0.id){S.wreqF.manual=false;S.wreqF.dup=null;S.wreqF.dupOk=false;comboSet("wr",D0.id);render()}return true}
   return _v139Act156(a,el)};
+
+/* ================================================================
+   v157 기관 추천 인재(근로자 DB에 없음)도 후보로 · 입사 연결되면 근로자 DB와 이어 붙이기
+        후보 추천: 다른 기업에 연계중 · 제안중인 사람 빼기
+        미등록 기업 채용 요청: 수정 · 같은 이름 기업 [연결] · 한 번에 연결 이름
+   ================================================================ */
+APP_VER="v157";APP_VER_ON="10/20";APP_NOTE="기관 추천 인재 후보 추가 · 연계중/제안중 추천 제외 · 미등록 기업 요청 수정";
+/* ---------- 1. 근로자 DB에 없는 추천인재도 [n차 후보로 추가] ---------- */
+var NOW_BTN='<button class="btn xs" disabled title="근로자 DB에 먼저 등록해야 후보로 넣을 수 있어요">근로자 DB 등록 필요</button>';
+var _pfRecHtml157=pfRecHtml;pfRecHtml=function(r){var h=_pfRecHtml157.apply(this,arguments);if(!h||h.indexOf(NOW_BTN)<0)return h;var last=rrRounds(r.id).slice().sort(function(a,b){return b.seq-a.seq})[0];
+  var out="",pos=0,i;while((i=h.indexOf(NOW_BTN,pos))>=0){var k=h.lastIndexOf('data-act="rc-tal" data-id="',i),tid=k<0?"":h.slice(k+27,h.indexOf('"',k+27));
+    out+=h.slice(pos,i)+(tid&&last?'<button class="btn xs act" data-act="talrec-add" data-id="'+last.id+'" data-t="'+esc(tid)+'" title="근로자 DB에 없는 기관 추천 인재 · 입사 등록 때 근로자 DB가 만들어져요">'+last.seq+'차 후보로 추가</button>':(last?NOW_BTN:'<span class="small muted">차수를 먼저 추가</span>'));pos=i+NOW_BTN.length}
+  return out+h.slice(pos)};
+var _talAsCand157=talAsCand;talAsCand=function(x,tid){var t=DB.talent.find(function(y){return y.id===tid});if(!t||t.worker&&wk(t.worker))return _talAsCand157.apply(this,arguments);
+  var _lc=logChange;logChange=function(tb,id,nm){if(tb==="workers"){arguments[0]="talent_picks";arguments[1]=t.id}return _lc.apply(this,arguments)};var c;try{c=_talAsCand157.apply(this,arguments)}finally{logChange=_lc}
+  if(c){if(!c.name)c.name=t.name||"";c.phone=t.phone||"";c.birth=t.birth||"";if(!t.birth)setTimeout(function(){toast("생년월일이 비어 있어요 · 넣어 두면 입사 등록 때 같은 사람을 찾기 쉬워요")},1800)}return c};
+/* 최종 합격 → 신규입사 등록: 추천인재 연락처 · 생년월일 미리 채움 */
+var _rrHire157=rrHire;rrHire=function(rid,i){var r=_rrHire157.apply(this,arguments);try{var x=DB.rrr.find(function(y){return y.id===rid}),c=x&&x.cands[+i];if(c&&S.onbRows&&S.onbRows[0]){var t=c.tal&&DB.talent.find(function(y){return y.id===c.tal}),p=c.pf&&pfOf(c.pf);var ph=c.phone||(t&&t.phone)||(p&&p.phone)||"",bd=c.birth||(t&&t.birth)||(p&&p.birth)||"";
+  if(ph&&!S.onbRows[0].phone)S.onbRows[0].phone=ph;if(bd&&!S.onbRows[0].birth)S.onbRows[0].birth=bd;render()}}catch(e){console.warn(e)}return r};
+/* 입사 연결된 후보의 추천인재 · 포트폴리오가 근로자 DB에 없으면 그 근로자와 이어 붙이기 */
+function hireLinkTal(){var n=0;DB.rrr.forEach(function(x){(x.cands||[]).forEach(function(c){if(!c.hired)return;var eid=typeof c.hired==="string"?c.hired:c.emp,e=eid&&emp(eid);if(!e||!e.worker)return;
+    var t=c.tal&&DB.talent.find(function(y){return y.id===c.tal});if(t&&(!t.worker||!wk(t.worker))){t.worker=e.worker;if(!t.hire_emp)t.hire_emp=e.id;logChange("talent_picks",t.id,(wk(e.worker)||{}).name||"","근로자 DB 연결 (입사)","",(wk(e.worker)||{}).name||"","브이드림 내부");n++}
+    var p=c.pf&&pfOf(c.pf);if(p&&!p.worker){p.worker=e.worker;n++}})});return n}
+var _render157=render;render=function(){try{hireLinkTal()}catch(e){console.warn(e)}return _render157.apply(this,arguments)};
+/* ---------- 2. 후보 추천: 다른 기업에 연계중 · 제안중인 사람 빼기 ---------- */
+function talOther(t,r){return t.status==="연계중"&&t.lcid&&r&&t.lcid!==r.company}
+function pfOther(p,r){if(p.status!=="제안중")return false;var c=r&&comp(r.company);return!(c&&p.proposed&&String(p.proposed).indexOf(c.name)>=0)}
+var _talRec157=talRec;talRec=function(r){return _talRec157.apply(this,arguments).filter(function(o){return!talOther(o.t,r)})};
+var _pfRec157=pfRec;pfRec=function(r){return _pfRec157.apply(this,arguments).filter(function(o){return!pfOther(o.p,r)&&!(o.tal&&talOther(o.tal,r))})};
+var _talcOpen157=talcOpen;talcOpen=function(rid){var res=_talcOpen157.apply(this,arguments);var x=DB.rrr.find(function(y){return y.id===rid}),r=x&&rcOf(x.req);if(!r)return res;
+  [].forEach.call(document.querySelectorAll("#modal input.talck"),function(i){if(i.disabled)return;var t=(DB.talent||[]).find(function(y){return y.id===i.value});if(!t||!talOther(t,r))return;var L=i.closest("label");if(L){L.style.opacity=".6";L.dataset.other=(comp(t.lcid)||{}).name||"다른 기업";L.insertAdjacentHTML("beforeend",' <span class="b sm warn">연계중 · '+esc(L.dataset.other)+'</span>')}});return res};
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.matches||!t.matches("#modal input.talck")||!t.checked)return;var L=t.closest("label");if(L&&L.dataset.other)toast(L.dataset.other+"에 연계 중인 사람이에요 · 동시에 진행해도 되는지 확인하고 추가해 주세요")});
+/* ---------- 3. 미등록 기업 채용 요청: 수정 · 같은 이름 기업 연결 ---------- */
+var _rrSave157=rrSave;rrSave=function(){var F=S.rrF,isNew=S.rrSel==="new";if(isNew||!F)return _rrSave157.apply(this,arguments);try{rrFormRead(F)}catch(e){}var r0=rcOf(S.rrSel);
+  if(F.company||!r0||(r0.company&&comp(r0.company)))return _rrSave157.apply(this,arguments);
+  F.jobs=(F.jobs||[]).filter(function(j){return j.job});if(!F.jobs.length){toast("직무를 1개 이상 입력해 주세요");return}if(F.pay_type==="최저시급")F.pay_amount="";F.headcount=rrHead(F);delete F.break_custom;delete F.co_new;
+  var nm=r0.company_label||rrSheetName(r0)||"미등록 기업",n=0;Object.keys(F).forEach(function(k){if(k==="id"||k==="created"||k==="company"||k==="src")return;var a=JSON.stringify(r0[k]==null?"":r0[k]),b=JSON.stringify(F[k]==null?"":F[k]);if(a!==b){if(k==="status")logChange("recruit_requests",r0.id,nm,"상태",r0.status,F.status,"브이드림 내부");else n++;r0[k]=JSON.parse(JSON.stringify(F[k]))}});
+  if(n)logChange("recruit_requests",r0.id,nm,"요청 정보 수정","",n+"개 항목 (미등록 기업)","브이드림 내부");S.rrF=null;S.rrEdit=null;toast("저장했어요 · 기업 DB에 등록되면 요청 창 위 [연결]로 이어 주세요");render()};
+function coNameKey(n){return String(n||"").replace(/\s|\(주\)|㈜|주식회사|유한회사/g,"").toLowerCase()}
+function rrCoGuess(r){var n=coNameKey(r.company_label||rrSheetName(r));if(!n)return null;return DB.companies.find(function(c){return!c.deleted&&(coNameKey(c.name)===n||coNameKey(c.display_name)===n)})||null}
+var _pRr157=pRr;pRr=function(){var h=_pRr157.apply(this,arguments);if(typeof h!=="string"||S.rrSel==="new")return h;var r=rcOf(S.rrSel);if(!r||(r.company&&comp(r.company)))return h;var g=rrCoGuess(r);
+  var b='<div class="rrcolink">'+(g?'<span>🔗 기업 DB에 <b>'+esc(g.name)+'</b>이(가) 있어요 · 이 요청을 그 기업과 연결할까요?</span><button class="btn xs pri" data-act="rr-colink" data-id="'+r.id+'" data-c="'+g.id+'">연결</button>':'<span>기업 DB에 아직 없는 기업이에요 ('+esc(r.company_label||rrSheetName(r)||"이름 없음")+') · 등록되면 여기서 바로 연결할 수 있어요 · [수정]에서 기업을 골라도 연결돼요</span>')+'</div>';
+  var i=h.indexOf('<div class="ps');return i<0?h:h.slice(0,i)+b+h.slice(i)};
+/* 직접 입력한 미등록 기업 요청을 '삭제된 기업'으로 잘못 보던 것 */
+rrOrph=function(r){return(r.company&&!comp(r.company))||(!r.company&&!String(r.raw||"").trim()&&!String(r.company_label||"").trim())};
+rrNoCoGroups=function(){var g={},o=[];rrNoCo().forEach(function(r){var n=rrSheetName(r)||String(r.company_label||"").trim()||"(업체명 없음)";if(!g[n]){g[n]=[];o.push(n)}g[n].push(r)});return o.map(function(n){return{n:n,L:g[n]}}).sort(function(a,b){return b.L.length-a.L.length})};
+var _v139Act157=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
+  if(a==="rr-colink"){var r=rcOf(D0.id),c=comp(D0.c);if(r&&c){var nm=r.company_label||rrSheetName(r);r.company=c.id;logChange("recruit_requests",r.id,c.name,"기업 연결 (미등록 → 기업 DB)",nm||"",c.name,"브이드림 내부");S.rrF=null;toast(c.name+"과(와) 연결했어요");render()}return true}
+  return _v139Act157(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
