@@ -41,7 +41,8 @@ function stName(id){var s=staff().find(function(x){return x.id===id});return s?s
 function stId(name){name=S(name).split(/[,·\/]/)[0].trim();if(!name)return null;var s=staff().find(function(x){return x.name===name||x.email===name});return s?s.id:null}
 /* ---------- V-Work 표 받기 · 쓰기 ---------- */
 var PAGE=1000;
-function loadRaw(t,sel){if(rawP[t])return rawP[t];var out=[];
+var NARROW={recruit_rounds:"id,request_id,seq,cands,handoff_on"};
+function loadRaw(t,sel){if(rawP[t])return rawP[t];var out=[];sel=sel||NARROW[t];
   function page(f){var q=R.from(t).select(sel||"*").range(f,f+PAGE-1);return q.then(function(r){if(r.error)throw r.error;out=out.concat(r.data||[]);if((r.data||[]).length===PAGE)return page(f+PAGE)})}
   rawP[t]=page(0).then(function(){raw[t]=out;return out},function(e){delete rawP[t];throw e});return rawP[t]}
 function need(L){return Promise.all(L.map(function(t){return loadRaw(t)}))}
@@ -263,8 +264,8 @@ function jobOld(r){var p=plOf(r),Q=supOf(r.id),q=Q[0]||{},qp=plOf(q);var open=Q.
     sourcing_target_count:p.sourcing_target_count!=null?p.sourcing_target_count:null,unit_price:r.unit_price!=null?r.unit_price:null,deadline:q.due_date||r.due_date||null,member:stName(q.assignee_id)||p.member||"",
     status:p.status||(open?"서칭중":"완료"),disability_type:p.disability_type||((r.dis_require||[])[0]||""),severity:p.severity||r.dis_level||"",work_type:r.work_type||p.work_type||"재택근무",location:p.location||"",requirements:p.requirements||r.extra||"",
     jd:p.jd||"",searched_orgs:p.searched_orgs||[],notes:p.notes!=null?p.notes:(q.memo||""),current_count:p.current_count!=null?Math.max(p.current_count,A.length):A.length,created_at:r.created_at||null,created_by_name:p.created_by_name||r.requester_name||"",_vw:r.id})}
-VT.jobs={deps:["staff","companies","recruit_requests","supply_requests","pl_applications"],
-  rows:function(){var has={};(raw.supply_requests||[]).forEach(function(q){has[q.request_id]=1});return(raw.recruit_requests||[]).filter(function(r){return has[r.id]||plOf(r).src}).map(jobOld)},
+VT.jobs={deps:["staff","companies","recruit_requests","supply_requests","pl_applications","org_recommends"],
+  rows:function(){var has={};(raw.supply_requests||[]).forEach(function(q){has[q.request_id]=1});(raw.org_recommends||[]).forEach(function(x){if(/발굴 앱/.test(x.memo||""))has[x.request_id]=1});return(raw.recruit_requests||[]).filter(function(r){return has[r.id]||plOf(r).src}).map(jobOld)},
   ins:function(p){var comp=(raw.companies||[]).find(function(c){return c.name===p.company});var id=uid();
     var row={id:id,company_id:comp?comp.id:null,company_label:comp?null:(p.company||""),kind:"신규",requested_on:today(),due_date:d10(p.deadline),jobs:[{job:p.job_title||"",n:+p.headcount||1}],headcount:+p.headcount||1,status:"",requester_name:myName(),created_at:new Date().toISOString(),
       pl:{src:"pl",job_title:p.job_title||"",status:p.status||"서칭중",member:p.member||"",created_by_name:myName(),extra:omit(p,["company","job_title","headcount","deadline","status","member","unit_price"])}};if(p.unit_price!=null)row.unit_price=p.unit_price;
@@ -278,7 +279,12 @@ VT.jobs={deps:["staff","companies","recruit_requests","supply_requests","pl_appl
     return Promise.all(P).then(function(){return rUpd("recruit_requests",r.id,patch)}).then(function(x){return jobOld(x)})},
   del:function(old){var Q=supOf(old._vw);return Promise.all(Q.map(function(q){return rUpd("supply_requests",q.id,{status:"취소",memo:(q.memo?q.memo+" / ":"")+"발굴 앱에서 채용 건 삭제"})}))}};
 /* ---------- 지원 현황 (pl_applications) ---------- */
+function roundsOf(rid){return(raw.recruit_rounds||[]).filter(function(x){return x.request_id===rid}).sort(function(a,b){return(b.seq||0)-(a.seq||0)})}
+function candFind(rid,k,pid){var R0=roundsOf(rid);for(var i=0;i<R0.length;i++){var C=R0[i].cands||[];for(var j=0;j<C.length;j++){var c=C[j];if((k==="tl"&&c.tal===pid)||(k==="pf"&&c.pf===pid))return{x:R0[i],c:c}}}return null}
+function candStatus(c){var all=[c.doc,c.iv,c.final].join(" ");if(c.hired||c.final==="합격")return"최종합격";if(/취소|포기/.test(all))return"지원취소";if(c.final==="불합격"||/불합격/.test(c.iv||""))return"최종불합격";if(c.doc==="불합격")return"서류불합격";if(c.doc==="합격")return"서류합격";return"채용지원"}
+function candStep(f){if(!f)return"";var c=f.c,L=[(f.x.seq||1)+"차"];L.push("서류 "+(c.doc||"대기"));if(c.iv)L.push("면접 "+c.iv+(c.iv_on?" "+String(c.iv_on).slice(5).replace("-","/"):""));if(c.final)L.push("최종 "+c.final);if(c.hired)L.push("입사 연결");return L.join(" · ")}
 function appOld(a){var d=a.data||{};var tk=S(a.talent_key);return Object.assign({},d,{id:num("app",a.id),talent_id:tk?num("tal",tk):null,job_id:a.job_id?num("rr",a.job_id):null,org_id:a.org_id?num("org",a.org_id):null,created_at:a.created_at||null,_vw:a.id})}
+function appOldVw(a){var o=appOld(a);var tk=S(a.talent_key),k=tk.split(":")[0],pid=tk.slice(k.length+1);if(a.job_id&&(k==="tl"||k==="pf")){var f=candFind(a.job_id,k,pid);if(f){o.status_pl=o.status;o.status=candStatus(f.c);o.vw_step=candStep(f)}}return o}
 function appSyncRec(a){/* 채용 건이 붙은 지원 → V-Work 채용 요청 '발굴 추천'과 수급 요청 연결 인재 */
   if(!a.job_id||!a.talent_key)return Promise.resolve();var k=a.talent_key.split(":")[0],pid=a.talent_key.slice(k.length+1);
   var ex=(raw.org_recommends||[]).find(function(x){return x.request_id===a.job_id&&x.person_id===pid});var P=[];
@@ -286,9 +292,12 @@ function appSyncRec(a){/* 채용 건이 붙은 지원 → V-Work 채용 요청 '
   var q=supOf(a.job_id).find(function(x){return x.status==="요청"||x.status==="진행"})||supOf(a.job_id)[0];if(q){var L=Array.isArray(q.links)?q.links:[];if(!L.some(function(l){return l.id===pid}))P.push(rUpd("supply_requests",q.id,{links:L.concat([{k:k,id:pid}]),status:q.status==="요청"?"진행":q.status}))}
   return Promise.all(P)}
 function appVirtual(){/* V-Work 입사 기록으로 생긴 합격 (지원 기록이 없는 인재) */var L=[],have={};(raw.pl_applications||[]).forEach(function(a){have[a.talent_key]=1});
+  var haveJ={};(raw.pl_applications||[]).forEach(function(a){haveJ[a.talent_key+"|"+a.job_id]=1});var jobOk={};VT.jobs.rows().forEach(function(j){jobOk[j._vw]=1});var shown={};VT.talents.rows().forEach(function(t){shown[talKey(t._k,t._vw)]=t});
+  (raw.recruit_rounds||[]).forEach(function(x){(x.cands||[]).forEach(function(c){var key=c.tal?"tl:"+c.tal:c.pf?"pf:"+c.pf:"";var t=key&&shown[key];if(!t||haveJ[key+"|"+x.request_id])return;haveJ[key+"|"+x.request_id]=1;have[key]=1;
+    L.push({id:num("app","vc:"+key+":"+x.request_id),talent_id:t.id,job_id:jobOk[x.request_id]?num("rr",x.request_id):null,org_id:t.source_org_id,status:candStatus(c),vw_step:candStep({x:x,c:c})+" · 채용파트 직접 추가",hire_company:compName((rFind("recruit_requests",x.request_id)||{}).company_id)||null,join_date:null,created_at:c.sent||t.created_at,_vw:null,_virt:key})})});
   VT.talents.rows().forEach(function(t){var key=talKey(t._k,t._vw);if(have[key]||!t.hire_company)return;L.push({id:num("app","v:"+key),talent_id:t.id,job_id:null,org_id:t.source_org_id,status:t.status==="계약종료"?"계약종료":"최종합격",hire_company:t.hire_company,contract_end_date:t.contract_end_date,join_date:t.join_date||null,created_at:t.created_at,_vw:null,_virt:key})});return L}
-VT.candidate_applications={deps:["staff","organizations","talent_picks","portfolios","workers","employments","contract_terms","companies","recruit_requests","supply_requests","pl_applications","org_recommends"],
-  rows:function(){return(raw.pl_applications||[]).map(appOld).concat(appVirtual())},
+VT.candidate_applications={deps:["staff","organizations","talent_picks","portfolios","workers","employments","contract_terms","companies","recruit_requests","supply_requests","pl_applications","org_recommends","recruit_rounds"],
+  rows:function(){return(raw.pl_applications||[]).map(appOldVw).concat(appVirtual())},
   ins:function(p){var tk=txt("tal",p.talent_id),row={id:uid(),talent_key:tk,job_id:txt("rr",p.job_id),org_id:txt("org",p.org_id),data:omit(p,["id","talent_id","job_id","org_id"]),created_at:new Date().toISOString()};
     return rIns("pl_applications",row).then(function(a){return appSyncRec(a).then(function(){return appOld(a)})})},
   upd:function(old,p){if(old._virt){return VT.candidate_applications.ins(Object.assign(omit(old,["id","_vw","_virt"]),p))}
@@ -378,7 +387,7 @@ window.PLA={wrap:function(client){R=client;
   _raw:raw,_num:num,_txt:txt,_vt:VT,reset:function(){raw={};rawP={};BLOB={};BLOBP={}},
   /* 덧붙임(pl_addon)용 */
   api:{R:function(){return R},raw:function(){return raw},load:loadRaw,need:need,fresh:function(t,sel){delete rawP[t];return loadRaw(t,sel)},find:rFind,ins:rIns,upd:rUpd,del:rDel,clog:clog,uid:uid,today:today,kst:kst,d10:d10,plOf:plOf,plPatch:plPatch,
-    stName:stName,staff:staff,me:function(){return ME},myName:myName,num:num,txt:txt,orgLast:orgLast,curEnd:curEnd,compName:compName,blobKeys:function(){return BLOB}}};
+    stName:stName,staff:staff,me:function(){return ME},myName:myName,num:num,txt:txt,orgLast:orgLast,curEnd:curEnd,compName:compName,candFind:candFind,candStep:candStep,candStatus:candStatus,roundsOf:roundsOf,blobKeys:function(){return BLOB}}};
 /* ---------- 구글 챗 · 명함 글자 읽기: 키 없이 V-Work로 ---------- */
 var _fetch=window.fetch.bind(window);
 window.fetch=function(u,o){var url=String(u&&u.url||u||"");
@@ -10612,16 +10621,31 @@ document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.targe
    ④ 채용 건: 인재 매칭 + 추천 결과
    ================================================================ */
 var REC_C={"검토 대기":"a","후보 추가":"g","보류":"r"};
+function stepChip(f){if(!f)return"";var st=A.candStatus(f.c),cl=/합격$/.test(st)&&!/불합격/.test(st)?"g":/불합격|취소/.test(st)?"r":"a";return'<span class="vwchip '+cl+'">'+E(st)+'</span> <span class="vwmuted">'+E(A.candStep(f))+'</span>'}
 function recHtml(job){var rid=A.txt("rr",job.id);if(!rid)return"";var L=raw("org_recommends").filter(function(x){return x.request_id===rid}).sort(function(a,b){return String(b.created_on||"").localeCompare(String(a.created_on||""))});
   var cnt={};L.forEach(function(x){cnt[x.status]=(cnt[x.status]||0)+1});
-  var h='<div class="vwsec" style="margin-top:12px"><h5>🔗 V-Work 추천 결과 '+Object.keys(cnt).map(function(s){return'<span class="vwchip '+(REC_C[s]||"x")+'">'+E(s)+' '+cnt[s]+'</span>'}).join(" ")+'<span style="flex:1"></span><button class="vwbtn p" onclick="event.stopPropagation();vwMatch('+job.id+')">🔎 인재 매칭</button></h5>';
-  if(!L.length)return h+'<p class="vwmuted" style="margin:0">아직 추천한 인재가 없어요 · [인재 매칭]에서 기관을 고르면 그 기관 인재가 조건 순으로 나와요 · 보내면 V-Work 채용 요청에 \'검토 대기\'로 올라가요</p></div>';
-  return h+'<table><tr><th>인재</th><th>기관</th><th>상태</th><th>사유 · 결정</th><th>추천일</th></tr>'+L.map(function(x){var o=x.org_id&&A.find("organizations",x.org_id);
-    return'<tr><td><b>'+E(personName(x.kind,x.person_id))+'</b></td><td class="vwmuted">'+E(oShort(o))+'</td><td><span class="vwchip '+(REC_C[x.status]||"x")+'">'+E(x.status||"")+'</span></td><td class="vwmuted">'+E(x.hold_reason||"")+(x.decided_by_name?" · "+E(x.decided_by_name):"")+(x.done_on?" "+md(x.done_on):"")+'</td><td class="vwmuted">'+md(x.created_on||"")+'</td></tr>'}).join("")+'</table></div>'}
+  var seen={};L.forEach(function(x){seen[x.kind+":"+x.person_id]=1});
+  var D=[];A.roundsOf(rid).forEach(function(x){(x.cands||[]).forEach(function(c){var k=c.tal?"tl":c.pf?"pf":"",pid=c.tal||c.pf;if(!k||seen[k+":"+pid])return;var t=k==="tl"?A.find("talent_picks",pid):A.find("portfolios",pid);if(!t||!t.src_org_id)return;seen[k+":"+pid]=1;D.push({k:k,pid:pid,org:t.src_org_id,f:{x:x,c:c}})})});
+  var h='<div class="vwsec" style="margin-top:12px"><h5>🔗 추천 결과 · 진행 '+Object.keys(cnt).map(function(s){return'<span class="vwchip '+(REC_C[s]||"x")+'">'+E(s)+' '+cnt[s]+'</span>'}).join(" ")+(D.length?' <span class="vwchip x">채용파트 직접 추가 '+D.length+'</span>':"")+'<span style="flex:1"></span><button class="vwbtn p" onclick="event.stopPropagation();vwMatch('+job.id+')">🔎 인재 매칭</button></h5>';
+  if(!L.length&&!D.length)return h+'<p class="vwmuted" style="margin:0">아직 추천한 인재가 없어요 · [인재 매칭]에서 기관을 고르면 그 기관 인재가 조건 순으로 나와요 · 보내면 운영페이지 채용 요청에 \'검토 대기\'로 올라가요</p></div>';
+  return h+'<table><tr><th>인재</th><th>기관</th><th>추천</th><th>진행 (채용파트 기록)</th><th>추천일</th></tr>'+L.map(function(x){var o=x.org_id&&A.find("organizations",x.org_id),f=(x.kind==="tl"||x.kind==="pf")?A.candFind(rid,x.kind,x.person_id):null;
+    return'<tr><td><b>'+E(personName(x.kind,x.person_id))+'</b></td><td class="vwmuted">'+E(oShort(o))+'</td><td><span class="vwchip '+(REC_C[x.status]||"x")+'">'+E(x.status||"")+'</span>'+(x.status==="보류"?'<div class="vwmuted">'+E(x.hold_reason||"")+'</div>':"")+'</td><td>'+(f?stepChip(f):'<span class="vwmuted">'+(x.status==="검토 대기"?"채용파트 검토 전":x.status==="보류"?"—":"후보로 추가됨 · 아직 진행 기록 없음")+'</span>')+'</td><td class="vwmuted">'+md(x.created_on||"")+'</td></tr>'}).join("")+
+    D.map(function(d){var o=A.find("organizations",d.org);return'<tr><td><b>'+E(personName(d.k,d.pid))+'</b></td><td class="vwmuted">'+E(oShort(o))+'</td><td><span class="vwchip x">채용파트 직접 추가</span></td><td>'+stepChip(d.f)+'</td><td class="vwmuted">'+md(d.f.c.sent||"")+'</td></tr>'}).join("")+'</table></div>'}
+/* 공고 내용 (운영페이지 채용 요청 그대로) */
+function won(n){n=+n||0;return n?n.toLocaleString("ko-KR")+"원":""}
+function jobInfoHtml(job){var rid=A.txt("rr",job.id),r=rid&&A.find("recruit_requests",rid);if(!r)return"";var R0=A.roundsOf(rid),x=R0[0];
+  var J=(Array.isArray(r.jobs)?r.jobs:[]).map(function(j){return j.job+(+j.n>1?" "+j.n+"명":"")+(j.detail?" ("+j.detail+")":"")}).join(", ");
+  var work=[r.wk_days?"주 "+r.wk_days+"일":"",r.day_hours?"하루 "+r.day_hours+"시간":"",r.break_min?"휴게 "+r.break_min+"분":"",r.time_note||"",r.weekly_off?"휴무 "+r.weekly_off:""].filter(Boolean).join(" · ");
+  var pay=r.pay_type==="최저시급"?"최저시급":[r.pay_type||"",won(r.pay_amount)].filter(Boolean).join(" ");
+  var dis=[r.dis_level&&r.dis_level!=="무관"?"정도 "+r.dis_level:"",(r.dis_require||[]).length?"필수 "+r.dis_require.join("·"):"",(r.dis_exclude||[]).length?"제외 "+r.dis_exclude.join("·"):""].filter(Boolean).join(" · ")||"무관";
+  var term=[r.term_months?r.term_months+"개월":r.term_end?"~"+r.term_end:"",r.probation_months?"수습 "+r.probation_months+"개월":""].filter(Boolean).join(" · ");
+  var stp=x?(x.seq||1)+"차 · "+(x.handoff_on?"운영 전달 "+md(x.handoff_on):(x.cands||[]).some(function(c){return c.sent})?"이력서 전달 중":"후보 모으는 중 (이력서 전달 전)"):"차수 없음 (채용파트가 아직 차수를 만들지 않았어요)";
+  var rows=[["고객사",A.compName(r.company_id)||r.company_label||""],["직무 · 인원",J+(r.headcount?" · 총 "+r.headcount+"명":"")],["입사 희망일",r.start_date?r.start_date+(r.start_note?" ("+r.start_note+")":""):"미정"],["근무",work],["근무 형태",[r.work_type,r.work_note].filter(Boolean).join(" · ")],["급여",pay],["계약",term],["장애 조건",dis],["추가 요청",r.extra||""],["마감",r.due_date||""],["진행",stp+(r.status_note?" · "+r.status_note:"")]].filter(function(z){return z[1]});
+  return'<div class="vwsec" style="margin-top:12px"><h5>📋 공고 내용 <span class="vwmuted" style="font-weight:500">운영페이지 채용 요청 기준</span></h5><table>'+rows.map(function(z){return'<tr><th style="width:96px">'+z[0]+'</th><td style="white-space:pre-wrap">'+E(z[1])+'</td></tr>'}).join("")+'</table></div>'}
 var _sp=window.sourcingPanelHtml;
-if(typeof _sp==="function")window.sourcingPanelHtml=function(job){var h=_sp.apply(this,arguments);try{h+=recHtml(job)}catch(e){console.warn(e)}return h};
+if(typeof _sp==="function")window.sourcingPanelHtml=function(job){var h=_sp.apply(this,arguments);try{h=jobInfoHtml(job)+h+recHtml(job)}catch(e){console.warn(e)}return h};
 var _rj=window.renderJobs;
-if(typeof _rj==="function")window.renderJobs=function(){var self=this,args=arguments;return A.fresh("org_recommends").then(function(){},function(){}).then(function(){return _rj.apply(self,args)})};
+if(typeof _rj==="function")window.renderJobs=function(){var self=this,args=arguments;return Promise.all([A.fresh("org_recommends"),A.fresh("recruit_rounds")]).then(function(){},function(){}).then(function(){return _rj.apply(self,args)})};
 function lvlOf(s){s=String(s||"");return/심하지/.test(s)?"심하지 않은":/심한|중증/.test(s)?"심한":""}
 function activeEmp(wid){var t=A.today();return raw("employments").some(function(e){if(e.worker_id!==wid||e.cancelled)return false;var end=e.end_date||A.curEnd(e.id);return!end||end>=t})}
 function busyTill(wid){if(!wid)return"";var t=A.today(),m="";raw("employments").forEach(function(e){if(e.worker_id!==wid||e.cancelled)return;var end=e.end_date||A.curEnd(e.id)||"9999-12-31";if(end>=t&&end>m)m=end});return m}
@@ -10629,8 +10653,9 @@ function busyTxt(d){return d==="9999-12-31"?"재직 중 (종료일 없음)":"만
 function matchCands(rid,oid){var r=A.find("recruit_requests",rid)||{},J=(Array.isArray(r.jobs)?r.jobs:[]).map(function(j){return j.job}).filter(Boolean),DL=lvlOf(r.dis_level);
   var linked={};raw("supply_requests").forEach(function(q){if(q.request_id===rid)(q.links||[]).forEach(function(l){linked[l.k+":"+l.id]=1})});raw("org_recommends").forEach(function(x){if(x.request_id===rid)linked[x.kind+":"+x.person_id]=1});
   var L=[],seenW={},ok=function(org){return org&&(!oid||org===oid)};
-  raw("portfolios").forEach(function(p){if(p.worker_id)seenW[p.worker_id]=1;if(!ok(p.src_org_id)||!/^(대기|제안중)$/.test(p.status||"대기"))return;L.push({k:"pf",id:p.id,org:p.src_org_id,name:p.name||"",jobs:p.jobs||[],lvl:lvlOf(p.dis_level),dt:p.dis_type||""})});
-  raw("talent_picks").forEach(function(t){if(t.worker_id)seenW[t.worker_id]=1;if(!ok(t.src_org_id)||!/^(대기|연계중|제안중)$/.test(t.status||"대기"))return;var w=t.worker_id&&A.find("workers",t.worker_id);L.push({k:"tl",id:t.id,org:t.src_org_id,name:t.name||(w&&w.name)||"",jobs:t.wish_jobs||(t.wish_job?[t.wish_job]:[]),lvl:lvlOf(w&&w.disability_level),dt:w?w.disability_type||"":""})});
+  var cname=A.compName(r.company_id)||r.company_label||"";
+  raw("portfolios").forEach(function(p){if(p.worker_id)seenW[p.worker_id]=1;if(!ok(p.src_org_id))return;var ps=p.status||"대기";if(!(ps==="대기"||(ps==="제안중"&&cname&&String(p.proposed||"").indexOf(cname)>=0)))return;L.push({k:"pf",id:p.id,org:p.src_org_id,name:p.name||"",jobs:p.jobs||[],lvl:lvlOf(p.dis_level),dt:p.dis_type||""})});
+  raw("talent_picks").forEach(function(t){if(t.worker_id)seenW[t.worker_id]=1;if(!ok(t.src_org_id))return;var ts=t.status||"대기";if(!(ts==="대기"||(ts==="연계중"&&t.linked_company_id&&t.linked_company_id===r.company_id)))return;var w=t.worker_id&&A.find("workers",t.worker_id);L.push({k:"tl",id:t.id,org:t.src_org_id,name:t.name||(w&&w.name)||"",jobs:t.wish_jobs||(t.wish_job?[t.wish_job]:[]),lvl:lvlOf(w&&w.disability_level),dt:w?w.disability_type||"":""})});
   raw("workers").forEach(function(w){if(!ok(w.org_id)||seenW[w.id]||w.merged_into||activeEmp(w.id))return;L.push({k:"wk",id:w.id,org:w.org_id,name:w.name||"",jobs:[],lvl:lvlOf(w.disability_level),dt:w.disability_type||""})});
   L=L.filter(function(c){return!linked[c.k+":"+c.id]});
   L.forEach(function(c){var src=c.k==="pf"?A.find("portfolios",c.id):c.k==="tl"?A.find("talent_picks",c.id):null,till=src?busyTill(src.worker_id):"";c.till=till;c.block=!!(till&&r.start_date&&r.start_date<=till)});
@@ -10749,6 +10774,33 @@ function ctEdit(o,cid){var c=(o.contacts||[]).find(function(x){return x.id===cid
     if(!String(nx.name||"").trim()){T("이름은 비울 수 없어요");return}if(!ch.length){ovClose();return}this.disabled=true;
     var P={contacts:(o.contacts||[]).map(function(x){return x.id===cid?nx:x})};if(nx.out&&o.window_contact_id===cid){P.window_contact_id=null;P.manager_name=null}
     A.upd("organizations",o.id,P).then(function(){A.clog("organizations",o.id,oShort(o),"기관 연락처 수정",c.name,nx.name+" · "+ch.map(function(k){return({name:"이름",title:"직책",dept:"부서",mobile:"휴대폰",phone:"전화",email:"이메일",out:"퇴사일",memo:"메모"})[k]||k}).join(", "));ovClose();T("연락처를 저장했어요");if(typeof openOrg==="function")openOrg(A.num("org",o.id))},function(e){if(!(e&&e.code==="CONFLICT")){ovClose();T("저장하지 못했어요: "+(e&&e.message||e))}})}}
+
+/* ================================================================
+   v157 인재영입: 인재별 '지금 추천할 만한 공고' (최신 차수 이력서 전달 전 공고)
+   ================================================================ */
+function openReqs(){return raw("recruit_requests").filter(function(r){if(/완료|취소|종료|마감|보류/.test(r.status||""))return false;var x=A.roundsOf(r.id)[0];return!x||(!x.handoff_on&&!(x.cands||[]).some(function(c){return c.sent}))})}
+function talRaw(numId){var key=A.txt("tal",numId);if(!key)return null;var k=key.split(":")[0],id=key.slice(k.length+1);var o=k==="pf"?A.find("portfolios",id):k==="wk"?A.find("workers",id):A.find("talent_picks",id);return o?{k:k==="wk"?"wk":k,id:id,o:o}:null}
+function talFacts(T){var o=T.o,w=T.k==="wk"?o:(o.worker_id&&A.find("workers",o.worker_id));return{jobs:T.k==="pf"?(o.jobs||[]):T.k==="tl"?(o.wish_jobs||(o.wish_job?[o.wish_job]:[])):[],lvl:lvlOf(T.k==="pf"?o.dis_level:(w&&w.disability_level)),dt:T.k==="pf"?(o.dis_type||""):(w&&w.disability_type)||"",wid:T.k==="wk"?o.id:o.worker_id}}
+function jobsFor(numId){var T=talRaw(numId);if(!T)return[];var F=talFacts(T),till=busyTill(F.wid),kk=T.k==="pf"?"pf":"tl";
+  var mine={};raw("org_recommends").forEach(function(x){if(x.person_id===T.id)mine[x.request_id]=1});raw("pl_applications").forEach(function(a){if(a.talent_key===T.k+":"+T.id)mine[a.job_id]=1});
+  return openReqs().filter(function(r){if(mine[r.id])return false;if(till&&r.start_date&&r.start_date<=till)return false;var ex=(r.dis_exclude||[]).some(function(d){return F.dt&&F.dt.indexOf(String(d).replace(/장애$/,""))>=0});return!ex})
+    .map(function(r){var J=(Array.isArray(r.jobs)?r.jobs:[]).map(function(j){return j.job}).filter(Boolean),ch=[];if(F.jobs.length)ch.push(["직무",F.jobs.some(function(j){return J.indexOf(j)>=0})]);var DL=lvlOf(r.dis_level);if(DL&&F.lvl)ch.push(["장애 정도",DL===F.lvl]);
+      var sc=ch.filter(function(z){return z[1]}).length*2-ch.filter(function(z){return!z[1]}).length;return{r:r,ch:ch,sc:sc,J:J}})
+    .filter(function(m){return m.sc>0||!F.jobs.length}).sort(function(a,b){return b.sc-a.sc||String(a.r.due_date||"9").localeCompare(String(b.r.due_date||"9"))})}
+function tjobsHtml(numId){var L=jobsFor(numId),T=talRaw(numId);if(!T)return"";var F=talFacts(T),till=busyTill(F.wid);
+  var h='<div class="vwsec" style="margin:0 0 12px"><h5>🎯 지금 추천할 만한 공고 <span class="vwchip">'+L.length+'</span><span class="vwmuted" style="font-weight:500">이력서 전달 전 공고 · 직무 · 장애 정도 기준</span></h5>';
+  if(till)h+='<p class="vwmuted" style="margin:0 0 6px">'+E(busyTxt(till))+' · 입사 희망일이 그 뒤인 공고만 보여요</p>';
+  if(!L.length)return h+'<p class="vwmuted" style="margin:0">'+(F.jobs.length?"맞는 공고가 없어요":"희망 직무를 넣으면 맞는 공고를 골라 줘요")+'</p></div>';
+  return h+L.slice(0,5).map(function(m){var r=m.r;return'<div class="vwr"><span class="vwt"><b>'+E(A.compName(r.company_id)||r.company_label||"")+'</b> · '+E(m.J.join(", "))+' <span class="vwmuted">'+(r.start_date?"입사 "+md(r.start_date):"입사일 미정")+(r.due_date?" · 마감 "+md(r.due_date):"")+'</span></span>'+m.ch.map(function(z){return'<span class="vwchip '+(z[1]?"g":"r")+'">'+z[0]+(z[1]?" ✓":" ✗")+'</span>'}).join(" ")+'<button class="vwbtn p" data-tj="'+E(r.id)+'" data-t="'+numId+'">이 공고에 추천</button></div>'}).join("")+'</div>'}
+function tjobsPaint(){var d=document.getElementById("talent-drawer");if(!d||d.style.display==="none"||typeof currentDrawerTalentId==="undefined"||currentDrawerTalentId==null)return;var c=document.getElementById("drawer-content");if(!c)return;var x=document.getElementById("vw-tjobs");if(!x){x=document.createElement("div");x.id="vw-tjobs";c.parentNode.insertBefore(x,c)}x.innerHTML=tjobsHtml(currentDrawerTalentId)}
+var TJ_DEPS=["staff","organizations","workers","employments","contract_terms","companies","recruit_requests","supply_requests","talent_picks","portfolios","pl_applications","org_recommends","recruit_rounds"];
+if(typeof window.openTalentDrawer==="function"){var _otd=window.openTalentDrawer;window.openTalentDrawer=function(){var r=_otd.apply(this,arguments);var x=document.getElementById("vw-tjobs");if(x)x.innerHTML='<p class="vwmuted">추천할 공고 찾는 중…</p>';A.need(TJ_DEPS).then(tjobsPaint,function(){});return r}}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-tj]");if(!b)return;ev.preventDefault();var rid=b.getAttribute("data-tj"),numId=+b.getAttribute("data-t"),T=talRaw(numId);if(!T)return;b.disabled=true;b.textContent="보내는 중…";
+  var go=T.k==="wk"?A.ins("talent_picks",{id:A.uid(),worker_id:T.id,source:"기관 추천",origin:"기관 추천",status:"대기",reason:"발굴 앱 · 추천 공고",links:[],wish_hours_list:[],src_org_id:T.o.org_id,created_by_name:A.myName(),created_at:new Date().toISOString(),pl:{src:"pl"}}).then(function(t){return"tl:"+t.id}):Promise.resolve(T.k+":"+T.id);
+  go.then(function(key){var org=T.k==="wk"?T.o.org_id:T.o.src_org_id;return PLA._vt.candidate_applications.ins({talent_id:A.num("tal",key),job_id:A.num("rr",rid),org_id:org?A.num("org",org):null,status:"채용지원",created_by_name:A.myName(),apply_date:A.today()})})
+    .then(function(){window.toast&&toast("추천했어요 · 운영페이지 채용 요청에 검토 대기로 올라가요");var p=typeof loadApplications==="function"?Promise.resolve(loadApplications()):Promise.resolve();return p.then(tjobsPaint)},function(e){b.disabled=false;b.textContent="다시 추천";window.toast&&toast("추천하지 못했어요: "+(e&&e.message||e))})});
+/* 인재 목록: '추천 공고 n' */
+if(typeof window.renderTalent==="function"){var _rt=window.renderTalent;window.renderTalent=function(){var r=_rt.apply(this,arguments);A.need(TJ_DEPS).then(function(){[].forEach.call(document.querySelectorAll('#talent-tbody tr[onclick*="openTalentDrawer("]'),function(tr){if(tr.querySelector(".vwtj"))return;var m=(tr.getAttribute("onclick")||"").match(/openTalentDrawer\((\d+)\)/);if(!m)return;var n=jobsFor(+m[1]).length;if(!n)return;var td=tr.querySelector("td");if(td)td.insertAdjacentHTML("beforeend",' <span class="vwchip g vwtj" title="이력서 전달 전 공고 중 맞는 공고">추천 공고 '+n+'</span>')})},function(){});return r}}
 })();
 </script>
 </body>
