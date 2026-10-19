@@ -48,7 +48,12 @@ function need(L){return Promise.all(L.map(function(t){return loadRaw(t)}))}
 function rFind(t,id){return(raw[t]||[]).find(function(x){return x.id===id})}
 function clean(t,row){var o=Object.assign({},row);if(!PL_OK)delete o.pl;return o}
 function rIns(t,row){return R.from(t).insert(clean(t,row)).select().then(function(r){if(r.error)throw r.error;var x=(r.data&&r.data[0])||row;(raw[t]=raw[t]||[]).push(x);return x})}
-function rUpd(t,id,patch){var p=clean(t,patch);if(!Object.keys(p).length)return Promise.resolve(rFind(t,id));return R.from(t).update(p).eq("id",id).select().then(function(r){if(r.error)throw r.error;var x=rFind(t,id),nx=r.data&&r.data[0];if(x)Object.assign(x,nx||p);return x})}
+var CONF_T={organizations:"기관",org_contact_logs:"소통 기록"};
+function rUpd(t,id,patch){var p=clean(t,patch);if(!Object.keys(p).length)return Promise.resolve(rFind(t,id));var x0=rFind(t,id),q=R.from(t).update(p).eq("id",id),chk=CONF_T[t]&&x0&&x0.updated_at;if(chk)q=q.eq("updated_at",x0.updated_at);
+  return q.select().then(function(r){if(r.error)throw r.error;var nx=r.data&&r.data[0];
+    if(chk&&!nx)return R.from(t).select("*").eq("id",id).maybeSingle().then(function(f){var x=rFind(t,id);if(f&&f.data){if(x)Object.keys(x).forEach(function(k){delete x[k]});if(x)Object.assign(x,f.data);else(raw[t]=raw[t]||[]).push(f.data)}
+      try{window.dispatchEvent(new CustomEvent("pl-conflict",{detail:{table:t,id:id}}))}catch(e){}var er=new Error("다른 사람이 먼저 이 "+CONF_T[t]+" 정보를 바꿨어요 · 최신 내용으로 다시 불러왔으니 확인 후 다시 고쳐 주세요");er.code="CONFLICT";throw er});
+    var x=rFind(t,id);if(x)Object.assign(x,nx||p);return x})}
 function rDel(t,id){return R.from(t).delete().eq("id",id).then(function(r){if(r.error)throw r.error;raw[t]=(raw[t]||[]).filter(function(y){return y.id!==id})})}
 function plPatch(x,obj){return Object.assign({},plOf(x),obj)}
 function clog(table,rowId,label,field,before,after){return R.from("change_logs").insert({id:uid(),table_name:table,row_id:rowId||"",row_label:label||"",field:field,before:S(before),after:S(after),changed_by_name:myName(),changed_at:new Date().toISOString(),source:"발굴 앱",source_date:today()}).then(function(){},function(){})}
@@ -62,7 +67,7 @@ function blobPut(key,data){BLOB[key]=data;if(data==null)return R.from("pl_blobs"
    예전 표 정의
    ================================================================ */
 var VT={};
-var SRC_O2N={"서칭":"콜드 컨택","행사·전시회":"행사","명함·소개":"소개"},SRC_N2O={"콜드 컨택":"서칭","행사":"행사·전시회","소개":"명함·소개"};
+var SRC_O2N={"행사·전시회":"행사/전시회","명함·소개":"소개","콜드 컨택":"서칭","행사":"행사/전시회"},SRC_N2O={},CAT_OLD={"장애인복지관":"복지관/센터","발달장애인지원센터":"복지관/센터","복지관, 센터":"복지관/센터","특수학교":"특수학교/특수학급","특수학교, 특수학급":"특수학교/특수학급","협회, 협단체":"협회/협단체","고용공단":"협회/협단체","대외협력기관":"협회/협단체","대학 · 장애학생지원센터":"대학교","직업재활센터":"직업재활기관"};
 /* ---------- 기관 ---------- */
 function orgLast(id){var L=(raw.org_contact_logs||[]).filter(function(l){return l.org_id===id}),m="";L.forEach(function(l){var d=d10(kst(l.logged_at));if(d>m)m=d});return m}
 function ctOld(c){return{name:c.name||"",position:c.title||"",title:c.title||"",phone:c.mobile||c.phone||"",tel:c.phone||"",email:c.email||"",memo:c.memo||"",dept:c.dept||"",status:c.out?"퇴사":"현재",addedDate:c.added||"",_id:c.id}}
@@ -71,16 +76,16 @@ function ctMerge(oldList,cur,oid){var L=(cur||[]).slice(),out=[];(oldList||[]).f
     if(mob){nx.mobile=mob;if(!ex)nx.phone=""}else{nx.phone=tel;if(!ex)nx.mobile=""}if(c.status&&c.status!=="현재"){nx.out=nx.out||c.addedDate||today()}else delete nx.out;if(c.addedDate)nx.added=c.addedDate;out.push(nx)});
   L.forEach(function(x){if(!out.some(function(y){return y.id===x.id}))out.push(Object.assign({},x,{out:x.out||today()}))});return out}
 function orgOld(o){var p=plOf(o),C=Array.isArray(o.contacts)?o.contacts:[],win=C.find(function(c){return c.id===o.window_contact_id})||C.find(function(c){return!c.out})||null,lc=orgLast(o.id),plc=d10(p.lastcontact)||"";
-  return Object.assign({},p.extra||{},{id:num("org",o.id),name:o.full_name||"",cat:o.category||"",source:SRC_N2O[o.found_via]||o.found_via||"",event_id:p.event_id!=null?num("evt",p.event_id):null,
+  return Object.assign({},p.extra||{},{id:num("org",o.id),name:o.full_name||"",cat:CAT_OLD[o.category]||o.category||"",source:SRC_O2N[o.found_via]||o.found_via||"",event_id:p.event_id!=null?num("evt",p.event_id):null,
     contact:win?win.name:(o.manager_name||""),contact_title:win?(win.title||""):"",phone:win?(win.phone||(win.mobile&&!/^01/.test(S(win.mobile).replace(/\D/g,""))?win.mobile:"")||o.phone||""):(o.phone||""),mobile:win?(win.mobile||""):"",fax:p.fax||"",email:win&&win.email||o.email||"",
     member:stName(o.owner_id)||p.member||"",accompany:stName(o.sub_owner_id)||p.accompany||"",stage:o.stage==null?0:o.stage,premeil:{"완료":1,"요구":2}[o.pre_mail]||0,school:{"필요":1,"완료":2}[o.edu_status]||0,
     date:o.first_meeting||null,mou_date:o.mou_date||null,memo:o.memo||"",website:o.website||"",region:o.region||"",address:o.address||"",business_card_url:p.business_card_url||null,
     lastcontact:plc>lc?plc:(lc||null),created_by:p.created_by||null,created_by_name:p.created_by_name||"",created_at:o.created_at||iso(o.created_on),updated_at:o.updated_at||o.created_at||null,updated_by_name:p.updated_by_name||"",
-    is_starred:!!o.pin,mou_checklist:p.mou_checklist||null,contacts:C.map(ctOld),member_history:p.member_history||[],is_test:!!p.is_test,contact_tier:o.tier||null,
+    short_name:o.short_name||"",is_starred:!!o.pin,mou_checklist:p.mou_checklist||null,contacts:C.map(ctOld),member_history:p.member_history||[],is_test:!!p.is_test,contact_tier:o.tier||null,
     card_image:BLOB["oimg:"+o.id]||null,business_card_thumb:BLOB["othumb:"+o.id]||null,_vw:o.id})}
-var ORG_DIRECT=["name","cat","source","event_id","contact","contact_title","phone","mobile","fax","email","member","accompany","stage","premeil","school","date","mou_date","memo","website","region","address","business_card_url","lastcontact","created_by","created_by_name","created_at","updated_at","updated_by_name","is_starred","mou_checklist","contacts","member_history","is_test","contact_tier","card_image","business_card_thumb","id"];
+var ORG_DIRECT=["short_name","name","cat","source","event_id","contact","contact_title","phone","mobile","fax","email","member","accompany","stage","premeil","school","date","mou_date","memo","website","region","address","business_card_url","lastcontact","created_by","created_by_name","created_at","updated_at","updated_by_name","is_starred","mou_checklist","contacts","member_history","is_test","contact_tier","card_image","business_card_thumb","id"];
 function orgNew(p,cur,isNew){var x={},pl={},has=function(k){return k in p},o=cur||{},C=Array.isArray(o.contacts)?o.contacts:[];
-  if(has("name")){x.full_name=S(p.name).trim();if(isNew)x.short_name=x.full_name.replace(/^\s*\(?(사|재)\)\s*|^\s*(사단법인|재단법인)\s*/,"").slice(0,10)||x.full_name.slice(0,10)}
+  if(has("short_name")&&S(p.short_name).trim())x.short_name=S(p.short_name).trim().slice(0,20);if(has("name")){x.full_name=S(p.name).trim();if(isNew&&!x.short_name)x.short_name=x.full_name.replace(/^\s*\(?(사|재)\)\s*|^\s*(사단법인|재단법인)\s*/,"").slice(0,10)||x.full_name.slice(0,10)}
   if(has("cat"))x.category=p.cat||null;if(has("source"))x.found_via=SRC_O2N[p.source]||p.source||null;if(has("event_id"))pl.event_id=txt("evt",p.event_id);
   if(has("member")){x.owner_id=stId(p.member);pl.member=p.member||""}if(has("accompany")){x.sub_owner_id=stId(p.accompany);pl.accompany=p.accompany||""}
   if(has("stage"))x.stage=p.stage==null||isNaN(+p.stage)?0:+p.stage;if(has("premeil"))x.pre_mail={1:"완료",2:"요구"}[+p.premeil]||null;if(has("school"))x.edu_status={1:"필요",2:"완료"}[+p.school]||null;
@@ -110,15 +115,15 @@ VT.orgs={deps:["staff","organizations","org_contact_logs"],
 /* ---------- 컨택 이력 ---------- */
 function logOld(l){var p=plOf(l);return Object.assign({},p.extra||{},{id:num("log",l.id),org_id:num("org",l.org_id),date:p.date||d10(kst(l.logged_at)),summary:p.summary!=null?p.summary:(l.summary||""),memo:p.memo!=null?p.memo:"",
   our_members:p.our_members!=null?p.our_members:stName(l.our_staff_id),their_members:l.their_name||"",contact_type:l.quick?(l.quick_kind||"기타"):(l.kind||""),status:l.status||"완료",threads:p.threads||[],is_quick:!!l.quick,
-  logged_at:iso(kst(l.logged_at)),created_at:p.created_at||l.created_at||iso(kst(l.logged_at)),created_by:p.created_by||null,created_by_name:l.created_by_name||"",_vw:l.id})}
+  channel:l.channel||"",recall_on:l.recall_on||null,logged_at:iso(kst(l.logged_at)),created_at:p.created_at||l.created_at||iso(kst(l.logged_at)),created_by:p.created_by||null,created_by_name:l.created_by_name||"",_vw:l.id})}
 var OLT=["통화","이메일","문자","미팅","기타"],OLS=["완료","진행중","재연락 필요"];
 function logNew(p,cur){var x={},pl={},has=function(k){return k in p};
   if(has("org_id"))x.org_id=txt("org",p.org_id);if(has("logged_at")||has("date")){var at=has("logged_at")&&p.logged_at?kst(p.logged_at):(cur?kst(cur.logged_at):"");if(has("date")&&p.date&&d10(at)!==d10(p.date))at=d10(p.date)+" "+(at.slice(11)||"09:00");if(at)x.logged_at=at}
   var q=has("is_quick")?!!p.is_quick:(cur?!!cur.quick:false);if(has("is_quick"))x.quick=q;if(has("contact_type")){if(q){x.quick_kind=p.contact_type||"기타";x.kind="기타"}else x.kind=OLT.indexOf(p.contact_type)>=0?p.contact_type:"기타"}
   if(has("status"))x.status=OLS.indexOf(p.status)>=0?p.status:"완료";if(has("their_members"))x.their_name=p.their_members||"";if(has("our_members")){x.our_staff_id=stId(p.our_members);pl.our_members=p.our_members||""}
   if(has("summary")||has("memo")){var sm=has("summary")?S(p.summary):(cur?S(plOf(cur).summary):""),me=has("memo")?S(p.memo):(cur?S(plOf(cur).memo):"");x.summary=[sm,me].filter(Boolean).join(" · ");if(has("summary"))pl.summary=sm;if(has("memo"))pl.memo=me}
-  if(has("date"))pl.date=d10(p.date);["threads","created_by","created_at"].forEach(function(k){if(has(k))pl[k]=p[k]});if(has("created_by_name"))x.created_by_name=p.created_by_name||"";
-  var extra=omit(p,["id","org_id","date","summary","memo","our_members","their_members","contact_type","status","threads","is_quick","logged_at","created_at","created_by","created_by_name"]);if(Object.keys(extra).length)pl.extra=extra;return{x:x,pl:pl}}
+  if(has("recall_on"))x.recall_on=d10(p.recall_on);if(has("date"))pl.date=d10(p.date);["threads","created_by","created_at"].forEach(function(k){if(has(k))pl[k]=p[k]});if(has("created_by_name"))x.created_by_name=p.created_by_name||"";
+  var extra=omit(p,["id","org_id","date","summary","memo","recall_on","channel","our_members","their_members","contact_type","status","threads","is_quick","logged_at","created_at","created_by","created_by_name"]);if(Object.keys(extra).length)pl.extra=extra;return{x:x,pl:pl}}
 VT.contact_logs={deps:["staff","organizations","org_contact_logs"],rows:function(){return(raw.org_contact_logs||[]).map(logOld)},
   ins:function(p){var m=logNew(p,null);var row=Object.assign({id:uid(),kind:"기타",quick:false,status:"완료",logged_at:kst(new Date().toISOString()),created_by_name:myName(),pl:m.pl},m.x);return rIns("org_contact_logs",row).then(logOld)},
   upd:function(old,p){var l=rFind("org_contact_logs",old._vw);if(!l)return Promise.reject(new Error("기록을 찾지 못했어요"));var m=logNew(p,l),patch=m.x;if(Object.keys(m.pl).length)patch.pl=plPatch(l,m.pl);return rUpd("org_contact_logs",l.id,patch).then(logOld)},
@@ -955,7 +960,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="page-header-left"><div class="page-title">기관 목록</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <select id="filter-cat" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
-        <option value="">전체 유형</option><option>복지관, 센터</option><option>특수학교, 특수학급</option><option>협회, 협단체</option><option>대외협력기관</option><option>기타</option>
+        <option value="">전체 유형</option><option>복지관/센터</option><option>협회/협단체</option><option>특수학교/특수학급</option><option>대학교</option><option>직업재활기관</option><option>기타</option>
       </select>
       <select id="filter-stage-orgs" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
         <option value="">전체 단계</option><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">인재영입 완료</option><option value="9">보류</option>
@@ -1113,8 +1118,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관" autocomplete="off" oninput="checkOrgNameDup(this.value)">
           <div id="n-name-warn" style="display:none;margin-top:6px;padding:8px 10px;background:#fff7ed;border:1.5px solid #f97316;border-radius:6px;font-size:11px;color:#c2410c;font-weight:600;line-height:1.5;"></div>
         </div>
-        <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관, 센터</option><option>특수학교, 특수학급</option><option>협회, 협단체</option><option>대외협력기관</option><option>기타</option></select></div>
-        <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
+        <div class="fg"><label>약칭 <span style="font-weight:400;color:#6b7280;font-size:11px">운영페이지 목록 · 칩 · 할 일에 보이는 짧은 이름 · 기관명을 쓰면 자동으로 채워져요</span></label><input id="n-short" maxlength="20" placeholder="예: 강서장" autocomplete="off"><div id="n-short-warn" style="display:none;margin-top:4px;font-size:11px;color:#c2410c;font-weight:600"></div></div>
+        <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관/센터</option><option>협회/협단체</option><option>특수학교/특수학급</option><option>대학교</option><option>직업재활기관</option><option>기타</option></select></div>
+        <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사/전시회</option><option>소개</option><option>인바운드</option><option>기타</option></select></div>
         <div class="fg"><label>관계 등급</label><select id="n-contact-tier"><option value="">미분류</option><option value="협조적"> 협조적 (수시 연락)</option><option value="중립적"> 중립적 (월 1회 발송)</option><option value="부정적"> 부정적 (월 1회 발송, 관계 유지)</option></select></div>
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
         <div class="fg"><label>직책</label><input type="text" id="n-contact-title" placeholder="팀장, 센터장 등"></div>
@@ -6841,7 +6847,7 @@ function loadOrgForEdit(orgId){
   document.getElementById('save-btn').innerHTML='수정 완료';
   // 폼에 데이터 채우기
   document.getElementById('n-name').value=o.name||'';
-  document.getElementById('n-cat').value=o.cat||'복지관, 센터';
+  document.getElementById('n-cat').value=o.cat||'복지관/센터';
   document.getElementById('n-source').value=o.source||'서칭';
   const tierSel=document.getElementById('n-contact-tier');if(tierSel)tierSel.value=o.contact_tier||'';
   document.getElementById('n-contact').value=o.contact||'';
@@ -7821,7 +7827,7 @@ async function renderEvents(){
   const total=cache.events.length;
   const totalCards=cache.events.reduce((a,e)=>a+(e.result_cards||0),0);
   const totalMeetings=cache.events.reduce((a,e)=>a+(e.result_meetings||0),0);
-  const orgLinked=cache.orgs.filter(o=>o.source==='행사·전시회').length;
+  const orgLinked=cache.orgs.filter(o=>o.source==='행사/전시회').length;
   document.getElementById('event-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">총 참여 행사</div><div class="metric-value">${total}</div><div class="metric-sub">회</div></div>
     <div class="metric"><div class="metric-label">수집 명함</div><div class="metric-value">${totalCards}</div><div class="metric-sub">장 누적</div></div>
@@ -8713,7 +8719,7 @@ async function openOrg(id){
     <div id="source-edit-wrap" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-sm);border:1.5px solid var(--accent);">
       <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">발굴 경로 수정</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        ${['서칭','행사·전시회','명함·소개','인바운드'].map(s=>`
+        ${['서칭','행사/전시회','소개','인바운드','기타'].map(s=>`
           <button onclick="saveOrgSource(${id},'${s}')" style="padding:6px 14px;border-radius:20px;border:1.5px solid ${o.source===s?'var(--accent)':'var(--border)'};background:${o.source===s?'var(--accent)':'var(--surface)'};color:${o.source===s?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer;">${s}</button>
         `).join('')}
         <button onclick="document.getElementById('source-edit-wrap').style.display='none'" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;cursor:pointer;">취소</button>
@@ -10550,13 +10556,29 @@ wrapG("renderActions",function(){ibPaint()});
 var BAN=[["ban_direct","🚫 근로자 연락은 기관 통해서만","근로자에게 직접 연락하지 않고 기관을 거쳐요 (V-Work 근로자 연락처 옆에 🚫 표시)"],["ban_mgr","🔒 기관 연락은 발굴파트만","다른 파트는 이 기관에 직접 연락하지 않아요 · 근로자 요청은 'V-Work에서 온 일'로 전달돼요"]];
 function ctTel(c){return c&&(c.mobile||c.phone)}
 function empState(e){if(!e)return["구직 중","x"];if(e.cancelled)return["입사 취소","x"];var s=firstStart(e.id),end=e.end_date||A.curEnd(e.id),t=A.today();if(s&&s>t)return["입사 예정","a"];if(e.end_date&&e.end_date<t)return[(e.end_type||"퇴사"),"x"];if(end&&end<t)return["계약 종료","x"];return["재직 중","g"]}
-function orgXHtml(o){var C=(Array.isArray(o.contacts)?o.contacts:[]).filter(function(c){return!c.out});
-  var h='<div class="vwsec"><h5>소통 제한 <span class="vwmuted" style="font-weight:500">V-Work와 같이 써요</span></h5><div class="vwban">'+BAN.map(function(b){return'<button class="'+(o[b[0]]?"on":"")+'" data-vwo="ban" data-f="'+b[0]+'" title="'+E(b[2])+'">'+b[1]+(o[b[0]]?" · 켜짐":"")+'</button>'}).join("")+'</div></div>';
+function ctOwners(o,cid){return raw("workers").filter(function(w){return w.org_id===o.id&&w.org_contact_id===cid}).length+raw("portfolios").filter(function(p){return p.mc_contact_id===cid}).length}
+var OX={edit:false,hist:null,histFor:null};
+function orgInfoHtml(o){var g=addrGu(o.address),drive=o.card_folder_id?"https://drive.google.com/drive/folders/"+o.card_folder_id:"";
+  if(OX.edit)return'<div class="vwsec"><h5>기관 정보 <span class="vwmuted" style="font-weight:500">운영페이지와 같이 써요</span></h5><div class="vwgrid">'+
+    '<label>약칭 <span class="vwmuted">목록 · 칩 · 할 일에 보이는 이름</span><input data-ox="short_name" maxlength="20" value="'+E(o.short_name||"")+'"><span class="vwwarn" data-oxw></span></label>'+
+    '<label>대표 전화<input data-ox="phone" value="'+E(o.phone||"")+'"></label><label>대표 이메일<input data-ox="email" value="'+E(o.email||"")+'"></label></div>'+
+    '<div class="ft" style="margin-top:8px"><button class="vwbtn" data-vwo="info-x">취소</button><button class="vwbtn p" data-vwo="info-save">저장</button></div></div>';
+  return'<div class="vwsec"><h5>기관 정보 <span class="vwmuted" style="font-weight:500">운영페이지와 같이 써요</span><span style="flex:1"></span><button class="vwbtn" data-vwo="info-edit">수정</button></h5><table>'+
+    '<tr><th style="width:90px">약칭</th><td><b>'+E(o.short_name||"—")+'</b></td></tr>'+
+    '<tr><th>대표 전화</th><td>'+E(o.phone||"—")+'</td></tr><tr><th>대표 이메일</th><td>'+E(o.email||"—")+'</td></tr>'+
+    '<tr><th>지역</th><td>'+E([o.region,g].filter(Boolean).join(" · ")||"—")+(g?' <span class="vwmuted">주소 기준</span>':"")+'</td></tr>'+
+    '<tr><th>명함 폴더</th><td>'+(drive?'<a href="'+E(drive)+'" target="_blank" rel="noopener" class="vwbtn">드라이브 폴더 열기 ↗</a>':'<span class="vwmuted">아직 없어요 · 명함을 올리면 생겨요</span>')+'</td></tr></table></div>'}
+function histHtml(o){var h='<div class="vwsec"><h5>변경 이력 <span class="vwmuted" style="font-weight:500">운영페이지 · 발굴페이지에서 바꾼 것</span><span style="flex:1"></span>'+(OX.histFor===o.id&&OX.hist?"":'<button class="vwbtn" data-vwo="hist">불러오기</button>')+'</h5>';
+  if(OX.histFor!==o.id||!OX.hist)return h+'<p class="vwmuted" style="margin:0">눌러야 불러와요 (전송량 아끼기)</p></div>';
+  if(!OX.hist.length)return h+'<p class="vwmuted" style="margin:0">기록이 없어요</p></div>';
+  return h+'<table><tr><th>시각</th><th>항목</th><th>변경</th><th>누가</th></tr>'+OX.hist.map(function(x){return'<tr><td class="vwmuted" style="white-space:nowrap">'+E(A.kst(x.changed_at).slice(2,16))+'</td><td>'+E(x.field||"")+'</td><td>'+(x.before?'<span class="vwmuted">'+E(String(x.before).slice(0,40))+'</span> → ':"")+E(String(x.after||"").slice(0,60))+'</td><td class="vwmuted">'+E(x.changed_by_name||"")+(x.source==="발굴 앱"?" · 발굴":"")+'</td></tr>'}).join("")+'</table></div>'}
+function orgXHtml(o){var C=(Array.isArray(o.contacts)?o.contacts:[]).slice().sort(function(a,b){return(a.out?1:0)-(b.out?1:0)});
+  var h=orgInfoHtml(o)+'<div class="vwsec"><h5>소통 제한 <span class="vwmuted" style="font-weight:500">V-Work와 같이 써요</span></h5><div class="vwban">'+BAN.map(function(b){return'<button class="'+(o[b[0]]?"on":"")+'" data-vwo="ban" data-f="'+b[0]+'" title="'+E(b[2])+'">'+b[1]+(o[b[0]]?" · 켜짐":"")+'</button>'}).join("")+'</div></div>';
   h+='<div class="vwsec"><h5>기관 연락처 <span class="vwmuted" style="font-weight:500">⭐ 연락창구 = 재직자 이슈 소통 · 👤 기관 담당자 = 기관 주 담당</span></h5>';
   if(!C.length)h+='<p class="vwmuted" style="margin:0">등록된 담당자가 없어요 · 위 \'담당자\'를 추가하면 여기서 지정할 수 있어요</p>';
-  else h+='<table><tr><th>이름</th><th>직책</th><th>연락처</th><th></th></tr>'+C.map(function(c){var win=o.window_contact_id===c.id,hd=!!c.head;
-    return'<tr><td><b>'+E(c.name)+'</b> '+(win?'<span class="vwchip a">⭐ 연락창구</span> ':"")+(hd?'<span class="vwchip">👤 기관 담당자</span>':"")+'</td><td class="vwmuted">'+E(c.title||"")+'</td><td class="vwmuted">'+E(ctTel(c)||"")+'</td><td style="text-align:right;white-space:nowrap">'+
-      (win?"":'<button class="vwbtn" data-vwo="win" data-c="'+E(c.id)+'"'+(ctTel(c)?"":' disabled title="연락처가 있어야 연락창구로 지정할 수 있어요"')+'>⭐ 연락창구</button> ')+(hd?"":'<button class="vwbtn" data-vwo="head" data-c="'+E(c.id)+'">👤 기관 담당자</button>')+'</td></tr>'}).join("")+'</table>';
+  else h+='<table><tr><th>이름</th><th>직책 · 부서</th><th>연락처</th><th></th></tr>'+C.map(function(c){var win=o.window_contact_id===c.id,hd=!!c.head,n=ctOwners(o,c.id);
+    return'<tr'+(c.out?' style="opacity:.55"':"")+'><td><b>'+E(c.name)+'</b> '+(win?'<span class="vwchip a">⭐ 연락창구</span> ':"")+(hd?'<span class="vwchip">👤 기관 담당자</span> ':"")+(c.out?'<span class="vwchip x">퇴사 '+E(md(c.out))+'</span> ':"")+(n?'<span class="vwchip g" title="이 사람을 주 소통으로 둔 근로자 · 인재">담당 '+n+'명</span>':"")+(c.memo?'<div class="vwmuted">'+E(c.memo)+'</div>':"")+'</td><td class="vwmuted">'+E([c.title,c.dept].filter(Boolean).join(" · "))+'</td><td class="vwmuted">'+E([c.mobile,c.phone].filter(Boolean).join(" · "))+(c.email?'<div>'+E(c.email)+'</div>':"")+'</td><td style="text-align:right;white-space:nowrap">'+
+      (c.out||win?"":'<button class="vwbtn" data-vwo="win" data-c="'+E(c.id)+'"'+(ctTel(c)?"":' disabled title="연락처가 있어야 연락창구로 지정할 수 있어요"')+'>⭐ 연락창구</button> ')+(c.out||hd?"":'<button class="vwbtn" data-vwo="head" data-c="'+E(c.id)+'">👤 기관 담당자</button> ')+'<button class="vwbtn" data-vwo="ct-edit" data-c="'+E(c.id)+'">수정</button></td></tr>'}).join("")+'</table>';
   h+='</div>';
   var W=raw("workers").filter(function(w){return w.org_id===o.id&&!w.merged_into});
   h+='<div class="vwsec"><h5>👥 소속 근로자 <span class="vwchip">'+W.length+'</span><span class="vwmuted" style="font-weight:500">V-Work 근로자 DB · 읽기 전용</span></h5>';
@@ -10564,21 +10586,27 @@ function orgXHtml(o){var C=(Array.isArray(o.contacts)?o.contacts:[]).filter(func
   else h+='<table><tr><th>이름</th><th>기업</th><th>상태</th><th>계약</th><th>주 소통</th></tr>'+W.map(function(w){var E0=raw("employments").filter(function(e){return e.worker_id===w.id}).sort(function(a,b){return String(b.created_at||"").localeCompare(String(a.created_at||""))}),e=E0.find(function(x){return!x.cancelled})||E0[0]||null,st=empState(e),s=e?firstStart(e.id):"",end=e?(e.end_date||A.curEnd(e.id)):"";
       var ct=(Array.isArray(o.contacts)?o.contacts:[]).find(function(c){return c.id===w.org_contact_id});
       return'<tr><td><b>'+E(w.name||"")+'</b></td><td>'+E(e?A.compName(e.company_id):"—")+'</td><td><span class="vwchip '+st[1]+'">'+E(st[0])+'</span></td><td class="vwmuted">'+(s?E(s):"")+(end?" ~ "+E(end):"")+'</td><td class="vwmuted">'+E(ct?ct.name:(w.main_contact||""))+'</td></tr>'}).join("")+'</table>';
-  return h+'</div>'}
+  return h+'</div>'+histHtml(o)}
 function orgXPaint(numId){var oid=A.txt("org",numId),o=oid&&A.find("organizations",oid);if(!o)return;var body=document.getElementById("m-body");if(!body)return;
   var col=body.firstElementChild&&body.firstElementChild.firstElementChild;if(!col)return;var x=document.getElementById("vw-orgx");if(x)x.remove();
   x=document.createElement("div");x.id="vw-orgx";x.setAttribute("data-oid",o.id);x.innerHTML=orgXHtml(o);col.insertBefore(x,col.firstChild)}
 var _openOrg=window.openOrg;
 if(typeof _openOrg==="function")window.openOrg=function(id){var r=_openOrg.apply(this,arguments);return Promise.resolve(r).then(function(v){return A.need(["workers","employments","contract_terms","companies"]).then(function(){try{orgXPaint(Number(id))}catch(e){console.warn(e)}return v},function(){try{orgXPaint(Number(id))}catch(e){}return v})})};
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-vwo]");if(!b)return;var box=b.closest("#vw-orgx");if(!box)return;ev.preventDefault();var o=A.find("organizations",box.getAttribute("data-oid"));if(!o)return;var a=b.getAttribute("data-vwo"),sh=oShort(o);
-  var redraw=function(){var n=A.num("org",o.id);if(typeof openOrg==="function")openOrg(n)};
+  var redraw=function(){var n=A.num("org",o.id);if(typeof openOrg==="function")openOrg(n)},repaint=function(){var x=document.getElementById("vw-orgx");if(x)x.innerHTML=orgXHtml(o)},fail=function(e){T((e&&e.code==="CONFLICT"?"":"저장하지 못했어요: ")+(e&&e.message||e))};
+  if(a==="info-edit"){OX.edit=true;repaint();return}if(a==="info-x"){OX.edit=false;repaint();return}
+  if(a==="info-save"){var P={},B={};[].forEach.call(box.querySelectorAll("[data-ox]"),function(i){var k=i.getAttribute("data-ox"),v=String(i.value||"").trim();if(v!==String(o[k]||"")){P[k]=v||null;B[k]=o[k]||""}});
+    if(P.short_name===null){T("약칭은 비울 수 없어요");return}if(!Object.keys(P).length){OX.edit=false;repaint();return}b.disabled=true;
+    A.upd("organizations",o.id,P).then(function(){var LB={short_name:"약칭",phone:"대표 전화",email:"대표 이메일"};Object.keys(P).forEach(function(k){A.clog("organizations",o.id,P.short_name||sh,LB[k],B[k],P[k]||"")});OX.edit=false;T("기관 정보를 저장했어요");redraw()},function(e){b.disabled=false;fail(e);OX.edit=false;redraw()});return}
+  if(a==="hist"){R().from("change_logs").select("changed_at,changed_by_name,field,before,after,source").eq("table_name","organizations").eq("row_id",o.id).order("changed_at",{ascending:false}).limit(50).then(function(r){OX.hist=(r&&r.data)||[];OX.histFor=o.id;repaint()});return}
+  if(a==="ct-edit"){ctEdit(o,b.getAttribute("data-c"));return}
   if(a==="ban"){var f=b.getAttribute("data-f"),lab=BAN.find(function(x){return x[0]===f}),nv=!o[f],p={};p[f]=nv;b.disabled=true;
-    A.upd("organizations",o.id,p).then(function(){A.clog("organizations",o.id,sh,lab[1].replace(/^\S+\s/,""),nv?"":"Y",nv?"Y":"");T(lab[1]+(nv?" 켰어요":" 껐어요"));var x=document.getElementById("vw-orgx");if(x)x.innerHTML=orgXHtml(o)},function(e){b.disabled=false;T("저장하지 못했어요: "+e.message)});return}
+    A.upd("organizations",o.id,p).then(function(){A.clog("organizations",o.id,sh,lab[1].replace(/^\S+\s/,""),nv?"":"Y",nv?"Y":"");T(lab[1]+(nv?" 켰어요":" 껐어요"));repaint()},function(e){fail(e);redraw()});return}
   var cid=b.getAttribute("data-c"),C=(o.contacts||[]).slice(),c=C.find(function(x){return x.id===cid});if(!c)return;
   if(a==="win"){if(!ctTel(c)){T("연락처가 있어야 연락창구로 지정할 수 있어요");return}var old=C.find(function(x){return x.id===o.window_contact_id});
-    A.upd("organizations",o.id,{window_contact_id:c.id,manager_name:c.name}).then(function(){A.clog("organizations",o.id,sh,"연락창구",old?old.name:"",c.name);T(c.name+"님을 연락창구로 지정했어요");redraw()},function(e){T("저장하지 못했어요: "+e.message)});return}
+    A.upd("organizations",o.id,{window_contact_id:c.id,manager_name:c.name}).then(function(){A.clog("organizations",o.id,sh,"연락창구",old?old.name:"",c.name);T(c.name+"님을 연락창구로 지정했어요");redraw()},function(e){fail(e);redraw()});return}
   if(a==="head"){var oldh=C.find(function(x){return x.head});var nc=C.map(function(x){var y=Object.assign({},x);delete y.head;if(y.id===cid)y.head=true;return y});
-    A.upd("organizations",o.id,{contacts:nc}).then(function(){A.clog("organizations",o.id,sh,"기관 담당자",oldh?oldh.name:"",c.name);T(c.name+"님을 기관 담당자로 지정했어요");redraw()},function(e){T("저장하지 못했어요: "+e.message)});return}
+    A.upd("organizations",o.id,{contacts:nc}).then(function(){A.clog("organizations",o.id,sh,"기관 담당자",oldh?oldh.name:"",c.name);T(c.name+"님을 기관 담당자로 지정했어요");redraw()},function(e){fail(e);redraw()});return}
 });
 /* ================================================================
    ④ 채용 건: 인재 매칭 + 추천 결과
@@ -10596,6 +10624,8 @@ var _rj=window.renderJobs;
 if(typeof _rj==="function")window.renderJobs=function(){var self=this,args=arguments;return A.fresh("org_recommends").then(function(){},function(){}).then(function(){return _rj.apply(self,args)})};
 function lvlOf(s){s=String(s||"");return/심하지/.test(s)?"심하지 않은":/심한|중증/.test(s)?"심한":""}
 function activeEmp(wid){var t=A.today();return raw("employments").some(function(e){if(e.worker_id!==wid||e.cancelled)return false;var end=e.end_date||A.curEnd(e.id);return!end||end>=t})}
+function busyTill(wid){if(!wid)return"";var t=A.today(),m="";raw("employments").forEach(function(e){if(e.worker_id!==wid||e.cancelled)return;var end=e.end_date||A.curEnd(e.id)||"9999-12-31";if(end>=t&&end>m)m=end});return m}
+function busyTxt(d){return d==="9999-12-31"?"재직 중 (종료일 없음)":"만료 "+md(d)}
 function matchCands(rid,oid){var r=A.find("recruit_requests",rid)||{},J=(Array.isArray(r.jobs)?r.jobs:[]).map(function(j){return j.job}).filter(Boolean),DL=lvlOf(r.dis_level);
   var linked={};raw("supply_requests").forEach(function(q){if(q.request_id===rid)(q.links||[]).forEach(function(l){linked[l.k+":"+l.id]=1})});raw("org_recommends").forEach(function(x){if(x.request_id===rid)linked[x.kind+":"+x.person_id]=1});
   var L=[],seenW={},ok=function(org){return org&&(!oid||org===oid)};
@@ -10603,15 +10633,16 @@ function matchCands(rid,oid){var r=A.find("recruit_requests",rid)||{},J=(Array.i
   raw("talent_picks").forEach(function(t){if(t.worker_id)seenW[t.worker_id]=1;if(!ok(t.src_org_id)||!/^(대기|연계중|제안중)$/.test(t.status||"대기"))return;var w=t.worker_id&&A.find("workers",t.worker_id);L.push({k:"tl",id:t.id,org:t.src_org_id,name:t.name||(w&&w.name)||"",jobs:t.wish_jobs||(t.wish_job?[t.wish_job]:[]),lvl:lvlOf(w&&w.disability_level),dt:w?w.disability_type||"":""})});
   raw("workers").forEach(function(w){if(!ok(w.org_id)||seenW[w.id]||w.merged_into||activeEmp(w.id))return;L.push({k:"wk",id:w.id,org:w.org_id,name:w.name||"",jobs:[],lvl:lvlOf(w.disability_level),dt:w.disability_type||""})});
   L=L.filter(function(c){return!linked[c.k+":"+c.id]});
+  L.forEach(function(c){var src=c.k==="pf"?A.find("portfolios",c.id):c.k==="tl"?A.find("talent_picks",c.id):null,till=src?busyTill(src.worker_id):"";c.till=till;c.block=!!(till&&r.start_date&&r.start_date<=till)});
   L.forEach(function(c){var ch=[];if(c.jobs.length)ch.push(["직무",c.jobs.some(function(j){return J.indexOf(j)>=0})]);if(DL&&c.lvl)ch.push(["장애 정도",c.lvl===DL]);c.ch=ch;c.sc=ch.filter(function(x){return x[1]}).length*2-ch.filter(function(x){return!x[1]}).length});
-  return L.sort(function(a,b){return b.sc-a.sc||a.name.localeCompare(b.name,"ko")})}
+  return L.sort(function(a,b){return(a.block?1:0)-(b.block?1:0)||b.sc-a.sc||a.name.localeCompare(b.name,"ko")})}
 var MS={job:null,oid:"",sel:{}};
-function matchBody(){var rid=A.txt("rr",MS.job),r=A.find("recruit_requests",rid)||{},L=matchCands(rid,MS.oid),show=MS.oid?L:L.slice(0,10);
-  var cond=[A.compName(r.company_id)||r.company_label,(Array.isArray(r.jobs)?r.jobs:[]).map(function(j){return j.job+(+j.n>1?" "+j.n+"명":"")}).join(", "),r.dis_level&&r.dis_level!=="무관"?"장애 "+r.dis_level:"",r.due_date?"마감 "+md(r.due_date):""].filter(Boolean).join(" · ");
+function matchBody(){var rid=A.txt("rr",MS.job),r=A.find("recruit_requests",rid)||{},L=matchCands(rid,MS.oid),show=MS.oid?L:L.filter(function(c){return!c.block}).slice(0,10);
+  var cond=[A.compName(r.company_id)||r.company_label,(Array.isArray(r.jobs)?r.jobs:[]).map(function(j){return j.job+(+j.n>1?" "+j.n+"명":"")}).join(", "),r.dis_level&&r.dis_level!=="무관"?"장애 "+r.dis_level:"",r.start_date?"입사 희망 "+md(r.start_date):"입사일 미정",r.due_date?"마감 "+md(r.due_date):""].filter(Boolean).join(" · ");
   var orgs=plOrgs().slice().sort(function(a,b){return oShort(a).localeCompare(oShort(b),"ko")});
   var h='<h3>인재 매칭</h3><p class="vwmuted" style="margin:0 0 8px">'+E(cond)+'</p><select id="vw-morg"><option value="">전체 기관 · 조건 맞는 상위 10명</option>'+orgs.map(function(o){return'<option value="'+E(o.id)+'"'+(MS.oid===o.id?" selected":"")+'>'+E(oShort(o))+(o.full_name&&o.full_name!==oShort(o)?" · "+E(o.full_name):"")+'</option>'}).join("")+'</select>';
   h+='<div class="vwm" style="margin-top:8px">'+(show.length?show.map(function(c){var key=c.k+":"+c.id,o=A.find("organizations",c.org);
-    return'<label><input type="checkbox" data-mk="'+E(key)+'"'+(MS.sel[key]?" checked":"")+'><b>'+E(c.name)+'</b><span class="vwchip x">'+({pf:"포트폴리오",tl:"추천인재",wk:"근로자 DB"})[c.k]+'</span><span class="vwmuted">'+E(oShort(o))+(c.jobs.length?" · "+E(c.jobs.join(", ")):"")+(c.lvl?" · "+E(c.lvl):"")+'</span><span style="flex:1"></span>'+c.ch.map(function(x){return'<span class="vwchip '+(x[1]?"g":"r")+'">'+x[0]+(x[1]?" ✓":" ✗")+'</span>'}).join(" ")+'</label>'}).join(""):'<p class="vwmuted">'+(MS.oid?"이 기관에서 추천할 수 있는 인재가 없어요 (이미 추천했거나 재직 중)":"추천할 수 있는 기관 인재가 없어요")+'</p>')+'</div>';
+    return'<label'+(c.block?' style="opacity:.5" title="입사 희망일 전에 계약이 끝나지 않아요"':"")+'><input type="checkbox" data-mk="'+E(key)+'"'+(MS.sel[key]?" checked":"")+(c.block?" disabled":"")+'><b>'+E(c.name)+'</b><span class="vwchip x">'+({pf:"포트폴리오",tl:"추천인재",wk:"근로자 DB"})[c.k]+'</span><span class="vwmuted">'+E(oShort(o))+(c.jobs.length?" · "+E(c.jobs.join(", ")):"")+(c.lvl?" · "+E(c.lvl):"")+'</span><span style="flex:1"></span>'+(c.till?'<span class="vwchip '+(c.block?"r":"a")+'">'+E(busyTxt(c.till))+(c.block?" 이후 가능":r.start_date?"":" · 입사일 미정")+'</span>':"")+c.ch.map(function(x){return'<span class="vwchip '+(x[1]?"g":"r")+'">'+x[0]+(x[1]?" ✓":" ✗")+'</span>'}).join(" ")+'</label>'}).join(""):'<p class="vwmuted">'+(MS.oid?"이 기관에서 추천할 수 있는 인재가 없어요 (이미 추천했거나 재직 중)":"추천할 수 있는 기관 인재가 없어요")+'</p>')+'</div>';
   h+='<p class="vwmuted" style="margin:8px 0 0">없는 사람은 [인재 추가]로 먼저 등록한 뒤 다시 매칭해 주세요 · 보내면 V-Work 채용 요청 \'발굴 추천\'에 검토 대기로 올라가고, 채용파트가 후보 추가 · 보류를 정하면 이 채용 건에 결과가 보여요</p>';
   var n=Object.keys(MS.sel).filter(function(k){return MS.sel[k]}).length;
   return h+'<div class="ft"><button class="vwbtn" data-mx="add">인재 추가</button><span style="flex:1"></span><button class="vwbtn" data-mx="x">닫기</button><button class="vwbtn p" data-mx="send"'+(n?"":" disabled")+'>'+n+'명 추천 보내기</button></div>'}
@@ -10663,6 +10694,61 @@ if(VB){var _bcRows=VB.rows,_bcIns=VB.ins,_bcDel=VB.del;
   VB.del=function(old){if(old._vwc)return Promise.reject(new Error("V-Work에서 올린 명함이에요 · V-Work 기관 창에서 지워 주세요"));return _bcDel(old)}}
 var VO=PLA._vt.orgs;
 if(VO){var _oIns=VO.ins;VO.ins=function(p){return _oIns(p).then(function(r){var o=A.find("organizations",r._vw);if(o&&p.business_card_url)cardToDrive(o,p.business_card_url);return r})}}
+
+/* ================================================================
+   v156 기관 분류 · 지역 (주소에서 구/시) · 약칭 입력 · 소통 기록 채널 · 재연락일 · 동시 수정
+   ================================================================ */
+var SIDO={"서울":"서울","서울시":"서울","서울특별시":"서울","경기":"경기","경기도":"경기","인천":"인천","인천시":"인천","인천광역시":"인천","부산":"부산","부산시":"부산","부산광역시":"부산","대구":"대구","대구시":"대구","대구광역시":"대구","광주":"광주","광주시":"광주","광주광역시":"광주","대전":"대전","대전시":"대전","대전광역시":"대전","울산":"울산","울산시":"울산","울산광역시":"울산","세종":"세종","세종시":"세종","세종특별자치시":"세종","강원":"강원","강원도":"강원","강원특별자치도":"강원","충북":"충북","충청북도":"충북","충남":"충남","충청남도":"충남","전북":"전북","전라북도":"전북","전북특별자치도":"전북","전남":"전남","전라남도":"전남","경북":"경북","경상북도":"경북","경남":"경남","경상남도":"경남","제주":"제주","제주도":"제주","제주특별자치도":"제주"};
+function addrSido(a){var t=String(a||"").trim().split(/\s+/)[0]||"";return SIDO[t]||""}
+function addrGu(a){var T=String(a||"").trim().split(/\s+/);if(!SIDO[T[0]||""]||SIDO[T[0]]==="세종")return"";var g=T[1]||"";if(!/(시|군|구)$/.test(g))return"";return g}
+window.vwAddrGu=addrGu;window.vwAddrSido=addrSido;
+var CSS2='<style>.vwgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.vwgrid label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:#374151}.vwgrid input,.vwgrid textarea{font-size:12px;padding:6px 8px;border:1.5px solid #e5e7eb;border-radius:6px;font-weight:400}.vwwarn{color:#c2410c;font-size:11px;font-weight:600}.vwlogc{font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;background:#eef2ff;color:#4338ca;flex-shrink:0}.vwlogc.r{background:#fef3c7;color:#92400e}</style>';
+document.head.insertAdjacentHTML("beforeend",CSS2);
+/* 약칭: 기관 등록 · 수정 화면 */
+function sugShort(n){n=String(n||"").trim();return(n.replace(/^\s*\(?(사|재)\)\s*|^\s*(사단법인|재단법인)\s*/,"").slice(0,10))||n.slice(0,10)}
+var SHT={touched:false};
+function shortDup(v,selfId){v=String(v||"").trim();if(!v)return null;return raw("organizations").find(function(o){return o.short_name===v&&o.id!==selfId})||null}
+function shortWarn(){var i=document.getElementById("n-short"),w=document.getElementById("n-short-warn");if(!i||!w)return;var self=typeof editOrgId!=="undefined"&&editOrgId?A.txt("org",editOrgId):null,d=shortDup(i.value,self);w.textContent=d?"⚠ 같은 약칭을 쓰는 기관이 있어요: "+(d.full_name||""):"";w.style.display=d?"":"none"}
+document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.id)return;
+  if(t.id==="n-name"){var s0=document.getElementById("n-short");if(s0&&!SHT.touched){s0.value=sugShort(t.value);shortWarn()}}
+  if(t.id==="n-short"){SHT.touched=!!t.value;shortWarn()}});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.id!=="n-address")return;var r=document.getElementById("n-region"),sd=addrSido(t.value);if(r&&!r.value&&sd){r.value=sd;T("주소에서 지역을 '"+sd+"'(으)로 채웠어요")}});
+if(typeof window.loadOrgForEdit==="function"){var _lofe=window.loadOrgForEdit;window.loadOrgForEdit=function(id){var r=_lofe.apply(this,arguments);var o=A.find("organizations",A.txt("org",id)),i=document.getElementById("n-short");if(i){i.value=o?o.short_name||"":"";SHT.touched=true;shortWarn()}return r}}
+if(typeof window.clearEditMode==="function"){var _cem=window.clearEditMode;window.clearEditMode=function(){var r=_cem.apply(this,arguments);var i=document.getElementById("n-short");if(i)i.value="";SHT.touched=false;shortWarn();return r}}
+function formOn(){var pg=document.getElementById("p-add-org");return!!(pg&&pg.classList.contains("active")&&document.getElementById("n-short"))}
+var VO2=PLA._vt.orgs;
+if(VO2){var _oIns2=VO2.ins,_oUpd2=VO2.upd;
+  VO2.ins=function(p){if("name" in p&&formOn()){var v=String(document.getElementById("n-short").value||"").trim();if(v)p=Object.assign({},p,{short_name:v})}return _oIns2(p)};
+  VO2.upd=function(old,p){if("name" in p&&formOn()){var v=String(document.getElementById("n-short").value||"").trim(),o=A.find("organizations",old._vw);if(v&&o&&v!==o.short_name){p=Object.assign({},p,{short_name:v});A.clog("organizations",o.id,v,"약칭",o.short_name||"",v)}}return _oUpd2(old,p)}}
+/* 기관 목록: 구/시 필터 · 지역 옆에 구/시 */
+function guFilterEl(){var fr=document.getElementById("filter-region");if(!fr)return null;var g=document.getElementById("filter-gu");if(!g){g=document.createElement("select");g.id="filter-gu";g.setAttribute("style",fr.getAttribute("style")||"");g.addEventListener("change",function(){if(typeof renderOrgs==="function")renderOrgs()});fr.parentNode.insertBefore(g,fr.nextSibling)}return g}
+function guOptions(){var g=guFilterEl();if(!g)return;var fr=(document.getElementById("filter-region")||{}).value||"",cur=g.value,M={};
+  (cache.orgs||[]).forEach(function(o){if(fr&&o.region!==fr)return;var x=addrGu(o.address);if(x)M[x]=(M[x]||0)+1});var L=Object.keys(M).sort(function(a,b){return a.localeCompare(b,"ko")});
+  g.innerHTML='<option value="">전체 구/시</option>'+L.map(function(x){return'<option'+(x===cur?" selected":"")+'>'+E(x)+' ('+M[x]+')</option>'}).join("");if(cur&&!M[cur])g.value="";else g.value=cur}
+if(typeof window.renderOrgs==="function"){var _ro=window.renderOrgs;window.renderOrgs=function(){var g=guFilterEl(),gv=g&&g.value?g.value.replace(/ \(\d+\)$/,""):"",keep=cache.orgs;if(gv)cache.orgs=keep.filter(function(o){return addrGu(o.address)===gv});var r;try{r=_ro.apply(this,arguments)}finally{cache.orgs=keep}
+  try{guOptions();if(gv&&g)[].forEach.call(g.options,function(op){if(op.value.replace(/ \(\d+\)$/,"")===gv)g.value=op.value});guPaint()}catch(e){console.warn(e)}return r}}
+function guPaint(){[].forEach.call(document.querySelectorAll('#org-tbody tr[onclick^="openOrg("]'),function(tr){if(tr.dataset.gu)return;tr.dataset.gu="1";var m=(tr.getAttribute("onclick")||"").match(/openOrg\((\d+)\)/);if(!m)return;var o=(cache.orgs||[]).find(function(x){return x.id===+m[1]});var g=o&&addrGu(o.address);if(!g||!o.region)return;
+  var el=[].find.call(tr.querySelectorAll("span,td"),function(x){return x.children.length===0&&x.textContent.trim()===o.region});if(el)el.textContent=o.region+" · "+g})}
+/* 소통 기록: 채널 · 재연락일 표시 · '재연락 필요'로 저장하면 재연락일도 저장 */
+if(typeof window.renderContactLogItem==="function"){var _rcl=window.renderContactLogItem;window.renderContactLogItem=function(l){var h=_rcl.apply(this,arguments);var chips=(l.channel?'<span class="vwlogc">'+E(l.channel)+'</span>':"")+(l.recall_on?'<span class="vwlogc r">재연락 '+E(md(l.recall_on))+'</span>':"");if(!chips)return h;var k=">"+l.summary+"</span>",i=h.indexOf(k);return i<0?h:h.slice(0,i+k.length)+chips+h.slice(i+k.length)}}
+var VL=PLA._vt.contact_logs;
+if(VL){var _lIns=VL.ins;VL.ins=function(p){if(p&&p.status==="재연락 필요"&&!p.recall_on){var d=(document.getElementById("log-recontact-date")||{}).value;if(d)p=Object.assign({},p,{recall_on:d})}return _lIns(p)}}
+/* 동시 수정: 다른 사람이 먼저 바꿨으면 알리고 기관 창을 새로 */
+window.addEventListener("pl-conflict",function(ev){var d=ev.detail||{};var oid=d.table==="organizations"?d.id:((A.find("org_contact_logs",d.id)||{}).org_id);
+  ovOpen('<h3>다른 사람이 먼저 바꿨어요</h3><p style="font-size:13px;margin:0">이 '+(d.table==="organizations"?"기관":"소통 기록")+' 정보를 그 사이에 다른 사람이 (운영페이지 또는 발굴페이지에서) 고쳤어요. 덮어쓰지 않고 최신 내용으로 다시 불러왔어요 · 확인한 뒤 다시 고쳐 주세요</p><div class="ft"><button class="vwbtn p" data-x>확인</button></div>');
+  var dd=document.getElementById("vw-ov");if(dd)dd.querySelector("[data-x]").onclick=ovClose;
+  var mo=document.getElementById("modal");if(oid&&mo&&mo.style.display==="flex"&&typeof openOrg==="function"&&typeof currentOrgId!=="undefined"&&A.txt("org",currentOrgId)===oid){var i=(cache.orgs||[]).findIndex(function(x){return x.id===currentOrgId});var fresh=PLA._vt.orgs.rows().find(function(x){return x._vw===oid});if(i>=0&&fresh){var c0={};Object.keys(fresh).forEach(function(k){if(k.charAt(0)!=="_")c0[k]=fresh[k]});cache.orgs[i]=Object.assign(cache.orgs[i],c0)}openOrg(currentOrgId)}});
+
+/* 기관 연락처 수정 (부서 · 메모 · 퇴사일 포함) */
+function ctEdit(o,cid){var c=(o.contacts||[]).find(function(x){return x.id===cid});if(!c)return;var F=[["name","이름"],["title","직책"],["dept","부서"],["mobile","휴대폰"],["phone","전화"],["email","이메일"]];
+  var d=ovOpen('<h3>기관 연락처 수정 · '+E(oShort(o))+'</h3><div class="vwgrid">'+F.map(function(f){return'<label>'+f[1]+'<input data-cf="'+f[0]+'" value="'+E(c[f[0]]||"")+'"></label>'}).join("")+
+    '<label>퇴사일 <span class="vwmuted">비우면 재직</span><input type="date" data-cf="out" value="'+E(c.out||"")+'"></label></div><label style="display:block;margin-top:8px;font-size:11px;font-weight:700">메모<textarea data-cf="memo" rows="2">'+E(c.memo||"")+'</textarea></label>'+
+    (o.window_contact_id===c.id?'<p class="vwmuted">⭐ 연락창구예요 · 퇴사 처리하면 연락창구가 비어요</p>':"")+'<div class="ft"><button class="vwbtn" data-x>닫기</button><button class="vwbtn p" data-ok>저장</button></div>');
+  d.querySelector("[data-x]").onclick=ovClose;
+  d.querySelector("[data-ok]").onclick=function(){var nx=Object.assign({},c),ch=[];[].forEach.call(d.querySelectorAll("[data-cf]"),function(i){var k=i.getAttribute("data-cf"),v=String(i.value||"").trim();if(v!==String(c[k]||"")){ch.push(k);if(v)nx[k]=v;else delete nx[k]}});
+    if(!String(nx.name||"").trim()){T("이름은 비울 수 없어요");return}if(!ch.length){ovClose();return}this.disabled=true;
+    var P={contacts:(o.contacts||[]).map(function(x){return x.id===cid?nx:x})};if(nx.out&&o.window_contact_id===cid){P.window_contact_id=null;P.manager_name=null}
+    A.upd("organizations",o.id,P).then(function(){A.clog("organizations",o.id,oShort(o),"기관 연락처 수정",c.name,nx.name+" · "+ch.map(function(k){return({name:"이름",title:"직책",dept:"부서",mobile:"휴대폰",phone:"전화",email:"이메일",out:"퇴사일",memo:"메모"})[k]||k}).join(", "));ovClose();T("연락처를 저장했어요");if(typeof openOrg==="function")openOrg(A.num("org",o.id))},function(e){if(!(e&&e.code==="CONFLICT")){ovClose();T("저장하지 못했어요: "+(e&&e.message||e))}})}}
 })();
 </script>
 </body>
