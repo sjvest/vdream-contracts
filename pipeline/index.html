@@ -49,6 +49,7 @@ function need(L){return Promise.all(L.map(function(t){return loadRaw(t)}))}
 function rFind(t,id){return(raw[t]||[]).find(function(x){return x.id===id})}
 function clean(t,row){var o=Object.assign({},row);if(!PL_OK)delete o.pl;return o}
 function rIns(t,row){return R.from(t).insert(clean(t,row)).select().then(function(r){if(r.error)throw r.error;var x=(r.data&&r.data[0])||row;(raw[t]=raw[t]||[]).push(x);return x})}
+var OSTN={0:"발굴",1:"컨택 시도",2:"미팅 완료",3:"관계 형성",4:"MOU 예정",5:"MOU 완료",6:"인재영입 완료",9:"보류"};
 var CONF_T={organizations:"기관",org_contact_logs:"소통 기록"};
 function rUpd(t,id,patch){var p=clean(t,patch);if(!Object.keys(p).length)return Promise.resolve(rFind(t,id));var x0=rFind(t,id),q=R.from(t).update(p).eq("id",id),chk=CONF_T[t]&&x0&&x0.updated_at;if(chk)q=q.eq("updated_at",x0.updated_at);
   return q.select().then(function(r){if(r.error)throw r.error;var nx=r.data&&r.data[0];
@@ -110,7 +111,7 @@ VT.orgs={deps:["staff","organizations","org_contact_logs"],
     return rIns("organizations",row).then(function(x){var P=[clog("organizations",x.id,x.short_name,"기관 등록","",x.full_name)];if(p.card_image)P.push(blobPut("oimg:"+x.id,p.card_image));if(p.business_card_thumb)P.push(blobPut("othumb:"+x.id,p.business_card_thumb));return Promise.all(P).then(function(){return orgOld(x)})})},
   upd:function(old,p){var o=rFind("organizations",old._vw);if(!o)return Promise.reject(new Error("기관을 찾지 못했어요"));var m=orgNew(p,o),patch=m.x;if(Object.keys(m.pl).length)patch.pl=plPatch(o,m.pl);var st0=o.stage;
     var P=[];if("card_image" in p)P.push(blobPut("oimg:"+o.id,p.card_image||null));if("business_card_thumb" in p)P.push(blobPut("othumb:"+o.id,p.business_card_thumb||null));
-    return Promise.all(P).then(function(){return rUpd("organizations",o.id,patch)}).then(function(x){if("stage" in patch&&patch.stage!==st0)clog("organizations",o.id,o.short_name,"단계",st0,patch.stage);return orgOld(x)})},
+    return Promise.all(P).then(function(){return rUpd("organizations",o.id,patch)}).then(function(x){if("stage" in patch&&patch.stage!==st0)clog("organizations",o.id,o.short_name,"단계",OSTN[st0]!=null?OSTN[st0]:st0,OSTN[patch.stage]!=null?OSTN[patch.stage]:patch.stage);return orgOld(x)})},
   del:function(old){var id=old._vw,w=(raw.workers||[]).some(function(x){return x.org_id===id});if(w)return Promise.reject(new Error("근로자 DB에 이 기관 소속 근로자가 있어 지울 수 없어요 (V-Work에서 처리해 주세요)"));
     return rDel("organizations",id).then(function(){clog("organizations",id,old.name,"기관 삭제",old.name,"")})}};
 /* ---------- 컨택 이력 ---------- */
@@ -2402,7 +2403,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='pl-v158';
+const APP_BUILD_VERSION='pl-v159';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -3163,7 +3164,7 @@ async function checkAlertsAndSendGChat(){
   let hasAlert=false;
 
   // 채용 마감 임박
-  (cache.jobs||[]).filter(j=>j.status==='진행중'&&j.deadline).forEach(j=>{
+  (cache.jobs||[]).filter(j=>j.status!=='완료'&&j.deadline).forEach(j=>{
     const days=Math.floor((new Date(j.deadline)-now)/864e5);
     if(days>=0&&days<=7){
       hasAlert=true;
@@ -3313,7 +3314,7 @@ function checkAlerts(manual=false){
 
   // 1. 채용 건 마감 임박 (D-7, D-3)
   if(cache.jobs){
-    cache.jobs.filter(j=>j.status==='진행중'&&j.deadline).forEach(j=>{
+    cache.jobs.filter(j=>j.status!=='완료'&&j.deadline).forEach(j=>{
       const days=Math.floor((new Date(j.deadline)-now)/864e5);
       if(days<=3&&days>=0){
         alerts.push({type:'danger',icon:'ti-alert-triangle',title:`채용 마감 D-${days}`,msg:`${j.company} · ${j.job_title} · ${j.current_count||0}/${j.headcount}명 확보`,link:'jobs'});
@@ -7558,7 +7559,7 @@ async function renderJobs(){
           </div>
           <span style="font-size:12px;font-weight:700;color:${barColor};white-space:nowrap;">${actualCount}/${j.headcount}명</span>
         </div>
-        ${remain>0&&j.status==='진행중'?`<div style="font-size:11px;color:var(--red);margin-top:3px;font-weight:600;">미충원 ${remain}명</div>`:''}
+        ${remain>0&&j.status!=='완료'?`<div style="font-size:11px;color:var(--red);margin-top:3px;font-weight:600;">미충원 ${remain}명</div>`:''}
       </td>
       <td style="padding:13px 16px;">
         ${j.status!=='완료'?`
@@ -10454,7 +10455,7 @@ var CSS='<style id="vw-addon-css">'+
  '.vwban{display:flex;gap:6px;flex-wrap:wrap}.vwban button{font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer}.vwban button.on{border-color:#dc2626;background:#fee2e2;color:#b91c1c}'+
  '#vw-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px}#vw-ov .dlg{background:#fff;border-radius:12px;max-width:720px;width:100%;max-height:88vh;overflow:auto;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.25)}'+
  '#vw-ov h3{margin:0 0 10px;font-size:15px;font-weight:800}#vw-ov .ft{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}#vw-ov textarea,#vw-ov input,#vw-ov select{width:100%;box-sizing:border-box;font-size:12px;padding:7px 9px;border:1.5px solid #e5e7eb;border-radius:6px}'+
- '.vwm label{display:flex;gap:8px;align-items:center;padding:7px 4px;border-top:1px solid #f1f5f9;font-size:12px;cursor:pointer}.vwjc{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;margin-top:6px;background:#fff}.vwjc-t{font-size:12px;line-height:1.4}.vwjc-t span{color:#374151}.vwjc-m{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:11px}.vwjc-m .vwbtn{white-space:nowrap}#vw-ov .vwgrid select,#vw-ov .vwgrid input{width:100%}.vwm label input,#vw-ov .vwm label input{width:auto;flex:none;margin:0}#vw-ov .vwm label b{white-space:nowrap}.vwmuted{color:#6b7280;font-size:11px}'+
+ '.vwm label{display:flex;gap:8px;align-items:center;padding:7px 4px;border-top:1px solid #f1f5f9;font-size:12px;cursor:pointer}.vwvm{color:#5B3FD6;font-weight:800;margin-right:2px}.vwjc{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;margin-top:6px;background:#fff}.vwjc-t{font-size:12px;line-height:1.4}.vwjc-t span{color:#374151}.vwjc-m{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:11px}.vwjc-m .vwbtn{white-space:nowrap}#vw-ov .vwgrid select,#vw-ov .vwgrid input{width:100%}.vwm label input,#vw-ov .vwm label input{width:auto;flex:none;margin:0}#vw-ov .vwm label b{white-space:nowrap}.vwmuted{color:#6b7280;font-size:11px}'+
  '</style>';
 document.head.insertAdjacentHTML("beforeend",CSS);
 /* ---------- 작은 창 ---------- */
@@ -10645,7 +10646,9 @@ function jobInfoHtml(job){var rid=A.txt("rr",job.id),r=rid&&A.find("recruit_requ
 var _sp=window.sourcingPanelHtml;
 if(typeof _sp==="function")window.sourcingPanelHtml=function(job){var h=_sp.apply(this,arguments);try{h=jobInfoHtml(job)+h+recHtml(job)}catch(e){console.warn(e)}return h};
 var _rj=window.renderJobs;
-if(typeof _rj==="function")window.renderJobs=function(){var self=this,args=arguments;return Promise.all([A.fresh("org_recommends"),A.fresh("recruit_rounds")]).then(function(){},function(){}).then(function(){return _rj.apply(self,args)})};
+if(typeof _rj==="function")window.renderJobs=function(){var self=this,args=arguments;return Promise.all([A.fresh("org_recommends"),A.fresh("recruit_rounds")]).then(function(){},function(){}).then(function(){return _rj.apply(self,args)}).then(function(v){try{vmPaint()}catch(e){console.warn(e)}return v})};
+/* v159 브이매치 공고 올라간 채용 건: 고객사 앞에 Ⓥ */
+function vmPaint(){[].forEach.call(document.querySelectorAll('#job-tbody tr[onclick^="toggleJobRow("]'),function(tr){if(tr.querySelector(".vwvm"))return;var m=(tr.getAttribute("onclick")||"").match(/toggleJobRow\((\d+)/);if(!m)return;var r=A.find("recruit_requests",A.txt("rr",+m[1]));if(!r||!r.vmatch_uploaded)return;var td=tr.querySelector("td");if(td)td.insertAdjacentHTML("afterbegin",'<span class="vwvm" title="브이매치 공고 업로드'+(r.vmatch_uploaded_on?" "+md(r.vmatch_uploaded_on):"")+'">Ⓥ</span> ')})}
 function lvlOf(s){s=String(s||"");return/심하지/.test(s)?"심하지 않은":/심한|중증/.test(s)?"심한":""}
 function activeEmp(wid){var t=A.today();return raw("employments").some(function(e){if(e.worker_id!==wid||e.cancelled)return false;var end=e.end_date||A.curEnd(e.id);return!end||end>=t})}
 function busyTill(wid){if(!wid)return"";var t=A.today(),m="";raw("employments").forEach(function(e){if(e.worker_id!==wid||e.cancelled)return;var end=e.end_date||A.curEnd(e.id)||"9999-12-31";if(end>=t&&end>m)m=end});return m}
