@@ -862,6 +862,16 @@ button.dbgo:hover,button.pfhas:hover{filter:brightness(.94)}
 .tabs .tgrp{font-size:11.5px;font-weight:700;color:var(--ink-2,#666);padding:0 6px 0 2px;align-self:center;white-space:nowrap}
 .tdone small{font-weight:400;opacity:.75;margin-left:2px}
 .ceinh.wrdup{margin:0 0 8px}
+.seqbtn{background:none;border:0;padding:0;cursor:pointer;font:inherit;display:inline-flex;align-items:center;gap:2px}
+.seqbtn:hover .seq{filter:brightness(.92);text-decoration:underline}
+.texrow td{background:#FAFAFD;padding:6px 10px!important}
+.texbox{display:flex;flex-direction:column;gap:3px;font-size:12.5px}
+.texr{display:flex;gap:8px;align-items:center}
+.texiss{color:#B42318;font-weight:600;font-size:12px;padding:2px 0}
+.texiss.ok{color:#777;font-weight:400}
+.gapok{background:#EEE!important;color:#666!important}
+.gapf{display:flex;gap:6px;margin-top:6px}
+.gapf input{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -15121,6 +15131,64 @@ var _v139Act164=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="rr-autoclose"){var r=rcOf(D0.id);if(!r)return true;askConfirm("채용 요청 완료로 정리","채용수 "+rrHead(r)+"명 모두 신규입사자로 등록됐어요. 요청 상태를 '완료'로 바꿀까요?","완료로 정리",function(){var b=r.status||"진행중";r.status="완료";logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"","상태",b,"완료","브이드림 내부");RR_DONE=null;toast("완료로 정리했어요");render()});return true}
   if(a==="onb-rrfix"){var e=emp(D0.e),q=e&&inOfR(e.id);if(!e||!q)return true;if(!rrApplyKind(q,e,false))toast("바꿀 게 없어요 · 대체 대상은 아래 '대체 대상'에서 골라 주세요");render();return true}
   return _v139Act164(a,el)};
+
+/* ================================================================
+   v165 소속 근로자 (기업 창 · 기관 창): 줄에는 전체 기간(1차 시작 ~ 마지막 만료) · 차수 칸 누르면 차수별 기간
+        차수 사이 공백 · 겹침 = ⚠ (있으면 안 되는 경우) · 누구나 사유를 적고 [특이 케이스로 확인] · 관리자는 취소
+        계약 정보 수정: 공백이면 사유를 적어야 저장 (저장하면 특이 케이스 확인까지)
+   ================================================================ */
+APP_VER="v165";APP_VER_ON="10/20";APP_NOTE="소속 근로자 차수별 계약기간 · 계약 공백/겹침 확인";
+/* ---------- SQL 74: 특이 케이스 사유 칸 ---------- */
+var V74={ok:!LIVE,probed:false};
+var _loadAll165=loadAll;loadAll=function(){var a=arguments,self=this;var pr=(!LIVE||V74.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(V74.probed=true,sb.from("employments").select("term_gap_note").limit(1).then(function(r){V74.ok=!r.error;if(V74.ok)colxAdd("employments",[["gap_note","term_gap_note"],["gap_by","term_gap_by"],["gap_on","term_gap_on","date"]])},function(){}));
+  return pr.then(function(){return _loadAll165.apply(self,a)})};
+/* ---------- 공백 · 겹침 ---------- */
+function termIss(eid){var T=termsOf(eid).slice().sort(function(a,b){return(+a.seq||0)-(+b.seq||0)}),L=[];
+  for(var i=1;i<T.length;i++){var p=T[i-1],r=T[i];if(!p.end||!r.start)continue;
+    if(r.start<=p.end)L.push({k:"겹침",d:dd(r.start,p.end)+1,p:p,r:r});else if(r.start!==addD(p.end,1))L.push({k:"공백",d:dd(p.end,r.start)-1,p:p,r:r})}return L}
+function gapOk(e){return!!(e&&e.gap_note)}
+function gapTip(e){return"특이 케이스로 확인 · "+(e.gap_note||"")+(e.gap_by?" · "+e.gap_by:"")+(e.gap_on?" "+md(e.gap_on):"")}
+function issBadge(e,L){if(!L.length)return"";var k=L.some(function(x){return x.k==="겹침"})?"겹침":"공백";
+  return gapOk(e)?' <span class="b sm tip gapok" tabindex="0" data-tip="'+esc(gapTip(e))+'">확인됨</span>':' <span class="b sm bad tip" tabindex="0" data-tip="'+esc(L.map(function(x){return x.p.seq+"차 → "+x.r.seq+"차 "+x.k+" "+x.d+"일"}).join(" · ")+" · 확인 필요")+'">⚠ '+k+'</span>'}
+/* ---------- 줄: 전체 기간 · 차수 칸 펼치기 ---------- */
+S.tex=S.tex||{};
+function fmtD(d,short){d=String(d||"");return short?d.slice(2).replace(/-/g,"."):d}
+function termAll(e){var T=termsOf(e.id).slice().sort(function(a,b){return(+a.seq||0)-(+b.seq||0)}),f=T[0]||{},l=T[T.length-1]||{};return{T:T,n:T.length,first:f,last:l,start:f.start||"",end:l.end||(T.length?"":"")}}
+function seqCell(e,A,L){var b=seqBadge(A.last.seq);if(A.n<2&&!L.length)return b;return'<button class="seqbtn" data-act="tex" data-e="'+e.id+'" aria-expanded="'+(S.tex[e.id]?"true":"false")+'" title="차수별 계약기간 보기">'+b+' <span class="small muted">'+(S.tex[e.id]?"▴":"▾")+'</span></button>'+issBadge(e,L)}
+function texRow(e,cols,A,L){if(!S.tex[e.id])return"";var rows=A.T.map(function(t,i){var iss=L.find(function(x){return x.r===t});
+    return(iss?'<div class="texiss'+(gapOk(e)?" ok":"")+'">'+(gapOk(e)?"":"⚠ ")+esc(t.seq-1)+'차 만료 '+esc(iss.p.end)+' → '+esc(t.seq)+'차 시작 '+esc(t.start)+' · '+iss.k+' '+iss.d+'일'+(gapOk(e)?' · 확인됨':' · 확인 필요')+'</div>':"")+
+      '<div class="texr"><span class="seq">'+esc(t.seq)+'차</span> <span class="num">'+esc(t.start)+' ~ '+esc(t.end||"무기")+'</span> <span class="small muted">'+esc(i===0?"최초":t.type||"연장")+'</span></div>'}).join("");
+  var act="";if(L.length){if(gapOk(e))act='<div class="small muted" style="margin-top:4px">특이 케이스 사유: '+esc(e.gap_note)+(e.gap_by?" · "+esc(e.gap_by):"")+(e.gap_on?" "+esc(md(e.gap_on)):"")+(S.role==="admin"?' <button class="linkbtn" data-act="gap-undo" data-e="'+e.id+'">확인 취소</button>':"")+'</div>';
+    else act=S.gapF===e.id?'<div class="gapf"><input id="gap-why" placeholder="사유 (꼭 적어 주세요) · 예: 기업 사정으로 1주 쉬고 재계약" maxlength="200"><button class="btn xs pri" data-act="gap-ok" data-e="'+e.id+'">확인</button><button class="btn xs" data-act="gap-x">취소</button></div>'
+      :'<div style="margin-top:4px"><button class="btn xs" data-act="gap-open" data-e="'+e.id+'">특이 케이스로 확인</button> <span class="small muted">입력 실수면 근로자 창 › 고용·계약 › [계약 정보 수정]에서 고쳐 주세요</span></div>'}
+  return'<tr class="texrow"><td colspan="'+cols+'"><div class="texbox">'+rows+act+'</div></td></tr>'}
+/* 기업 창 › 소속 근로자 */
+var _pComp165=pComp;pComp=function(c){var h=_pComp165.apply(this,arguments);if(typeof h!=="string"||!c||S.compPTab!=="emp")return h;
+  var a='<table class="mini"><thead><tr><th>근로자</th><th>연락처</th><th>상태</th><th>차수</th><th>계약시작일</th><th>계약만료일</th><th>장애 재판정</th></tr></thead><tbody>',i=h.indexOf(a);if(i<0)return h;var j=h.indexOf("</tbody></table>",i);if(j<0)return h;
+  var es=DB.employments.filter(function(e){return e.company===c.id}).sort(function(x,y){return(activeEmp(y)?1:0)-(activeEmp(x)?1:0)});
+  var body=es.length?es.map(function(e){var w=wk(e.worker),A=termAll(e),L=termIss(e.id);return'<tr><td>'+wlink(e.worker)+'</td><td>'+mtel(w)+'</td><td>'+stBadge(statusOf(e))+'</td><td class="nowrap">'+seqCell(e,A,L)+'</td><td class="num">'+esc(A.start)+(A.n>1?' <span class="small muted">최초</span>':"")+'</td><td class="num">'+esc(A.end||"무기")+'</td><td>'+disLabel1(e.id)+'</td></tr>'+texRow(e,7,A,L)}).join(""):'<tr><td colspan="7" class="muted">소속 근로자가 없습니다.</td></tr>';
+  return h.slice(0,i)+a+body+h.slice(j)};
+/* 기관 창 › 소속 근로자 (계약기간 칸) */
+oEmpRow=function(x){var w=x.w,e=x.e,A=termAll(e),L=termIss(e.id),mc=mainC(w),end=A.end||e.end_date||"";
+  return'<tr><td>'+wlink(w.id)+'</td><td>'+clink(e.company)+'</td><td>'+stBadge(statusOf(e))+'</td><td class="nowrap">'+seqCell(e,A,L)+'</td><td class="num small nowrap">'+esc(fmtD(A.start,1))+' ~ '+esc(end?fmtD(end,1):"무기")+(A.n>1?' <span class="small muted">최초~</span>':"")+'</td><td class="small">'+esc(e.job||"")+'</td><td class="small">'+esc(mc.l)+'</td></tr>'+texRow(e,7,A,L)};
+/* ---------- 계약 정보 수정: 공백이면 사유 ---------- */
+function ceIss(C){var R=C.rows,L=[];for(var i=1;i<R.length;i++){var p=R[i-1],r=R[i];if(p.end&&r.start&&r.start!==addD(p.end,1)&&r.start>p.end)L.push((i+1)+"번째 차수 앞 공백 "+(dd(p.end,r.start)-1)+"일")}return L}
+var _ceModal165=ceModal;ceModal=function(){var r=_ceModal165.apply(this,arguments);try{var C=S.ce;if(C&&C.gapWarn){var b=$('#modal [data-act="ce-save"]');if(b){b.textContent="사유 적고 저장";if(!$("#ce-gapwhy")){var e=emp(C.eid);b.closest(".ps").insertAdjacentHTML("beforebegin",'<div class="ps"><div class="wrdup"><b>⚠ 차수 사이에 공백이 있어요</b> · '+esc(ceIss(C).join(" · "))+' · 입력 실수가 아니면 사유를 적어 주세요 (특이 케이스로 확인돼요)<input id="ce-gapwhy" style="width:100%;margin-top:6px" maxlength="200" placeholder="사유 (꼭 적어 주세요)" value="'+esc((e&&e.gap_note)||C.gapWhy||"")+'"></div></div>')}}}}catch(x){}return r};
+document.addEventListener("input",function(ev){if(ev.target&&ev.target.id==="ce-gapwhy"&&S.ce)S.ce.gapWhy=ev.target.value},true);
+var _ceSave165=ceSave;ceSave=function(root){var C=S.ce;if(!C)return _ceSave165.apply(this,arguments);var iss=ceIss(C);
+  if(iss.length&&C.gapWarn){var why=String((($("#ce-gapwhy")||{}).value)||C.gapWhy||"").trim();if(!why){toast("공백 사유를 적어 주세요");var i=$("#ce-gapwhy");if(i)i.focus();return}C.gapWhy=why}
+  var eid=C.eid,r=_ceSave165.apply(this,arguments);if(S.ce)return r;/* 저장 안 됨 */
+  var e=emp(eid);if(e&&iss.length&&C.gapWhy&&e.gap_note!==C.gapWhy)gapSet(e,C.gapWhy);else if(e&&!iss.length&&e.gap_note&&!termIss(e.id).length){gapClear(e,"공백이 없어져 확인 해제");}render();return r};
+function gapSet(e,why){var w=wk(e.worker)||{},b=e.gap_note||"";e.gap_note=why;e.gap_by=st(S.me).name;e.gap_on=TODAY;logChange("workers",e.worker,w.name||"","계약 공백 · 특이 케이스 확인 ("+((comp(e.company)||{}).name||"")+")",b,why,"브이드림 내부");if(!V74.ok)toast("SQL 74를 실행해야 사유가 저장돼요 (지금은 이 화면에서만 보여요)")}
+function gapClear(e,why){var w=wk(e.worker)||{},b=e.gap_note;e.gap_note="";e.gap_by="";e.gap_on=null;logChange("workers",e.worker,w.name||"","계약 공백 · 특이 케이스 확인 취소 ("+((comp(e.company)||{}).name||"")+")",b,why||"취소","브이드림 내부")}
+/* ---------- 동작 ---------- */
+var _v139Act165=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="tex"){S.tex[D0.e]=!S.tex[D0.e];render();return true}
+  if(a==="gap-open"){S.gapF=D0.e;render();setTimeout(function(){var i=$("#gap-why");if(i)i.focus()},0);return true}
+  if(a==="gap-x"){S.gapF=null;render();return true}
+  if(a==="gap-ok"){var e=emp(D0.e),why=String((($("#gap-why")||{}).value)||"").trim();if(!e)return true;if(!why){toast("사유를 적어 주세요");return true}gapSet(e,why);S.gapF=null;toast("특이 케이스로 확인했어요");render();return true}
+  if(a==="gap-undo"){var e2=emp(D0.e);if(!e2||S.role!=="admin")return true;askConfirm("특이 케이스 확인 취소","이 고용 건의 공백 · 겹침 경고를 다시 띄울까요?","확인 취소",function(){gapClear(e2,"관리자 취소");render()});return true}
+  return _v139Act165(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
