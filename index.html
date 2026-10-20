@@ -14876,6 +14876,43 @@ xlPf=function(rows){return xlLoad().then(function(X){var wb=new X.Workbook(),ws=
     V.forEach(function(v,i){ws.getCell(r+2,i+1).value=v==null?"":(i===0?v:String(v))})});
   return xlSave(wb,"VWork_포트폴리오_"+TODAY+".xlsx",rows.length)})};
 
+/* ================================================================
+   v161 요약 보기(접기)는 '저장된 값' 기준으로만
+        고치기 시작한 칸은 저장하거나 창을 닫을 때까지 펼친 채로 · 저장하면 다시 요약 · 요약에 저장일
+        대상: 장애 재판정 확인 (근로자 창 · 신규입사자 창) · 근로자 창 인적 정보 · 신규입사자 창 직무
+   ================================================================ */
+APP_VER="v161";APP_VER_ON="10/20";APP_NOTE="요약 보기: 저장된 값 기준 · 고치는 중엔 펼친 채로";
+S.onbOpen=S.onbOpen||{};S.wkOpen=S.wkOpen||{};
+var FOLD_LAST={wm:null,onb:null};
+function fdSec(pn,re){return[].find.call(pn.querySelectorAll(".ps"),function(p){var h=p.querySelector("h3");return h&&re.test(h.textContent)})}
+function fdFold(sec,sum){[].forEach.call(sec.children,function(c){if(c.tagName!=="H3")c.hidden=true});sec.classList.add("onbfold");sec.insertAdjacentHTML("beforeend",sum)}
+/* 저장된 재판정 값이 확인완료이고, 지금 화면 값이 저장 값과 같을 때만 */
+function fdDisOk(eid){var d=eid&&disOf(eid);if(!d||d.result!=="확인완료"||!(d.permanent||d.recheck))return null;var F=S.disF;
+  if(F&&F.emp===eid&&(F.result!==d.result||!!F.permanent!==!!d.permanent||(F.permanent?"":F.recheck||"")!==(d.permanent?"":d.recheck||"")||(F.docs||[]).slice().sort().join()!==(d.docs||[]).slice().sort().join()))return null;return d}
+function fdDisSum(d,act,k,withDocs){return'<div class="onbsum"><span class="b ok">✓ 확인완료</span> <span>'+(d.permanent?"영구장애 (재판정 없음)":"재판정일 <b class=\"num\">"+esc(d.recheck||"—")+"</b>")+'</span>'+(withDocs&&(d.docs||[]).length?' <span class="small muted">· '+esc(d.docs.join(", "))+'</span>':"")+(d.checked?' <span class="small muted">· 저장 '+esc(md(d.checked))+'</span>':"")+'<span class="grow"></span><button class="btn xs" data-act="'+act+'" data-k="'+k+'">수정</button></div>'}
+/* ---------- 신규입사자 창 ---------- */
+onbPaint=function(){var pn=document.querySelector('aside.pnl[aria-label="입사 상세"]');if(!pn||!S.onbSel)return;var e=emp(S.onbSel);if(!e)return;var w=wk(e.worker);
+  if(FOLD_LAST.onb!==S.onbSel){FOLD_LAST.onb=S.onbSel;S.onbOpen={}}
+  var box=fdSec(pn,/^장애 정보/);if(box&&w&&!box.querySelector(".blrow"))box.insertAdjacentHTML("beforeend",blSeg(w));
+  var rp=pn.querySelector('.ps[data-spec="6"]'),d=fdDisOk(e.id);
+  if(rp&&d&&!S.onbOpen["d:"+e.id]&&!rp.querySelector(".onbsum"))fdFold(rp,fdDisSum(d,"onb-unfold","d:"+e.id,true));
+  var jp=fdSec(pn,/^직무/);
+  if(jp&&e.job&&!S.onbOpen["j:"+e.id]&&!jp.querySelector(".onbsum"))fdFold(jp,'<div class="onbsum"><span class="b ok">✓ 확정</span> <b>'+esc(e.job)+'</b>'+(e.job_detail?' <span class="small muted">· '+esc(e.job_detail)+'</span>':"")+'<span class="grow"></span><button class="btn xs" data-act="onb-unfold" data-k="j:'+e.id+'">수정</button></div>')};
+/* ---------- 근로자 창 › 인적 정보 ---------- */
+wkFoldPaint=function(){if(FOLD_LAST.wm!==S.wm){FOLD_LAST.wm=S.wm;S.wkOpen={}}var pn=document.querySelector("aside.pnl");if(!pn||!S.wm||S.wkPT!=="person")return;var w=wk(S.wm);if(!w)return;
+  var info=fdSec(pn,/^인적 정보/);
+  if(info&&!info.querySelector(".onbsum")&&!S.wkOpen["i:"+w.id]){var ok=w.name&&w.birth&&(w.non_dis||(w.dis_type&&w.dis_level))&&w.basic_living&&w.basic_living!=="모름";
+    if(ok)fdFold(info,'<div class="onbsum"><span class="b ok">✓ 확인됨</span> <b>'+esc(w.name)+'</b> <span class="small">'+esc(w.birth)+ageTag(w.birth)+' · '+esc(w.non_dis?"비장애인 판정":[w.dis_type,w.dis_level].join(" "))+' · 기초생활수급자 '+esc(w.basic_living)+'</span><span class="grow"></span><button class="btn xs" data-act="wk-unfold" data-k="i:'+w.id+'">수정</button></div>')}
+  var rp=fdSec(pn,/^장애 재판정 확인/),d=rp&&S.disF&&fdDisOk(S.disF.emp);
+  if(rp&&d&&!S.wkOpen["d:"+w.id]&&!rp.querySelector(".onbsum"))fdFold(rp,fdDisSum(d,"wk-unfold","d:"+w.id,false))};
+/* ---------- 고치기 시작하면 펼친 채로 · 저장하면 다시 요약 ---------- */
+function fdKeyOf(el){var sec=el.closest&&el.closest("aside.pnl .ps");if(!sec)return null;var pn=sec.closest("aside.pnl"),h=sec.querySelector("h3"),t=h?h.textContent:"",k=/^장애 재판정 확인/.test(t)?"d":/^인적 정보/.test(t)?"i":/^직무/.test(t)?"j":"";if(!k)return null;
+  if(pn.getAttribute("aria-label")==="입사 상세"&&S.onbSel)return{m:S.onbOpen,k:k+":"+S.onbSel};if(S.wm&&k!=="j")return{m:S.wkOpen,k:k+":"+S.wm};return null}
+["input","change"].forEach(function(tp){document.addEventListener(tp,function(ev){var K=fdKeyOf(ev.target);if(K)K.m[K.k]=1},true)});
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="dis-save"],[data-act="wk-save"]');if(!b)return;var K=fdKeyOf(b);
+  if(b.dataset.act==="dis-save"){Object.keys(S.onbOpen).forEach(function(k){if(k.indexOf("d:")===0)delete S.onbOpen[k]});Object.keys(S.wkOpen).forEach(function(k){if(k.indexOf("d:")===0)delete S.wkOpen[k]})}
+  else if(K)delete K.m[K.k]},true);
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
