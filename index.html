@@ -828,6 +828,7 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 .rrcolink{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;border-radius:8px;background:#EEF4FF;border:1px solid #C9D8FB;font-size:12.5px;color:#1E3A8A}
 .cdtel{font-size:11px;margin-top:3px;white-space:nowrap;color:var(--ink-2,#555)}.cdtel small{color:var(--muted,#888)}.cdtel.ban{color:#B42318}
 .tlman .fg{margin-top:6px}
+.vmv{color:#5B3FD6;font-weight:800;margin-right:4px;font-size:13px}
 </style>
 </head>
 <body>
@@ -14710,6 +14711,62 @@ document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.targe
     name:nm,phone:String(M.phone||"").trim(),birth:M.birth||"",src_org:M.src_org||"",main_contact:mc,guardian_rel:String(M.guardian_rel||"").trim(),gphone:String(M.gphone||"").trim(),mc_ct:M.mc_ct||"",mc_name:ct?ct.name:""},V);
   DB.talent.push(t);logChange("talent_picks",t.id,nm,"추천인재 등록 (직접 입력 · 근로자 DB에 없음)","",t.source+" · "+mc+(t.reason?" · "+t.reason:""),"브이드림 내부");S.talSel=t.id;S.talF=null;toast("추천인재로 등록했어요"+(t.birth?"":" · 생년월일을 넣어 두면 입사 등록 때 같은 사람을 찾기 쉬워요"));render()},true);
 var _v139Act158=v139Act;v139Act=function(a,el){if(a==="tlm-back"){if(S.talF){S.talF.manual=false;S.talF.dup=null;S.talF.dupOk=false}render();return true}return _v139Act158(a,el)};
+
+/* ================================================================
+   v159 채용 요청 목록: 브이매치 공고 올라간 요청은 기업명 앞에 Ⓥ
+        포트폴리오 일괄 업로드: 새 양식 · 추천인재에 있으면 포트폴리오로 옮김 · 근로자 DB 연결 · 수급처 → 기관
+   ================================================================ */
+APP_VER="v159";APP_VER_ON="10/20";APP_NOTE="채용 요청 브이매치 Ⓥ · 포트폴리오 업로드 새 양식 · 추천인재 이관";
+/* ---------- 1. Ⓥ ---------- */
+function vmMark(r){return r&&r.vm?'<span class="vmv" title="브이매치 공고 업로드'+(r.vm_on?" "+esc(md(r.vm_on).replace(/\(.\)/,"")):"")+'">Ⓥ</span>':""}
+var _rrGCo159=rrGCo;rrGCo=function(r){var h=_rrGCo159.apply(this,arguments);var v=vmMark(r);if(!v||typeof h!=="string")return h;var i=h.indexOf("<button");if(i<0){var j=h.indexOf(">");return j<0?v+h:h.slice(0,j+1)+v+h.slice(j+1)}return h.slice(0,i)+v+h.slice(i)};
+/* ---------- 2. 포트폴리오 일괄 업로드 ---------- */
+PF_TPL_H=["NO","근로자명","장애유형","장애등급","연락처","성별","생년월일","희망 직무 유형","직무 상세","희망 근무 시간","희망급여","직무레벨","포트폴리오","특이사항","제안 기업","매칭완료여부","수급처","수급담당자"];
+pfTpl=function(){xlLoad().then(function(X){var wb=new X.Workbook(),ws=wb.addWorksheet("포트폴리오");ws.addRow(PF_TPL_H);
+  ws.addRow([1,"홍길동","지체장애","중증","010-1234-5678","남","1995-03-14","디자인, 사무행정","포스터 · 상세페이지","주 5일 · 일 4시간 / 주 3일 · 일 6시간","최저시급","중","https://drive.google.com/…","","","대기","OO복지관","김담당"]);
+  ws.getRow(1).font={bold:true};ws.columns.forEach(function(c){c.width=16});ws.getColumn(1).width=6;ws.views=[{state:"frozen",ySplit:1}];
+  var g=wb.addWorksheet("안내");[["2행은 예시예요. 지우고 3행부터 넣어도 되고, 2행을 덮어써도 돼요. NO는 번호라 읽지 않아요."],["근로자명 · 희망 직무 유형은 필수예요. 희망 직무 유형은 "+JOBS.join(" · ")+" 중에서 쉼표로 여러 개."],["연락처 · 생년월일 중 하나는 꼭 넣어 주세요. 같은 사람을 찾는 기준이에요 (이름 + 연락처 또는 생년월일)."],
+    ["같은 사람이 ① 포트폴리오에 있으면 건너뛰고, ② 추천인재에 있으면 포트폴리오로 옮기고 추천인재는 '종료(포트폴리오로 이관)', ③ 근로자 DB에 있으면 연결해요. 연계중인 추천인재는 종료하지 않아요."],
+    ["희망 근무 시간이 여러 개면 ‘ / ’로 나눠 주세요. 예: 주 5일 · 일 4시간 / 주 3일 · 일 6시간"],["포트폴리오 칸은 링크(https://…)만 넣어 주세요. 파일은 등록 뒤 화면에서 올려요."],
+    ["매칭완료여부: 비우거나 ‘대기’ → 대기, ‘취업 · 완료’ → 취업완료, 그 밖 → 기타."],["수급처가 기관 DB의 정식명 · 약칭과 같으면 그 기관으로 연결돼요 (발굴페이지에도 보여요). 기관이 '근로자 연락은 기관 통해서만'이면 소통 연락처가 기관 담당자로 정해져요."],["수급담당자는 화면에서 ‘등록자’로 보여요. 올린 날이 등록일이에요."]].forEach(function(r){g.addRow(r)});g.getColumn(1).width=110;
+  return wb.xlsx.writeBuffer().then(function(buf){var n="포트폴리오_업로드양식.xlsx";dlBlob(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),n);toast(n+"을 내려받았어요")})}).catch(function(e){toast("양식을 만들지 못했어요: "+(e&&e.message||e))})};
+function pfKey(s){return String(s||"").replace(/\s|\(.*?\)|사단법인|재단법인|\(사\)|\(재\)/g,"").toLowerCase()}
+function pfOrgOf(src){var k=pfKey(src);if(!k)return null;return(DB.orgs||[]).find(function(o){return o.stage!=null&&(pfKey(o.full)===k||pfKey(o.short)===k)})||null}
+function samePerson(nm,ph,bd,n2,p2,b2){if(!nm||nm!==n2)return false;var a=normPhone(ph||""),b=normPhone(p2||"");return(a.length>=9&&a===b)||(!!bd&&bd===b2)}
+pfImport=function(ws){var hr=0;for(var r=1;r<=8;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|");if(/근로자명/.test(v)&&/희망/.test(v)){hr=r;break}}if(!hr)return{made:0,warn:["‘근로자명’ 머리글을 못 찾았어요"]};
+  var H={};ws.getRow(hr).values.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});var col=function(row,k){var i=H[k];return i?rrCellTxt(row.values[i]):""};
+  var C={new:0,link:0,mv:0,skip:0,chk:0},warn=[],noOrg={},made=0;
+  for(var r2=hr+1;r2<=ws.rowCount;r2++){var row=ws.getRow(r2),nm=col(row,"근로자명").trim();if(!nm)continue;
+    var link=row.values[H["포트폴리오"]],url=link&&link.hyperlink&&/^https?:\/\//i.test(link.hyperlink)?link.hyperlink:/^https?:/.test(col(row,"포트폴리오"))?col(row,"포트폴리오"):"";
+    var jobs=[],jt=col(row,"희망직무유형");JOBS.forEach(function(j){if(jt.indexOf(j)>=0||(j==="미술"&&/미술/.test(jt))||(j==="음악"&&/음악/.test(jt)))jobs.push(j)});if(jt&&!jobs.length){jobs=["기타"];warn.push(r2+"행 "+nm+": 희망 직무 ‘"+jt+"’ → 기타")}
+    var st0=col(row,"매칭완료여부"),s=/취업|완료/.test(st0)?"취업완료":/지원|대기/.test(st0)||!st0?"대기":"기타",b=rrDate(col(row,"생년월일"));if(col(row,"생년월일")&&!b)warn.push(r2+"행 "+nm+": 생년월일 ‘"+col(row,"생년월일")+"’을 읽지 못했어요");
+    var ph0=(col(row,"연락처")||col(row,"휴대폰")||col(row,"전화번호")).trim();
+    /* ① 포트폴리오에 있음 */
+    if(DB.pf.some(function(x){return samePerson(nm,ph0,b,x.name,x.phone||(x.worker&&(wk(x.worker)||{}).phone),x.birth||(x.worker&&(wk(x.worker)||{}).birth))})){warn.push(r2+"행 "+nm+": 포트폴리오에 이미 있어 건너뜀");C.skip++;continue}
+    /* ② 추천인재에 있음 */
+    var t=(DB.talent||[]).find(function(y){var w=y.worker&&wk(y.worker);return samePerson(nm,ph0,b,y.name||(w&&w.name),y.phone||(w&&w.phone),y.birth||(w&&w.birth))});
+    var tw=t&&t.worker&&wk(t.worker);
+    /* ③ 근로자 DB */
+    var w=tw||DB.workers.find(function(x){return samePerson(nm,ph0,b,x.name,x.phone,x.birth)});
+    var src=col(row,"수급처").trim(),o=pfOrgOf(src)||(t&&t.src_org&&oOf(t.src_org))||null;if(src&&!pfOrgOf(src))noOrg[src]=(noOrg[src]||0)+1;
+    var mc=o&&o.ban_direct?"기관":(t&&t.main_contact)||"본인",lv=col(row,"장애등급");
+    var p={id:nid(),created:stamp(),by:col(row,"수급담당자")||"시트 이관",worker:w?w.id:"",name:nm,phone:ph0||(t&&t.phone)||(w?w.phone:""),birth:b||(t&&t.birth)||(w?w.birth:""),gender:/^남/.test(col(row,"성별"))?"남":/^여/.test(col(row,"성별"))?"여":"",
+      dis_type:(DIS_TYPES.find(function(x){return col(row,"장애유형").indexOf(x.replace(/장애$/,""))>=0})||(w&&w.dis_type)||""),dis_level:/중증|심한/.test(lv)?"중증":/경증|심하지/.test(lv)?"경증":(w&&w.dis_level?(/심하지|경/.test(w.dis_level)?"경증":"중증"):""),
+      jobs:jobs.length?jobs:(t&&t.jobs)||[],job_detail:col(row,"직무상세"),wish_hours:col(row,"희망근무시간").split(/\s*[\/,]\s*/).filter(Boolean).join(" / "),wish_pay:col(row,"희망급여"),level:(col(row,"직무레벨").match(/[상중하]/)||[""])[0],
+      files:url?[{kind:"link",name:"기존 포트폴리오 링크",url:url,by:"시트 이관",at:""}]:(link&&link.hyperlink&&col(row,"포트폴리오")?[{kind:"link",name:col(row,"포트폴리오"),url:"",broken:String(link.hyperlink),fname:pflBase(col(row,"포트폴리오")),by:"시트 이관",at:""}]:[]),
+      note:col(row,"특이사항"),proposed:col(row,"제안기업"),status:s,source:src,source_mgr:col(row,"수급담당자"),consent:true,consent_on:TODAY,
+      src_org:o?o.id:"",main_contact:mc,guardian_rel:(t&&t.guardian_rel)||"",gphone:(t&&t.gphone)||"",mc_ct:(t&&t.mc_ct)||"",mc_name:(t&&t.mc_name)||""};
+    if(!url&&col(row,"포트폴리오")&&link&&link.hyperlink)warn.push(r2+"행 "+nm+": 포트폴리오 링크가 인터넷 주소가 아니에요 → 파일 이름만 남겼어요");else if(!url&&col(row,"포트폴리오"))p.note=(p.note?p.note+"\n":"")+"포트폴리오: "+col(row,"포트폴리오");
+    if(!ph0&&!b){C.chk++;warn.push(r2+"행 "+nm+": ⚠ 연락처 · 생년월일이 없어 같은 사람인지 확인 못 했어요 (새로 등록 · 동명이인 확인 필요)")}
+    if(t){var tn=[t.reason,t.ev_note].filter(function(x){return String(x||"").trim()}).join(" · ");if(tn)p.note=(p.note?p.note+"\n":"")+"[추천인재에서 이관] "+tn;
+      if(t.status==="연계중"){warn.push(r2+"행 "+nm+": ⚠ 추천인재가 연계중이라 추천인재는 그대로 두고 포트폴리오만 만들었어요");C.chk++}
+      else if(t.status==="대기"||t.status==="보류"){var b0=t.status;t.status="종료";t.close_type="기타";t.close_reason="포트폴리오로 이관";t.closed_at=stamp();logChange("talent_picks",t.id,nm,"추천인재 → 포트폴리오 이관",b0,"종료 (포트폴리오로 이관)","브이드림 내부")}
+      C.mv++;warn.push(r2+"행 "+nm+": 추천인재에서 포트폴리오로 옮김")}
+    else if(w){C.link++}else C.new++;
+    DB.pf.push(p);made++;logChange("portfolios",p.id,nm,"포트폴리오 등록 (일괄 업로드)","",(t?"추천인재에서 이관":w?"근로자 DB 연결":"신규")+(o?" · "+o.short:""),"브이드림 내부")}
+  var nk=Object.keys(noOrg);var head=["새로 등록 "+C.new+" · 근로자 DB와 연결 "+C.link+" · 추천인재에서 옮김 "+C.mv+" · 이미 있어 건너뜀 "+C.skip+(C.chk?" · ⚠ 확인 필요 "+C.chk:"")];
+  if(nk.length)head.push("기관 DB에 없는 수급처 (글자로만 남김): "+nk.map(function(k){return k+" "+noOrg[k]+"건"}).join(" · "));
+  return{made:made,warn:head.concat(warn)}};
 
 /* ============ 렌더 ============ */
 function renderMain(){
