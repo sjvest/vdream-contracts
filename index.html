@@ -828,7 +828,7 @@ body.mob .sbx-it{min-height:44px;display:flex;align-items:center;font-size:15px}
 .rrcolink{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:8px 12px;border-radius:8px;background:#EEF4FF;border:1px solid #C9D8FB;font-size:12.5px;color:#1E3A8A}
 .cdtel{font-size:11px;margin-top:3px;white-space:nowrap;color:var(--ink-2,#555)}.cdtel small{color:var(--muted,#888)}.cdtel.ban{color:#B42318}
 .tlman .fg{margin-top:6px}
-.vmv{color:#5B3FD6;font-weight:800;margin-right:4px;font-size:13px}
+.vmv{color:#5B3FD6;font-weight:800;margin-right:3px;font-size:12px;display:inline}
 </style>
 </head>
 <body>
@@ -14719,7 +14719,7 @@ var _v139Act158=v139Act;v139Act=function(a,el){if(a==="tlm-back"){if(S.talF){S.t
 APP_VER="v159";APP_VER_ON="10/20";APP_NOTE="채용 요청 브이매치 Ⓥ · 포트폴리오 업로드 새 양식 · 추천인재 이관";
 /* ---------- 1. Ⓥ ---------- */
 function vmMark(r){return r&&r.vm?'<span class="vmv" title="브이매치 공고 업로드'+(r.vm_on?" "+esc(md(r.vm_on).replace(/\(.\)/,"")):"")+'">Ⓥ</span>':""}
-var _rrGCo159=rrGCo;rrGCo=function(r){var h=_rrGCo159.apply(this,arguments);var v=vmMark(r);if(!v||typeof h!=="string")return h;var i=h.indexOf("<button");if(i<0){var j=h.indexOf(">");return j<0?v+h:h.slice(0,j+1)+v+h.slice(j+1)}return h.slice(0,i)+v+h.slice(i)};
+var _rrGCo159=rrGCo;rrGCo=function(r){var h=_rrGCo159.apply(this,arguments);var v=vmMark(r);if(!v||typeof h!=="string")return h;var i=h.indexOf("<button"),j=i<0?h.indexOf(">"):h.indexOf(">",i);return j<0?v+h:h.slice(0,j+1)+v+h.slice(j+1)};
 /* ---------- 2. 포트폴리오 일괄 업로드 ---------- */
 PF_TPL_H=["NO","근로자명","장애유형","장애등급","연락처","성별","생년월일","희망 직무 유형","직무 상세","희망 근무 시간","희망급여","직무레벨","포트폴리오","특이사항","제안 기업","매칭완료여부","수급처","수급담당자"];
 pfTpl=function(){xlLoad().then(function(X){var wb=new X.Workbook(),ws=wb.addWorksheet("포트폴리오");ws.addRow(PF_TPL_H);
