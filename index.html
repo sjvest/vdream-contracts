@@ -872,6 +872,14 @@ button.dbgo:hover,button.pfhas:hover{filter:brightness(.94)}
 .gapok{background:#EEE!important;color:#666!important}
 .gapf{display:flex;gap:6px;margin-top:6px}
 .gapf input{flex:1;min-width:0}
+.pnl-dis .dis2{display:grid;grid-template-columns:1fr 1fr;gap:0;grid-column:1/-1;width:100%}
+.pnl-dis .dis2 .dcol{min-width:0}
+.pnl-dis .dis2 .dcol+.dcol{border-left:1px solid var(--line)}
+@media (max-width:860px){.pnl-dis .dis2{grid-template-columns:1fr}.pnl-dis .dis2 .dcol+.dcol{border-left:0}}
+.holdtg{margin-right:6px}
+.holdtg.on{background:#F4F2FB;border-color:#B9AEEA;color:#4B36B8;font-weight:700}
+.holdtg[disabled]{opacity:.45;cursor:default}
+.holdtgn{margin-right:8px}
 </style>
 </head>
 <body>
@@ -14943,10 +14951,10 @@ document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.targe
 APP_VER="v162";APP_VER_ON="10/20";APP_NOTE="연락처 표시 통일 · 재직 중 탭 · 이름 클릭 · 🏛/🚫/🔐 · 약칭 선택";
 /* ---------- ④ 이모지 ---------- */
 function orgCanGo(){var me=st(S.me)||{};return partOf()==="발굴파트"||isAdminSt(me)||S.role==="admin"}
-function orgEmo(o){if(!o)return"";return'<span class="oemo"'+(orgCanGo()?' data-act="go-o" data-id="'+esc(o.id)+'" role="button" tabindex="0"':"")+' title="소속 기관 · '+esc(o.full||o.short||"")+'">🏛</span>'}
+function orgEmo(o){if(!o)return"";return'<span class="oemo tip"'+(orgCanGo()?' data-act="go-o" data-id="'+esc(o.id)+'" role="button"':"")+' tabindex="0" data-tip="소속 기관 · '+esc(o.full||o.short||"")+'">🏛</span>'}
 function ctEmo(o){if(!o)return"";var h="";
-  if(o.ban_direct)h+='<span class="ctemo banph" title="'+esc(o.short+" 소속 · 근로자 직접 소통 금지 · 기관 담당자를 통해서만 연락")+'">🚫</span>';
-  if(o.ban_mgr)h+='<span class="ctemo banph" title="'+esc(o.short+" · 기관 담당자 연락은 발굴파트만 · 필요하면 담당 "+oMem(o.mem)+"에게 요청")+'">🔐</span>';return h}
+  if(o.ban_direct)h+='<span class="ctemo banph tip" tabindex="0" data-tip="'+esc(o.short+" 소속 · 근로자 직접 소통 금지 · 기관 담당자를 통해서만 연락")+'">🚫</span>';
+  if(o.ban_mgr)h+='<span class="ctemo banph tip" tabindex="0" data-tip="'+esc(o.short+" · 기관 담당자 연락은 발굴파트만 · 필요하면 담당 "+oMem(o.mem)+"에게 요청")+'">🔐</span>';return h}
 /* ---------- ① 연락처 ---------- */
 personCt=function(t,p,w){var o=oOf((t&&t.src_org)||(p&&p.src_org)||(w&&w.org_id));
   if(o&&o.ban_direct){var c=ctOf(o,(t&&t.mc_ct)||(p&&p.mc_ct)||(w&&w.org_ct))||ctWin(o)||null;return{l:o.short+" · "+(c?c.name:"담당자")+(c&&c.out?" ⚠퇴사":""),p:(c&&ctTel(c))||o.phone||"",ban:true,o:o}}
@@ -15058,7 +15066,7 @@ hoUndo=function(id){var x=DB.rrr.find(function(y){return y.id===id});if(!x)retur
   logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"",x.seq+"차 운영 전달",b,"되돌림","브이드림 내부");render()})};
 /* 차수 표: 전달 전 표시 · [추가 전달] */
 var _rrRoundHtml163=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml163.apply(this,arguments);if(typeof h!=="string")return h;var W=rdWait(x);
-  W.forEach(function(o){var k='data-cd="'+x.id+'|'+o.i+'|name"',a=h.indexOf(k);if(a<0)return;var e=h.indexOf("</td>",a);if(e<0)return;h=h.slice(0,e)+'<span class="b sm warn hoW" title="채용파트가 아직 운영파트에 넘기지 않은 후보예요">운영 전달 전</span>'+h.slice(e)});
+  W.forEach(function(o){var k='data-cd="'+x.id+'|'+o.i+'|name"',a=h.indexOf(k);if(a<0)return;var e=h.indexOf("</td>",a);if(e<0)return;h=h.slice(0,e)+'<span class="b sm warn hoW tip" tabindex="0" data-tip="채용파트가 아직 운영파트에 넘기지 않은 후보예요">운영 전달 전</span>'+h.slice(e)});
   if(x.ho_on&&W.length){var u='<button class="linkbtn" data-act="ho-undo" data-id="'+x.id+'">되돌리기</button>';h=h.replace(u,u+'<button class="btn xs pri" data-act="ho-open" data-id="'+x.id+'">추가 전달 ('+W.length+'명)</button>')}
   else if(!x.ho_on&&W.length)h=h.replace('<span class="small muted">채용파트가 운영파트에 이력서를 넘기면 눌러 주세요</span>','<span class="small muted">전달 전 후보 '+W.length+'명 · 운영파트에 넘기면 눌러 주세요 (그 전엔 운영파트 할 일에 안 올라가요)</span>');
   return h};
@@ -15082,7 +15090,7 @@ var _rrDoneOn164=rrDoneOn;rrDoneOn=function(r){if(rrRegDone(r)){var d="";rrCands
 if(typeof DR_T!=="undefined"&&DR_T.rreq)DR_T.rreq.d=function(r){return rrDoneOn(r)};
 var _rrCoCell164=rrCoCell;rrCoCell=function(r){var h=_rrCoCell164.apply(this,arguments);if(typeof h!=="string")return h;var hd=rrHead(r),n=rrRegN(r);
   if(rrRegDone(r))return h+' <span class="b sm warn tip" tabindex="0" data-tip="채용수 '+hd+'명 모두 신규입사자로 등록됐는데 요청 상태가 아직 \''+esc(r.status||"진행중")+'\'이에요 · 발굴페이지 · 알림에는 진행 중으로 보여요">상태 정리 필요</span> <button class="btn xs" data-act="rr-autoclose" data-id="'+r.id+'">완료로 정리</button>';
-  if(n&&hd&&n<hd&&r.status!=="완료"&&r.status!=="취소")return h+' <span class="b sm t" title="신규입사자 등록 / 채용수">입사 '+n+'/'+hd+'</span>';return h};
+  if(n&&hd&&n<hd&&r.status!=="완료"&&r.status!=="취소")return h+' <span class="b sm t tip" tabindex="0" data-tip="신규입사자 등록 / 채용수">입사 '+n+'/'+hd+'</span>';return h};
 function rrTabsFix(h){return h.replace('<div class="tabs" role="tablist"><button','<div class="tabs" role="tablist"><span class="tgrp">채용 요청</span><button').replace(/(<button class="tdone[^"]*" data-act="rr-tab" data-v="완료"[^>]*>)완료 조회(<\/button>)/,'$1완료 <small>(신규입사자 등록 끝 · 종결)</small>$2')}
 var _vRreq164=vRreq;vRreq=function(){var h=_vRreq164.apply(this,arguments);return typeof h==="string"?rrTabsFix(h):h};
 /* ---------- ② 신규입사자 창 [계약 정보 수정] ---------- */
@@ -15189,6 +15197,66 @@ var _v139Act165=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="gap-ok"){var e=emp(D0.e),why=String((($("#gap-why")||{}).value)||"").trim();if(!e)return true;if(!why){toast("사유를 적어 주세요");return true}gapSet(e,why);S.gapF=null;toast("특이 케이스로 확인했어요");render();return true}
   if(a==="gap-undo"){var e2=emp(D0.e);if(!e2||S.role!=="admin")return true;askConfirm("특이 케이스 확인 취소","이 고용 건의 공백 · 겹침 경고를 다시 띄울까요?","확인 취소",function(){gapClear(e2,"관리자 취소");render()});return true}
   return _v139Act165(a,el)};
+
+/* ================================================================
+   v166 ① 말풍선: 🏛 · 🚫 · 🔐 · 운영 전달 전 · 입사 n/m 도 커서에 안 가리는 방식
+        ② 추천인재 등록 경로: 기관 추천이면 기관명(+ 수급 요청) · 직접 입력은 (DB 없음)
+        ③ 추천인재 · 포트폴리오 목록 상태 칸 🔒 없앰
+        ④ 장애 재판정: 이름 = 근로자 DB · 줄 = 장애 재판정 창
+        ⑤ 내 할 일 보류: 맨 마지막에 거르기 · 보류 중 보기 = 버튼 하나 · 선택이 모두 보류 중이면 같은 자리에 [보류 해제]
+   ================================================================ */
+APP_VER="v166";APP_VER_ON="10/21";APP_NOTE="말풍선 · 추천인재 등록 경로 · 장애 재판정 창 · 내 할 일 보류 고침";
+/* ---------- ②③ 목록 ---------- */
+function talSq(t){return(DB.supq||[]).some(function(q){return(q.links||[]).some(function(l){return l.k==="tl"&&l.id===t.id})})}
+function talOriginH(t){var o=t.src_org&&oOf(t.src_org);
+  if(o&&(t.source==="기관 추천"||t.origin==="기관 추천"))return'<span class="tip" tabindex="0" data-tip="기관 추천 · '+esc(o.full||o.short)+'">🏛 '+esc(o.short)+'</span>'+(talSq(t)?' <span class="small muted">· 수급 요청</span>':"");
+  var noDb=!t.worker||String(t.worker).indexOf("tlw_")===0||!wk(t.worker);
+  if(t.origin==="직접 입력"&&noDb)return'직접 입력 <span class="small muted">(DB 없음)</span>';return esc(t.origin||"—")}
+var _dtable166=dtable;dtable=function(k,cols,rows,rowFn,empty){
+  if(k==="tal"&&rowFn){var rf=rowFn;rowFn=function(t){var h=rf.apply(this,arguments);if(typeof h!=="string"||!t)return h;var a="<td>"+esc(t.origin||"")+"</td>",i=h.indexOf(a);return i<0?h:h.slice(0,i)+"<td>"+talOriginH(t)+"</td>"+h.slice(i+a.length)}}
+  if(k==="dis"&&rowFn){var rd=rowFn;rowFn=function(r){var h=rd.apply(this,arguments);if(typeof h!=="string"||!r||!r.e)return h;return h.replace('<tr data-act="go-w" data-id="'+r.e.worker+'"','<tr class="'+(S.disOpen===r.e.id?"sel":"")+'" data-act="dis-open" data-e="'+r.e.id+'"')}}
+  var h=_dtable166.call(this,k,cols,rows,rowFn,empty);if((k==="pf"||k==="tal")&&typeof h==="string")h=h.replace(/ 🔒(<\/span>)/g,"$1");return h};
+var _exportCsv166=exportCsv;exportCsv=function(){if(!LAST||LAST.k!=="tal"||!LAST.cols)return _exportCsv166.apply(this,arguments);var keep=LAST.cols,i=keep.findIndex(function(c){return c.k==="o"});
+  var add={k:"og",h:"출처 기관",t:"text",f:function(r){var t=r&&r.t&&r.t.id?r.t:r,o=t&&t.src_org&&oOf(t.src_org);return o?o.short:""}};LAST.cols=keep.slice(0,i+1).concat([add],keep.slice(i+1));try{return _exportCsv166.apply(this,arguments)}finally{LAST.cols=keep}};
+/* ---------- ④ 장애 재판정 창 ---------- */
+S.disOpenF=S.disOpenF||{};
+function onbSec(h,re){var m=h.match(re);if(!m)return"";var k=m.index,e=divEnd(h,k);return e<0?"":h.slice(k,e)}
+function disLogs(e){return(DB.logs||[]).filter(function(l){return l.row===e.worker&&/장애 재판정/.test(l.field||"")}).sort(function(a,b){return String(b.at).localeCompare(String(a.at))}).slice(0,6)}
+function disTodo(e){var L=[];try{L=buildTodos().filter(function(t){return t.emp===e.id&&t.type==="rech"})}catch(x){}return L[0]||null}
+function pDisP(e){var w=wk(e.worker)||{},c=comp(e.company)||{},z=disOf(e.id)||{},t1=curTerm(e.id)||{},o=oOf(w.org_id),src="";try{src=pOnb(e)||""}catch(x){}
+  var d=z.recheck?dd(TODAY,z.recheck):null,rb=z.result?'<span class="b '+(z.result==="확인완료"?"ok":String(z.result).indexOf("거부")===0?"bad":"p")+'">'+esc(z.result)+'</span>':'<span class="b warn">미입력</span>';
+  var rinfo=z.permanent?'<span class="b">영구장애</span>':z.recheck?'<span class="b'+(d<0?" bad":d<=30?" warn":"")+'">재판정일 '+esc(z.recheck)+' · '+esc(dlabel(d))+'</span>':"";
+  var after=z.recheck&&t1.end&&z.recheck>t1.end?'<span class="b sm tip" tabindex="0" data-tip="재판정일이 지금 계약 만료일('+esc(t1.end)+') 뒤예요">계약 만료 뒤 재판정</span>':"";
+  var h='<aside class="pnl pnl-dis" aria-label="장애 재판정"><div class="ph"><div><div class="k">장애 재판정</div><h2>'+orgEmo(o)+wlink(e.worker)+' · '+clink(e.company)+'</h2><div class="tags">'+stBadge(statusOf(e))+rb+rinfo+after+mtel(w)+'</div></div>'+closeBtn("dis-close")+'</div>';
+  var td=disTodo(e),todo='<div class="ps"><h3>다음 할 일</h3>'+(td?'<p style="margin:0 0 6px">'+esc(td.task)+'</p><p class="small muted" style="margin:0 0 8px">기한 '+esc(td.due||"")+' · 담당 '+esc((st(td.assignee)||{}).name||"")+'</p><button class="btn xs" data-act="dis-todo" data-k="'+esc(td.key)+'">내 할 일에서 처리</button>':'<p class="hint" style="margin:0">지금 할 일이 없어요</p>')+'</div>';
+  var rech=onbSec(src,/<div class="ps" data-spec="6">/)||disBody(e.id),info=onbSec(src,/<div class="ps"><h3>장애 정보/),term=onbSec(src,/<div class="ps"><h3>계약기간/);
+  var L=disLogs(e),hist='<div class="ps"><h3>재판정 기록</h3>'+(L.length?'<table class="mini"><tbody>'+L.map(function(l){return'<tr><td class="num small nowrap">'+esc(String(l.at||"").slice(0,10))+'</td><td class="small">'+esc(l.by||"")+'</td><td class="small">'+esc(l.after||"")+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint" style="margin:0">기록이 없어요</p>')+'</div>';
+  return h+'<div class="dis2"><div class="dcol">'+rech+todo+'</div><div class="dcol">'+(info||"")+(term||"")+hist+'</div></div></aside>'}
+var _vDis166=vDis;vDis=function(){var h=_vDis166.apply(this,arguments);if(typeof h!=="string"||!S.disOpen)return h;var e=emp(S.disOpen);if(!e){S.disOpen=null;return h}return h+pDisP(e)};
+function disPaint(){var pn=document.querySelector('aside.pnl[aria-label="장애 재판정"]');if(!pn||!S.disOpen)return;var e=emp(S.disOpen);if(!e)return;if(FOLD_LAST.dis!==S.disOpen){FOLD_LAST.dis=S.disOpen;S.disOpenF={}}
+  var rp=pn.querySelector('.ps[data-spec="6"]'),d=fdDisOk(e.id);if(rp&&d&&!S.disOpenF[e.id]&&!rp.querySelector(".onbsum"))fdFold(rp,fdDisSum(d,"dis-unfold","d:"+e.id,true))}
+document.addEventListener("input",function(ev){var p=ev.target&&ev.target.closest&&ev.target.closest('aside.pnl[aria-label="장애 재판정"] .ps[data-spec="6"]');if(p&&S.disOpen)S.disOpenF[S.disOpen]=1},true);
+document.addEventListener("change",function(ev){var p=ev.target&&ev.target.closest&&ev.target.closest('aside.pnl[aria-label="장애 재판정"] .ps[data-spec="6"]');if(p&&S.disOpen)S.disOpenF[S.disOpen]=1},true);
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('aside.pnl[aria-label="장애 재판정"] [data-act="dis-save"]');if(b&&S.disOpen)delete S.disOpenF[S.disOpen]},true);
+/* ---------- ⑤ 보류: 맨 마지막에 거르기 ---------- */
+var _bt166=buildTodos;buildTodos=function(){var hv=S.tdHoldV,ho=tdHoldOf,L;S.tdHoldV=false;tdHoldOf=function(){return""};try{L=_bt166.apply(this,arguments)}finally{tdHoldOf=ho;S.tdHoldV=hv}
+  var seen={};L=L.filter(function(t){if(!t||!t.key)return true;if(seen[t.key])return false;seen[t.key]=1;return true});
+  L.forEach(function(t){var h=tdHoldOf(t.key);t.hold=h&&h>TODAY?h:"";t.holdEnd=h&&h<=TODAY&&h>=addD(TODAY,-3)?h:""});return hv?L.filter(function(t){return t.hold}):L.filter(function(t){return!t.hold})};
+var _vTodo166=vTodo;vTodo=function(){var h=_vTodo166.apply(this,arguments);if(typeof h!=="string")return h;
+  h=h.replace(/<div class="holdbar on"><b>보류 중인 할 일만 보는 중<\/b>[\s\S]*?data-act="td-holdv">돌아가기<\/button><\/div>/,"").replace(/<div class="holdbar"><span>보류 중 <b>\d+건<\/b>[\s\S]*?data-act="td-holdv">보류 중 보기<\/button><\/div>/,"");
+  var n=tdHoldN(),on=!!S.tdHoldV,btn='<button class="btn sm holdtg'+(on?" on":"")+'" data-act="td-holdv"'+(!on&&!n?" disabled":"")+' aria-pressed="'+on+'">'+(on?"✓ 보류 중만 보는 중 ":"보류 중 ")+'<b>'+n+'</b></button>'+(on?'<span class="small muted holdtgn">날짜가 되면 다시 목록에 나와요</span>':"");
+  var i=h.indexOf('<div class="fbar">');if(i>=0){var j=i+'<div class="fbar">'.length;h=h.slice(0,j)+btn+h.slice(j)}
+  /* 선택한 건이 모두 보류 중이면 같은 자리에 [보류 해제] */
+  var P=tdPicks();if(P.length){var held=P.filter(function(k){return tdHoldOf(k)>TODAY}).length;if(held===P.length)h=h.replace(/<button class="btn xs pri" data-act="td-hmany">[^<]*<\/button><button class="btn xs" data-act="td-hoffmany">[^<]*<\/button>/,'<button class="btn xs pri" data-act="td-hoffmany">선택한 '+P.length+'건 보류 해제</button>')}
+  return h};
+/* ---------- 동작 · 그린 뒤 ---------- */
+var _v139Act166=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="dis-open"){S.disOpen=D0.e;S.disF=null;S.wm=null;render();return true}
+  if(a==="dis-close"){S.disOpen=null;S.disF=null;render();return true}
+  if(a==="dis-unfold"){S.disOpenF[S.disOpen]=1;render();return true}
+  if(a==="dis-todo"){var k=D0.k;S.disOpen=null;go("todo");S.todoTab="all";S.sel=k;render();return true}
+  return _v139Act166(a,el)};
+var _render166=render;render=function(){var r=_render166.apply(this,arguments);try{disPaint()}catch(e){console.warn(e)}return r};
 
 /* ============ 렌더 ============ */
 function renderMain(){
