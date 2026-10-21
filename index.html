@@ -893,6 +893,12 @@ button.dbgo:hover,button.pfhas:hover{filter:brightness(.94)}
 .rqwl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;max-height:220px;overflow:auto}
 .wkaddr{margin-top:8px}
 .onbaddr .fg{grid-template-columns:1fr}
+/* v169 */
+.exsum{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:#FAFAFD}
+.exsum.bad{border-color:#F1B8B8;background:#FFF6F6}
+.exres{white-space:normal;text-align:left}
+.exwhy{display:flex;gap:6px;margin-top:8px}.exwhy input{flex:1}
+.exline{margin-top:6px}
 </style>
 </head>
 <body>
@@ -15483,6 +15489,60 @@ var _v139Act168=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="oaddr-save"){var w=wk(D0.w);if(!w)return true;if(!v76Need())return true;var pn=el.closest(".ps"),a1=String((pn.querySelector('[data-oaddr="addr"]')||{}).value||"").trim(),a2=String((pn.querySelector('[data-oaddr="addr2"]')||{}).value||"").trim();if(!a1){toast("주소를 입력해 주세요");return true}
     var n=addrSave(w,a1,a2);delete S.onbOpen["a:"+D0.e];toast(n?"주소를 저장했어요":"바뀐 값이 없어요");render();return true}
   return _v139Act168(a,el)};
+
+/* ================================================================
+   v169 계약만료 처리 결과 보이기
+        ① 완료 조회 '결과' 칸: 연장 · N차 추가 (기간) / 무기계약 전환 · N차 / 만료 확정 · 사유
+        ② 뒷처리가 빠진 건(새 차수 미추가 · 만료 미반영 · 사유 미입력)은 '진행 중'에 남김 + [계약 정보 추가]
+        ③ 진행 창 맨 위 결과 요약 · 만료 사유 메모
+        ④ 근로자 DB 고용 · 계약 탭에 같은 문구
+   ================================================================ */
+APP_VER="v169";APP_VER_ON="10/21";APP_NOTE="계약만료 처리 결과 표시 · 뒷처리 누락은 진행 중에 남김";
+function exNewT(e,x){if(!e||!x||!x.newSeq)return null;return termsOf(e.id).find(function(t){return t.seq===x.newSeq})||null}
+function exWhy(e,x){var a=x.corp==="종료"?"고객사 종료 결정":wishOf(x)==="거절"?"근로자 연장 거절":"";return[a,e&&e.leave_detail].filter(Boolean).join(" · ")}
+/* 결과: {t:글자, cls, miss:빠진 것} */
+function exRes(e,x){if(!e||!x||!x.decision)return null;var nt=exNewT(e,x);
+  if(x.decision==="연장")return nt?{t:"연장 · "+nt.seq+"차 추가 ("+nt.start+" ~ "+(nt.end||"")+")",cls:"ok"}:{t:"연장 · 계약 정보 미추가",cls:"bad",miss:"term"};
+  if(x.decision==="무기계약 전환")return nt?{t:"무기계약 전환 · "+nt.seq+"차 ("+nt.start+"부터)",cls:"ok"}:{t:"무기계약 전환 · 계약 정보 미추가",cls:"bad",miss:"term"};
+  if(x.decision==="종료"){if(e.end_type!=="계약만료"||!e.end_date)return{t:"만료 확정 · 퇴사일 미반영",cls:"bad",miss:"end"};var w=exWhy(e,x);return w?{t:"만료 확정 ("+e.end_date+") · 사유: "+w,cls:""}:{t:"만료 확정 ("+e.end_date+") · 사유 미입력",cls:"bad",miss:"why"}}
+  return{t:x.decision,cls:""}}
+function exResH(e,x,sm){var r=exRes(e,x);if(!r)return"";return'<span class="b'+(sm?" sm":"")+' exres '+r.cls+'">'+esc(r.t)+'</span>'}
+/* ② 빠진 것 = 후속 항목 (진행 중에 남고, 완료 조회에서 빠짐) */
+var _xFollow169=xFollow;xFollow=function(eid){var L=_xFollow169.apply(this,arguments),e=emp(eid),x=xOf(eid),r=exRes(e,x);
+  if(r&&r.miss==="term")L.push({k:"exterm:"+eid,name:(x.newSeq||((curTerm(eid)||{}).seq||0)+1)+"차 계약 정보",st:"미추가",done:false,kind:"계약 정보"});
+  if(r&&r.miss==="end")L.push({k:"exend:"+eid,name:"계약만료 퇴사일",st:"미반영",done:false,kind:"계약 정보"});
+  if(r&&r.miss==="why")L.push({k:"exwhy:"+eid,name:"만료 사유",st:"미입력",done:false,kind:"계약 정보"});
+  return L};
+var _coae169=caseOpenAfterEnd;caseOpenAfterEnd=function(e){if(_coae169.apply(this,arguments))return true;var x=e&&!e.cancelled&&xOf(e.id),r=x&&exRes(e,x);return!!(r&&r.miss)};
+var _xmBtns169=xmBtns;xmBtns=function(eid,sz){var h=_xmBtns169.apply(this,arguments);var m=/data-k="(ex(term|end|why)):[^"]*">서류 열기/.exec(h||"");if(!m)return h;return h.replace(">서류 열기<",">"+(m[2]==="term"?"계약 정보 추가":m[2]==="end"?"퇴사일 반영":"사유 입력")+"<")};
+function exTermAdd(eid){var e=emp(eid),x=xOf(eid);if(!e||!x)return;S.xm=null;ceOpen(eid);var C=S.ce,ts=C.rows,lr=ts[ts.length-1]||{};
+  var x0=termsOf(eid).filter(function(t){return!x.newSeq||t.seq<x.newSeq}).pop()||lr,perm=x.decision==="무기계약 전환",sq=x.newSeq||(lr.seq||0)+1;
+  if(!ts.some(function(r){return r.seq===sq})){C.rows.push({id:"",seq:sq,start:x.ext_start||addD(x0.end,1),end:perm?"":(x.ext_end||extEnd(x0.end,+(x.period)||12)),type:perm?"무기계약":"연장",perm:perm});C.exFix=eid;C.exSeq=sq;ceModal()}}
+var _ceSave169=ceSave;ceSave=function(root){var C=S.ce,fix=C&&C.exFix,sq=C&&C.exSeq,r=_ceSave169.apply(this,arguments);if(fix){var x=xOf(fix),e=emp(fix);if(x&&e&&!x.newSeq&&termsOf(fix).some(function(t){return t.seq===sq})){x.newSeq=sq;logChange("workers",e.worker,(wk(e.worker)||{}).name||"","계약만료 새 차수 연결","",sq+"차","브이드림 내부")}if(S.ce==null)render()}return r};
+function exEndFix(eid){var e=emp(eid),x=xOf(eid);if(!e||!x)return;var ts=termsOf(eid),t=(x.newSeq?ts.filter(function(y){return y.seq<x.newSeq}).pop():ts[ts.length-1])||{};if(!t.end){toast("계약만료일이 없어요 · 계약 정보를 먼저 확인해 주세요");return}
+  askConfirm("퇴사일 반영",(wk(e.worker)||{}).name+" · 계약만료일 "+t.end+"을 퇴사일(계약만료)로 반영할까요?","반영",function(){var b=(e.end_type||"")+" "+(e.end_date||"");e.end_type="계약만료";e.end_date=t.end;logChange("workers",e.worker,(wk(e.worker)||{}).name||"","계약만료 퇴사일 반영",b.trim(),"계약만료 "+t.end,"브이드림 내부");toast("반영했어요");render()})}
+function exWhySave(eid,v){var e=emp(eid);if(!e)return;v=String(v||"").trim();if(v===(e.leave_detail||""))return false;logChange("workers",e.worker,(wk(e.worker)||{}).name||"","계약만료 사유",e.leave_detail||"",v,"브이드림 내부");e.leave_detail=v;return true}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="fu-open"][data-k^="ex"]');if(!b)return;var m=/^ex(term|end|why):(.+)$/.exec(b.dataset.k||"");if(!m)return;ev.preventDefault();ev.stopImmediatePropagation();
+  if(m[1]==="term")exTermAdd(m[2]);else if(m[1]==="end")exEndFix(m[2]);else{xmOpen(m[2]);setTimeout(function(){var i=document.querySelector("#exwhy-in");if(i)i.focus()},30)}},true);
+/* ③ 진행 창 맨 위 요약 */
+var _xmBody169=xmBody;xmBody=function(eid,x,e){var B=_xmBody169.apply(this,arguments);if(!x||!x.decision||!e||!Array.isArray(B))return B;var r=exRes(e,x);if(!r)return B;
+  var box='<div class="exsum '+r.cls+'"><b>처리 결과</b> '+exResH(e,x)+(r.miss==="term"?' <button class="btn xs pri" data-act="fu-open" data-k="exterm:'+eid+'">계약 정보 추가</button>':r.miss==="end"?' <button class="btn xs pri" data-act="fu-open" data-k="exend:'+eid+'">퇴사일 반영</button>':"")+
+    (x.decision==="종료"?'<div class="exwhy"><input id="exwhy-in" data-e="'+eid+'" value="'+esc(e.leave_detail||"")+'" placeholder="사유 메모 (예: 업무량 감소로 고객사 종료)"><button class="btn xs" data-act="exwhy-save" data-e="'+eid+'">사유 저장</button></div>':"")+'</div>';
+  return[box+B[0],B[1]]};
+/* ① 완료 조회 표 · 엑셀 */
+var _dtable169=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="expd"&&rowFn){var rf=rowFn;rowFn=function(r){var h=rf.apply(this,arguments);if(typeof h!=="string"||!r||!r.x)return h;var n=0,p=-1;for(var i=0;i<5;i++){p=h.indexOf("<td",p+1);if(p<0)return h}var q=h.indexOf("</td>",p);if(q<0)return h;var o=h.indexOf(">",p);return h.slice(0,o+1)+exResH(r.e,r.x,true)+h.slice(q)}
+    cols=(cols||[]).map(function(c){return c.k==="dc"?Object.assign({},c,{h:"결과",f:function(r){var x=exRes(r.e,r.x);return x?x.t:r.x.decision}}):c})}
+  return _dtable169.call(this,k,cols,rows,rowFn,empty)};
+/* ④ 근로자 DB 고용 · 계약 탭 */
+var _empCards169=empCardsHtml;empCardsHtml=function(w,es){var h=_empCards169.apply(this,arguments);if(typeof h!=="string")return h;
+  (es||[]).forEach(function(e){var x=xOf(e.id),r=exRes(e,x);if(!r)return;var line='<div class="exline small">계약만료 처리 '+exResH(e,x,true)+'</div>';
+    var a=h.indexOf('data-act="emp-fold" data-e="'+e.id+'"');if(a>=0){var bq=h.indexOf("</button>",a);if(bq>0){h=h.slice(0,bq+9)+line+h.slice(bq+9);return}}
+    var c=h.indexOf('data-act="ce-open" data-e="'+e.id+'"');if(c<0)return;var d=h.lastIndexOf('<div class="emp cur">',c);if(d<0)return;var hs=d+'<div class="emp cur">'.length,he=divEnd(h,hs);if(he>0)h=h.slice(0,he)+line+h.slice(he)});
+  return h};
+/* 동작 */
+var _v139Act169=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="exwhy-save"){var i=document.querySelector("#exwhy-in");var ch=exWhySave(D0.e,i?i.value:"");toast(ch?"사유를 저장했어요":"바뀐 값이 없어요");if(S.xm)xmPaint();render();return true}
+  return _v139Act169(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
