@@ -880,6 +880,12 @@ button.dbgo:hover,button.pfhas:hover{filter:brightness(.94)}
 .holdtg.on{background:#F4F2FB;border-color:#B9AEEA;color:#4B36B8;font-weight:700}
 .holdtg[disabled]{opacity:.45;cursor:default}
 .holdtgn{margin-right:8px}
+.emdup{background:#FDF2F1;border:1px solid #F3C9C4;border-radius:10px;padding:8px 12px;margin:0 0 10px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.emgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.emc{display:block;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.emc.on{border-color:#7B66D9;background:#F6F4FD}
+.emc input{margin-right:4px}
+@media (max-width:560px){.emgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -15257,6 +15263,95 @@ var _v139Act166=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="dis-todo"){var k=D0.k;S.disOpen=null;go("todo");S.todoTab="all";S.sel=k;render();return true}
   return _v139Act166(a,el)};
 var _render166=render;render=function(){var r=_render166.apply(this,arguments);try{disPaint()}catch(e){console.warn(e)}return r};
+
+/* ================================================================
+   v167 ① 차수 고르기: 추천인재는 진행 중(대기 · 연계중)만 · 포트폴리오는 취업완료 빼기 · 등록 창에 이전 추천 이력
+        ② 고용 건 합치기: 같은 계약 / 연속 계약 이어 붙이기 / 공백은 사유 (SQL 75 함수)
+        ③ 이미 등록된 사람 찾기: 이름 + 본인 · 보호자 연락처 (+ 생년월일 있으면)
+        ④ 추천인재 헤더 필터 · 엑셀: 목록과 같은 기준으로 계산
+   ================================================================ */
+APP_VER="v167";APP_VER_ON="10/21";APP_NOTE="고용 건 합치기 · 고르기 창 정리 · 추천인재 필터 고침";
+/* ---------- ① 고르기 창 ---------- */
+function withList(key,flt,fn){var keep=DB[key];DB[key]=(keep||[]).filter(flt);try{return fn()}finally{DB[key]=keep}}
+var _talcOpen167=talcOpen;talcOpen=function(){var a=arguments,me=this;return withList("talent",function(t){talNorm(t);return!!TAL_OPEN[t.status]},function(){return _talcOpen167.apply(me,a)})};
+var _pfcOpen167=pfcOpen;pfcOpen=function(){var a=arguments,me=this;return withList("pf",function(p){return p.status!=="취업완료"},function(){return _pfcOpen167.apply(me,a)})};
+/* 등록 창: 같은 사람의 이전 추천 */
+var _talNewPanel167=talNewPanel;talNewPanel=function(){var h=_talNewPanel167.apply(this,arguments),F=S.talF;if(typeof h!=="string"||!F||!F.worker)return h;
+  var L=(DB.talent||[]).filter(function(t){return t.worker===F.worker&&!TAL_OPEN[t.status]}).sort(function(a,b){return String(b.created||"").localeCompare(String(a.created||""))});if(!L.length)return h;var t=L[0],cn=(comp(t.lcid)||{}).name||"";
+  return afterPh(h,'<div class="ps wide" style="padding-top:8px;padding-bottom:8px"><div class="hint" style="margin:0">이전 추천 <b>'+L.length+'건</b> · 마지막: '+esc(t.status)+(cn?" · "+esc(cn):"")+' · '+esc(String(t.closed_at||t.ldate||t.created||"").slice(0,7))+' · 이번 등록은 새 건(+1)으로 쌓여요</div></div>')};
+/* ---------- ③ 같은 사람 찾기 넓히기 ---------- */
+function wFindLoose(nm,ph,bd){nm=String(nm||"").trim();ph=normPhone(ph||"");if(!nm||ph.length<9)return null;
+  return DB.workers.find(function(w){return w.name===nm&&(normPhone(w.phone)===ph||normPhone(w.gphone)===ph)&&(!bd||!w.birth||w.birth===bd)})||null}
+rrRegFind=function(x,c,r){var ci=c.ci||{},ph=normPhone(ci.phone||""),nm=String(c.name||"").trim();
+  var w=workerByKey(ci.phone,ci.birth)||wFindLoose(nm,ci.phone,ci.birth);
+  var a=DB.intake.find(function(b){return b.cid===r.company&&!b.rrr&&String(b.name).trim()===nm&&((ph.length>=9&&normPhone(b.phone)===ph)||(ci.birth&&b.birth===ci.birth))&&!(b.emp&&emp(b.emp)&&emp(b.emp).cancelled)});
+  var e=w&&DB.employments.filter(function(o){return o.worker===w.id&&o.company===r.company&&!o.cancelled}).sort(function(p,q){return String((termsOf(q.id)[0]||{}).start).localeCompare(String((termsOf(p.id)[0]||{}).start))})[0];
+  if(a&&a.emp&&emp(a.emp))e=emp(a.emp);if(!a&&e)a=DB.intake.find(function(b){return b.emp===e.id})||null;return{a:a,e:e||null}};
+var _linkIntake167=linkIntake;linkIntake=function(a){if(!a||(a.emp&&emp(a.emp))||workerByKey(a.phone,a.birth))return _linkIntake167.apply(this,arguments);
+  var w=wFindLoose(a.name,a.phone,a.birth);if(!w||!w.phone||!w.birth)return _linkIntake167.apply(this,arguments);var p0=a.phone,b0=a.birth;a.phone=w.phone;a.birth=w.birth;try{return _linkIntake167.apply(this,arguments)}finally{a.phone=p0;a.birth=b0}};
+/* ---------- ④ 추천인재 필터 · 엑셀: 목록과 같은 기준 ---------- */
+function talCtx(fn){var L=[];(DB.talent||[]).forEach(function(t){if(t.worker&&wk(t.worker))return;var w={id:"tlw_"+t.id,name:t.name||"",birth:t.birth||"",phone:t.phone||"",gphone:t.gphone||"",guardian_rel:t.guardian_rel||"",main_contact:t.main_contact||"본인",org_id:t.src_org||"",org_ct:t.mc_ct||""};DB.workers.push(w);L.push([t,t.worker||""]);t.worker=w.id});
+  bzOn();try{return fn()}finally{bzOff();L.forEach(function(x){var id="tlw_"+x[0].id;x[0].worker=x[1];var i=DB.workers.findIndex(function(w){return w.id===id});if(i>=0)DB.workers.splice(i,1)})}}
+var _popHtml167=popHtml;popHtml=function(){var a=arguments,me=this;if(S.pop&&String(S.pop).indexOf("tal|")===0)return talCtx(function(){return _popHtml167.apply(me,a)});return _popHtml167.apply(me,a)};
+var _exportCsv167=exportCsv;exportCsv=function(){var a=arguments,me=this;if(LAST&&LAST.k==="tal")return talCtx(function(){return _exportCsv167.apply(me,a)});return _exportCsv167.apply(me,a)};
+/* ---------- ② 고용 건 합치기 ---------- */
+function emSpan(e){var T=termsOf(e.id).slice().sort(function(a,b){return String(a.start).localeCompare(String(b.start))});return{T:T,f:(T[0]||{}).start||"",l:T.length?(T[T.length-1].end||"9999-12-31"):""}}
+function emKind(a,b){var A=emSpan(a),B=emSpan(b);if(!A.f||!B.f)return{k:"none"};if(A.f===B.f)return{k:"same"};var x=A.f<B.f?A:B,y=A.f<B.f?B:A;if(y.f<=x.l)return{k:"overlap"};var g=dd(x.l,y.f)-1;return{k:g?"gap":"seq",g:g}}
+function emKindTxt(K){return K.k==="same"?"같은 계약":K.k==="seq"?"연속 계약 (차수로 이어 붙임)":K.k==="gap"?"공백 "+K.g+"일 (사유 필요)":K.k==="overlap"?"기간이 겹침":"차수 없음"}
+function emDups(wid){var G={};DB.employments.forEach(function(e){if(e.worker!==wid||e.cancelled)return;(G[e.company]=G[e.company]||[]).push(e)});return Object.keys(G).filter(function(c){return G[c].length>1}).map(function(c){return{c:c,L:G[c]}})}
+function emSentA(e){return(DB.intake||[]).some(function(a){return a.emp===e.id&&(a.mail_sent||a.completed)})}
+function emDefKeep(a,b){if(emSentA(a)!==emSentA(b))return emSentA(a)?a:b;var A=emSpan(a),B=emSpan(b);if(A.f!==B.f)return A.f<B.f?a:b;return String(a._created||"")<=String(b._created||"")?a:b}
+function emBanner(w){var D=emDups(w.id);if(!D.length)return"";return'<div class="emdup">'+D.map(function(g){var a=g.L[0],b=g.L[1],K=emKind(a,b);return'<div><b>⚠ 같은 기업 고용 건 '+g.L.length+'개</b> · '+esc((comp(g.c)||{}).name||"")+' · '+esc(emKindTxt(K))+' <button class="btn xs pri" data-act="em-open" data-a="'+a.id+'" data-b="'+b.id+'"'+(K.k==="overlap"?' disabled title="기간이 겹쳐서 합칠 수 없어요 · 계약 정보를 먼저 고쳐 주세요"':"")+'>합치기</button></div>'}).join("")+'</div>'}
+var _pWk167=pWk;pWk=function(w){var h=_pWk167.apply(this,arguments);if(typeof h!=="string"||!w||S.wkPT!=="emp")return h;var b=emBanner(w);if(!b)return h;var i=h.indexOf('<div class="ncbar">');return i<0?afterPh(h,'<div class="ps wide">'+b+'</div>'):h.slice(0,i)+b+h.slice(i)};
+var _dtable167=dtable;dtable=function(k,cols,rows,rowFn,empty){var h=_dtable167.apply(this,arguments);if((k!=="onb"&&k!=="onbp")||typeof h!=="string")return h;
+  (rows||[]).forEach(function(r0){var e=r0&&r0.e?r0.e:r0;if(!e||!e.worker||!e.company||e.cancelled)return;var o=DB.employments.find(function(x){return x!==e&&x.worker===e.worker&&x.company===e.company&&!x.cancelled&&emKind(x,e).k==="same"});if(!o)return;
+    var p=h.indexOf('data-e="'+e.id+'"');if(p<0)return;var j1=h.indexOf("</td>",p),j=j1<0?-1:h.indexOf("</td>",j1+5),te=h.indexOf("</tr>",p);if(j<0||(te>=0&&j>te))return;
+    h=h.slice(0,j)+' <button class="b sm bad tip" tabindex="0" data-act="em-open" data-a="'+e.id+'" data-b="'+o.id+'" data-tip="같은 근로자 · 같은 기업 · 같은 계약이 2건 있어요 · 눌러서 합치기">⚠ 중복</button>'+h.slice(j)});return h};
+function emCard(e,keep){var A=emSpan(e),a=(DB.intake||[]).filter(function(x){return x.emp===e.id}),rp=e.replaced&&emp(e.replaced),rn=rp?(wk(rp.worker)||{}).name:e.replaced_name;
+  return'<label class="emc'+(keep?" on":"")+'"><input type="radio" name="emkeep" value="'+e.id+'"'+(keep?" checked":"")+'> <b>'+(keep?"남기는 건":"지우는 건")+'</b><div class="small">'+esc(e.hire_type||"신규")+(rn?" · "+esc(rn)+" 대체":(e.hire_type==="대체"?" · 대체 대상 미지정":""))+(e.job?" · "+esc(e.job):"")+'</div>'+
+    A.T.map(function(t){return'<div class="small num">'+esc(t.seq)+'차 '+esc(t.start)+' ~ '+esc(t.end||"무기")+'</div>'}).join("")+'<div class="small muted">입구서 '+(a.length?a.map(function(x){return x.completed?"완료":x.mail_sent?"발송":"미발송"}).join(", "):"없음")+' · 등록 '+esc(String(e._created||"").slice(0,10)||"—")+'</div></label>'}
+function emModal(){var F=S.emF;if(!F)return;var a=emp(F.a),b=emp(F.b);if(!a||!b){S.emF=null;$("#modal").innerHTML="";return}var keep=F.keep===b.id?b:a,drop=keep===a?b:a,K=emKind(a,b),w=wk(a.worker)||{};
+  var R=K.k==="same"?emSpan(keep).T:emSpan(a).T.concat(emSpan(b).T).sort(function(x,y){return String(x.start).localeCompare(String(y.start))});
+  var prev=K.k==="overlap"?'<p class="wrdup" style="margin:0">⚠ 두 계약의 기간이 겹쳐서 합칠 수 없어요 · 근로자 창 › [계약 정보 수정]에서 먼저 고쳐 주세요</p>':
+    '<div class="small" style="margin-bottom:4px"><b>합친 결과</b> · '+esc(emKindTxt(K))+'</div>'+R.map(function(t,i){return'<div class="num small">'+(i+1)+'차 '+esc(t.start)+' ~ '+esc(t.end||"무기")+' <span class="muted">'+(i===0?"최초":"연장")+'</span></div>'}).join("")+
+    (K.k==="gap"?'<input id="em-why" style="width:100%;margin-top:8px" maxlength="200" placeholder="공백 사유 (꼭 적어 주세요)" value="'+esc(F.why||"")+'">':"");
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="고용 건 합치기" style="width:min(640px,calc(100vw - 32px))"><div class="ph"><div><div class="k">고용 건 합치기 · '+esc(w.name||"")+' · '+esc((comp(a.company)||{}).name||"")+'</div><h2>두 고용 건을 하나로 합칠까요?</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><div class="emgrid">'+emCard(a,keep===a)+emCard(b,keep===b)+'</div><p class="hint" style="margin:6px 0 0">남기는 건을 바꾸려면 위에서 골라 주세요 · 기본은 입구서를 받은 건이에요</p></div>'+
+    '<div class="ps">'+prev+'</div><div class="ps"><p class="hint" style="margin:0">지우는 건의 서류 · 계약만료 · 재판정 · 요청 · 근태 · 입구서 · 추천인재 · 채용 요청 후보 · 대체 대상 연결은 남기는 건으로 옮겨요. 둘 다 값이 있으면 남기는 건 값을 둬요'+(K.k==="same"?" · 같은 계약이라 지우는 건의 시작 안 한 서류와 안 보낸 입구서는 버려요":"")+'. 변경 이력에 남아요.</p></div>'+
+    '<div class="ps foot"><button class="btn" data-act="modal-close">취소</button><span class="grow"></span><button class="btn pri" data-act="em-run"'+(K.k==="overlap"?" disabled":"")+'>합치기</button></div></div></div>'}
+document.addEventListener("change",function(ev){var t=ev.target;if(t&&t.name==="emkeep"&&S.emF){S.emF.keep=t.value;emModal()}},true);
+document.addEventListener("input",function(ev){if(ev.target&&ev.target.id==="em-why"&&S.emF)S.emF.why=ev.target.value},true);
+function emLocal(keep,drop,K,why){var me=st(S.me).name,kid=keep.id,did=drop.id,A=emSpan(keep),B=emSpan(drop),later=K.k==="same"?keep:(A.f<B.f?drop:keep),earlier=later===keep?drop:keep;
+  if(K.k==="same")DB.terms=DB.terms.filter(function(t){return t.emp!==did});else{DB.terms.forEach(function(t){if(t.emp===did)t.emp=kid});var T=DB.terms.filter(function(t){return t.emp===kid}).sort(function(a,b){return String(a.start).localeCompare(String(b.start))});T.forEach(function(t,i){t.seq=i+1;t.type=i===0?"최초":(i===T.length-1&&!t.end?"무기계약":"연장")})}
+  var mv=function(arr,f){(arr||[]).forEach(function(x){if(x[f]===did)x[f]=kid})};
+  var xk=(DB.expiry||[]).find(function(x){return x.emp===kid}),xd=(DB.expiry||[]).find(function(x){return x.emp===did});if(xd){if(!xk)xd.emp=kid;else if(K.k!=="same"&&later===drop){DB.expiry.splice(DB.expiry.indexOf(xk),1);xd.emp=kid}else DB.expiry.splice(DB.expiry.indexOf(xd),1)}
+  var zk=(DB.dis||[]).find(function(x){return x.emp===kid}),zd=(DB.dis||[]).find(function(x){return x.emp===did});if(zd){if(!zk)zd.emp=kid;else if((!zk.result&&zd.result)||(zd.result&&String(zd.checked||"")>String(zk.checked||""))){DB.dis.splice(DB.dis.indexOf(zk),1);zd.emp=kid}else DB.dis.splice(DB.dis.indexOf(zd),1)}
+  if(K.k==="same")DB.casedocs=DB.casedocs.filter(function(c){return!(c.emp===did&&!c.step&&!(c.dates||[]).length)});
+  mv(DB.casedocs,"emp");mv(DB.xdocs,"emp");mv(DB.reqw,"emp");mv(DB.wreq,"emp");mv(DB.att,"emp");mv(DB.wdocs,"emp");mv(DB.oex,"emp");mv(DB.talent,"emp");mv(DB.talent,"hire_emp");mv(DB.pf,"hired_emp");mv(DB.employments,"replaced");
+  if(K.k==="same")DB.intake=DB.intake.filter(function(x){return!(x.emp===did&&!x.mail_sent&&!x.completed&&!x.send_state)});mv(DB.intake,"emp");mv(DB.intake,"repl");
+  (DB.rrr||[]).forEach(function(x){if(!(x.cands||[]).some(function(c){return c.hired===did||c.emp===did}))return;x.cands=x.cands.map(function(c){var o=Object.assign({},c);if(o.hired===did)o.hired=kid;if(o.emp===did)o.emp=kid;return o})});
+  if(!keep.job)keep.job=drop.job;if(!keep.job_detail)keep.job_detail=drop.job_detail;if(!keep.replaced_name)keep.replaced_name=drop.replaced_name;
+  if(K.k!=="same"&&earlier===drop){keep.hire_type=drop.hire_type;keep.replaced=drop.replaced||keep.replaced}else{if(K.k==="same"&&(!keep.hire_type||keep.hire_type==="신규")&&/대체|추가/.test(drop.hire_type||""))keep.hire_type=drop.hire_type;keep.replaced=keep.replaced||drop.replaced}
+  if(drop.vwork_start&&(!keep.vwork_start||drop.vwork_start<keep.vwork_start))keep.vwork_start=drop.vwork_start;if(drop.onb_note)keep.onb_note=[keep.onb_note,drop.onb_note].filter(Boolean).join(" / ");
+  if(K.k!=="same"&&later===drop)["end_date","end_type","leave_reason","ins_reason","leave_detail","rehire","rehire_note","status"].forEach(function(f){keep[f]=drop[f]});
+  if(K.k==="gap"){keep.gap_note=why;keep.gap_by=me;keep.gap_on=TODAY}
+  DB.employments=DB.employments.filter(function(e){return e.id!==did});
+  logChange("workers",keep.worker,(wk(keep.worker)||{}).name||"","고용 건 합치기 ("+((comp(keep.company)||{}).name||"")+")","고용 건 2개",K.k==="same"?"같은 계약 → 1건":K.k==="seq"?"연속 계약 → 차수로 이어 붙임":"공백 "+K.g+"일 · 차수로 이어 붙임 · 사유: "+why,"브이드림 내부")}
+function emRun(){var F=S.emF;if(!F)return;var a=emp(F.a),b=emp(F.b);if(!a||!b)return;var keep=F.keep===b.id?b:a,drop=keep===a?b:a,K=emKind(a,b);if(K.k==="overlap"||K.k==="none"){toast("이 두 건은 합칠 수 없어요");return}
+  var why=String((($("#em-why")||{}).value)||F.why||"").trim();if(K.k==="gap"&&!why){toast("공백 사유를 적어 주세요");return}var me=st(S.me).name,btn=$('#modal [data-act="em-run"]');if(btn){btn.disabled=true;btn.textContent="합치는 중…"}
+  var done=function(){S.emF=null;$("#modal").innerHTML="";S.wm=keep.worker;S.wkPT="emp";toast("고용 건을 하나로 합쳤어요");render()};
+  if(!LIVE||typeof sb==="undefined"||!sb){emLocal(keep,drop,K,why);done();return}
+  var wait=function(n){return new Promise(function(ok){(function chk(i){if(!(typeof persisting!=="undefined"&&persisting)&&!(typeof pending!=="undefined"&&pending)||i>50)ok();else setTimeout(function(){chk(i+1)},100)})(0)})};
+  try{if(typeof persist==="function")persist()}catch(x){}
+  wait().then(function(){return sb.rpc("merge_employments",{p_keep:keep.id,p_drop:drop.id,p_note:why||null,p_by:me})}).then(function(r){if(r&&r.error){var m=String(r.error.message||r.error);toast(/function|merge_employments/.test(m)&&/not|없/.test(m)?"SQL 75를 먼저 실행해 주세요":"합치지 못했어요: "+m);if(btn){btn.disabled=false;btn.textContent="합치기"}return}
+    return loadAll().then(function(){done()})}).catch(function(e){toast("합치지 못했어요: "+(e&&e.message||e));if(btn){btn.disabled=false;btn.textContent="합치기"}})}
+/* 근로자 병합 뒤: 같은 기업 고용 건이 생기면 바로 알려주기 */
+var _mgRun167=mgRun;mgRun=function(){var M=S.mg,t=M&&M.kind==="worker"?M.target:null,r=_mgRun167.apply(this,arguments);if(t&&wk(t)&&emDups(t).length){S.wm=t;S.wkPT="emp";setTimeout(function(){toast("합친 근로자에게 같은 기업 고용 건이 2개 있어요 · 고용·계약 탭에서 [합치기]를 눌러 주세요");render()},50)}return r};
+/* ---------- 동작 ---------- */
+var _v139Act167=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="em-open"){var x=emp(D0.a),y=emp(D0.b);if(!x||!y)return true;S.emF={a:x.id,b:y.id,keep:emDefKeep(x,y).id,why:""};emModal();return true}
+  if(a==="em-run"){emRun();return true}
+  return _v139Act167(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
