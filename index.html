@@ -899,6 +899,11 @@ button.dbgo:hover,button.pfhas:hover{filter:brightness(.94)}
 .exres{white-space:normal;text-align:left}
 .exwhy{display:flex;gap:6px;margin-top:8px}.exwhy input{flex:1}
 .exline{margin-top:6px}
+/* v170 */
+.fjtabs{margin:6px 0}
+.fjtab td{vertical-align:top}
+.fjtab select{max-width:320px}
+tr.fj-pick td,tr.fj-rej td{background:#FFF6F6}
 </style>
 </head>
 <body>
@@ -15543,6 +15548,109 @@ var _empCards169=empCardsHtml;empCardsHtml=function(w,es){var h=_empCards169.app
 var _v139Act169=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="exwhy-save"){var i=document.querySelector("#exwhy-in");var ch=exWhySave(D0.e,i?i.value:"");toast(ch?"사유를 저장했어요":"바뀐 값이 없어요");if(S.xm)xmPaint();render();return true}
   return _v139Act169(a,el)};
+
+/* ================================================================
+   v170 ① 데이터 업로드 ⑦ 주소 · 직무 채우기 (기업명 · 근로자명 · 주소 · 상세주소 · 직무 · 상세업무)
+          비어 있는 칸만 채움 · 재직자 우선 · 동명이인은 미리보기에서 직접 고르기 · 직무 변환 탭
+        ② 기존 직무 표기 정리 (같은 변환 규칙 · 묶음별 체크 · 변경 이력)
+   ================================================================ */
+APP_VER="v170";APP_VER_ON="10/22";APP_NOTE="주소 · 직무 일괄 채우기 · 기존 직무 표기 정리";
+/* ---------- 직무 변환 규칙 ---------- */
+var JN_RULES=[["뉴스스크랩",/스크랩|기사|뉴스/],["음악",/음악|오케스트라|합창|악기|피아노|바이올린|비올라|첼로|플루트|클라리넷|성악|국악|밴드|연주|작곡|보컬/],["미술",/미술|그림|회화|드로잉|일러스트|공예|작가|조소|서예/],["디자인",/디자인/],["사무행정",/사무|행정|데이터|입력|문서|서무|엑셀/]];
+var JN_SYN={"뉴스스크랩":["스크랩","뉴스스크랩","뉴스","기사","기사스크랩","뉴스기사스크랩","뉴스기사"],"음악":["음악"],"미술":["미술"],"디자인":["디자인"],"사무행정":["사무","행정","사무행정","사무보조","행정보조"],"기타":["기타"]};
+var JN_GEN=/^(장애예술인|예술|예술인|예술활동|문화예술|기타|-|없음)$/;
+function jnK(s){return String(s||"").replace(/\s+/g,"")}
+function jnKey(j,d){return jnK(j)+"|"+jnK(d)}
+function jnMap(){var m=appSet("job_map",null);return m&&typeof m==="object"?m:{}}
+function jnRule(t){t=jnK(t);if(!t||JN_GEN.test(t))return"";for(var i=0;i<JN_RULES.length;i++)if(JN_RULES[i][1].test(t))return JN_RULES[i][0];return JOBS.indexOf(t)>=0?t:""}
+function jnSyn(job,t){t=jnK(t);return!t||t===job||(JN_SYN[job]||[]).indexOf(t)>=0}
+function jobNorm(j,d,extra){j=String(j||"").trim();d=String(d||"").trim();var k=jnKey(j,d),M=extra&&extra[k]||jnMap()[k];if(M)return{job:M.job||"",det:M.det==null?"":M.det,src:"saved"};
+  if(!j&&!d)return{job:"",det:"",src:"none"};var job=jnRule(j)||jnRule(d)||(j||d?"기타":""),det=d;
+  if(!det&&j&&!jnSyn(job,j)&&!JN_GEN.test(jnK(j))&&JOBS.indexOf(jnK(j))<0)det=j;
+  if(det&&jnSyn(job,det))det="";return{job:job,det:det,src:"auto"}}
+/* ---------- ① 주소 · 직무 채우기 ---------- */
+function fjCoKey(s){return nmKey(String(s||"").replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g,""))}
+function fjCos(name){var k=fjCoKey(name);if(!k)return[];var ex=DB.companies.filter(function(c){return fjCoKey(c.name)===k||fjCoKey(c.display_name)===k});if(ex.length)return ex;
+  return DB.companies.filter(function(c){var a=fjCoKey(c.name),b=fjCoKey(c.display_name);return k.length>=2&&(a&&(a.indexOf(k)>=0||k.indexOf(a)>=0)||b&&(b.indexOf(k)>=0||k.indexOf(b)>=0))})}
+function fjEmps(c,name){var k=nmKey(name),L=DB.employments.filter(function(e){var w=wk(e.worker);return e.company===c.id&&!e.cancelled&&w&&nmKey(w.name)===k}),A=L.filter(function(e){return activeEmp(e)||!empStarted(e)});return A.length?A:L}
+function fjLabelE(e){var w=wk(e.worker)||{},t0=termsOf(e.id)[0]||{},ph=normPhone(w.phone||"");return(w.name||"")+" · "+(w.birth||"생년월일 없음")+(ph?" · "+ph.slice(-4):"")+" · 입사 "+(t0.start||"—")+" · "+(activeEmp(e)?"재직":!empStarted(e)?"입사예정":"퇴사")}
+function fjJudge(x,M){x.ch=[];x.keep=[];x.msg="";x.st="";if(!x.c){x.st=x.C.length>1?"pick":"rej";x.msg=x.C.length>1?"기업 "+x.C.length+"곳 · 골라 주세요":"기업을 못 찾음";return x}
+  if(!x.e){x.E=fjEmps(x.c,x.name);if(x.E.length===1)x.e=x.E[0]}
+  if(!x.e){x.st=x.E.length>1?"pick":"rej";x.msg=x.E.length>1?"동명이인 "+x.E.length+"명 · 골라 주세요":"이 기업에 이 이름의 근로자가 없음";return x}
+  var e=x.e,w=wk(e.worker)||{},n=jobNorm(x.job,x.det,M&&M.map);x.nj=n;
+  var put=function(lab,cur,v,k){if(!v)return;if(!cur){x.ch.push([k,lab,v])}else if(jnK(cur)!==jnK(v))x.keep.push(lab+" 기존값 유지 ("+cur+")")};
+  if(V76.ok){put("주소",w.addr,x.a1,"addr");put("상세주소",w.addr2,x.a2,"addr2")}else if(x.a1||x.a2)x.keep.push("주소는 SQL 76 실행 뒤 채워져요");
+  put("직무",e.job,n.job,"job");put("상세업무",e.job_detail,n.det,"det");
+  var ret=!activeEmp(e)&&empStarted(e);x.st=x.ch.length?(ret?"warn":"ok"):"same";x.msg=x.ch.length?x.ch.map(function(c){return c[1]}).join(" · ")+" 채움"+(ret?" · 퇴사자":""):"채울 칸 없음";return x}
+function fjParse(ws){var hr=0,H={};for(var r=1;r<=6;r++){var v=ws.getRow(r).values.map(rrCellTxt).join("|").replace(/\s/g,"");if(/근로자명|성명|이름/.test(v)&&/기업명|기업/.test(v)){hr=r;break}}if(!hr)return{err:"‘기업명 · 근로자명’ 머리글을 못 찾았어요"};
+  ws.getRow(hr).values.forEach(function(v,i){var t=rrCellTxt(v).replace(/\s+/g,"");if(t)H[t]=i});
+  var ix=function(){for(var i=0;i<arguments.length;i++)if(H[arguments[i]])return H[arguments[i]];return 0},g=function(row,i){return i?rrCellTxt(row.values[i]).trim():""};
+  var C={co:ix("기업명","기업"),nm:ix("근로자명","성명","이름"),a1:ix("주소"),a2:ix("상세주소"),jb:ix("직무"),dt:ix("상세업무","직무상세","업무내용")},L=[];
+  for(var r2=hr+1;r2<=ws.rowCount;r2++){var row=ws.getRow(r2),nm=g(row,C.nm),co=g(row,C.co);if(!nm&&!co)continue;L.push({r:r2,co:co,name:nm,a1:g(row,C.a1),a2:g(row,C.a2),job:g(row,C.jb),det:g(row,C.dt)})}
+  return{L:L}}
+function fjFile(file){if(!/\.xlsx$/i.test(file.name)){toast("엑셀(.xlsx) 파일만 올릴 수 있어요");return}toast("읽는 중…");try{dlLog({kind:"import",menu:"데이터 업로드 · 주소 · 직무 채우기",file:file.name,pii:true})}catch(e){}
+  xlLoad().then(function(X){return file.arrayBuffer().then(function(buf){var wb=new X.Workbook();return wb.xlsx.load(buf).then(function(){return wb})})}).then(function(wb){var R=null;wb.worksheets.some(function(ws){var p=fjParse(ws);if(p.L){R=p;return true}R=R||p;return false});
+    if(!R||!R.L){toast(R&&R.err||"읽을 수 없는 파일이에요");return}var M={file:file.name,tab:"rows",f:"issue",map:{},rows:[]};
+    M.rows=R.L.map(function(o){var x=Object.assign({},o);x.C=fjCos(o.co);x.c=x.C.length===1?x.C[0]:null;x.E=[];x.e=null;return fjJudge(x,M)});S.fj=M;render();toast(M.rows.length+"행을 읽었어요")}).catch(function(e){toast("읽지 못했어요: "+(e&&e.message||e))})}
+function fjN(st){return(S.fj.rows||[]).filter(function(x){return x.st===st}).length}
+function fjJobKinds(){var M=S.fj,G={};M.rows.forEach(function(x){if(!x.job&&!x.det)return;var k=jnKey(x.job,x.det);if(!G[k])G[k]={k:k,j:x.job,d:x.det,n:0};G[k].n++});return Object.keys(G).map(function(k){return G[k]}).sort(function(a,b){return b.n-a.n})}
+function jnRowCtl(k,j,d,ov,pre){var n=jobNorm(j,d,ov);return'<select data-jn="'+pre+'job" data-k="'+esc(k)+'">'+opt(JOBS,n.job,"(비움)")+'</select> <input data-jn="'+pre+'det" data-k="'+esc(k)+'" value="'+esc(n.det)+'" placeholder="상세업무 (비움)" style="width:160px"> <span class="small muted">'+(n.src==="saved"?"저장된 변환":"자동")+'</span>'}
+function fjHtml(){var M=S.fj;if(!M)return"";var R=M.rows,K=fjJobKinds(),sh=M.f==="all"?R:R.filter(function(x){return x.st!=="same"});
+  var h='<div class="dcard fjcard" style="margin-top:10px"><div class="dcard-h"><b>주소 · 직무 채우기 미리보기 · '+esc(M.file)+'</b><span class="small muted">채움 '+fjN("ok")+' · 퇴사자 '+fjN("warn")+' · 고르기 필요 '+fjN("pick")+' · 못 찾음 '+fjN("rej")+' · 채울 칸 없음 '+fjN("same")+'</span></div>'+
+    '<div class="tabs fjtabs"><button class="'+(M.tab==="rows"?"on":"")+'" data-act="fj-tab" data-v="rows">행 '+R.length+'</button><button class="'+(M.tab==="map"?"on":"")+'" data-act="fj-tab" data-v="map">직무 변환 '+K.length+'종</button></div>';
+  if(M.tab==="map"){h+='<p class="hint">원래 값 종류별로 어떤 직무 · 상세업무로 들어갈지 보여요. 틀린 건 고치면 아래 모든 행에 적용되고, 등록할 때 기억해서 다음 업로드와 [기존 직무 표기 정리]에도 써요.</p><div style="max-height:420px;overflow:auto"><table class="mini"><thead><tr><th>원래 직무</th><th>원래 상세업무</th><th>행</th><th>바뀔 직무 · 상세업무</th></tr></thead><tbody>'+
+    K.map(function(g){return'<tr><td>'+esc(g.j||"—")+'</td><td>'+esc(g.d||"—")+'</td><td class="num">'+g.n+'</td><td class="nowrap">'+jnRowCtl(g.k,g.j,g.d,M.map,"fj-")+'</td></tr>'}).join("")+'</tbody></table></div>'}
+  else{h+='<div style="margin:6px 0"><label class="ckl"><input type="checkbox" data-fjf="1"'+(M.f==="all"?" checked":"")+'> 채울 칸 없는 행도 보기</label></div><div style="max-height:460px;overflow:auto"><table class="mini fjtab"><thead><tr><th>행</th><th>기업명</th><th>근로자명</th><th>찾은 근로자</th><th>주소</th><th>직무 → 변환</th><th>결과</th></tr></thead><tbody>'+
+    sh.map(function(x){var i=R.indexOf(x),cl=x.st==="ok"?"ok":x.st==="warn"?"warn":x.st==="pick"||x.st==="rej"?"bad":"";
+      var co=x.c?esc(x.c.name):x.C.length>1?'<select data-fjc="'+i+'"><option value="">기업 고르기</option>'+x.C.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+(c.display_name&&c.display_name!==c.name?" ("+esc(c.display_name)+")":"")+'</option>'}).join("")+'</select>':'<span class="muted">'+esc(x.co)+'</span>';
+      var em=x.e?'<span class="small">'+esc(fjLabelE(x.e))+'</span>'+(x.E.length>1?' <button class="linkbtn small" data-act="fj-repick" data-i="'+i+'">다시 고르기</button>':""):x.E.length>1?'<select data-fje="'+i+'"><option value="">동명이인 고르기</option>'+x.E.map(function(e){return'<option value="'+e.id+'">'+esc(fjLabelE(e))+'</option>'}).join("")+'</select>':"—";
+      var nj=x.nj||jobNorm(x.job,x.det,M.map);
+      return'<tr class="fj-'+x.st+'"><td class="num small">'+x.r+'</td><td>'+co+'</td><td>'+esc(x.name)+'</td><td>'+em+'</td><td class="small">'+esc([x.a1,x.a2].filter(Boolean).join(" "))+'</td><td class="small">'+esc([x.job,x.det].filter(Boolean).join(" / ")||"—")+(x.job||x.det?' → <b>'+esc(nj.job||"—")+'</b>'+(nj.det?" / "+esc(nj.det):""):"")+'</td><td><span class="b sm '+cl+'">'+esc(x.msg)+'</span>'+(x.keep.length?'<div class="small muted">'+esc(x.keep.join(" · "))+'</div>':"")+'</td></tr>'}).join("")+'</tbody></table></div>'}
+  var n=fjN("ok")+fjN("warn");return h+'<div class="foot" style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end;align-items:center"><span class="small muted grow">비어 있는 칸만 채워요 · 고르기 필요 · 못 찾음 행은 빠져요</span><button class="btn sm" data-act="fj-cancel">취소</button><button class="btn sm pri" data-act="fj-ok"'+(n?"":" disabled")+'>채우기 ('+n+'건)</button></div></div>'}
+function fjRejudge(){var M=S.fj;M.rows.forEach(function(x){fjJudge(x,M)})}
+function fjSaveMap(map){var keys=Object.keys(map||{});if(!keys.length)return;var m=Object.assign({},jnMap());keys.forEach(function(k){m[k]=map[k]});appSetPut("job_map",m)}
+function fjApply(){var M=S.fj,n=0,f=0;fjRejudge();M.rows.forEach(function(x){if(x.st!=="ok"&&x.st!=="warn")return;var e=x.e,w=wk(e.worker);
+    x.ch.forEach(function(c){var k=c[0],v=c[2];if(k==="addr"&&!w.addr){w.addr=v;logChange("workers",w.id,w.name,"주소 (일괄 업로드)","",v,"브이드림 내부");f++}else if(k==="addr2"&&!w.addr2){w.addr2=v;logChange("workers",w.id,w.name,"상세주소 (일괄 업로드)","",v,"브이드림 내부");f++}
+      else if(k==="job"&&!e.job){e.job=v;logChange("workers",w.id,w.name,"직무 (일괄 업로드 · "+((comp(e.company)||{}).name||"")+")","",v,"브이드림 내부");f++}else if(k==="det"&&!e.job_detail){e.job_detail=v;logChange("workers",w.id,w.name,"상세업무 (일괄 업로드 · "+((comp(e.company)||{}).name||"")+")","",v,"브이드림 내부");f++}});n++});
+  fjSaveMap(M.map);S.fj=null;toast(n+"명 · "+f+"칸 채웠어요");render()}
+/* ---------- ② 기존 직무 표기 정리 ---------- */
+function jnGroups(){var G={};DB.employments.forEach(function(e){if(e.cancelled||(!e.job&&!e.job_detail))return;var k=jnKey(e.job,e.job_detail),n=jobNorm(e.job,e.job_detail,S.jn&&S.jn.map);if(n.job===(e.job||"")&&n.det===(e.job_detail||""))return;
+    if(!G[k])G[k]={k:k,j:e.job||"",d:e.job_detail||"",E:[]};G[k].E.push(e)});return Object.keys(G).map(function(k){return G[k]}).sort(function(a,b){return b.E.length-a.E.length})}
+function jnHtml(){var J=S.jn;if(!J)return"";var G=jnGroups(),tot=G.reduce(function(a,g){return a+(J.off[g.k]?0:g.E.length)},0);
+  return'<div class="dcard jncard" style="margin-top:10px"><div class="dcard-h"><b>기존 직무 표기 정리 · '+G.length+'종</b><span class="small muted">근로자 DB에 저장된 직무 · 상세업무 중 변환 규칙과 다른 것만 보여요</span></div>'+(G.length?'<div style="max-height:460px;overflow:auto"><table class="mini"><thead><tr><th><input type="checkbox" data-jnall="1"'+(Object.keys(J.off).length?"":" checked")+' aria-label="모두"></th><th>지금 직무</th><th>지금 상세업무</th><th>건수</th><th>바꿀 직무 · 상세업무</th><th></th></tr></thead><tbody>'+
+    G.map(function(g){return'<tr><td><input type="checkbox" data-jnon="'+esc(g.k)+'"'+(J.off[g.k]?"":" checked")+'></td><td>'+esc(g.j||"(빈칸)")+'</td><td>'+esc(g.d||"(빈칸)")+'</td><td class="num">'+g.E.length+'</td><td class="nowrap">'+jnRowCtl(g.k,g.j,g.d,J.map,"jn-")+'</td><td><button class="linkbtn small" data-act="jn-who" data-k="'+esc(g.k)+'">근로자 보기</button></td></tr>'+
+      (J.who===g.k?'<tr><td></td><td colspan="5" class="small">'+g.E.map(function(e){return esc((wk(e.worker)||{}).name||"")+' ('+esc((comp(e.company)||{}).name||"")+')'}).join(", ")+'</td></tr>':"")}).join("")+'</tbody></table></div>':'<p class="hint">정리할 표기가 없어요</p>')+
+    '<div class="foot" style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end"><button class="btn sm" data-act="jn-close">닫기</button><button class="btn sm pri" data-act="jn-apply"'+(tot?"":" disabled")+'>선택한 '+tot+'건 정리</button></div></div>'}
+function jnApply(){var J=S.jn,G=jnGroups().filter(function(g){return!J.off[g.k]}),n=0;
+  askConfirm("직무 표기 정리",G.reduce(function(a,g){return a+g.E.length},0)+"건의 직무 · 상세업무를 바꿀까요? 변경 이력에 전후 값이 남아요.","정리",function(){G.forEach(function(g){var t=jobNorm(g.j,g.d,J.map);g.E.forEach(function(e){var w=wk(e.worker)||{},b=[e.job,e.job_detail].filter(Boolean).join(" / ");e.job=t.job;e.job_detail=t.det;logChange("workers",e.worker,w.name||"","직무 표기 정리 (관리자 · "+((comp(e.company)||{}).name||"")+")",b,[t.job,t.det].filter(Boolean).join(" / ")||"(빈칸)","브이드림 내부");n++})});
+    fjSaveMap(J.map);S.jn=null;toast(n+"건 정리했어요");render()})}
+/* ---------- 화면 ---------- */
+var _vMig170=vMig;vMig=function(){var h=_vMig170.apply(this,arguments);if(S.role!=="admin")return h;
+  var card='<div class="migcards" style="margin-top:12px"><div class="migcard"><b>⑦ 주소 · 직무 채우기 (재직자)</b><p class="small muted">기업명 · 근로자명 · 주소 · 상세주소 · 직무 · 상세업무. 비어 있는 칸만 채워요(이미 있으면 그대로). 재직자를 먼저 찾고, 동명이인은 미리보기에서 골라요. 직무는 '+JOBS.join(" · ")+' 중 하나로 바꿔요.</p>'+
+    '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="fj-tpl">양식 다운로드</button><label class="btn sm pri"><input type="file" accept=".xlsx" data-fjin="1" hidden>파일 올리기</label><button class="btn sm" data-act="jn-open">기존 직무 표기 정리</button></div></div></div>';
+  return h+card+fjHtml()+jnHtml()};
+function fjTpl(){xlLoad().then(function(X){var wb=new X.Workbook(),ws=wb.addWorksheet("주소직무");["기업명","근로자명","주소","상세주소","직무","상세업무"].forEach(function(t,i){xlHead(ws,1,i+1,t);ws.getColumn(i+1).width=i===2?36:i===3?18:14});
+  ws.getCell(2,1).value="(예시) 한빛물류";ws.getCell(2,2).value="홍길동";ws.getCell(2,3).value="서울 강서구 화곡로 1";ws.getCell(2,4).value="101호";ws.getCell(2,5).value="오케스트라";ws.getCell(2,6).value="";ws.getRow(2).font={color:{argb:"FF999999"},italic:true};
+  return wb.xlsx.writeBuffer().then(function(buf){dlBlob(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"VWork_주소직무_양식.xlsx");toast("양식을 내려받았어요 · 예시 행은 지우고 써 주세요")})}).catch(function(e){toast(e.message||e)})}
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)return;var D=t.dataset;
+  if(D.fjin&&t.files&&t.files[0]){fjFile(t.files[0]);t.value="";return}
+  var M=S.fj;if(M){if(D.fjf){M.f=t.checked?"all":"issue";render();return}
+    if(D.fjc!=null){var x=M.rows[+D.fjc],c=comp(t.value);if(x&&c){x.c=c;x.E=[];x.e=null;fjJudge(x,M);render()}return}
+    if(D.fje!=null){var y=M.rows[+D.fje],e=emp(t.value);if(y&&e){y.e=e;fjJudge(y,M);render()}return}}
+  if(D.jn){var pre=D.jn.slice(0,3),store=pre==="fj-"?(S.fj&&S.fj.map):(S.jn&&S.jn.map);if(!store)return;var k=D.k,cur=store[k]||(function(){var p=k.split("|"),src=pre==="fj-"?S.fj.rows.find(function(r){return jnKey(r.job,r.det)===k}):null;var n=src?jobNorm(src.job,src.det,store):(function(){var g=jnGroups().find(function(g){return g.k===k});return g?jobNorm(g.j,g.d,store):{job:"",det:""}})();return{job:n.job,det:n.det}})();
+    cur=Object.assign({},cur);if(D.jn.slice(3)==="job")cur.job=t.value;else cur.det=String(t.value||"").trim();store[k]=cur;if(pre==="fj-")fjRejudge();render();return}
+  if(S.jn){if(D.jnon){if(t.checked)delete S.jn.off[D.jnon];else S.jn.off[D.jnon]=1;render();return}if(D.jnall){S.jn.off={};if(!t.checked)jnGroups().forEach(function(g){S.jn.off[g.k]=1});render();return}}},false);
+var _v139Act170=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="fj-tpl"){fjTpl();return true}
+  if(a==="fj-tab"){S.fj.tab=D0.v;render();return true}
+  if(a==="fj-cancel"){S.fj=null;render();return true}
+  if(a==="fj-repick"){var x=S.fj.rows[+D0.i];if(x){x.e=null;x.E=fjEmps(x.c,x.name);fjJudge(x,S.fj);x.e=null;x.st="pick";x.msg="동명이인 "+x.E.length+"명 · 골라 주세요";render()}return true}
+  if(a==="fj-ok"){var M=S.fj;fjRejudge();var n=fjN("ok")+fjN("warn");askConfirm("주소 · 직무 채우기",n+"명의 빈칸을 채울까요? 이미 입력된 값은 바꾸지 않아요."+(fjN("pick")?" (고르기 필요 "+fjN("pick")+"행은 빠져요)":""),"채우기",fjApply);return true}
+  if(a==="jn-open"){S.jn={map:{},off:{},who:""};render();setTimeout(function(){var c=document.querySelector(".jncard");if(c)c.scrollIntoView({block:"start"})},30);return true}
+  if(a==="jn-close"){S.jn=null;render();return true}
+  if(a==="jn-who"){S.jn.who=S.jn.who===D0.k?"":D0.k;render();return true}
+  if(a==="jn-apply"){jnApply();return true}
+  return _v139Act170(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
