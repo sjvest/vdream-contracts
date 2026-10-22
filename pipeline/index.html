@@ -2403,7 +2403,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='pl-v163';
+const APP_BUILD_VERSION='pl-v164';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -10740,7 +10740,9 @@ if(VB){var _bcRows=VB.rows,_bcIns=VB.ins,_bcDel=VB.del;
   VB.ins=function(p){return _bcIns(p).then(function(r){var o=A.find("organizations",A.txt("org",p.org_id));if(o)cardToDrive(o,p.url);return r})};
   VB.del=function(old){if(old._vwc)return Promise.reject(new Error("V-Work에서 올린 명함이에요 · V-Work 기관 창에서 지워 주세요"));return _bcDel(old)}}
 var VO=PLA._vt.orgs;
-if(VO){var _oRows=VO.rows,_oUpd=VO.upd;VO.rows=function(){cardSync();return _oRows.apply(this,arguments).map(function(r){if(r&&r.business_card_url){var o=A.find("organizations",r._vw);r.business_card_url=cardResolve(o,r.business_card_url)}return r})};
+if(VO){var _oRows=VO.rows,_oUpd=VO.upd;VO.rows=function(){cardSync();return _oRows.apply(this,arguments).map(function(r){if(!r)return r;var o=A.find("organizations",r._vw);if(r.business_card_url)r.business_card_url=cardResolve(o,r.business_card_url);if(!r.business_card_url&&o){var f=ocards(o).find(function(c){return c.url});if(f)r.business_card_url=driveImg(f.url)}r.card_image=null;r.business_card_thumb=null;return r})};
+  /* pl-v164: 명함 사진은 DB(pl_blobs)에서 불러오지 않음 · 드라이브 사진만 */
+  VO.blobs=function(){return Promise.resolve()};
   VO.upd=function(old,p){var u=p&&p.business_card_url;if(p&&"card_image" in p&&p.card_image&&/^data:/.test(String(p.card_image)))delete p.card_image;return _oUpd.apply(this,arguments).then(function(r){var o=A.find("organizations",old._vw);if(o&&isTmp(u))cardToDrive(o,u);return r})};
   var _oIns=VO.ins;VO.ins=function(p){if(p)delete p.card_image;return _oIns(p).then(function(r){var o=A.find("organizations",r._vw);if(o&&p.business_card_url)cardToDrive(o,p.business_card_url);return r})}}
 
