@@ -904,6 +904,11 @@ button.dbgo:hover,button.pfhas:hover{filter:brightness(.94)}
 .fjtab td{vertical-align:top}
 .fjtab select{max-width:320px}
 tr.fj-pick td,tr.fj-rej td{background:#FFF6F6}
+/* v171 */
+.rdbox{margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:8px}
+.rdl{margin:4px 0 6px 18px;padding:0;font-size:12.5px}
+.fbbar{display:flex;gap:8px;align-items:center;padding:8px 10px;margin:8px 0;border:1px solid #F0D9A0;background:#FFF8E6;border-radius:8px}
+.fbl{display:flex;flex-direction:column;gap:4px;max-height:360px;overflow:auto;margin-top:6px}
 </style>
 </head>
 <body>
@@ -15651,6 +15656,78 @@ var _v139Act170=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="jn-who"){S.jn.who=S.jn.who===D0.k?"":D0.k;render();return true}
   if(a==="jn-apply"){jnApply();return true}
   return _v139Act170(a,el)};
+
+/* ================================================================
+   v171 ① 숨긴 화면(발굴 메뉴)으로 가는 버튼이 내 할 일로 튕기던 것 → 보던 화면 유지 · 수급 요청은 그 자리에서 창으로
+        ② 서류 보완 요청(핑퐁): 회차 기록 · 되돌아갈 단계 · 사유 · 마감일 다시 계산
+        ③ 충족입사: 대상 기간이 모두 주말 · 공휴일이면 제외(시작 전 건만) · 평일 n일 표시
+        ④ 충족입사 미진행 일괄 완료(관리자 · 빼기 가능 · '일괄 완료' 배지)
+   ================================================================ */
+APP_VER="v171";APP_VER_ON="10/22";APP_NOTE="화면 튕김 고침 · 서류 보완 요청(회차) · 충족입사 주말 제외 · 미진행 일괄 완료";
+/* ---------- ① 숨긴 화면 → 보던 화면 유지 ---------- */
+function v171Hidden(v){return(typeof DISC_MENU!=="undefined"&&DISC_MENU.some(function(x){return x[0]===v}))||/^(ologs|orel|ostat)$/.test(v||"")}
+var _go171=go;go=function(v){if(S.view&&!v171Hidden(S.view))S.lastV=S.view;return _go171.apply(this,arguments)};
+var _renderMain171=renderMain;renderMain=function(){if(v171Hidden(S.view)){var back=S.lastV&&!v171Hidden(S.lastV)?S.lastV:"todo";S.view=back}
+  var h=_renderMain171.apply(this,arguments);if(S.sqSel&&S.view!=="osupq"&&typeof pSupq==="function"){try{var p=pSupq();if(p){if(typeof h==="string")h+=p;else{var m=document.querySelector("#main");if(m)m.insertAdjacentHTML("beforeend",p)}}}catch(e){console.warn(e)}}return h};
+/* ---------- ② 서류 보완 요청 (핑퐁) ---------- */
+var V77={ok:!LIVE,probed:false};
+var _loadAll171=loadAll;loadAll=function(){var a=arguments,self=this;var pr=(!LIVE||V77.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(V77.probed=true,Promise.all([sb.from("case_documents").select("rounds").limit(1),sb.from("exit_documents").select("rounds").limit(1)]).then(function(R){V77.ok=R.every(function(r){return!r.error});if(V77.ok){colxAdd("casedocs",[["rounds",null,"json"]]);colxAdd("xdocs",[["rounds",null,"json"]])}},function(){}));
+  return pr.then(function(){return _loadAll171.apply(self,a)})};
+var RND_WHY=["서명 누락","서류 누락","정보 오류","파일 · 사진 불량","기타"];
+function rndObj(kind,id){return kind==="xd"?(DB.xdocs||[]).find(function(x){return x.id===id}):(DB.casedocs||[]).find(function(x){return x.id===id})}
+function rndList(o){return o&&Array.isArray(o.rounds)?o.rounds:[]}
+function rndN(o){return rndList(o).length+1}
+function rndHtml(kind,o){var L=rndList(o),s=docSteps(o.method||(kind==="xd"?xMeth(o):""));if(!L.length&&!(o.step>0))return"";
+  return'<div class="rdbox">'+(L.length?'<div class="rdh"><span class="b sm warn">'+rndN(o)+'회차 진행 중</span></div><ol class="rdl">'+L.map(function(r,i){return'<li><b>'+(i+1)+'회차</b> '+esc(md(r.at))+' 보완 요청 · '+esc(r.why||"")+(r.memo?' ('+esc(r.memo)+')':"")+' → <span class="small muted">'+esc(s[r.to]||"처음")+'부터 다시</span></li>'}).join("")+'</ol>':"")+
+    (o.step>0?'<button class="btn xs" data-act="rd-open" data-k="'+kind+'" data-id="'+o.id+'">보완 요청 (다시 주고받기)</button>':"")+'</div>'}
+var _stepsHtml171=stepsHtml;stepsHtml=function(kind,o){var h=_stepsHtml171.apply(this,arguments);try{return h+rndHtml(kind,o)}catch(e){return h}};
+function rndModal(){var F=S.rdF;if(!F)return;var o=rndObj(F.k,F.id);if(!o){S.rdF=null;$("#modal").innerHTML="";return}var m=o.method||(F.k==="xd"?xMeth(o):""),s=docSteps(m),e=emp(o.emp),w=e&&wk(e.worker);
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="보완 요청" style="width:min(520px,calc(100vw - 32px))"><div class="ph"><div><div class="k">'+esc((w||{}).name||"")+' · '+esc(o.name||"")+'</div><h2>보완 요청 · '+(rndN(o)+1)+'회차</h2></div><button class="close" data-act="rd-x" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><p class="hint" style="margin-top:0">받은 서류에 문제가 있어 다시 주고받을 때 써요. 지금까지 단계와 날짜는 회차 기록으로 남고, 고른 단계부터 다시 진행해요.</p><div class="fg">'+
+    '<label class="f full"><span>어느 단계부터 다시</span><select id="rd-to">'+s.slice(0,o.step).map(function(lb,i){return'<option value="'+i+'"'+(i===F.to?" selected":"")+'>'+(i+1)+'. '+esc(lb)+'</option>'}).join("")+'</select></label>'+
+    '<label class="f"><span>사유</span><select id="rd-why">'+opt(RND_WHY,F.why||RND_WHY[0])+'</select></label><label class="f"><span>메모 (선택)</span><input id="rd-memo" value="'+esc(F.memo||"")+'" placeholder="예: 2쪽 서명 빠짐"></label></div></div>'+
+    '<div class="ps foot"><button class="btn" data-act="rd-x">닫기</button><span class="grow"></span><button class="btn pri" data-act="rd-save">보완 요청 기록</button></div></div></div>'}
+function rndSave(){var F=S.rdF;if(!F)return;var o=rndObj(F.k,F.id);if(!o)return;if(LIVE&&!V77.ok){toast("SQL 77을 먼저 실행해 주세요");return}
+  var to=+(($("#rd-to")||{}).value||0),why=($("#rd-why")||{}).value||"기타",memo=String(($("#rd-memo")||{}).value||"").trim(),m=o.method||(F.k==="xd"?xMeth(o):""),s=docSteps(m);
+  if(why==="기타"&&!memo){toast("기타면 메모를 적어 주세요");return}
+  var r={at:TODAY,by:st(S.me).name,from:o.step||0,to:to,why:why,memo:memo,dates:(o.dates||[]).slice()};o.rounds=rndList(o).concat([r]);o.step=to;o.dates=(o.dates||[]).slice(0,to);
+  if(F.k==="xd"){if(o.status==="완료"){o.status=to>0?"진행 중":"요청됨";o.done=""}else if(to===0&&o.status==="진행 중")o.status="요청됨"}
+  var e=emp(o.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,(F.k==="xd"?"퇴사 서류":"서류")+" 보완 요청 · "+o.name,s[r.from-1]||"",(o.rounds.length+1)+"회차 · "+(s[to]||"처음")+"부터 · "+why+(memo?" ("+memo+")":""),"브이드림 내부");
+  S.rdF=null;$("#modal").innerHTML="";afterAction((F.k==="xd"?"xdoc:":"odoc:")+o.id,(o.rounds.length+1)+"회차로 다시 진행해요")}
+/* 내 할 일: 회차 표시 · 마감일은 마지막 보완 요청일 기준 */
+var _bt171=buildTodos;buildTodos=function(){var L=_bt171.apply(this,arguments);L.forEach(function(t){if(t.type!=="odoc"&&t.type!=="xdoc")return;var o=t.type==="xdoc"?rndObj("xd",t.doc||String(t.key).slice(5)):rndObj("cd",t.doc||String(t.key).slice(5)),R=rndList(o);if(!R.length)return;
+    var last=R[R.length-1],off=(setting(t.type)||{}).offset;off=off>0?off:3;var nd=addD(last.at,off);if(!t.due||nd>t.due||t.due<last.at)t.due=nd;if(String(t.task||"").indexOf("회차")<0)t.task=(t.task||"")+" · "+(R.length+1)+"회차"});return L};
+/* 서류 관리 목록: 회차 배지 */
+var _docRows171=typeof docRows==="function"?docRows:null;if(_docRows171)docRows=function(){return _docRows171.apply(this,arguments).map(function(r){var o=r.tb==="exit_documents"?rndObj("xd",r.did):rndObj("cd",r.did),R=rndList(o);if(R.length&&String(r.step).indexOf("회차")<0)r.step=(r.step||"")+" · "+(R.length+1)+"회차";return r})};
+/* ---------- ③ 충족입사: 주말 · 공휴일 ---------- */
+function fillBizN(e){var t1=termsOf(e.id)[0];if(!t1||!t1.start||!e.vwork_start)return 0;var d=t1.start,end=addD(e.vwork_start,-1),n=0,g=0;while(d<=end&&g<400){if(!isOff(d))n++;d=addD(d,1);g++}return n}
+var _fillNeed171=fillNeed;fillNeed=function(e){if(!_fillNeed171.apply(this,arguments))return false;var f=fillOf(e);if(f.att||f.note||f.done)return true;return fillBizN(e)>0};
+var _fillBody171=fillBody;fillBody=function(e){var h=_fillBody171.apply(this,arguments);if(typeof h!=="string"||!e)return h;var R=fillRange(e),n=dd(R[0],R[1])+1;return h.replace("("+n+"일)","("+n+"일 · 평일 "+fillBizN(e)+"일)")};
+/* ---------- ④ 미진행 일괄 완료 ---------- */
+var _dtable171=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k==="fillm"&&rowFn){var rf=rowFn;rowFn=function(r){var h=rf.apply(this,arguments);if(typeof h!=="string"||!r||!r.e)return h;
+    h=h.replace('<span class="small muted">'+r.n+'일</span>','<span class="small muted">'+r.n+'일 · 평일 '+fillBizN(r.e)+'일</span>');if(fillOf(r.e).bulk)h=h.replace('<span class="b sm ok">완료</span>','<span class="b sm ok">완료</span> <span class="b sm tip" tabindex="0" data-tip="미진행 정리로 일괄 완료 · 업무일지 확인 아님">일괄 완료</span>');return h}}
+  return _dtable171.call(this,k,cols,rows,rowFn,empty)};
+function fbStale(){return fillRows().filter(function(r){return r.st==="stale"&&scopeOK(r.company)&&qcOK(r.company)&&qwOK(r.worker)})}
+var _vFillm171=vFillm;vFillm=function(){var h=_vFillm171.apply(this,arguments);if(typeof h!=="string"||S.fmTab!=="stale"||S.role!=="admin")return h;var n=fbStale().length;if(!n)return h;
+  return insBeforeFbar(h,'<div class="fbbar"><span class="small">브이워크 시작일이 오래돼 진행하지 않은 건이에요.</span><span class="grow"></span><button class="btn sm pri" data-act="fb-open">미진행 '+n+'건 일괄 완료</button></div>')};
+function fbModal(){var F=S.fbF;if(!F)return;var L=fbStale(),on=L.filter(function(r){return!F.off[r.id]}).length;
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="미진행 일괄 완료" style="width:min(560px,calc(100vw - 32px))"><div class="ph"><div><div class="k">충족입사 관리</div><h2>미진행 일괄 완료</h2></div><button class="close" data-act="fb-x" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><p class="hint" style="margin-top:0">체크한 건을 완료로 바꿔요. 완료 조회에 \'일괄 완료\' 배지가 붙고 변경 이력에 남아요. 챙겨야 할 건은 체크를 풀어 주세요.</p><label class="ckl"><input type="checkbox" data-fball="1"'+(Object.keys(F.off).length?"":" checked")+'> 모두</label><div class="fbl">'+
+    L.map(function(r){return'<label class="ckl"><input type="checkbox" data-fbon="'+r.id+'"'+(F.off[r.id]?"":" checked")+'> '+esc((wk(r.worker)||{}).name||"")+' <span class="small muted">'+esc((comp(r.company)||{}).name||"")+' · 브이워크 시작 '+esc(r.e.vwork_start||"")+'</span></label>'}).join("")+'</div></div>'+
+    '<div class="ps foot"><button class="btn" data-act="fb-x">닫기</button><span class="grow"></span><button class="btn pri" data-act="fb-save"'+(on?"":" disabled")+'>'+on+'건 완료 처리</button></div></div></div>'}
+function fbSave(){var F=S.fbF;if(!F)return;var n=0;fbStale().forEach(function(r){if(F.off[r.id])return;var e=r.e,w=wk(e.worker)||{},f=Object.assign({},fillOf(e));f.done=TODAY;f.bulk=true;e.fill=f;logChange("workers",e.worker,w.name||"","충족입사 · 일괄 완료 (미진행 정리)","미진행","완료","브이드림 내부");n++});
+  S.fbF=null;$("#modal").innerHTML="";toast(n+"건 완료 처리했어요");render()}
+document.addEventListener("change",function(ev){var t=ev.target,F=S.fbF;if(!F||!t||!t.dataset)return;if(t.dataset.fbon){if(t.checked)delete F.off[t.dataset.fbon];else F.off[t.dataset.fbon]=1;fbModal();return}if(t.dataset.fball){F.off={};if(!t.checked)fbStale().forEach(function(r){F.off[r.id]=1});fbModal()}},false);
+/* ---------- 동작 ---------- */
+var _v139Act171=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="rd-open"){var o=rndObj(D0.k,D0.id);if(!o)return true;S.rdF={k:D0.k,id:D0.id,to:0,why:"",memo:""};rndModal();return true}
+  if(a==="rd-x"){S.rdF=null;$("#modal").innerHTML="";return true}
+  if(a==="rd-save"){rndSave();return true}
+  if(a==="fb-open"){S.fbF={off:{}};fbModal();return true}
+  if(a==="fb-x"){S.fbF=null;$("#modal").innerHTML="";return true}
+  if(a==="fb-save"){fbSave();return true}
+  if(a==="sq-close"&&S.view!=="osupq"){S.sqSel=null;render();return true}
+  return _v139Act171(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
