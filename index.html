@@ -15570,7 +15570,7 @@ function jnMap(){var m=appSet("job_map",null);return m&&typeof m==="object"?m:{}
 function jnRule(t){t=jnK(t);if(!t||JN_GEN.test(t))return"";for(var i=0;i<JN_RULES.length;i++)if(JN_RULES[i][1].test(t))return JN_RULES[i][0];return JOBS.indexOf(t)>=0?t:""}
 function jnSyn(job,t){t=jnK(t);return!t||t===job||(JN_SYN[job]||[]).indexOf(t)>=0}
 function jobNorm(j,d,extra){j=String(j||"").trim();d=String(d||"").trim();var k=jnKey(j,d),M=extra&&extra[k]||jnMap()[k];if(M)return{job:M.job||"",det:M.det==null?"":M.det,src:"saved"};
-  if(!j&&!d)return{job:"",det:"",src:"none"};var job=jnRule(j)||jnRule(d)||(j||d?"기타":""),det=d;
+  if(!j&&!d)return{job:"",det:"",src:"none"};var strong=/스크랩|오케스트라|합창|악기|피아노|바이올린|비올라|첼로|플루트|클라리넷|성악|국악|그림|회화|드로잉|일러스트/.test(jnK(d)),job=(strong&&jnRule(d))||jnRule(j)||jnRule(d)||(j||d?"기타":""),det=d;
   if(!det&&j&&!jnSyn(job,j)&&!JN_GEN.test(jnK(j))&&JOBS.indexOf(jnK(j))<0)det=j;
   if(det&&jnSyn(job,det))det="";return{job:job,det:det,src:"auto"}}
 /* ---------- ① 주소 · 직무 채우기 ---------- */
@@ -15663,7 +15663,7 @@ var _v139Act170=v139Act;v139Act=function(a,el){var D0=el.dataset;
         ③ 충족입사: 대상 기간이 모두 주말 · 공휴일이면 제외(시작 전 건만) · 평일 n일 표시
         ④ 충족입사 미진행 일괄 완료(관리자 · 빼기 가능 · '일괄 완료' 배지)
    ================================================================ */
-APP_VER="v171";APP_VER_ON="10/22";APP_NOTE="화면 튕김 고침 · 서류 보완 요청(회차) · 충족입사 주말 제외 · 미진행 일괄 완료";
+APP_VER="v172";APP_VER_ON="10/22";APP_NOTE="직무 변환: 상세업무 스크랩 우선 · 화면 튕김 고침 · 서류 보완 요청(회차) · 충족입사 주말 제외 · 미진행 일괄 완료";
 /* ---------- ① 숨긴 화면 → 보던 화면 유지 ---------- */
 function v171Hidden(v){return(typeof DISC_MENU!=="undefined"&&DISC_MENU.some(function(x){return x[0]===v}))||/^(ologs|orel|ostat)$/.test(v||"")}
 var _go171=go;go=function(v){if(S.view&&!v171Hidden(S.view))S.lastV=S.view;return _go171.apply(this,arguments)};
