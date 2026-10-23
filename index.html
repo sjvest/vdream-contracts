@@ -909,6 +909,11 @@ tr.fj-pick td,tr.fj-rej td{background:#FFF6F6}
 .rdl{margin:4px 0 6px 18px;padding:0;font-size:12.5px}
 .fbbar{display:flex;gap:8px;align-items:center;padding:8px 10px;margin:8px 0;border:1px solid #F0D9A0;background:#FFF8E6;border-radius:8px}
 .fbl{display:flex;flex-direction:column;gap:4px;max-height:360px;overflow:auto;margin-top:6px}
+/* v174 */
+.rrpickbar{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px}
+.obyjl{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px}
+.obyjl select{font-size:12px;padding:2px 4px}
+.holov{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;background:rgba(20,16,40,.35)}
 </style>
 </head>
 <body>
@@ -15737,6 +15742,108 @@ var _v139Act171=v139Act;v139Act=function(a,el){var D0=el.dataset;
 APP_VER="v173";APP_VER_ON="10/22";APP_NOTE="기업 검색: 브이워크 기업명 · 그룹명 · 기업코드 · 주소/직무 업로드 기업코드";
 function qcKey(s){return String(s||"").toLowerCase().replace(/\(주\)|㈜|주식회사|\(유\)|유한회사|\s+/g,"")}
 qcOK=function(cid){if(S.qcId)return cid===S.qcId;var q=qcKey(S.qc);if(!q)return true;var c=comp(cid);if(!c)return false;return[c.name,c.display_name,c.group_name,c.corp_code].some(function(v){return v&&qcKey(v).indexOf(q)>=0})};
+
+/* ================================================================
+   v174 ① 채용 요청에서 신규입사 등록: 화면 이동 없이 · 합격자 여러 명 골라 한 번에
+        ② 지시주체: 기본 + 직무별 예외 (예: 음악 · 미술 → 대리지시) · '목록 밖' 문장 정리 도구
+        ③ 기업 창 › 소속 근로자: 직무 · 상세업무 · 지시주체
+        ④ 입사한 추천인재 정리 (관리자) · 근로자 DB 없는 추천인재도 이름 + 연락처/생년월일로 자동 종결
+        ⑤ 계약 시작일이 휴일이면 확인 · 브이워크 시작일은 영업일로
+   ================================================================ */
+APP_VER="v174";APP_VER_ON="10/23";APP_NOTE="입사 등록 화면 유지 · 여러 명 등록 · 직무별 지시주체 · 입사한 추천인재 정리 · 휴일 시작일 확인";
+/* ---------- ① 화면 유지 ---------- */
+S.stayV=null;
+var _go174=go;go=function(v){if(S.stayV&&(v==="onb"||v==="intake")){if(S.view!==S.stayV)S.view=S.stayV;render();return}if(S.stayV&&v!==S.stayV)S.stayV=null;return _go174.apply(this,arguments)};
+function stayStart(){S.stayV=S.view;S.stayRr=S.rrSel}
+function stayFix(){if(!S.stayV)return;if(S.view!==S.stayV)S.view=S.stayV;if(S.stayRr&&!S.rrSel)S.rrSel=S.stayRr;render()}
+var _renderMain174=renderMain;renderMain=function(){var r=_renderMain174.apply(this,arguments);if(S.stayV&&S.view===S.stayV&&S.inForm&&typeof inFormPanel==="function"){try{var m=$("#main");if(m&&!m.querySelector('aside[aria-label="입사자 등록"]'))m.insertAdjacentHTML("beforeend",inFormPanel())}catch(e){console.warn(e)}}return r};
+var _render174=render;render=function(){var r=_render174.apply(this,arguments);if(S.stayV&&!S.inForm){setTimeout(function(){var md=$("#modal");if(S.stayV&&!S.inForm&&!(md&&md.innerHTML.trim()))S.stayV=null},400)}return r};
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="view"],[data-act="navfav"],[data-act="onb-go"]');if(b)S.stayV=null},true);
+var _rrReg1174=rrReg1;rrReg1=function(){stayStart();var r=_rrReg1174.apply(this,arguments);stayFix();return r};
+var _rrMarkHired174=rrMarkHired;rrMarkHired=function(a,eid){var x=a&&a.rrr&&DB.rrr.find(function(y){return y.id===a.rrr}),was=x&&x.cands&&x.cands[+a.rri]&&x.cands[+a.rri].hired;var r=_rrMarkHired174.apply(this,arguments);if(S.stayV&&!was&&x&&x.cands[+a.rri]&&x.cands[+a.rri].hired)setTimeout(function(){toast((a.name||"")+" 신규입사자로 등록했어요 · 줄의 [신규입사자 등록됨]으로 볼 수 있어요")},50);return r};
+/* 여러 명 */
+var _rrRoundHtml174=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml174.apply(this,arguments);if(typeof h!=="string"||!x)return h;var n=0;
+  h=h.replace(/<button class="btn xs act" data-act="rr-reg" data-id="([^"]+)" data-i="(\d+)">/g,function(m,id,i){n++;return'<input type="checkbox" class="rrpick" data-k="'+id+'|'+i+'" aria-label="입사 등록할 합격자 고르기"> '+m});
+  if(n>=2)h+='<div class="rrpickbar"><span class="small muted">합격자 체크 후</span> <button class="btn xs pri" data-act="rr-regsel" data-id="'+x.id+'">선택한 합격자 입사 등록</button></div>';return h};
+function rrRegSel(xid){var K=[].slice.call(document.querySelectorAll('.rrpick:checked')).map(function(i){return i.dataset.k}).filter(function(k){return k.split("|")[0]===xid});if(!K.length){toast("입사 등록할 합격자를 체크해 주세요");return}
+  var batch=[];K.forEach(function(k){var p=k.split("|"),x=DB.rrr.find(function(y){return y.id===p[0]}),c=x&&x.cands&&x.cands[+p[1]],r=x&&rcOf(x.req);if(!c||!r)return;var F=rrRegFind(x,c,r);if(F.a||F.e)rrReg1(p[0],p[1]);else batch.push(k)});
+  if(!batch.length)return;stayStart();$("#modal").innerHTML=batch.map(function(k){return'<input type="checkbox" class="rlchk" data-k="'+esc(k)+'" checked>'}).join("");rrLoadOk();stayFix()}
+/* ---------- ② 직무별 지시주체 ---------- */
+var V78={ok:!LIVE,probed:false};
+var _loadAll174=loadAll;loadAll=function(){var a=arguments,self=this;var pr=(!LIVE||V78.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(V78.probed=true,sb.from("companies").select("order_by_jobs").limit(1).then(function(r){V78.ok=!r.error;if(V78.ok)colxAdd("companies",[["oby_jobs","order_by_jobs","obj"]])},function(){}));return pr.then(function(){return _loadAll174.apply(self,a)})};
+function obyJobs(c){var o=c&&c.oby_jobs;return o&&typeof o==="object"&&!Array.isArray(o)?o:{}}
+function obyOf(e,c){c=c||(e&&comp(e.company));if(!c)return"";var o=obyJobs(c);return(e&&e.job&&o[e.job])||c.order_by||""}
+var _pComp174=pComp;pComp=function(c){var h=_pComp174.apply(this,arguments);if(typeof h!=="string"||!c)return h;
+  if(S.compPTab==="rules"){var k=h.indexOf('<select data-cf="order_by">');if(k>=0){var e=h.indexOf("</label>",k);if(e>0){var o=obyJobs(c),inList=!c.order_by||CO.oby.indexOf(c.order_by)>=0;
+    var box='<div class="f full obyj"><span>직무별 지시주체 <span class="small muted" style="font-weight:400">기본과 다른 직무만 고르세요 · 그 직무 근로자는 이 값을 따라요</span></span><div class="obyjl">'+JOBS.map(function(j){return'<label class="ckl">'+esc(j)+' <select data-oj="'+esc(j)+'">'+opt([["","기본 따름"]].concat(CO.oby.map(function(v){return[v,v]})),o[j]||"")+'</select></label>'}).join("")+'</div>'+(inList?"":'<p class="hint" style="color:var(--bad)">지시주체가 목록 밖 값이에요 · 기업 DB 위 [지시주체 정리]로 바꿀 수 있어요</p>')+'</div>';h=h.slice(0,e+8)+box+h.slice(e+8)}}}
+  if(S.compPTab==="emp"){h=h.replace('<th>상태</th><th>차수</th>','<th>상태</th><th>직무</th><th>차수</th>').replace(/<tr><td colspan="7" class="muted">소속 근로자가 없습니다/,'<tr><td colspan="8" class="muted">소속 근로자가 없습니다');
+    DB.employments.filter(function(e){return e.company===c.id}).forEach(function(e){var p=h.indexOf('data-act="go-w" data-id="'+e.worker+'"');if(p<0)return;var q=h.indexOf("</td>",h.indexOf("</td>",h.indexOf("</td>",p)+5)+5);if(q<0)return;var ob=obyOf(e,c);
+      var cell='<td class="small">'+(e.job?esc(e.job)+(e.job_detail?'<div class="muted">'+esc(e.job_detail)+'</div>':""):'<span class="b sm warn">직무 미입력</span>')+(ob&&ob!==c.order_by?'<div><span class="b sm t">'+esc(ob)+'</span></div>':"")+'</td>';h=h.slice(0,q+5)+cell+h.slice(q+5)})}
+  return h};
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="comp-save"]');if(!b)return;var root=b.closest(".pnl"),c=comp(b.dataset.id);if(!root||!c)return;var S0=root.querySelectorAll("[data-oj]");if(!S0.length)return;
+  var o={};[].forEach.call(S0,function(s){if(s.value)o[s.dataset.oj]=s.value});var b0=JSON.stringify(obyJobs(c)),a0=JSON.stringify(o);if(b0===a0)return;if(LIVE&&!V78.ok){toast("직무별 지시주체는 SQL 78을 먼저 실행해 주세요");return}
+  c.oby_jobs=o;logChange("companies",c.id,c.name,"직무별 지시주체",obyTxt(JSON.parse(b0)),obyTxt(o),"브이드림 내부")},true);
+function obyTxt(o){return Object.keys(o||{}).map(function(k){return k+" "+o[k]}).join(" · ")}
+var _pAtt174=pAtt;pAtt=function(){var a=S.attSel&&S.attSel!=="new"&&(DB.att||[]).find(function(x){return x.id===S.attSel}),c=a&&comp(a.company),e=a&&a.emp&&emp(a.emp);if(!c||!e)return _pAtt174.apply(this,arguments);var b=c.order_by;c.order_by=obyOf(e,c);try{return _pAtt174.apply(this,arguments)}finally{c.order_by=b}};
+/* '목록 밖' 지시주체 정리 */
+var OBY_LAB=[[/사무|행정|보조/,["사무행정"]],[/예술|아티스트/,["음악","미술"]],[/스크랩|뉴스|기사/,["뉴스스크랩"]],[/음악|연주|오케스트라/,["음악"]],[/미술|그림/,["미술"]],[/디자인/,["디자인"]]];
+function obyParse(t){var P=[],re=/([가-힣A-Za-z·\/ ]+?)\s*[:：]\s*(기업지시|당사지시|대리지시)/g,m;while((m=re.exec(String(t||"")))){var lab=m[1].trim(),js=null;OBY_LAB.some(function(x){if(x[0].test(lab)){js=x[1];return true}});if(!js)return null;P.push({lab:lab,jobs:js,v:m[2]})}if(!P.length)return null;
+  var cnt={};P.forEach(function(p){cnt[p.v]=(cnt[p.v]||0)+p.jobs.length});var adm=P.find(function(p){return p.jobs.indexOf("사무행정")>=0}),base=adm?adm.v:Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]})[0],o={};P.forEach(function(p){if(p.v!==base)p.jobs.forEach(function(j){o[j]=p.v})});return{base:base,jobs:o}}
+function obyBad(){return DB.companies.filter(function(c){return c.order_by&&CO.oby.indexOf(c.order_by)<0})}
+var _vComp174=vComp;vComp=function(){var h=_vComp174.apply(this,arguments);if(typeof h!=="string"||S.role!=="admin")return h;var n=obyBad().length;if(!n)return h;return insBeforeFbar(h,'<div class="fbbar"><span class="small">지시주체가 목록 밖 값인 기업 <b>'+n+'곳</b> · 직무별 지시주체로 바꿀 수 있어요</span><span class="grow"></span><button class="btn sm pri" data-act="oby-open">지시주체 정리</button></div>')};
+function obyModal(){var F=S.obyF;if(!F)return;var L=obyBad();
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="지시주체 정리" style="width:min(760px,calc(100vw - 32px))"><div class="ph"><div><div class="k">기업 DB</div><h2>지시주체 정리 · '+L.length+'곳</h2></div><button class="close" data-act="oby-x" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><p class="hint" style="margin-top:0">\'사무보조 : 기업지시 예술인 : 대리지시\' 같은 문장을 기본값 + 직무별 지시주체로 바꿔요. 읽지 못한 기업은 기업 창 › 근무 규칙에서 직접 골라 주세요.</p><div style="max-height:420px;overflow:auto"><table class="mini"><thead><tr><th></th><th>기업</th><th>지금 값</th><th>바뀔 값</th></tr></thead><tbody>'+
+    L.map(function(c){var p=obyParse(c.order_by);return'<tr><td>'+(p?'<input type="checkbox" data-obyon="'+c.id+'"'+(F.off[c.id]?"":" checked")+'>':"")+'</td><td>'+esc(c.name)+'</td><td class="small">'+esc(c.order_by)+'</td><td class="small">'+(p?'기본 <b>'+esc(p.base)+'</b>'+(Object.keys(p.jobs).length?' · '+esc(obyTxt(p.jobs)):""):'<span class="b sm warn">직접 수정</span>')+'</td></tr>'}).join("")+'</tbody></table></div></div>'+
+    '<div class="ps foot"><button class="btn" data-act="oby-x">닫기</button><span class="grow"></span><button class="btn pri" data-act="oby-save">체크한 기업 바꾸기</button></div></div></div>'}
+function obySave(){var F=S.obyF;if(!F)return;if(LIVE&&!V78.ok){toast("SQL 78을 먼저 실행해 주세요");return}var n=0;obyBad().forEach(function(c){if(F.off[c.id])return;var p=obyParse(c.order_by);if(!p)return;var b=c.order_by;c.order_by=p.base;c.oby_jobs=Object.assign({},obyJobs(c),p.jobs);logChange("companies",c.id,c.name,"지시주체 (정리)",b,"기본 "+p.base+(Object.keys(p.jobs).length?" · "+obyTxt(p.jobs):""),"브이드림 내부");n++});S.obyF=null;$("#modal").innerHTML="";toast(n+"곳 바꿨어요");render()}
+/* ---------- ④ 입사한 추천인재 ---------- */
+function thKey(t){var w=t.worker&&wk(t.worker);return{name:String((w&&w.name)||t.name||"").replace(/\s/g,""),ph:normPhone((w&&w.phone)||t.phone||""),birth:(w&&w.birth)||t.birth||""}}
+function thWorkers(t){if(t.worker&&wk(t.worker))return{L:[wk(t.worker)],sure:true};var k=thKey(t);if(!k.name)return{L:[],sure:false};var L=DB.workers.filter(function(w){return String(w.name||"").replace(/\s/g,"")===k.name});var S1=L.filter(function(w){return(k.ph.length>=9&&normPhone(w.phone)===k.ph)||(k.birth&&w.birth===k.birth)});return S1.length?{L:S1,sure:true}:{L:L,sure:false}}
+function thRows(){var day=function(t){return String(t.created||t.dat||"").slice(0,10)};var out=[];(DB.talent||[]).forEach(function(t){if(!TAL_OPEN[t.status])return;var W=thWorkers(t);if(!W.L.length)return;var d0=day(t);
+    var E=[];W.L.forEach(function(w){DB.employments.forEach(function(e){if(e.worker!==w.id||e.cancelled||e.id===t.emp)return;var t1=termsOf(e.id)[0];if(!t1)return;var end=effEnd(e)||"";if(end&&d0&&end<d0)return;E.push(e)})});if(!E.length)return;
+    E.sort(function(a,b){return String((termsOf(b.id)[0]||{}).start).localeCompare(String((termsOf(a.id)[0]||{}).start))});out.push({t:t,e:E[0],sure:W.sure,w:wk(E[0].worker)})});return out}
+var _vTalent174=vTalent;vTalent=function(){var h=_vTalent174.apply(this,arguments);if(typeof h!=="string"||S.role!=="admin")return h;var n=thRows().length;if(!n)return h;return insBeforeFbar(h,'<div class="fbbar"><span class="small">이미 입사한 추천인재 <b>'+n+'명</b>이 아직 열려 있어요</span><span class="grow"></span><button class="btn sm pri" data-act="th-open">입사한 추천인재 정리</button></div>')};
+function thModal(){var F=S.thF;if(!F)return;var L=thRows();
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="입사한 추천인재 정리" style="width:min(820px,calc(100vw - 32px))"><div class="ph"><div><div class="k">추천인재</div><h2>입사한 추천인재 정리 · '+L.length+'명</h2></div><button class="close" data-act="th-x" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><p class="hint" style="margin-top:0">체크한 건을 연계완료로 바꾸고 그 고용 건과 연결해요(발굴파트 실적에도 잡혀요). \'확인 필요\'는 이름만 같아요 · 맞는지 보고 체크해 주세요.</p><div style="max-height:440px;overflow:auto"><table class="mini"><thead><tr><th></th><th>추천인재</th><th>추천 경로</th><th>추천일</th><th>입사 기업</th><th>입사일</th><th></th></tr></thead><tbody>'+
+    L.map(function(r){var t=r.t,e=r.e,t1=termsOf(e.id)[0]||{},o=t.src_org&&typeof oOf==="function"&&oOf(t.src_org),on=r.sure?!F.off[t.id]:!!F.on[t.id];
+      return'<tr><td><input type="checkbox" data-thon="'+t.id+'" data-sure="'+(r.sure?1:0)+'"'+(on?" checked":"")+'></td><td>'+esc(talNm(t))+'</td><td class="small">'+esc(o?o.short:(t.source||t.origin||""))+'</td><td class="num small">'+esc(String(t.created||"").slice(0,10))+'</td><td>'+esc((comp(e.company)||{}).name||"")+'</td><td class="num small">'+esc(t1.start||"")+(activeEmp(e)?"":' <span class="b sm">현재 퇴사</span>')+'</td><td>'+(r.sure?"":'<span class="b sm warn">확인 필요</span>')+'</td></tr>'}).join("")+'</tbody></table></div></div>'+
+    '<div class="ps foot"><button class="btn" data-act="th-x">닫기</button><span class="grow"></span><button class="btn pri" data-act="th-save">체크한 건 연계완료</button></div></div></div>'}
+function thClose(t,e,by){var b=t.status,t1=termsOf(e.id)[0]||{};if(!t.worker||!wk(t.worker))t.worker=e.worker;t.status="연계완료";t.close_type="자동";t.close_reason="입사 확인 (정리)";t.hire_emp=e.id;t.lcid=e.company;t.ldate=t1.start||TODAY;t.closed_at=stamp();t.dby=by;t.dat=stamp();
+  logChange("workers",e.worker,(wk(e.worker)||{}).name||"","추천인재 종결",b,"연계완료 ("+((comp(e.company)||{}).name||"")+" · "+(t1.start||"")+" 입사)","브이드림 내부")}
+function thSave(){var F=S.thF;if(!F)return;var n=0;thRows().forEach(function(r){var on=r.sure?!F.off[r.t.id]:!!F.on[r.t.id];if(!on)return;thClose(r.t,r.e,st(S.me).name);n++});S.thF=null;$("#modal").innerHTML="";toast(n+"명 연계완료로 정리했어요");render()}
+/* 앞으로: 근로자 DB 없는 추천인재도 이름 + 연락처/생년월일이 같으면 신규 입사 때 자동 종결 */
+var _talSync174=talSync;talSync=function(){var r=_talSync174.apply(this,arguments);try{(DB.talent||[]).forEach(function(t){if(!TAL_OPEN[t.status]||(t.worker&&wk(t.worker)))return;var W=thWorkers(t);if(!W.sure||W.L.length!==1)return;var d0=String(t.created||"").slice(0,10),w=W.L[0];
+  var e=DB.employments.find(function(x){if(x.worker!==w.id||x.cancelled)return false;var t1=termsOf(x.id)[0];return t1&&d0&&t1.start>=d0});if(e)thClose(t,e,"자동")})}catch(e){console.warn(e)}return r};
+/* ---------- ⑤ 휴일 시작일 ---------- */
+function holLab(d){return md(d)}
+var HOL_BYPASS=false;
+var HOL_T=[{act:"rr-save",cs:'[data-rrf="start_date"]',flip:null,lab:"입사 요청일"},{act:"ci-save",cs:"#ci-cs",flip:"#ci-flip",lab:"계약 시작일"},{act:"in-save",cs:'[data-ir$=":cs"]',flip:'[data-ir$=":flip"]',lab:"계약 시작일"}];
+function holScan(btn,T){var root=btn.closest(".pnl,.dlg,aside")||document,P=[];[].forEach.call(root.querySelectorAll(T.cs),function(i){var v=i.value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return;var f=null;if(T.flip){if(T.act==="in-save"){var pre=i.dataset.ir.split(":")[0];f=root.querySelector('[data-ir="'+pre+':flip"]')}else f=root.querySelector(T.flip)}
+    var fv=f&&f.value||"",bad=isOff(v),fbad=!!(fv&&/^\d{4}-\d{2}-\d{2}$/.test(fv)&&isOff(fv));if(bad||fbad)P.push({i:i,f:f,v:v,fv:fv,bad:bad,fbad:fbad})});return P}
+function holSet(inp,v){if(!inp)return;inp.value=v;inp.dispatchEvent(new Event("input",{bubbles:true}));inp.dispatchEvent(new Event("change",{bubbles:true}))}
+document.addEventListener("click",function(ev){if(HOL_BYPASS)return;var b=ev.target.closest&&ev.target.closest("[data-act]");if(!b)return;var T=HOL_T.find(function(x){return x.act===b.dataset.act});if(!T)return;var P=holScan(b,T);if(!P.length)return;
+  ev.preventDefault();ev.stopImmediatePropagation();
+  var msg=P.map(function(p){return(p.bad?T.lab+" "+holLab(p.v)+"는 휴일이에요 (다음 영업일 "+holLab(nextBiz(p.v))+")":"")+(p.fbad?(p.bad?" · ":"")+"브이워크 시작일 "+holLab(p.fv)+"는 휴일이에요":"")}).join("<br>");
+  var ov=document.createElement("div");ov.className="ov holov";ov.innerHTML='<div class="dlg" role="dialog" aria-modal="true" aria-label="휴일 확인" style="width:min(460px,calc(100vw - 32px))"><div class="ph"><div><div class="k">휴일 확인</div><h2>휴일인데 등록할까요?</h2></div></div><div class="ps"><p style="margin:0">'+msg+'</p><p class="hint">계약 시작일은 평일로 하는 게 좋아요. 그대로 등록해도 브이워크 시작일은 다음 영업일로 맞춰요.</p></div>'+
+    '<div class="ps foot"><button class="btn" data-h="x">취소</button><span class="grow"></span><button class="btn" data-h="keep">그대로 등록</button><button class="btn pri" data-h="move">다음 영업일로 바꾸기</button></div></div>';document.body.appendChild(ov);
+  ov.addEventListener("click",function(e2){var h=e2.target.closest&&e2.target.closest("[data-h]");if(!h)return;var k=h.dataset.h;ov.remove();if(k==="x")return;
+    P.forEach(function(p){var cs=p.v;if(k==="move"&&p.bad){cs=nextBiz(p.v);holSet(p.i,cs)}var want=nextBiz(cs);if(p.f){var fv=p.f.value;if(!fv||isOff(fv)||fv<cs||(p.bad&&fv===p.v))holSet(p.f,want)}});
+    HOL_BYPASS=true;try{var b2=document.querySelector('[data-act="'+T.act+'"]');(b2||b).click()}finally{HOL_BYPASS=false}})},true);
+/* ---------- 동작 ---------- */
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)return;
+  if(t.dataset.obyon&&S.obyF){if(t.checked)delete S.obyF.off[t.dataset.obyon];else S.obyF.off[t.dataset.obyon]=1;return}
+  if(t.dataset.thon&&S.thF){var id=t.dataset.thon;if(t.dataset.sure==="1"){if(t.checked)delete S.thF.off[id];else S.thF.off[id]=1}else{if(t.checked)S.thF.on[id]=1;else delete S.thF.on[id]}}},false);
+var _v139Act174=v139Act;v139Act=function(a,el){var D0=el.dataset;
+  if(a==="rr-regsel"){rrRegSel(D0.id);return true}
+  if(a==="oby-open"){S.obyF={off:{}};obyModal();return true}
+  if(a==="oby-x"){S.obyF=null;$("#modal").innerHTML="";return true}
+  if(a==="oby-save"){obySave();return true}
+  if(a==="th-open"){S.thF={off:{},on:{}};thModal();return true}
+  if(a==="th-x"){S.thF=null;$("#modal").innerHTML="";return true}
+  if(a==="th-save"){thSave();return true}
+  return _v139Act174(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
