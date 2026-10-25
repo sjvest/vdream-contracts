@@ -973,6 +973,11 @@ textarea.mta{resize:none;min-height:34px;line-height:1.45;font:inherit;padding:7
 .pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input[type=checkbox]:not([data-memo-in]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input[type=date]{pointer-events:none}
 .pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .sbx,.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .sbx input{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0}
 .pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .sbx::after{display:none}
+/* v179 완료 조회 통일 */
+tr[data-jd] td{opacity:.5}
+tr[data-jd]{background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.025) 6px 12px)}
+.tabs.sub{margin:-4px 0 8px;border-bottom:0}
+.tabs.sub button{font-size:12.5px;padding:5px 10px}
 </style>
 </head>
 <body>
@@ -16288,6 +16293,88 @@ var _reqPanel178=reqPanel;reqPanel=function(c){var h=_reqPanel178.apply(this,arg
   var box='<div class="ps wide rqprog"><h3>이 건 특이사항 <span class="small muted" style="font-weight:400">이 요청 때문에 생긴 이 근로자 사정 · 고치면 바로 저장돼요</span></h3><textarea class="mta" rows="1" data-rqprog="'+c.id+'" placeholder="예: 검진 병원 예약 10/30 · 보호자 동행 필요">'+esc(c.prog||"")+'</textarea></div>';
   var m=h.match(/<div class="ph">/);if(!m)return h;var k=m.index,e=divEnd(h,k);return e>0?h.slice(0,e)+box+h.slice(e):h};
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.rqprog)return;var c=(DB.reqw||[]).find(function(x){return x.id===t.dataset.rqprog});if(!c)return;var v=String(t.value||"").trim();if(v===String(c.prog||""))return;var b=c.prog||"";c.prog=v;logChange("workers",c.worker,(wk(c.worker)||{}).name||"","고객사 요청 케이스 특이사항",b,v,"브이드림 내부");var r=t.getBoundingClientRect();flashAt(r.right-60,r.top);schedulePersist()},true);
+
+/* ================================================================
+   v179 완료 조회 통일 (내 할 일 방식)
+     · 탭 = [진행 중 n | 메뉴별 세부 탭 ‖ 완료 조회] · 완료 조회에서만 기간 선택
+     · '전체' 탭 · '완료 제외' 체크 · '완료된 입사자 보기' 버튼 없앰
+     · 창을 열어 둔 채 완료하면 창을 닫을 때까지 그 줄이 흐리게 남음
+     · 고객사 요청 · 입구서 발송 · 추천인재 · 기업 창 목록까지 같은 모양
+   ================================================================ */
+APP_VER="v179";APP_VER_ON="10/25";APP_NOTE="완료 조회 통일 · 모든 메뉴 [진행 중 ‖ 완료 조회] · 전체 탭 · 완료 제외 체크 정리";
+/* ---------- 공통 ---------- */
+function tabDrop(h,act,v){return typeof h!=="string"?h:h.replace(new RegExp('<button(?=[^>]*data-act="'+act+'")(?=[^>]*data-v="'+v+'")[^>]*>[\\s\\S]*?</button>'),"")}
+function tabsSwap(h,act,T){if(typeof h!=="string")return h;var i=h.indexOf('data-act="'+act+'"');if(i<0)return h;var a=h.lastIndexOf('<div class="tabs',i);if(a<0)return h;var b=h.indexOf("</div>",i);if(b<0)return h;return h.slice(0,a)+T+h.slice(b+6)}
+function subTabs(act,cur,L){return tabsHtml(act,cur,L).replace('<div class="tabs"','<div class="tabs sub"')}
+/* ---------- 열어 둔 창의 완료 건은 닫을 때까지 남김 ---------- */
+var KEEP179={
+  att:{on:function(){return(S.attTab||"open")==="open"},get:function(){return S.attSel&&S.attSel!=="new"?DB.att.find(function(a){return a.id===S.attSel}):null},done:function(a){return a.status==="완료"}},
+  wreq:{on:function(){return(S.wrTab||"open")==="open"},get:function(){return S.wreqSel&&S.wreqSel!=="new"?DB.wreq.find(function(r){return r.id===S.wreqSel}):null},done:function(r){return r.status==="완료"}},
+  rreq:{on:function(){return S.rrTab!=="완료"},get:function(){return S.rrSel&&S.rrSel!=="new"?DB.rr.find(function(r){return r.id===S.rrSel}):null},done:function(r){return rrTabOf(r)==="완료"}},
+  req:{on:function(){return S.reqTab!=="done"&&!S.reqGroup},get:function(){return S.reqSel?reqRows().find(function(x){return x.c&&x.c.id===S.reqSel}):null},done:function(x){return x.c&&x.c.status==="완료"},same:function(a,b){return a.c&&b.c&&a.c.id===b.c.id}}};
+var _dtable179=dtable;dtable=function(k,cols,rows,rowFn,empty){
+  if(k==="req"&&S.reqTab==="done"){rows=rows.filter(function(x){return x.c&&x.c.status==="완료"});empty="이 기간에 완료한 요청이 없어요."}
+  var K=KEEP179[k];if(K&&K.on()&&Array.isArray(rows)){var x=null;try{x=K.get()}catch(e){}
+    if(x&&K.done(x)){var same=function(r){return K.same?K.same(r,x):r===x};if(!rows.some(same))rows=rows.concat([x]);
+      if(rowFn){var rf=rowFn;rowFn=function(r){var h=rf.apply(this,arguments);return same(r)&&typeof h==="string"?h.replace(/^\s*<tr/,'<tr data-jd="1" title="방금 완료 · 창을 닫으면 완료 조회로 옮겨져요"'):h}}}}
+  return _dtable179.call(this,k,cols,rows,rowFn,empty)};
+var _frzSig179=frzSig;frzSig=function(k){return _frzSig179(k)+JSON.stringify([S.reqTab,S.inSub,S.uniTab,S.attSel,S.wreqSel,S.rrSel,S.reqSel])};
+/* ---------- 근태/업무 · 근로자 요청 · 중도퇴사 · 서류 관리 · 충족입사: '전체' 탭 없앰 ---------- */
+var _vAtt179=vAtt;vAtt=function(){if(S.attTab==="all")S.attTab="open";return tabDrop(_vAtt179.apply(this,arguments),"att-tab","all")};
+var _vWreq179=vWreq;vWreq=function(){if(S.wrTab==="all")S.wrTab="open";return tabDrop(_vWreq179.apply(this,arguments),"wr-tab","all")};
+var _vLea179=vLea;vLea=function(){if(S.leaTab==="all")S.leaTab="open";return tabDrop(_vLea179.apply(this,arguments),"lea-tab","all")};
+var _vDocm179=vDocm;vDocm=function(){if(S.dmTab==="all")S.dmTab="open";return tabDrop(_vDocm179.apply(this,arguments),"dm-tab","all")};
+var _vFillm179=vFillm;vFillm=function(){if(S.fmTab==="all")S.fmTab="open";return tabDrop(_vFillm179.apply(this,arguments),"fm-tab","all")};
+/* ---------- 채용 요청: '전체' = 진행 중 전체 · 완료 탭 이름 통일 ---------- */
+var _vRreq179=vRreq;vRreq=function(){var h=_vRreq179.apply(this,arguments);if(typeof h!=="string")return h;
+  h=h.replace(/(<button[^>]*data-act="rr-tab" data-v="전체"[^>]*>)전체/,"$1진행 중 전체");
+  h=h.replace(/(<button class="tdone[^"]*" data-act="rr-tab" data-v="완료")([^>]*>)완료 <small>\(신규입사자 등록 끝 · 종결\)<\/small>/,'$1 title="신규입사자 등록까지 끝났거나 종결 · 취소한 요청"$2완료 조회');
+  return h};
+/* ---------- 고객사 요청: '완료 제외' 체크 → [진행 중 ‖ 완료 조회] ---------- */
+var _vReq179=vReq;vReq=function(){S.reqTab=S.reqTab==="done"?"done":"open";var dn=S.reqTab==="done",g=S.reqGroup,h;S.reqOpen=!dn;if(dn)S.reqGroup=false;
+  var n0=dn?reqOpenN179(null):0;try{h=_vReq179.apply(this,arguments)}finally{S.reqGroup=g}if(typeof h!=="string")return h;
+  h=h.replace(/<label class="cb"><input type="checkbox" data-ch="req-open"[^>]*>\s*완료 제외<\/label>/,"");
+  if(dn)h=h.replace(/<label class="cb"><input type="checkbox" data-ch="req-group"[^>]*>\s*요청별로 묶기<\/label>/,"");
+  var n=dn?n0:reqOpenN179(h);
+  return insBeforeFbar(h,tabsHtml("req-tab",S.reqTab,[["open","진행 중",n],["done","완료 조회"]]))};
+function reqOpenN179(h){if(h==null){var t=S.reqTab,o=S.reqOpen,g=S.reqGroup;S.reqTab="open";S.reqOpen=true;S.reqGroup=false;try{h=_vReq179()}catch(e){h=""}finally{S.reqTab=t;S.reqOpen=o;S.reqGroup=g}}
+  if(S.reqGroup&&S.reqTab!=="done")return(h.match(/<tr[^>]*data-act="reqg-open"/g)||[]).length;return(h.match(/<tr(?![^>]*data-jd)[^>]*data-act="req-open"/g)||[]).length}
+/* ---------- 입구서 발송: 입사자 탭 안 [진행 중 ‖ 완료 조회] ---------- */
+var _inApp179=inAppView;inAppView=function(){S.inSub=S.inSub==="done"?"done":"open";var n=DB.intake.filter(function(a){return!a.completed}).length,T=subTabs("in-sub",S.inSub,[["open","진행 중",n],["done","완료 조회"]]);
+  if(S.inSub!=="done"){var h=_inApp179.apply(this,arguments);if(typeof h==="string")h=h.replace(/<button class="btn" data-act="in-done-list"[^>]*>[^<]*<\/button>/,"");return T+h}
+  return T+inDoneView179()};
+function inDoneView179(){var q=(S.inq||"").trim().toLowerCase();
+  var rows=DB.intake.filter(function(a){return a.completed&&inDR("intake",a.done_at)&&(!q||(a.name+" "+(a.email||"")+" "+normPhone(a.phone)+" "+(a.phone||"")).toLowerCase().indexOf(q)>=0)}).sort(function(a,b){return String(b.done_at||"").localeCompare(String(a.done_at||""))});
+  var cols=[{k:"n",h:"이름",t:"text",f:function(a){return a.name}},{k:"p",h:"연락처",t:"none",al:"c"},{k:"c",h:"기업명",t:"text",f:function(a){var c=comp(a.cid);return c?c.name:""}},{k:"f",h:"브이워크 시작",t:"date",v:function(a){return a.flip||""}},{k:"r",h:"서류수신",t:"text",al:"c",f:function(a){return(RCV[a.receive||"pending"]||[""])[0]}},{k:"d",h:"완료일",t:"date",v:function(a){return String(a.done_at||"").slice(0,10)}},{k:"a",h:"",t:"none",al:"c"}];
+  var h=dRBar("intake","완료일")+'<div class="fbar"><span class="muted small">완료 '+rows.length+'명</span><input type="search" id="in-q" data-in="inq" placeholder="이름 · 이메일 · 연락처 검색" aria-label="완료된 입사자 검색" value="'+esc(S.inq||"")+'" style="width:200px"><span class="grow"></span></div>';
+  return h+'<div>'+dtable("intaked",cols,rows,function(a){var c=comp(a.cid);
+    return'<tr data-act="noop"><td><b>'+esc(a.name)+'</b>'+inLinkTag(a)+'</td><td>'+telHtml(a.phone)+'</td><td>'+(c?clink(c.id):"—")+'</td><td class="num">'+esc(a.flip||"—")+'</td><td>'+rcvBadge(a)+'</td><td class="num">'+esc(String(a.done_at||"").slice(0,10)||"—")+'</td><td class="acts-cell"><button class="btn xs" data-act="in-rs179" data-id="'+a.id+'">진행 중으로 되돌리기</button></td></tr>'},"이 기간에 완료한 입사자가 없어요. 기간을 넓혀 보세요.")+'</div>'}
+function inRestore179(id){var q=inA(id);if(!q)return;var btn=[{k:"r",l:"되돌리기",pri:true},{k:"x",l:"취소"}];if(q.folder)btn=[{k:"f",l:"되돌리기 + 임시 폴더도 복구",pri:true},{k:"r",l:"되돌리기만"},{k:"x",l:"취소"}];
+  ovAsk("완료 되돌리기","<p style='margin:0'><b>"+esc(q.name)+"</b> 님을 진행 중으로 되돌릴까요?"+(q.folder?"<br><span class='small muted'>임시 폴더는 완료할 때 Drive 휴지통으로 옮겨졌어요.</span>":"")+"</p>",btn,function(k){if(k!=="f"&&k!=="r")return;
+    q.completed=false;q.done_at="";if(k==="f"&&q.folder)addJob("restore_folder",q.id,{folder_url:q.folder});logChange("intake_applicants",q.id,q.name,"완료 복구","완료","진행 중","브이드림 내부");toast("진행 중으로 되돌렸어요");S.inSub="open";render()})}
+/* ---------- 추천인재: [진행 중 | 대기 | 제안중 | 면접 ‖ 완료 조회(취업완료 · 종료)] ---------- */
+var UNI_OPEN179={"대기":1,"제안중":1,"면접":1},UNI_MODE179=null,UNI_LM=null,UNI_LMN=-1;
+function uniLM(){var L=DB.logs||[];if(!UNI_LM||UNI_LMN!==L.length){UNI_LM={};L.forEach(function(l){var d=String(l.at||"").slice(0,10);if(d&&(!UNI_LM[l.row]||UNI_LM[l.row]<d))UNI_LM[l.row]=d});UNI_LMN=L.length}return UNI_LM}
+function uniDoneOn(r){var M=uniLM(),d=[r.t&&M[r.t.id],r.p&&M[r.p.id],r.t&&r.t.updated,r.p&&r.p.updated].filter(Boolean).map(function(x){return String(x).slice(0,10)}).sort();return d.length?d[d.length-1]:r.created||""}
+function uniSel179(r){return(r.t&&S.talSel===r.t.id)||(r.p&&S.pfSel===r.p.id)}
+var _uniRows179=uniRows;uniRows=function(){var R=_uniRows179.apply(this,arguments);if(!UNI_MODE179)return R;
+  return R.filter(function(r){if(UNI_MODE179==="open")return UNI_OPEN179[r.st]||uniSel179(r);return!UNI_OPEN179[r.st]&&(uniSel179(r)||inDR("uni",uniDoneOn(r)))})};
+function uniCnt179(){var q=String(S.qw||"").trim(),c={o:0};_uniRows179().forEach(function(r){if(S.uniF==="tal"&&!r.t)return;if(S.uniF==="pf"&&!r.p)return;if(q&&(r.name+" "+uniJobs(r)+" "+((r.ti||r.pi||{}).ph||"")).indexOf(q)<0)return;c[r.st]=(c[r.st]||0)+1;if(UNI_OPEN179[r.st])c.o++});return c}
+S.uniTab="open";
+var _vUni179=vUni;vUni=function(){var tab=S.uniTab;if(!tab||tab==="all")tab="open";if(tab==="취업완료"||tab==="종료")tab="done";S.uniTab=tab;var h;
+  if(tab==="open"||tab==="done"){UNI_MODE179=tab;S.uniTab="all";try{h=_vUni179.apply(this,arguments)}finally{UNI_MODE179=null;S.uniTab=tab}}else h=_vUni179.apply(this,arguments);
+  if(typeof h!=="string")return h;var c=uniCnt179();
+  var T=tabsHtml("uni-tab",tab,[["open","진행 중",c.o],["대기","대기",c["대기"]||0],["제안중","제안중",c["제안중"]||0],["면접","면접",c["면접"]||0],["done","완료 조회"]])+(tab==="done"?dRBar("uni","취업완료 · 종료 (마지막 변경일)"):"");
+  return tabsSwap(h,"uni-tab",T)};
+/* ---------- 기업 창 안 목록: [진행 중 n | 완료 n] ---------- */
+var _cxF179=cxF;cxF=function(k){var v=_cxF179(k);return v==="all"?"open":v};
+cxSeg=function(k,n){var v=cxF(k);return'<div class="seg sm" role="group">'+[["open","진행 중 "+n.o],["done","완료 "+n.d]].map(function(x){return'<button data-act="cx-f" data-k="'+k+'" data-v="'+x[0]+'" class="'+(v===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'};
+/* ---------- 동작 ---------- */
+var _v139Act179=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
+  if(a==="req-tab"){S.reqTab=D0.v;S.reqSel=null;S.reqChk={};if(typeof resetPages==="function")resetPages();render();return true}
+  if(a==="in-sub"){closeIntakePanels();S.inSub=D0.v;S.inSel={};render();return true}
+  if(a==="in-rs179"){inRestore179(D0.id);return true}
+  return _v139Act179(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
