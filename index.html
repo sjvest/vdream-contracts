@@ -924,7 +924,7 @@ tr.fj-pick td,tr.fj-rej td{background:#FFF6F6}
 .pnl-bg,.ov2,.ov3{background:rgba(20,18,40,.38)!important}
 .holov{background:rgba(20,16,40,.5)!important}
 .pnl>.ps.foot,.pnl .ps.foot:last-child,.dlg>.ps.foot,aside.pnl>.foot{position:sticky;bottom:0;z-index:3;background:var(--surface,#fff);box-shadow:0 -6px 12px -8px rgba(20,18,40,.25)}
-.pnl.dirty [data-act$="-save"],.pnl.dirty [data-act="in-save"],.pnl.dirty [data-act="ce-save"],.dlg.dirty [data-act$="-save"]{box-shadow:0 0 0 3px rgba(194,65,12,.35)}
+.pnl.isdirty [data-act$="-save"],.pnl.isdirty [data-act="in-save"],.pnl.isdirty [data-act="ce-save"],.dlg.isdirty [data-act$="-save"]{box-shadow:0 0 0 3px rgba(194,65,12,.35)}
 .dirtychip{align-self:center;margin-left:8px;font-size:12px;font-weight:700;color:#C2410C;background:#FFF4E6;border:1px solid #F5C08A;border-radius:999px;padding:2px 10px;white-space:nowrap}
 .ps.memo0{padding-top:8px;padding-bottom:8px}
 .ps.memo0 h3{display:inline-block;margin:0 8px 4px 0}
@@ -16110,10 +16110,10 @@ if(typeof ctCell==="function"){var _ctCell176=ctCell;ctCell=function(r,o){if(!r|
 /* ---------- ④ 저장 줄 · 저장 안 됨 ---------- */
 var DIRTY_SKIP=/^(qw|qc|talq)$/;
 function dirtyRoot(t){return t.closest&&t.closest("aside.pnl,aside.pnl2,#modal .dlg")}
-function dirtyOn(root,t){if(!root||root.classList.contains("dirty"))return;var hasSave=[].some.call(root.querySelectorAll("button[data-act]"),function(b){return/저장|등록|기록/.test(b.textContent)});if(!hasSave)return;root.classList.add("dirty");var ph=root.querySelector(".ph");if(ph&&!ph.querySelector(".dirtychip"))ph.insertAdjacentHTML("beforeend",'<span class="dirtychip" role="status">● 저장 안 된 변경</span>')}
+function dirtyOn(root,t){if(!root||root.classList.contains("isdirty"))return;var hasSave=[].some.call(root.querySelectorAll("button[data-act]"),function(b){return/저장|등록|기록/.test(b.textContent)});if(!hasSave)return;root.classList.add("isdirty");var ph=root.querySelector(".ph");if(ph&&!ph.querySelector(".dirtychip"))ph.insertAdjacentHTML("beforeend",'<span class="dirtychip" role="status">● 저장 안 된 변경</span>')}
 document.addEventListener("input",function(ev){var t=ev.target;if(!t||!/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.type==="search"||t.type==="checkbox"||t.type==="file")return;if(t.dataset&&(t.dataset.ch||DIRTY_SKIP.test(t.dataset.in||"")||t.hasAttribute("data-memo-in")))return;if(t.id==="pfc-q")return;dirtyOn(dirtyRoot(t),t)},true);
-document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('.close,[data-act$="-close"],[data-act="close"],[data-act="modal-close"]');if(!b||b.dataset.dirtyok)return;var root=dirtyRoot(b);if(!root||!root.classList.contains("dirty"))return;ev.preventDefault();ev.stopImmediatePropagation();
-  ovAsk("저장하지 않은 변경","<p style='margin:0'>고친 내용이 아직 저장되지 않았어요. 그냥 닫을까요?</p>",[{k:"x",l:"계속 고치기",pri:true},{k:"close",l:"저장 안 하고 닫기"}],function(a){if(a!=="close")return;root.classList.remove("dirty");b.dataset.dirtyok="1";b.click()})},true);
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('.close,[data-act$="-close"],[data-act="close"],[data-act="modal-close"]');if(!b||b.dataset.dirtyok)return;var root=dirtyRoot(b);if(!root||!root.classList.contains("isdirty"))return;ev.preventDefault();ev.stopImmediatePropagation();
+  ovAsk("저장하지 않은 변경","<p style='margin:0'>고친 내용이 아직 저장되지 않았어요. 그냥 닫을까요?</p>",[{k:"x",l:"계속 고치기",pri:true},{k:"close",l:"저장 안 하고 닫기"}],function(a){if(a!=="close")return;root.classList.remove("isdirty");b.dataset.dirtyok="1";b.click()})},true);
 /* ---------- ⑤ 위쪽 블록 압축 ---------- */
 function topFix(){[].forEach.call(document.querySelectorAll("aside.pnl,#modal .dlg"),function(p){
   [].forEach.call(p.querySelectorAll(".hint"),function(h){if(/^(케이스 )?처리 내용이 없어요\.?$/.test(h.textContent.trim())||/^특이사항이 없어요\.?$/.test(h.textContent.trim())){var ps=h.closest(".ps");if(ps)ps.classList.add("memo0");h.remove()}});
@@ -16238,13 +16238,13 @@ function pePaint(){[].forEach.call(document.querySelectorAll("#main aside.pnl,#m
 function peSnap(p){var M=[];[].forEach.call(p.querySelectorAll(".fsec input,.fsec select,.fsec textarea"),function(i){if(i.dataset.ch||i.type==="file")return;var k=null;[].some.call(i.attributes,function(a){if(/^data-/.test(a.name)&&!/^data-(ph0|orig)$/.test(a.name)){k="["+a.name+'="'+String(a.value).replace(/"/g,'\\"')+'"]';return true}return false});if(!k&&i.id)k="#"+i.id;if(!k)return;M.push([k,i.type==="checkbox"||i.type==="radio"?i.checked:i.value,i.type])});return M}
 function peApply(p,M){M.forEach(function(m){var i=p.querySelector(m[0]);if(!i)return;if(m[2]==="checkbox"||m[2]==="radio"){if(i.checked!==m[1])i.checked=m[1]}else if(i.value!==m[1]){i.value=m[1];i.dispatchEvent(new Event("input",{bubbles:true}))}})}
 function peFind(key){return[].find.call(document.querySelectorAll("#main aside.pnl,#main aside.pnl2"),function(p){return peKey(p)===key})}
-function peSave(){var key=S.peEdit,p=peFind(key);if(!p){S.peEdit=null;render();return}var dirty=p.classList.contains("dirty");
-  var secs=peFormSecs(p).filter(function(s){return s.classList.contains("dirty")||!dirty}),acts=[];secs.forEach(function(s){peSaveBtns(s).forEach(function(b){var sel='[data-act="'+b.dataset.act+'"]'+(b.dataset.id?'[data-id="'+b.dataset.id+'"]':"")+(b.dataset.w?'[data-w="'+b.dataset.w+'"]':"")+(b.dataset.e?'[data-e="'+b.dataset.e+'"]':"");if(acts.indexOf(sel)<0)acts.push(sel)})});
+function peSave(){var key=S.peEdit,p=peFind(key);if(!p){S.peEdit=null;render();return}var dirty=p.classList.contains("isdirty");
+  var secs=peFormSecs(p).filter(function(s){return s.classList.contains("isdirty")||!dirty}),acts=[];secs.forEach(function(s){peSaveBtns(s).forEach(function(b){var sel='[data-act="'+b.dataset.act+'"]'+(b.dataset.id?'[data-id="'+b.dataset.id+'"]':"")+(b.dataset.w?'[data-w="'+b.dataset.w+'"]':"")+(b.dataset.e?'[data-e="'+b.dataset.e+'"]':"");if(acts.indexOf(sel)<0)acts.push(sel)})});
   if(!dirty){S.peEdit=null;render();toast("바뀐 값이 없어요");return}
   var M=peSnap(p),ok=0;PE_BUSY=true;try{acts.forEach(function(sel){var q=peFind(key)||p;peApply(q,M);var b=q.querySelector(sel);if(b){b.dataset.dirtyok="1";b.click();ok++}})}finally{PE_BUSY=false}
   var still=peFind(key);S.peEdit=null;render();if(ok)toast("저장했어요")}
 var PE_BUSY=false;
-document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="wk-pt"],[data-act="comp-ptab"]');if(!b||PE_BUSY)return;var p=b.closest("aside");if(!p||!p.classList.contains("dirty")||b.dataset.dirtyok)return;ev.preventDefault();ev.stopImmediatePropagation();
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="wk-pt"],[data-act="comp-ptab"]');if(!b||PE_BUSY)return;var p=b.closest("aside");if(!p||!p.classList.contains("isdirty")||b.dataset.dirtyok)return;ev.preventDefault();ev.stopImmediatePropagation();
   ovAsk("저장하지 않은 변경","<p style='margin:0'>고친 내용이 아직 저장되지 않았어요. 탭을 옮길까요?</p>",[{k:"x",l:"계속 고치기",pri:true},{k:"go",l:"저장 안 하고 옮기기"}],function(a){if(a!=="go")return;S.peEdit=null;b.dataset.dirtyok="1";b.click()})},true);
 /* ---------- ② ✓ 저장됨 ---------- */
 var FLASH_ACTS=/^(d-step|xd-step|xm-do|memo-add|st-set|bl-set|mc-set|fill-set|dis-save|att-step|x-step|wr-st|req-st|onb-ht)$/;
@@ -16271,16 +16271,16 @@ document.addEventListener("input",function(ev){var t=ev.target;if(t&&t.classList
 /* ---------- 그린 뒤 ---------- */
 var _render178=render;render=function(){var r=_render178.apply(this,arguments);try{memoTa();rrTabsPaint();wkMemoPaint();expColsPaint();pePaint()}catch(e){console.warn(e)}return r};
 var _v139Act178=v139Act;v139Act=function(a,el){var D0=el.dataset;
-  if(a==="pe-toggle"){var p=el.closest("aside");if(!p)return true;var k=peKey(p);if(S.peEdit===k){if(p.classList.contains("dirty")){ovAsk("저장하지 않은 변경","<p style='margin:0'>고친 내용이 아직 저장되지 않았어요.</p>",[{k:"x",l:"계속 고치기",pri:true},{k:"q",l:"저장 안 하고 끝내기"}],function(x){if(x==="q"){S.peEdit=null;render()}});return true}S.peEdit=null}else S.peEdit=k;render();return true}
+  if(a==="pe-toggle"){var p=el.closest("aside");if(!p)return true;var k=peKey(p);if(S.peEdit===k){if(p.classList.contains("isdirty")){ovAsk("저장하지 않은 변경","<p style='margin:0'>고친 내용이 아직 저장되지 않았어요.</p>",[{k:"x",l:"계속 고치기",pri:true},{k:"q",l:"저장 안 하고 끝내기"}],function(x){if(x==="q"){S.peEdit=null;render()}});return true}S.peEdit=null}else S.peEdit=k;render();return true}
   if(a==="pe-cancel"){S.peEdit=null;render();return true}
   if(a==="pe-save"){peSave();return true}
   if(a==="rr-pt"){S.rrPT=D0.v;render();return true}
   if(a==="wk-memo"){S.wkMemoOpen=S.wm;render();var i=document.querySelector("aside.pnl2 .memotop [data-memo-in]");if(i)i.focus();return true}
   if(a==="rr-open"||a==="rr-go")S.rrPT="info";
   return _v139Act178(a,el)};
-document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.closest)return;var s=t.closest(".pfx.emode .fsec");if(!s||t.dataset.ch)return;s.classList.add("dirty");var p=s.closest("aside");if(p){p.classList.add("dirty");var ph=p.querySelector(".ph");if(ph&&!ph.querySelector(".dirtychip"))ph.insertAdjacentHTML("beforeend",'<span class="dirtychip" role="status">● 저장 안 된 변경</span>')}},true);
-document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.closest)return;var s=t.closest(".pfx.emode .fsec");if(!s||t.dataset.ch)return;s.classList.add("dirty");var p=s.closest("aside");if(p)p.classList.add("dirty")},true);
-document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest(".pfx.emode .fsec button[data-act]");if(!b||b.classList.contains("pesave"))return;var s=b.closest(".fsec");setTimeout(function(){var p=document.querySelector("aside.pfx.emode");if(!p)return;var k=[].indexOf.call(document.querySelectorAll(".fsec"),s);p.classList.add("dirty");[].forEach.call(p.querySelectorAll(".fsec"),function(x){if(x.querySelector(".on,.sel,:checked"))x.classList.add("dirty")})},0)},true);
+document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.closest)return;var s=t.closest(".pfx.emode .fsec");if(!s||t.dataset.ch)return;s.classList.add("isdirty");var p=s.closest("aside");if(p){p.classList.add("isdirty");var ph=p.querySelector(".ph");if(ph&&!ph.querySelector(".dirtychip"))ph.insertAdjacentHTML("beforeend",'<span class="dirtychip" role="status">● 저장 안 된 변경</span>')}},true);
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.closest)return;var s=t.closest(".pfx.emode .fsec");if(!s||t.dataset.ch)return;s.classList.add("isdirty");var p=s.closest("aside");if(p)p.classList.add("isdirty")},true);
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest(".pfx.emode .fsec button[data-act]");if(!b||b.classList.contains("pesave"))return;var s=b.closest(".fsec");setTimeout(function(){var p=document.querySelector("aside.pfx.emode");if(!p)return;var k=[].indexOf.call(document.querySelectorAll(".fsec"),s);p.classList.add("isdirty");[].forEach.call(p.querySelectorAll(".fsec"),function(x){if(x.querySelector(".on,.sel,:checked"))x.classList.add("isdirty")})},0)},true);
 /* ---------- ⑧ 고객사 요청 등록: 근로자별 특이사항 (케이스 특이사항으로 들어감) ---------- */
 var _reqNewPanel178=reqNewPanel;reqNewPanel=function(){var h=_reqNewPanel178.apply(this,arguments),F=S.reqF;if(typeof h!=="string"||!F)return h;F.notes=F.notes||{};var E=Object.keys(F.ws||{}).filter(function(k){return F.ws[k]&&emp(k)});
   var box='<div class="ps rqnotes"><h3>근로자별 특이사항 <span class="small muted" style="font-weight:400">이 요청 때문에 생기는 사정 · 선택 · 각 근로자 케이스 특이사항으로 들어가요</span></h3>'+(E.length?'<label class="f full"><span>모두에게 같은 내용</span><textarea class="mta" rows="1" data-rqnote="*" placeholder="예: 이번 달 안에 건강검진 결과지 제출">'+esc(F.notes["*"]||"")+'</textarea></label>'+
@@ -16301,7 +16301,7 @@ document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.datase
      · 창을 열어 둔 채 완료하면 창을 닫을 때까지 그 줄이 흐리게 남음
      · 고객사 요청 · 입구서 발송 · 추천인재 · 기업 창 목록까지 같은 모양
    ================================================================ */
-APP_VER="v179";APP_VER_ON="10/25";APP_NOTE="완료 조회 통일 · 모든 메뉴 [진행 중 ‖ 완료 조회] · 전체 탭 · 완료 제외 체크 정리";
+APP_VER="v180";APP_VER_ON="10/25";APP_NOTE="입력 중 창이 타원 모양으로 바뀌던 문제 수정 · 완료 조회 통일";
 /* ---------- 공통 ---------- */
 function tabDrop(h,act,v){return typeof h!=="string"?h:h.replace(new RegExp('<button(?=[^>]*data-act="'+act+'")(?=[^>]*data-v="'+v+'")[^>]*>[\\s\\S]*?</button>'),"")}
 function tabsSwap(h,act,T){if(typeof h!=="string")return h;var i=h.indexOf('data-act="'+act+'"');if(i<0)return h;var a=h.lastIndexOf('<div class="tabs',i);if(a<0)return h;var b=h.indexOf("</div>",i);if(b<0)return h;return h.slice(0,a)+T+h.slice(b+6)}
