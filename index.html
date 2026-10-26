@@ -16376,6 +16376,65 @@ var _v139Act179=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
   if(a==="in-rs179"){inRestore179(D0.id);return true}
   return _v139Act179(a,el)};
 
+/* ================================================================
+   v181
+     ① 신규입사자 표: '주소' 열 (미입력 배지는 여기로) · '입구서' 열 빼기 · 등록일 왼쪽 정렬
+     ② 브이워크 전환 배지: 이전 계약 종료 다음 날부터 전환 가능
+     ③ 입구서 받은 서류 폴더 링크 바꾸기 (입구서 발송 줄 · 근로자 DB › 서류 › 입구서)
+   ================================================================ */
+APP_VER="v181";APP_VER_ON="10/26";APP_NOTE="신규입사자 주소 열 · 브이워크 전환일 기준 · 입구서 폴더 링크 바꾸기";
+/* ---------- ① 신규입사자 표 ---------- */
+var ADDR_BADGE=' <span class="b sm warn">주소 미입력</span>';
+function onbEmpOf(r0){var e=r0&&r0.e?r0.e:r0;return e&&e.worker&&!e.cancelled?e:null}
+function onbAddrTxt(r0){var e=onbEmpOf(r0),w=e&&wk(e.worker);if(!w)return"";return String(w.addr||"").trim()?"입력":"미입력"}
+function onbAddrTd(r0){var e=onbEmpOf(r0),w=e&&wk(e.worker);if(!w)return'<td class="c muted">—</td>';
+  if(String(w.addr||"").trim())return'<td class="c"><span class="ok-t tip" tabindex="0" data-tip="'+esc([w.addr,w.addr2].filter(Boolean).join(" "))+'">✓</span></td>';
+  return'<td class="c"><span class="b sm warn tip" tabindex="0" data-tip="근로자 창 › 인적정보 또는 이 줄을 눌러 신규입사자 창에서 입력">미입력</span></td>'}
+var _dtable181=dtable;dtable=function(k,cols,rows,rowFn,empty){
+  if((k!=="onb"&&k!=="onbp")||!Array.isArray(cols)||!rowFn)return _dtable181.apply(this,arguments);
+  var iIn=cols.findIndex(function(c){return c.k==="inm"}),iPh=cols.findIndex(function(c){return c.k==="ph"}),iRg=cols.findIndex(function(c){return c.k==="rg"});
+  var C=cols.slice();if(iIn>=0)C.splice(iIn,1);var at=(iPh>=0?iPh:cols.findIndex(function(c){return c.k==="w"}))+1;if(iIn>=0&&iIn<at)at--;
+  var hasAddr=V76&&V76.ok;if(hasAddr)C.splice(at,0,{k:"addr",h:"주소",t:"text",al:"c",f:onbAddrTxt});
+  var rf=rowFn;var fn=function(r){var h=rf.apply(this,arguments);if(typeof h!=="string")return h;
+    var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);if(!T||T.length!==cols.length)return h;
+    if(iRg>=0)T[iRg]=T[iRg].replace(/^<td\b([^>]*)>/,function(a,b){return'<td'+b+' style="text-align:left">'});
+    if(iIn>=0)T.splice(iIn,1);if(hasAddr)T.splice(at,0,onbAddrTd(r));return m[1]+T.join("")+m[3]};
+  var h=_dtable181.call(this,k,C,rows,fn,empty);if(typeof h!=="string")return h;
+  h=h.split(ADDR_BADGE).join("");
+  if(iRg>=0)h=h.replace(/(<th\b)([^>]*>(?:(?!<\/th>)[\s\S])*?등록일)/,'$1 style="text-align:left"$2');
+  return h};
+/* ---------- ② 브이워크 전환 배지 ---------- */
+vwSwitch=function(e){if(!e||e.cancelled||e.flip_joined)return null;var P=onbPrev(e);if(!P.length)return null;var p=P[0],s0=e.vwork_start||empStart(e),en=effEnd(p),sd=s0;
+  if(en){var n1=addD(en,1);if(n1<s0)sd=n1}return{p:p,sd:sd,s0:s0,en:en}};
+vwBadge=function(e){var v=vwSwitch(e);if(!v)return"";var pn=(comp(v.p.company)||{}).name||"",cn=(comp(e.company)||{}).name||"",due=v.sd<=TODAY;
+  var tip=v.en&&v.sd<v.s0?pn+" 계약 "+md(v.en)+" 종료 · "+md(v.sd)+"부터 "+cn+"(으)로 브이워크 연동을 바꿀 수 있어요 (1계정 1기업)":pn+" 계약 "+(v.en?md(v.en)+" 종료":"진행 중")+" · "+md(v.sd)+"에 "+cn+"(으)로 브이워크 연동을 바꿔 주세요 (1계정 1기업)";
+  return' <span class="b sm '+(due?"warn":"")+' tip vwsw" tabindex="0" data-tip="'+esc(tip)+'">'+(due?"전환 필요":md(v.sd).replace(/\(.*\)/,"")+" 전환")+'</span>'};
+/* ---------- ③ 입구서 폴더 링크 바꾸기 ---------- */
+function infdId(v){v=String(v||"").trim();if(!v)return"";if(/\/file\/d\/|docs\.google\.com|\/d\/[A-Za-z0-9_-]+\/(view|edit)/.test(v))return null;var m=v.match(/folders\/([A-Za-z0-9_-]{10,})/)||v.match(/[?&]id=([A-Za-z0-9_-]{10,})/);if(m)return m[1];return/^[A-Za-z0-9_-]{10,}$/.test(v)?v:null}
+function infdBtn(a){if(!a)return"";return' <button class="linkbtn small tip infd" data-act="infd-edit" data-id="'+a.id+'" data-tip="'+(a.folder?"받은 서류 폴더 링크 바꾸기":"받은 서류 폴더 링크 넣기")+'" aria-label="'+(a.folder?"폴더 링크 바꾸기":"폴더 링크 넣기")+'">'+(a.folder?"✏️":"📁+")+'</button>'}
+function infdEdit(id){var a=inA(id);if(!a)return;var old=a.folder||"";
+  var html='<p style="margin:0 0 8px"><b>'+esc(a.name)+'</b>'+(comp(a.cid)?' · '+esc(comp(a.cid).name):"")+'</p><label class="f full"><span>구글 드라이브 폴더 링크</span><input id="infd-v" value="'+esc(old)+'" placeholder="https://drive.google.com/drive/folders/..."></label>'+
+    (old?'<p class="hint" style="margin:6px 0 0">지금 링크: <a href="'+esc(old)+'" target="_blank" rel="noopener">열기 ↗</a></p>':"")+
+    (a.completed?'<p class="hint" style="margin:6px 0 0">완료된 입사자예요 · 링크만 바뀌고 폴더는 그대로예요.</p>':'<p class="hint" style="margin:8px 0 0;color:#B45309">⚠ 입구서를 <b>완료 처리하면 이 폴더는 드라이브 휴지통으로 가요</b>. 기업 폴더처럼 계속 쓰는 폴더는 넣지 마세요.</p>')+
+    '<p class="hint" style="margin:6px 0 0">폴더 주소나 폴더 ID만 넣어요 · 파일 링크는 안 돼요. 새로 들어오는 서류는 여전히 작업기가 정한 입사자 폴더로 가요.</p>';
+  var ov=ovAsk(old?"받은 서류 폴더 링크 바꾸기":"받은 서류 폴더 링크 넣기",html,[{k:"x",l:"취소"},{k:"ok",l:"저장",pri:true}],function(){});
+  var inp=ov.querySelector("#infd-v");if(inp){inp.focus();inp.select()}
+  ov.querySelector('[data-h="ok"]').addEventListener("click",function(ev){var fid=infdId(inp.value);
+    if(!fid){ev.preventDefault();ev.stopImmediatePropagation();toast(fid===null?"폴더 링크를 넣어 주세요 · 파일 · 문서 링크는 안 돼요":"폴더 링크를 넣어 주세요");inp.focus();return}
+    var url="https://drive.google.com/drive/folders/"+fid;if(url===old)return;a.folder=url;
+    logChange("intake_applicants",a.id,a.name,"받은 서류 폴더 링크",old,url,"브이드림 내부");
+    var e=a.emp&&emp(a.emp);if(e&&e.worker)logChange("workers",e.worker,(wk(e.worker)||{}).name||a.name,"입구서 폴더 링크",old,url,"브이드림 내부");
+    if(typeof schedulePersist==="function"&&LIVE)try{schedulePersist()}catch(x){}
+    toast("폴더 링크를 저장했어요");setTimeout(render,0)},false)}
+var _rcvBadge181=rcvBadge;rcvBadge=function(a){var h=_rcvBadge181.apply(this,arguments);return a&&a.id?h+infdBtn(a):h};
+var _wkDocExtra181=wkDocExtra;wkDocExtra=function(w,es){var h=_wkDocExtra181.apply(this,arguments);if(typeof h!=="string")return h;var ids={};(es||[]).forEach(function(e){ids[e.id]=1});
+  var A=(DB.intake||[]).filter(function(a){return ids[a.emp]||(!a.emp&&workerByKey(a.phone,a.birth)===w)}).sort(function(a,b){return String(b.created||"").localeCompare(String(a.created||""))});
+  var end=h.indexOf('<h3 style="margin-top:12px">포트폴리오');if(end<0)end=h.length;var head=h.slice(0,end),tail=h.slice(end),i=0,p=0,out="";
+  while(true){var q=head.indexOf('<div class="wdl">',p);if(q<0||i>=A.length){out+=head.slice(p);break}var z=head.indexOf("</div></div>",q);if(z<0){out+=head.slice(p);break}
+    out+=head.slice(p,z)+(A[i].completed?"":infdBtn(A[i]));p=z;i++}
+  return out+tail};
+var _v139Act181=v139Act;v139Act=function(a,el){if(a==="infd-edit"){infdEdit((el.dataset||{}).id);return true}return _v139Act181(a,el)};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
