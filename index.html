@@ -1021,6 +1021,20 @@ aside.pnl:has(.rr2){align-content:start}
 .rr2cs{background:#F7F6FB;border-radius:8px;font-size:12.5px;padding:8px 12px!important;margin:8px 12px 0}
 .rr2rec select{border:0;background:transparent;font:inherit;color:inherit;padding:0 2px;cursor:pointer}
 .rr2rec.warn{background:#FFF1DC;color:#9A5B13}
+/* v183 */
+.sibks{display:flex;flex-wrap:wrap;gap:4px 14px}.sibks .sibk{display:inline-flex;gap:4px;align-items:center;margin:2px 0}
+.sibl{max-height:46vh}.sibt{width:100%;font-size:12.5px}.sibt td{vertical-align:top;padding:7px 8px}.sibt th{text-align:left}
+.sibt tr.sibg td{background:#F7F6FB;border-top:1px solid var(--line)}.sibt tr.sibsame td{opacity:.55}
+.sibln{line-height:1.5}.sibln>.muted{font-size:11.5px;margin-right:4px}
+.sibsyncb{margin-right:6px}
+.rrtop{border-bottom:1px solid var(--line)}
+.rr2rawpin{margin:8px 0;padding:8px 10px;background:#FFF8E6;border:1px solid #F5DFA8;border-radius:8px;cursor:pointer}
+.rr2rawpin .rr2rawt{white-space:pre-wrap;font-size:12.5px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rr2rawpin.open .rr2rawt{display:block;-webkit-line-clamp:unset}
+.sibdlg{width:min(1000px,calc(100vw - 32px))!important;max-height:calc(100vh - 32px);display:flex;flex-direction:column}
+.sibdlg>.ps:not(.foot){overflow:auto}
+.sibks{max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.sibdlg .ps.foot{position:sticky;bottom:0;background:#fff}
 </style>
 </head>
 <body>
@@ -16298,10 +16312,12 @@ document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.datase
 S.rrPT=S.rrPT||"info";
 function rrSecKind(s){var t=(s.querySelector(":scope > h3, :scope > b, :scope > .ctlr, :scope > div > b")||{}).textContent||"";if(s.classList.contains("upbox"))return"price";if(/차수 · 후보자|후보 추천|발굴파트 수급|발굴파트 추천/.test(t)||s.classList.contains("osqbox")||s.classList.contains("orecbox"))return"cand";if(s.classList.contains("progbox")||s.classList.contains("notebox2")||/변경 이력/.test(t))return"log";if(s.querySelector('[data-act="rr-del"]'))return"del";return"info"}
 function rrTabsPaint(){var p=document.querySelector('#main aside.pnl.pnl-w');if(!p||p.dataset.rrt||!S.rrSel||S.rrSel==="new"||S.rrEdit===S.rrSel)return;var ph=p.querySelector(".ph");if(!ph)return;p.dataset.rrt="1";var S0=[].filter.call(p.children,function(c){return c.classList&&c.classList.contains("ps")});var cnt={info:0,cand:0,log:0},price=null,del=null;
-  S0.forEach(function(s){var k=rrSecKind(s);if(k==="price"){price=s;k="info"}if(k==="del"){del=s;k="info"}s.dataset.rrk=k;cnt[k]++;if(k!==S.rrPT)s.style.display="none"});
+  if(S.rrPT==="log")S.rrPT="info";var tops=[];
+  S0.forEach(function(s){var k=rrSecKind(s);if(k==="price"){price=s;k="info"}if(k==="del"){del=s;k="info"}if(k==="log"){if(s.classList.contains("progbox")||s.classList.contains("notebox2")){tops.push(s);s.classList.add("rrtop");return}k="info"}s.dataset.rrk=k;cnt[k]++;if(k!==S.rrPT)s.style.display="none"});
   if(price){var last=S0.filter(function(s){return s.dataset.rrk==="info"&&s!==price&&s!==del}).pop();if(last)last.insertAdjacentElement("afterend",price)}
   var cands=0;try{rrRounds(S.rrSel).forEach(function(x){cands+=(x.cands||[]).length})}catch(e){}
-  ph.insertAdjacentHTML("afterend",'<nav class="ptabs rrpt">'+[["info","요청 정보"],["cand","후보 · 차수"+(cands?' <span class="cnt">'+cands+'</span>':"")],["log","기록"]].map(function(t){return'<button class="'+(S.rrPT===t[0]?"on":"")+'" data-act="rr-pt" data-v="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</nav>')}
+  ph.insertAdjacentHTML("afterend",'<nav class="ptabs rrpt">'+[["info","요청 정보"],["cand","후보 · 차수"+(cands?' <span class="cnt">'+cands+'</span>':"")]].map(function(t){return'<button class="'+(S.rrPT===t[0]?"on":"")+'" data-act="rr-pt" data-v="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</nav>');
+  for(var ti=tops.length-1;ti>=0;ti--)ph.insertAdjacentElement("afterend",tops[ti])}
 /* ---------- ⑤ 근로자 창 특이사항 접기 ---------- */
 function wkMemoPaint(){var p=document.querySelector("#main aside.pnl2");if(!p)return;var m=p.querySelector(".memotop.memo0");if(!m||S.wkMemoOpen===S.wm)return;m.style.display="none";var tabs=p.querySelector("nav.ptabs");if(tabs&&!p.querySelector(".wkmemob"))tabs.insertAdjacentHTML("beforeend",'<span class="grow"></span><button class="btn xs wkmemob" data-act="wk-memo">+ 특이사항</button>')}
 /* ---------- ⑥ 계약만료 두 열 ---------- */
@@ -16575,7 +16591,7 @@ function rr2Form(F,isNew){rr2Init(F);var sec=!isNew&&S.rrSec||"",all=!sec,show=f
     h+=rr2Row("이력서 전달 마감",'<input type="date" data-rrf="due_date" value="'+esc(F.due_date||"")+'">'+(F.due_date?" "+rr2Dday(F.due_date):"")+'<span class="small muted">요청일 '+(isNew?"오늘 자동":md(F.requested||""))+'</span>')}
   if(show("work"))h+=rr2Row("근무 조건",rr2Work(F,!!(F._open.work||sec==="work")),1,"rr2t0");
   if(show("qual"))h+=rr2Row("자격",rr2Qual(F,!!(F._open.qual||sec==="qual")),0,"rr2t0");
-  if(show("etc")){if(isNew)h+=rr2Row("고객사 원문",'<textarea data-rr2="raw" rows="3" placeholder="메일 · 카톡 내용을 그대로 붙여 넣어요 (선택) · 상세 창 › 기록에서 다시 볼 수 있어요">'+esc(F._raw||"")+'</textarea>',0,"rr2t0");
+  if(show("etc")){if(isNew)h+=rr2Row("고객사 원문",'<textarea data-rr2="raw" rows="3" placeholder="메일 · 카톡 내용을 그대로 붙여 넣어요 (선택) · 창 위 처리 기록 맨 위에 고정돼요">'+esc(F._raw||"")+'</textarea>',0,"rr2t0");
     h+=rr2Row("추가 사항",'<textarea data-rrf="extra" rows="2" placeholder="예: 엑셀 가능자 우대">'+esc(F.extra||"")+'</textarea>',0,"rr2t0")}
   if(F.raw&&all)h+='<details class="rraw"><summary>시트 원문 (옮길 때 해석하지 못한 값)</summary><pre>'+esc(F.raw)+'</pre></details>';
   var m=rr2Miss(F);
@@ -16603,7 +16619,7 @@ function rr2View(F){var r=F,reps=(r.replaced||[]).map(function(id){var e=emp(id)
     row("급여 · 형태",esc(rr2PayTxt(r))+" · "+esc(r.work_type||"근무형태 미정")+(r.work_note?" ("+esc(r.work_note)+")":"")+" · 주휴 "+esc(r.weekly_off&&r.weekly_off!=="모름"?r.weekly_off:"확인중"),"")+
     row("계약",esc(rr2TermTxt(r)),"")+
     row("자격",'<b>'+esc(r.dis_level||"미정")+'</b>'+((r.dis_exclude||[]).length?" · "+esc(r.dis_exclude.join(", "))+" 제외":"")+((r.dis_require||[]).length?" · "+esc(r.dis_require.join(", "))+"만":""),"qual")+
-    row("추가 · 원문",(r.extra?esc(r.extra):'<span class="muted">없음</span>')+(rr2Raw(r).length?' · <button type="button" class="linkbtn small" data-act="rr-pt" data-v="log">고객사 원문 보기</button>':""),"etc")+'</table></div>';
+    row("추가 · 원문",(r.extra?esc(r.extra):'<span class="muted">없음</span>')+(rr2Raw(r).length?' · <button type="button" class="linkbtn small" data-act="rr2-raw">고객사 원문 보기</button>':""),"etc")+'</table></div>';
   return h}
 /* 묶음별 수정: 누른 묶음만 펼쳐서 */
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="rr-edit"]');if(b)S.rrSec=b.dataset.sec||"";var c=ev.target.closest&&ev.target.closest('[data-act="rr-ecancel"],[data-act="rr-close"]');if(c)S.rrSec=""},true);
@@ -16647,6 +16663,70 @@ var _rrPostText182=rrPostText;rrPostText=function(r){var t=_rrPostText182.apply(
 var _ciOpen182=ciOpen;ciOpen=function(id,i){_ciOpen182.apply(this,arguments);var x=DB.rrr.find(function(y){return y.id===id}),r=x&&rcOf(x.req);if(!r)return;var sl=rr2Slots(r.time_note);if(sl.length<2)return;
   var box=document.querySelector('#modal [data-act="ci-wh"]');box=box&&box.parentNode;if(!box)return;var cur=(($("#ci-wh")||{}).value||"");
   sl.slice(1).forEach(function(s){var v=s.s+"~"+s.e+(+r.break_min?" (휴게시간 "+r.break_min+"분 포함)":"");var ex=[].find.call(box.querySelectorAll('[data-act="ci-wh"]'),function(x){return x.dataset.v===v});if(ex){if(!ex.querySelector("small"))ex.insertAdjacentHTML("beforeend"," <small>요청서</small>");return}var b=document.createElement("button");b.type="button";b.className="chip"+(v===cur?" on":"");b.dataset.act="ci-wh";b.dataset.v=v;b.innerHTML=esc(v)+" <small>요청서</small>";var dir=box.querySelector('[data-act="ci-wh"][data-v=""]');box.insertBefore(b,dir||null)})};
+
+/* ================================================================
+   v183
+     ① 계열사 반영: 담당자 · 대무자 · 파트 · 레벨 · 계약 종료일 · 특이사항 · 입구서 메모 · 고객사 연락처도 같이
+        반영 창 = 표 (☑ · 기업명 · 기존값 · 변경값) · 부서 / 계열사 필터 · 묶음별 전체 선택 · 해제
+     ② 기업 창 [🔗 계열사와 맞추기]
+     ③ 채용 요청 창: 처리 기록을 위로 (최근 3건) · 기록 탭 없앰 · 고객사 원문 맨 위 고정
+   ================================================================ */
+APP_VER="v183";APP_VER_ON="10/26";APP_NOTE="계열사 일괄 반영 확대 · 계열사와 맞추기 · 채용 요청 기록 위로";
+/* ---------- ① 같이 바꿀 수 있는 항목 ---------- */
+SIB_SKIP=/^(id|corp_code|name|display_name|group_name|dept|address|flip_login_id|merged_into|deleted|missing_since|_.*)$/;
+var SIB_STAFF={manager:1,backup:1};
+function sibKeysAll(){var K=cfKeys();return Object.keys(K).filter(function(k){return!SIB_SKIP.test(k)})}
+function sibV(k,v){v=v==null?"":String(v);if(SIB_STAFF[k]&&v)v=(st(v)||{}).name||v;return v}
+function sibShow(k,v){v=sibV(k,v);return v?esc(v.length>36?v.slice(0,36)+"…":v):'<span class="muted">(빈 값)</span>'}
+function sibSame(x,c,k){return String(x[k]==null?"":x[k])===String(c[k]==null?"":c[k])}
+function sibGroups(c){var L=coSibs(c);return[["d","부서 · 같은 기업명",L.filter(function(o){return o.why==="같은 기업명"})],["g","계열사 · 같은 그룹",L.filter(function(o){return o.why!=="같은 기업명"})]]}
+sibAsk=function(id,pre){var c=comp(id);if(!c)return;var ch=sibKeysAll().filter(function(k){return String(c[k]==null?"":c[k])!==String(pre[k]==null?"":pre[k])});if(!ch.length)return;if(!coSibs(c).length)return;
+  var on={};ch.forEach(function(k){on[k]=true});S.sib={id:id,ks:ch,on:on,off:{},f:"all",mode:"save"};sibDlg()};
+function sibSyncOpen(id){var c=comp(id);if(!c)return;var L=coSibs(c);if(!L.length){toast("같은 기업명 · 같은 그룹 기업이 없어요");return}
+  var ks=sibKeysAll().filter(function(k){return L.some(function(o){return!sibSame(o.c,c,k)})});if(!ks.length){toast("계열사와 값이 모두 같아요");return}
+  S.sib={id:id,ks:ks,on:{},off:{},f:"all",mode:"sync"};sibDlg()}
+function sibOnKs(){var X=S.sib;return X.ks.filter(function(k){return X.on[k]})}
+sibDlg=function(){var X=S.sib,c=X&&comp(X.id);if(!c){S.sib=null;return}var G=sibGroups(c),ks=sibOnKs(),sync=X.mode==="sync";
+  var nD=G[0][2].length,nG=G[1][2].length;if(X.f==="d"&&!nD)X.f="all";if(X.f==="g"&&!nG)X.f="all";
+  var h='<div class="ov"><div class="dlg dlg-w sibdlg" role="dialog" aria-modal="true" aria-label="계열사 반영"><div class="ph"><div><div class="k">'+(sync?"계열사와 맞추기":"기업 정보 저장 완료")+'</div><h2>'+(sync?"이 기업 값으로 계열사를 맞출까요?":"같은 계열사 기업에도 반영할까요?")+'</h2><p class="hint" style="margin-top:4px"><b>'+esc(c.name)+(coSub(c)?" · "+esc(coSub(c)):"")+'</b> ('+esc(c.corp_code||"")+')의 값을 고른 기업에 똑같이 넣어요. 체크한 기업 · 항목만 바뀌어요.</p></div><button class="close" data-act="sib-no" aria-label="닫기">×</button></div>';
+  h+='<div class="ps"><h3>'+(sync?"맞출 항목 <span class=\"small muted\" style=\"font-weight:400\">계열사와 값이 다른 항목만 보여요</span>":"반영할 항목")+'</h3><div class="sibks">'+X.ks.map(function(k){return'<label class="cb sibk"><input type="checkbox" data-sibk="'+esc(k)+'"'+(X.on[k]?" checked":"")+'> <b>'+esc(cfLabel(k))+'</b> <span class="muted">'+sibShow(k,c[k])+'</span></label>'}).join("")+'</div></div>';
+  h+='<div class="ps"><h3>적용할 기업<span class="grow"></span><span class="seg sm" role="group">'+[["all","전체 "+(nD+nG)],["d","부서 "+nD],["g","계열사 "+nG]].map(function(x){return'<button type="button" data-act="sib-f" data-v="'+x[0]+'" class="'+(X.f===x[0]?"on":"")+'"'+((x[0]==="d"&&!nD)||(x[0]==="g"&&!nG)?" disabled":"")+'>'+x[1]+'</button>'}).join("")+'</span></h3>';
+  if(!ks.length){h+='<p class="hint">위에서 '+(sync?"맞출":"반영할")+' 항목을 골라 주세요.</p>'}
+  else{var tot=0,sel=0;
+    h+='<div class="sibl"><table class="t sibt"><thead><tr><th style="width:34px"></th><th>기업명</th><th>기존값</th><th>변경값</th></tr></thead><tbody>';
+    G.forEach(function(g){if(!g[2].length||(X.f!=="all"&&X.f!==g[0]))return;var rows=g[2].map(function(o){var x=o.c,diff=ks.filter(function(k){return!sibSame(x,c,k)});return{x:x,diff:diff}}),act=rows.filter(function(r){return r.diff.length}),onN=act.filter(function(r){return!X.off[r.x.id]}).length;
+      h+='<tr class="sibg"><td><input type="checkbox" data-sibg="'+g[0]+'"'+(act.length&&onN===act.length?" checked":"")+(act.length?"":" disabled")+' aria-label="'+esc(g[1])+' 모두"></td><td colspan="3"><b>'+esc(g[1])+'</b> <span class="small muted">'+g[2].length+'곳 · 바뀌는 곳 '+act.length+' · 체크로 모두 선택 · 해제</span></td></tr>';
+      rows.forEach(function(r){var x=r.x,same=!r.diff.length,on=!same&&!X.off[x.id];tot+=same?0:1;sel+=on?1:0;
+        h+='<tr class="'+(same?"sibsame":"")+'"><td><input type="checkbox" data-sibc="'+esc(x.id)+'"'+(on?" checked":"")+(same?" disabled":"")+'></td><td>'+coCell2(x)+'<small class="muted num">'+esc(x.corp_code||"")+'</small></td>'+
+          '<td>'+ks.map(function(k){return'<div class="sibln"><span class="muted">'+esc(cfLabel(k))+'</span> '+sibShow(k,x[k])+'</div>'}).join("")+'</td>'+
+          '<td>'+(same?'<span class="muted">이미 같음</span>':ks.map(function(k){var s=sibSame(x,c,k);return'<div class="sibln'+(s?" muted":"")+'"><span class="muted">'+esc(cfLabel(k))+'</span> '+(s?"같음":'<b>'+sibShow(k,c[k])+'</b>')+'</div>'}).join(""))+'</td></tr>'})});
+    h+='</tbody></table></div>';X._n=[sel,tot]}
+  var n=X._n||[0,0];
+  h+='</div><div class="ps foot"><span class="small muted" id="sib-n">'+(ks.length?n[1]+"곳 중 "+n[0]+"곳 "+(sync?"맞춤":"반영"):"")+'</span><span class="grow"></span><button class="btn" data-act="sib-no">'+(sync?"닫기":"반영 안 함")+'</button><button class="btn pri" data-act="sib-ok"'+(ks.length&&n[0]?"":" disabled")+'>선택한 기업에 '+(sync?"맞추기":"반영")+'</button></div></div></div>';
+  $("#modal").innerHTML=h};
+sibCount=function(){};
+document.addEventListener("change",function(ev){var t=ev.target,X=S.sib;if(!t||!X||!t.closest||!t.closest(".sibdlg"))return;var d=t.dataset;
+  if(d.sibk){X.on[d.sibk]=t.checked}else if(d.sibc){if(t.checked)delete X.off[d.sibc];else X.off[d.sibc]=true}
+  else if(d.sibg){var c=comp(X.id),g=sibGroups(c).find(function(g){return g[0]===d.sibg});if(g)g[2].forEach(function(o){if(t.checked)delete X.off[o.c.id];else X.off[o.c.id]=true})}else return;
+  var sc=document.querySelector(".sibdlg .sibl");var top=sc?sc.scrollTop:0;sibDlg();var sc2=document.querySelector(".sibdlg .sibl");if(sc2)sc2.scrollTop=top},true);
+var _v139Act183=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
+  if(a==="sib-f"&&S.sib){S.sib.f=D0.v;sibDlg();return true}
+  if(a==="sib-sync"){sibSyncOpen(D0.id);return true}
+  if(a==="rr2-raw"){var b=document.querySelector(".rr2rawpin");if(b){b.scrollIntoView({block:"center",behavior:"smooth"});b.classList.add("open")}return true}
+  return _v139Act183(a,el)};
+/* sib-all (예전 버튼) 대응 */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('.sibdlg [data-act="sib-all"]');if(!b||!S.sib)return;ev.stopImmediatePropagation();var c=comp(S.sib.id);coSibs(c).forEach(function(o){if(b.dataset.v==="1")delete S.sib.off[o.c.id];else S.sib.off[o.c.id]=true});sibDlg()},true);
+/* ---------- ② 기업 창 [계열사와 맞추기] ---------- */
+function sibBtnPaint(){var p=document.querySelector("#main aside.pnl");if(!p||!S.cm)return;var c=comp(S.cm);if(!c||p.querySelector(".sibsyncb"))return;var n=coSibs(c).length;if(!n)return;var ref=p.querySelector('.ph [data-act="aff-from"]')||p.querySelector(".ph .close");if(!ref)return;
+  ref.insertAdjacentHTML("beforebegin",'<button class="btn sm sibsyncb" data-act="sib-sync" data-id="'+esc(c.id)+'" title="이 기업 값을 기준으로 같은 기업명 · 같은 그룹 기업의 값을 맞춰요">🔗 계열사와 맞추기 <span class="muted">'+n+'곳</span></button>')}
+/* ---------- ③ 채용 요청: 기록 위로 · 원문 고정 ---------- */
+function rr2RawPin(){var p=document.querySelector('aside.pnl[aria-label="채용 요청"]');if(!p||!S.rrSel||S.rrSel==="new")return;var r=rcOf(S.rrSel),pb=p.querySelector(".progbox");if(!r||!pb)return;
+  [].forEach.call(pb.querySelectorAll(".mrow"),function(m){var t=m.querySelector(".txt");if(t&&/\[고객사 원문\]/.test(t.textContent))m.remove()});
+  var R=rr2Raw(r)[0];if(!R||pb.querySelector(".rr2rawpin"))return;var th=pb.querySelector(".memo-in")||pb.querySelector(".mth");
+  var body=String(R.body||"").replace(/^\[고객사 원문\]\n?/,"");
+  th.insertAdjacentHTML("afterend",'<div class="rr2rawpin" tabindex="0" title="눌러서 전체 보기"><b>📌 고객사 원문</b> <span class="small muted">'+esc(R.author||"")+' · '+esc(String(R.at||"").slice(5,16))+'</span><div class="rr2rawt">'+esc(body)+'</div></div>')}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest(".rr2rawpin");if(b)b.classList.toggle("open")});
+var _render183=render;render=function(){var x=_render183.apply(this,arguments);try{sibBtnPaint();rr2RawPin()}catch(e){console.warn(e)}return x};
 
 /* ============ 렌더 ============ */
 function renderMain(){
