@@ -16739,6 +16739,40 @@ cdIvNorm=function(){};
 /* ③ 담당 미배정 채용 요청은 채용파트 모두의 '내 담당'에 보이게 (배정 전에도 찾을 수 있게) */
 var _rrScope184=rrScope;rrScope=function(r){if(r&&!r.recruiter&&S.scope==="mine"&&!S.mgr&&((st(S.me)||{}).part==="채용파트"))return true;return _rrScope184.apply(this,arguments)};
 
+/* ================================================================
+   v185
+     ① 추천인재 · 포트폴리오의 소속(출처) 기관 → 근로자 DB로 자동 반영
+        · 연결 경로 상관없이(입사 정리 · 최종 합격 연결 · 포트폴리오 취업완료 · 같은 사람 정리 · 입사 등록) 한 곳에서 처리
+        · 근로자 DB 소속 기관이 비어 있을 때만 채움 · 주 소통이 '기관'이면 기관 담당자까지
+        · 연결이 없어도 이름 + 연락처가 같으면 같은 사람으로 봄
+     ② 기관이 서로 다르면 덮어쓰지 않고 근로자 창에 표시 + [이 기관으로 변경]
+   ================================================================ */
+APP_VER="v185";APP_VER_ON="10/26";APP_NOTE="추천인재 · 포트폴리오 소속 기관 → 근로자 DB 자동 반영";
+function woNm(p){return String(p&&p.name||"").trim()}
+function woKey(ph,nm){ph=normPhone(ph||"");return ph.length>=9&&nm?ph+"|"+nm:""}
+function woIdx(){var byW={},byK={};(DB.talent||[]).map(function(p){return["추천인재",p]}).concat((DB.pf||[]).map(function(p){return["포트폴리오",p]})).forEach(function(x){var p=x[1];if(!p||!p.src_org||!oOf(p.src_org))return;var it={k:x[0],p:p};
+    if(p.worker)(byW[p.worker]=byW[p.worker]||[]).push(it);var nm=woNm(p)||(p.worker&&wk(p.worker)?woNm(wk(p.worker)):""),k=woKey(p.phone,nm);if(k)(byK[k]=byK[k]||[]).push(it)});return{w:byW,k:byK}}
+function woSrcs(w,I){if(!w||!w.id)return[];I=I||woIdx();var L=(I.w[w.id]||[]).slice(),k=woKey(w.phone,woNm(w));(k&&I.k[k]||[]).forEach(function(it){if(L.indexOf(it)<0&&(!it.p.worker||it.p.worker===w.id||!wk(it.p.worker)))L.push(it)});
+  return L.sort(function(a,b){return String(b.p.created||"").localeCompare(String(a.p.created||""))})}
+var WOS_K="";
+function wOrgSync(){if(!DB.workers||!DB.orgs||!DB.orgs.length)return 0;var T=DB.talent||[],P=DB.pf||[];
+  var k=DB.workers.length+"|"+T.length+"|"+P.length+"|"+T.filter(function(t){return t.worker}).length+"|"+P.filter(function(p){return p.worker}).length+"|"+DB.workers.filter(function(w){return w.org_id}).length;
+  if(k===WOS_K)return 0;WOS_K=k;var I=woIdx(),n=0;
+  DB.workers.forEach(function(w){if(!w||!w.id||w.org_id||w.merged_into)return;var L=woSrcs(w,I);if(!L.length)return;var it=L[0],p=it.p,o=oOf(p.src_org);if(!o)return;
+    w.org_id=o.id;logChange("workers",w.id,w.name,"소속 기관","",o.short+" ("+it.k+"에서 자동)","브이드림 내부");
+    if(p.main_contact==="기관"&&(!w.main_contact||w.main_contact==="본인")){w.main_contact="기관";if(!w.org_ct)w.org_ct=p.mc_ct||o.mc||"";logChange("workers",w.id,w.name,"주 연락 대상","본인","기관 ("+it.k+"에서 자동)","브이드림 내부")}
+    n++});
+  if(n){WOS_K=k.replace(/\|\d+$/,"|"+DB.workers.filter(function(w){return w.org_id}).length);if(LIVE&&READY)schedulePersist();setTimeout(function(){toast("근로자 "+n+"명의 소속 기관을 추천인재 · 포트폴리오에서 채웠어요")},600)}
+  return n}
+/* ② 근로자 창: 추천인재 기관과 다르면 표시 */
+var _pWk185=pWk;pWk=function(w){var h=_pWk185.apply(this,arguments);try{if(!h||!w||!w.id||!w.org_id)return h;var D={};woSrcs(w).forEach(function(it){if(it.p.src_org!==w.org_id&&!D[it.p.src_org])D[it.p.src_org]=it});
+  var ks=Object.keys(D);if(!ks.length)return h;
+  return afterPh(h,'<div class="ps wide" style="padding-top:8px;padding-bottom:8px">'+ks.map(function(oid){var o=oOf(oid),it=D[oid];return'<span class="b sm warn">'+esc(it.k)+' 기관과 다름</span> <b>🏛 '+esc(o.short)+'</b> <span class="small muted">지금 근로자 DB: '+esc((oOf(w.org_id)||{}).short||"")+'</span> <button class="btn xs" data-act="wo-fix" data-w="'+esc(w.id)+'" data-o="'+esc(oid)+'">이 기관으로 변경</button>'}).join("<br>")+'</div>')}catch(e){console.warn(e)}return h};
+var _v139Act185=v139Act;v139Act=function(a,el){var D0=el.dataset||{};
+  if(a==="wo-fix"){var w=wk(D0.w),o=oOf(D0.o);if(!w||!o)return true;var b=(oOf(w.org_id)||{}).short||"";w.org_id=o.id;if(w.main_contact==="기관")w.org_ct=o.mc||"";logChange("workers",w.id,w.name,"소속 기관",b,o.short,"브이드림 내부");if(LIVE&&READY)schedulePersist();toast("소속 기관을 "+o.short+"(으)로 변경했어요");render();return true}
+  return _v139Act185(a,el)};
+var _render185=render;render=function(){try{wOrgSync()}catch(e){console.warn(e)}return _render185.apply(this,arguments)};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
