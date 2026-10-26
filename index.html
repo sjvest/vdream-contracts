@@ -10571,10 +10571,10 @@ function leaWdDocs(e,why){var P=leaWdPlan(e),w=wk(e.worker),nm=w?w.name:"",tag="
   P.keep.forEach(function(x){x.note=(x.note?x.note+" · ":"")+"철회됨";logChange("workers",e.worker,nm,"퇴사 서류 · "+x.name,"완료","완료 유지 (퇴사 의사 철회 · 기록으로 남김)","브이드림 내부")});
   if(P.del.length){var ids=P.del.map(function(x){return x.id});DB.xdocs=DB.xdocs.filter(function(x){return ids.indexOf(x.id)<0});P.del.forEach(function(x){logChange("workers",e.worker,nm,"퇴사 서류 · "+x.name,x.status||"요청됨","삭제 (퇴사 의사 철회 · 시작 전)","브이드림 내부")})}}
 var _xdocBody103=xdocBody;xdocBody=function(id){if(!DB.xdocs.some(function(y){return y.id===id}))return'<div class="ps"><p class="hint">삭제된 퇴사 서류예요.</p></div>';var h=_xdocBody103(id);
-  return S.role==="admin"?h.replace('data-act="xd-save" data-id="'+id+'">저장</button>','data-act="xd-save" data-id="'+id+'">저장</button> <button class="btn danger" data-act="xd-del" data-id="'+id+'">삭제 (관리자)</button>'):h};
-function xdDel(id){var x=DB.xdocs.find(function(y){return y.id===id});if(!x||S.role!=="admin")return;var e=emp(x.emp),w=e&&wk(e.worker);
+  return h.replace('data-act="xd-save" data-id="'+id+'">저장</button>','data-act="xd-save" data-id="'+id+'">저장</button> <button class="btn danger" data-act="xd-del" data-id="'+id+'">삭제</button>')};
+function xdDel(id){var x=DB.xdocs.find(function(y){return y.id===id});if(!x)return;var e=emp(x.emp),w=e&&wk(e.worker);
   askConfirm("퇴사 서류 삭제",(w?w.name+" · ":"")+x.name+" 서류를 지울까요? 되돌릴 수 없어요. 잘못 만든 서류만 지우고, 실제로 진행하지 않게 된 건 '해당 없음'으로 저장해 주세요.","삭제",function(){DB.xdocs=DB.xdocs.filter(function(y){return y.id!==id});
-    if(e)logChange("workers",e.worker,w?w.name:"","퇴사 서류 · "+x.name,x.status||"","삭제 (관리자)","브이드림 내부");toast("퇴사 서류를 지웠어요");render()})}
+    if(e)logChange("workers",e.worker,w?w.name:"","퇴사 서류 · "+x.name,x.status||"","삭제 · "+st(S.me).name,"브이드림 내부");toast("퇴사 서류를 지웠어요");render()})}
 function v103Act(a,el){if(a==="xd-del"){xdDel(el.dataset.id);return true}return false}
 /* v104: 새 버전 [지금 적용]이 안 되던 문제 (설정 화면 등에서 쓰는 값을 '작성 중'으로 잘못 봄) · 막히면 띠에 이유 표시 · 띠를 위쪽으로 */
 APP_VER="v104";APP_VER_ON="10/13";APP_NOTE="새 버전 [지금 적용] 고침";
@@ -14643,7 +14643,7 @@ var _v139Act153=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
         두 화면이 같은 DB(기관 · 소통 히스토리 · 추천인재 · 포트폴리오 · 채용 요청)를 써요
    ================================================================ */
 APP_VER="v154";APP_VER_ON="10/19";APP_NOTE="발굴 파이프라인 연결 (/pipeline) · V-Work 발굴 메뉴 숨김";
-var PL_URL="https://sjvest.github.io/vdream-pipeline/";
+var PL_URL="pipeline/";
 function plCan(){var me=st(S.me)||{};return me.part==="발굴파트"||isAdminSt(me)||S.role==="admin"}
 /* 발굴 메뉴는 V-Work에서 숨겨요 (기관 DB · 추천인재 · 포트폴리오는 그대로) */
 var _mpSee154=mpSee;mpSee=function(v){var v2=(typeof DISC_ALIAS!=="undefined"&&DISC_ALIAS[v])||v;if(DISC_MENU.some(function(x){return x[0]===v2}))return false;return _mpSee154(v)};
@@ -16232,7 +16232,7 @@ function upSet(id){var u=(DB.uploads||[]).find(function(x){return x.id===id});va
 /* ---------- ③ 받은 파일 옮기기 · 빼기 ---------- */
 var FM_OK=false;
 document.addEventListener("click",function(ev){if(FM_OK)return;var b=ev.target.closest&&ev.target.closest('[data-act="wdf-rm"]');if(!b)return;var p=String(b.dataset.id).split(":"),o=wdObj(p[0],p[1]),i=+b.dataset.i,f=o&&(o.files||[])[i];if(!f)return;ev.preventDefault();ev.stopImmediatePropagation();
-  var adm=S.role==="admin";ovAsk("받은 파일 · "+(f.name||""),"<p style='margin:0'>잘못 올린 파일이면 맞는 서류로 <b>옮기고</b>, 필요 없는 파일이면 <b>빼요</b>. 빼면 드라이브 휴지통으로 가요 (30일 안에 되살릴 수 있어요)"+(adm?"":" · 빼기는 관리자만 할 수 있어요")+".</p>",
+  var adm=true;ovAsk("받은 파일 · "+(f.name||""),"<p style='margin:0'>잘못 올린 파일이면 맞는 서류로 <b>옮기고</b>, 필요 없는 파일이면 <b>빼요</b>. 빼면 드라이브 휴지통으로 가요 (30일 안에 되살릴 수 있어요)"+(adm?"":" · 빼기는 관리자만 할 수 있어요")+".</p>",
     [{k:"mv",l:"다른 서류로 옮기기",pri:true}].concat(adm?[{k:"rm",l:"빼기 (휴지통)"}]:[]),function(k){if(k==="mv")fmMove(p[0],p[1],i);if(k==="rm")fmTrash(p[0],p[1],i,b)})},true);
 function fmTrash(kind,id,i,btn){var o=wdObj(kind,id),f=o&&(o.files||[])[i];if(!f)return;if(f.id&&LIVE)addJob("trash_file",o.id,{file_id:f.id,file_name:f.name||""});var e=o.emp&&emp(o.emp),wid=(e&&e.worker)||o.worker;if(wid)logChange("workers",wid,(wk(wid)||{}).name||"","받은 파일 빼기 · "+(o.name||""),f.name||"","드라이브 휴지통","브이드림 내부");FM_OK=true;try{btn.click()}finally{FM_OK=false}}
 function fmDocs(eid){var e=emp(eid);if(!e)return[];var L=[];(DB.casedocs||[]).forEach(function(c){if(c.emp===eid)L.push({k:"cd",o:c,l:(isExtDoc(c)?"연장 · ":"입사 · ")+c.name})});(DB.xdocs||[]).forEach(function(x){if(x.emp===eid)L.push({k:"xd",o:x,l:"퇴사 · "+x.name})});(DB.wdocs||[]).forEach(function(w){if(w.emp===eid||(!w.emp&&w.worker===e.worker))L.push({k:"wd",o:w,l:"서류 · "+(w.name||w.cat||"")})});return L}
@@ -16727,6 +16727,17 @@ function rr2RawPin(){var p=document.querySelector('aside.pnl[aria-label="채용 
   th.insertAdjacentHTML("afterend",'<div class="rr2rawpin" tabindex="0" title="눌러서 전체 보기"><b>📌 고객사 원문</b> <span class="small muted">'+esc(R.author||"")+' · '+esc(String(R.at||"").slice(5,16))+'</span><div class="rr2rawt">'+esc(body)+'</div></div>')}
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest(".rr2rawpin");if(b)b.classList.toggle("open")});
 var _render183=render;render=function(){var x=_render183.apply(this,arguments);try{sibBtnPaint();rr2RawPin()}catch(e){console.warn(e)}return x};
+
+/* ================================================================
+   v184
+     ① 받은 파일 빼기(휴지통) · 퇴사 서류 삭제 → 담당자도 (DB 삭제 권한은 이미 담당자 허용 · SQL 없음)
+     ② 최종 합격을 골라도 면접 결과는 그대로 (자동 '합격' 없앰) · 면접 할 일은 최종 결과가 있으면 원래대로 빠짐
+     ③ 담당 미배정 채용 요청 → 채용파트 모두의 내 담당에 보임
+   ================================================================ */
+APP_VER="v184";APP_VER_ON="10/26";APP_NOTE="서류 파일 빼기 · 퇴사 서류 삭제 담당자도 · 최종 합격 시 면접 자동 합격 없앰";
+cdIvNorm=function(){};
+/* ③ 담당 미배정 채용 요청은 채용파트 모두의 '내 담당'에 보이게 (배정 전에도 찾을 수 있게) */
+var _rrScope184=rrScope;rrScope=function(r){if(r&&!r.recruiter&&S.scope==="mine"&&!S.mgr&&((st(S.me)||{}).part==="채용파트"))return true;return _rrScope184.apply(this,arguments)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
