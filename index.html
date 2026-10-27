@@ -1191,6 +1191,11 @@ table.rrc input[data-cd$="|name"]{display:inline-block;vertical-align:middle}
 .jdbox{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tdsa{margin-left:8px}
 .srcbar{display:inline-block;width:120px;height:8px;background:#EEEAF8;border-radius:4px;overflow:hidden;vertical-align:middle}.srcbar i{display:block;height:100%;background:#7C6CD0}
+/* v196 연계 검토 */
+.lkhd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.lksub{font-size:12.5px;font-weight:600;color:var(--ink-2);margin:10px 0 6px}
+.lkc{margin-left:4px}
+.lkbar{border-color:#F5DFA8;background:#FFFBEF;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -17894,6 +17899,70 @@ var _v139Act194=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
 
 /* v195: 채용 합격자 등록 버튼 동작 이름 겹침 수정 (채용 연계 → rk-*) */
 APP_VER="v195";APP_VER_ON="10/27";APP_NOTE="채용 합격자 등록 버튼 먹통 수정";
+
+/* ================================================================
+   v196 불합격 → 채용파트 연계 검토
+     · 운영파트는 결과만 입력 (지금과 같음) → 채용 담당에게 [연계 검토] 할 일
+     · ① 다른 요청에 연계 (최근 차수 후보로 · 이름 · 연락처 · 출처 그대로) ② 다음에 연계 (인재 풀 대기) ③ 연계 종료 (사유)
+     · 인재 기록이 없는 사람(신규 · 계약만료)은 ②에서 [인재로 남기기] → 추천인재 대기
+     · 제외: 최종 '타사 입사' · 사유 '연락 두절' · 이미 다른 요청 진행 중 · [테스트]
+     · 후보 줄 표시: 채용파트 연계 검토 중 / → 기업 n차로 연계 / 인재 풀 대기 / 연계 종료
+   ================================================================ */
+APP_VER="v196";APP_VER_ON="10/27";APP_NOTE="불합격 → 채용파트 연계 검토 할 일 · 다른 요청에 연계 · 인재로 남기기";
+function lkRej(c){return c&&(c.doc==="불합격"||c.iv==="불합격"||c.final==="불합격")}
+function lkWhere(c){return c.final==="불합격"?"최종":c.iv==="불합격"?"면접":"서류"}
+function lkElig(c,x){if(!lkRej(c)||c.lk)return false;if(c.final==="타사 입사"||c.why==="연락 두절")return false;if(isTestName(c.name))return false;var r=rcOf(x.req);if(!r||tRr(r))return false;return true}
+function lkBusy(c,x){return cdOther(c,x).length>0}
+function lkPending(){var L=[];(DB.rrr||[]).forEach(function(x){(x.cands||[]).forEach(function(c,i){if(lkElig(c,x)&&!lkBusy(c,x))L.push({x:x,c:c,i:i,r:rcOf(x.req)})})});return L}
+function lkPerson(c){var w=c.worker&&wk(c.worker),t=c.tal&&(DB.talent||[]).find(function(y){return y.id===c.tal}),p=c.pf&&pfOf(c.pf);return{lvl:(w&&w.dis_level)||(p&&p.dis_level)||"",jobs:(p&&p.jobs)||(t&&t.jobs)||[]}}
+function lkMatches(c,x){var r0=rcOf(x.req),P=lkPerson(c),job=c.job||"";
+  return DB.rr.filter(function(r){return r.id!==x.req&&rrState(r)!=="완료"&&r.status!=="보류"&&!tRr(r)}).map(function(r){var s=0,J=(r.jobs||[]).map(function(j){return j.job});if(job&&J.indexOf(job)>=0)s+=3;else if(P.jobs.some(function(j){return J.indexOf(j)>=0}))s+=2;
+    if(P.lvl&&r.dis_level&&r.dis_level===P.lvl)s+=1;if(c.why==="근무시간"&&r0&&(+r.day_hours!==+r0.day_hours||String(r.time_note)!==String(r0.time_note)))s+=2;if(c.why==="장애유형"&&r0&&JSON.stringify(r.dis_exclude||[])!==JSON.stringify(r0.dis_exclude||[]))s+=2;if(r0&&r.company&&r.company===r0.company)s-=5;return{r:r,s:s}})
+    .filter(function(o){return o.s>=2}).sort(function(a,b){return b.s-a.s||String(a.r.due_date||"9").localeCompare(String(b.r.due_date||"9"))})}
+function lkCo(r){return(comp(r&&r.company)||{}).name||(r&&r.company_label)||""}
+function lkSetC(xid,i,fn){var x=DB.rrr.find(function(y){return y.id===xid});if(!x)return null;var C=(x.cands||[]).slice();if(!C[+i])return null;C[+i]=Object.assign({},C[+i]);fn(C[+i],x);x.cands=C;if(LIVE&&READY)schedulePersist();return C[+i]}
+function lkTo(xid,i,rid){var x=DB.rrr.find(function(y){return y.id===xid}),c=x&&(x.cands||[])[+i],r=rcOf(rid);if(!c||!r)return;var R=rrRounds(rid),y=R[R.length-1];if(!y){y={id:nid(),req:rid,seq:1,channel:"기타",notice:"",docs:"",comm:[],cands:[],raw:"",due:""};DB.rrr.push(y)}
+  var JL=rrJobNames(r),n={name:c.name,phone:c.phone||"",worker:c.worker||"",tal:c.tal||"",pf:c.pf||"",src_org:c.src_org||"",src:c.src||"",job:JL.length===1?JL[0]:(JL.indexOf(c.job)>=0?c.job:""),sent:"",doc:"",iv:"",final:"",why:"",told:"",told_on:"",from:lkCo(rcOf(x.req))+" "+x.seq+"차 불합격"};
+  if((y.cands||[]).some(function(d){return(n.worker&&d.worker===n.worker)||(n.phone&&normPhone(d.phone||"")===normPhone(n.phone))||d.name===n.name})){toast("이미 그 요청의 후보예요");return}
+  y.cands=(y.cands||[]).concat([n]);lkSetC(xid,i,function(cc){cc.lk={st:"linked",to:rid,seq:y.seq,by:st(S.me).name,at:stamp()}});
+  logChange("recruit_requests",rid,lkCo(r),"후보 추가","",c.name+" ("+lkCo(rcOf(x.req))+" 불합격 → 연계 · "+y.seq+"차)","브이드림 내부");if(LIVE&&READY)schedulePersist();toast(c.name+" 님을 "+lkCo(r)+" "+y.seq+"차 후보로 넣었어요")}
+function lkKeep(xid,i){var x=DB.rrr.find(function(y){return y.id===xid}),c=x&&(x.cands||[])[+i];if(!c)return;var t=null;
+  if(!c.tal&&!c.pf){var w=c.worker&&wk(c.worker),r=rcOf(x.req);t={id:nid(),worker:c.worker||"",name:w?"":c.name,phone:w?"":(c.phone||""),source:"담당자 추천",origin:"불합격 후 연계 대기",job:c.job||"",jobs:c.job?[c.job]:[],hrs:[],status:"대기",reason:lkCo(r)+" "+x.seq+"차 "+lkWhere(c)+" 불합격"+(c.why?" ("+c.why+")":"")+" · 다른 곳 연계 대기",by:st(S.me).name,created:stamp(),links:[],ev:{s:0,a:0,c:0}};DB.talent.push(t);logChange("talent_picks",t.id,c.name,"추천인재 등록","","불합격 후 연계 대기 ("+lkCo(r)+")","브이드림 내부")}
+  lkSetC(xid,i,function(cc){cc.lk={st:"later",by:st(S.me).name,at:stamp()};if(t)cc.tal=t.id});toast(t?"추천인재로 남겼어요 · 직무 상세를 채워 주세요":"인재 풀 대기로 남겼어요");if(t){S.talSel=t.id}}
+function lkEnd(xid,i,why){lkSetC(xid,i,function(cc){cc.lk={st:"end",why:why,by:st(S.me).name,at:stamp()}});toast("연계 종료로 정리했어요")}
+/* 할 일 */
+var _buildTodos196=buildTodos;buildTodos=function(){var L=_buildTodos196.apply(this,arguments);try{lkPending().forEach(function(o){var r=o.r,c=o.c,M=lkMatches(c,o.x),base=String(c.final_on||c.iv_on||c.doc_on||TODAY).slice(0,10);
+  tdPush(L,{key:"lkrev:"+o.x.id+":"+o.i,type:"lkrev",cat:"채용",task:"[연계 검토] "+c.name+" · "+lkCo(r)+" "+o.x.seq+"차 "+lkWhere(c)+" 불합격"+(c.why?"("+c.why+")":"")+" · 조건 맞는 요청 "+M.length+"건",worker:c.worker||"",emp:"",company:r.company,base:base,auto:false,fixedDue:addD(base<TODAY?TODAY:base,2),rr:r.id,lkx:o.x.id,lki:o.i});
+  var t=L[L.length-1];t.assignee=rrRecruiter(r)||rr2Mgr();t.proxy=false;t.orig=""})}catch(e){console.warn(e)}return L};
+function lkBox(xid,i){var x=DB.rrr.find(function(y){return y.id===xid}),c=x&&(x.cands||[])[+i];if(!x||!c)return'<p class="hint">후보를 찾지 못했어요</p>';var r=rcOf(x.req),M=lkMatches(c,x).slice(0,8),S0=cdSrc(c,x),noRec=!c.tal&&!c.pf;
+  var h='<div class="lkhd"><b>'+esc(c.name)+'</b> '+(c.phone?'<span class="num small">'+esc(c.phone)+'</span> ':"")+(S0?'<span class="b sm cdsrc '+S0.cls+'">'+esc(S0.l)+'</span> ':"")+'<span class="small muted">'+esc(lkCo(r))+' '+x.seq+'차 · '+lkWhere(c)+' 불합격'+(c.why?" · 사유 "+esc(c.why):"")+'</span></div>';
+  h+='<div class="lksub">① 다른 요청에 연계 <span class="small muted">직무 · 장애 정도 · 불합격 사유 기준으로 맞는 순서 · 같은 기업은 아래로</span></div>';
+  h+=M.length?'<table class="t"><tbody>'+M.map(function(o){var q=o.r;return'<tr><td><b>'+esc(lkCo(q))+'</b> <span class="b sm">'+esc(q.kind||"")+'</span></td><td class="small">'+esc(rrJobsTxt(q))+'</td><td class="small">'+esc(rr2WorkTxt(q))+'</td><td class="small">'+esc(q.dis_level||"")+'</td><td class="small num">'+(q.due_date?esc(yymd(q.due_date))+" "+rr2Dday(q.due_date):"")+'</td><td><button class="btn xs pri" data-act="lk-to" data-x="'+esc(xid)+'" data-i="'+i+'" data-r="'+esc(q.id)+'">여기 후보로</button></td></tr>'}).join("")+'</tbody></table>':'<p class="hint">조건 맞는 진행 중 요청이 없어요 · ②로 남겨 두면 다음 요청 때 후보 추천에 떠요</p>';
+  h+='<div class="lksub">② 다음에 연계 · ③ 연계 종료</div><div class="obt"><button class="btn" data-act="lk-later" data-x="'+esc(xid)+'" data-i="'+i+'">'+(noRec?"인재로 남기기 (추천인재 대기)":"다음에 연계 (인재 풀 대기)")+'</button><select data-lkwhy data-nosbx><option value="">종료 사유</option><option>본인 포기</option><option>연락 두절</option><option>조건 안 맞음</option><option>타사 입사</option><option>기타</option></select><button class="btn" data-act="lk-end" data-x="'+esc(xid)+'" data-i="'+i+'">연계 종료</button></div>';return h}
+var _pTodo196=pTodo;pTodo=function(t){var h=_pTodo196.apply(this,arguments);if(!h||!t||t.type!=="lkrev")return h;var b='<div class="ps wide lkbox"><h3>연계 검토</h3>'+lkBox(t.lkx,t.lki)+'</div>';
+  return/<\/div><\/aside>$/.test(h)?h.replace(/<\/div><\/aside>$/,b+'</div></aside>'):h.replace(/<\/aside>$/,b+'</aside>')};
+/* 후보 줄 표시 */
+function lkChip(c,x,ix){if(c.lk){var L=c.lk;if(L.st==="linked"){var r=rcOf(L.to);return'<span class="b sm t lkc">→ '+esc(lkCo(r))+' '+(L.seq||"")+'차로 연계</span>'}if(L.st==="later")return'<span class="b sm lkc">인재 풀 대기</span>';if(L.st==="end")return'<span class="b sm lkc muted">연계 종료'+(L.why?" · "+esc(L.why):"")+'</span>'}
+  if(lkElig(c,x)){if(lkBusy(c,x))return'<span class="b sm lkc">다른 요청 진행 중</span>';return'<span class="b sm warn lkc">채용파트 연계 검토 중</span>'+(partOf()==="채용파트"||S.role==="admin"?' <button class="btn xs" data-act="lk-open" data-x="'+esc(x.id)+'" data-i="'+ix+'">연계</button>':"")}
+  if(c.from)return'<span class="b sm muted lkc" title="이전 요청 불합격 후 연계">'+esc(c.from)+'에서</span>';return""}
+var _rrRoundHtml196=rrRoundHtml;rrRoundHtml=function(x){var h=_rrRoundHtml196.apply(this,arguments);try{var C=x.cands||[];h=h.replace(/(<input data-cd="([^"|]+)\|(\d+)\|phone"[^>]*>)/g,function(m,inp,rid,i){var c=C[+i];if(!c)return m;var ch=lkChip(c,x,+i);return ch?inp+ch:inp})}catch(e){console.warn(e)}return h};
+/* 채용 요청 화면 위: 연계 검토 대기 */
+var _vRreq196=vRreq;vRreq=function(){var h=_vRreq196.apply(this,arguments);try{var L=lkPending();if(!L.length)return h;var mine=L.filter(function(o){var w=rrRecruiter(o.r)||rr2Mgr();return w===S.me||(typeof sharedFor==="function"&&sharedFor(w,S.me))});
+  var bar='<div class="soonbar lkbar"><b>불합격 후 연계 검토 대기 '+L.length+'명</b>'+(mine.length?' · 내 담당 '+mine.length+'명':"")+' <span class="small muted">'+esc(L.slice(0,4).map(function(o){return o.c.name+"("+lkCo(o.r)+")"}).join(" · "))+(L.length>4?" 외":"")+'</span><span class="grow"></span><button class="btn xs" data-act="lk-todo">내 할 일에서 처리</button></div>';var k=h.indexOf('<div class="tabs');return k>0?h.slice(0,k)+bar+h.slice(k):bar+h}catch(e){return h}};
+/* 동작 */
+var _v139Act196=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
+  case"lk-to":lkTo(D0.x,D0.i,D0.r);S.sel=null;$("#modal").innerHTML="";render();return true;
+  case"lk-later":lkKeep(D0.x,D0.i);S.sel=null;$("#modal").innerHTML="";render();return true;
+  case"lk-end":(function(){var s=el.parentElement&&el.parentElement.querySelector("[data-lkwhy]"),why=s&&s.value;if(!why){toast("종료 사유를 골라 주세요");return}lkEnd(D0.x,D0.i,why);S.sel=null;$("#modal").innerHTML="";render()})();return true;
+  case"lk-open":$("#modal").innerHTML='<div class="ov"><div class="dlg dlg-w" role="dialog" aria-modal="true" aria-label="연계 검토"><div class="ph"><div><div class="k">채용 요청 · 후보</div><h2>연계 검토</h2></div><button class="close" data-act="lk-x" aria-label="닫기">×</button></div><div class="ps">'+lkBox(D0.x,D0.i)+'</div></div></div>';return true;
+  case"lk-x":$("#modal").innerHTML="";return true;
+  case"lk-todo":go("todo");S.todoView="type";render();return true}
+  return _v139Act196(a,el)};
+/* v197: 근로자 주 소통 채널 기본값 '무관' (contact_channel 빈 값으로 저장 거부되던 문제 보완) */
+APP_VER="v197";APP_VER_ON="10/27";APP_NOTE="근로자 저장 오류(contact_channel) 보완";
+function chFill(){(DB.workers||[]).forEach(function(w){if(w&&w.channel==null)w.channel="무관"})}
+var _schedulePersist197=schedulePersist;schedulePersist=function(){try{chFill()}catch(e){}return _schedulePersist197.apply(this,arguments)};
+var _render197=render;render=function(){try{chFill()}catch(e){}return _render197.apply(this,arguments)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
