@@ -17094,6 +17094,15 @@ var _v139Act187=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
   return _v139Act187(a,el)};
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.ch)return;var k=t.dataset.ch;if(k==="pl-job"){plF().job=t.value;render()}else if(k==="pl-rg"){plF().rg=t.value;render()}else if(k==="pl-prop"){plF().prop=t.checked;render()}},true);
 
+/* ================================================================
+   v189
+     ① 기관 출신 입사 → '입사 소식 공유' 교류 건 자동 생성: 기관 교류 기록을 불러온 계정(발굴파트 · 관리자)만
+        · 운영 · 채용 계정은 교류 기록을 안 불러와서(빈 목록) 매번 '없다'고 보고 새로 만들던 문제
+        · 기관 단계 자동 변경(기관 출신 입사 → 6단계)은 그대로
+   ================================================================ */
+APP_VER="v189";APP_VER_ON="10/27";APP_NOTE="입사 소식 공유 교류 건 중복 생성 수정";
+var _oSync189=oSync;oSync=function(){if(typeof SKIP_DISC!=="undefined"&&SKIP_DISC){var A=DB.oex;DB.oex=null;try{return _oSync189.apply(this,arguments)}finally{DB.oex=A}}return _oSync189.apply(this,arguments)};
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
