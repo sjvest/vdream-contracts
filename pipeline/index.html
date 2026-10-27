@@ -2436,7 +2436,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='pl-v168';
+const APP_BUILD_VERSION='pl-v169';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -10846,7 +10846,7 @@ function jobsFor(numId){var T=talRaw(numId);if(!T)return[];var F=talFacts(T),til
       var sc=ch.filter(function(z){return z[1]}).length*2-ch.filter(function(z){return!z[1]}).length;return{r:r,ch:ch,sc:sc,J:J}})
     .filter(function(m){return m.sc>0||!F.jobs.length}).sort(function(a,b){return b.sc-a.sc||String(a.r.due_date||"9").localeCompare(String(b.r.due_date||"9"))})}
 function tjobsHtml(numId){var L=jobsFor(numId),T=talRaw(numId);if(!T)return"";var F=talFacts(T),till=busyTill(F.wid);
-  var h='<div class="vwsec" style="margin:0 0 12px"><h5>🎯 지금 추천할 만한 공고 <span class="vwchip">'+L.length+'</span><span class="vwmuted" style="font-weight:500">이력서 전달 전 공고 · 직무 · 장애 정도 기준</span></h5>';
+  var h='<div class="vwsec" style="margin:0 0 12px"><h5>🎯 지금 추천할 만한 공고 <span class="vwchip">'+L.length+'</span><span class="vwmuted" style="font-weight:500">이력서 전달 전 공고 · 직무 · 장애 정도 · 근무 시간 · 입사 가능일 기준</span></h5>';
   if(till)h+='<p class="vwmuted" style="margin:0 0 6px">'+E(busyTxt(till))+' · 입사 희망일이 그 뒤인 공고만 보여요</p>';
   if(!L.length)return h+'<p class="vwmuted" style="margin:0">'+(F.jobs.length?"맞는 공고가 없어요":"희망 직무를 넣으면 맞는 공고를 골라 줘요")+'</p></div>';
   return h+L.slice(0,5).map(function(m){var r=m.r;return'<div class="vwjc"><div class="vwjc-t"><b>'+E(A.compName(r.company_id)||r.company_label||"")+'</b> <span>'+E(m.J.join(", "))+'</span></div><div class="vwjc-m"><span class="vwmuted">'+(r.start_date?"입사 "+md(r.start_date):"입사일 미정")+(r.due_date?" · 마감 "+md(r.due_date):"")+'</span>'+m.ch.map(function(z){return'<span class="vwchip '+(z[1]?"g":"r")+'">'+z[0]+(z[1]?" ✓":" ✗")+'</span>'}).join("")+'<span style="flex:1"></span><button class="vwbtn p" data-tj="'+E(r.id)+'" data-t="'+numId+'">이 공고에 추천</button></div></div>'}).join("")+'</div>'}
@@ -10937,6 +10937,29 @@ function tlConModal(TT){var o=TT.o,F={src_org:o.src_org_id,main_contact:o.main_c
     A.upd("talent_picks",o.id,P).then(function(){A.clog("talent_picks",o.id,personName("tl",o.id),"소통 연락처","",P.main_contact);ovClose();T("저장했어요");tconPaint()},function(e){T("저장하지 못했어요: "+(e&&e.message||e))})}}
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-tcon]");if(!b)return;ev.preventDefault();var TT=talRaw(+b.getAttribute("data-tcon"));if(!TT)return;if(TT.k==="pf")pfModal(TT.id);else tlConModal(TT)});
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.getAttribute||!t.getAttribute("data-pfup"))return;var p=A.find("portfolios",t.getAttribute("data-pfup"));if(!p||!t.files.length)return;T("올리는 중…");pfUpload(p,t.files).then(function(n){T("파일 "+n+"개를 올렸어요 · 1~2분 뒤 드라이브 링크가 생겨요");tconPaint()},function(e){T("올리지 못했어요: "+(e&&e.message||e))})});
+
+/* ================================================================
+   pl-v169 추천 공고: 운영페이지 연계 검토와 같은 조건
+     · 직무 · 장애 정도 + 근무 시간 · 입사 가능일 · 희망 근무 기간 (값이 있는 것만 비교)
+     · 대상 공고: 마지막 차수에 이력서가 한 명도 전달되지 않은 공고 (그대로)
+     · 기관 창: 🎯 소속 인재 추천 공고
+   ================================================================ */
+function plHrs(T){var o=T.o,s="";if(T.k==="pf")s=o.wish_hours||"";else if(T.k==="tl")s=[(Array.isArray(o.wish_hours_list)?o.wish_hours_list:[]).join(" "),o.wish_hours_etc||"",o.wish_hours||""].join(" ");
+  var any=/무관/.test(s),H=[],re=/(\d{1,2})(?:\s*[~\-]\s*(\d{1,2}))?\s*시간/g,m;while((m=re.exec(s))){var a=+m[1],b=m[2]?+m[2]:a;for(var x=Math.min(a,b);x<=Math.max(a,b);x++)if(H.indexOf(x)<0)H.push(x)}return{any:any,h:H}}
+function plAvail(T){var o=T.o;if(T.k==="wk")return"";if(o.avail_now)return A.today();return o.avail_from?String(o.avail_from).slice(0,10):""}
+var _jobsFor169=jobsFor;jobsFor=function(numId){var L=_jobsFor169.apply(this,arguments),T=talRaw(numId);if(!T)return L;var H=plHrs(T),av=plAvail(T),tm=T.k==="wk"?"":String(T.o.wish_term||"").replace(/\s/g,"");
+  L.forEach(function(m){var r=m.r;if(r.day_hours&&(H.any||H.h.length)){var ok=H.any||H.h.some(function(x){return Math.abs(x-(+r.day_hours))<=0.5});m.ch.push(["근무 시간",ok]);m.sc+=ok?2:-1}
+    var st=r.start_date||"";if(av&&st){var ok2=av<=st;m.ch.push(["입사 가능",ok2]);m.sc+=ok2?2:-1}
+    if(tm&&tm!=="무관"&&+r.term_months){var ok3=tm===(+r.term_months)+"개월";m.ch.push(["희망 기간",ok3]);m.sc+=ok3?1:-1}});
+  return L.filter(function(m){return m.sc>0}).sort(function(a,b){return b.sc-a.sc||String(a.r.due_date||"9").localeCompare(String(b.r.due_date||"9"))})};
+function orgTalHtml(o){var P=[];raw("talent_picks").forEach(function(t){if(t.src_org_id===o.id&&!/종료|연계완료|반려/.test(t.status||""))P.push("tl:"+t.id)});raw("portfolios").forEach(function(p){if(p.src_org_id===o.id&&!/취업완료|기타/.test(p.status||""))P.push("pf:"+p.id)});
+  var rows=P.map(function(k){var n=A.num("tal",k),T=talRaw(n);if(!T)return null;var L=jobsFor(n);var nm=T.k==="pf"?T.o.name:(T.o.name||((A.find("workers",T.o.worker_id)||{}).name)||"");return{n:n,nm:nm,L:L,k:T.k}}).filter(function(x){return x&&x.L.length}).sort(function(a,b){return b.L.length-a.L.length});
+  var h='<div class="vwsec" id="vw-orgtal"><h5>🎯 소속 인재 추천 공고 <span class="vwchip">'+rows.length+'명</span><span class="vwmuted" style="font-weight:500">이력서 전달 전 공고 · 직무 · 장애 정도 · 근무 시간 · 입사 가능일 기준</span></h5>';
+  if(!rows.length)return h+'<p class="vwmuted" style="margin:0">지금 추천할 만한 공고가 있는 소속 인재가 없어요</p></div>';
+  return h+'<table><tr><th>인재</th><th>맞는 공고</th><th></th></tr>'+rows.slice(0,15).map(function(x){return'<tr><td><b>'+E(x.nm)+'</b> <span class="vwchip">'+(x.k==="pf"?"포트폴리오":"추천인재")+'</span></td><td class="vwmuted">'+E(x.L.slice(0,2).map(function(m){return(A.compName(m.r.company_id)||m.r.company_label||"")+" "+m.J.join(",")}).join(" / "))+(x.L.length>2?" 외 "+(x.L.length-2):"")+'</td><td><button class="vwbtn p" data-otal="'+x.n+'">인재 보기 · 추천</button></td></tr>'}).join("")+'</table></div>'}
+function orgTalPaint(numId){var oid=A.txt("org",numId),o=oid&&A.find("organizations",oid);var box=document.getElementById("vw-orgx");if(!o||!box)return;var old=document.getElementById("vw-orgtal");if(old)old.remove();box.insertAdjacentHTML("afterbegin",orgTalHtml(o))}
+if(typeof window.openOrg==="function"){var _openOrg169=window.openOrg;window.openOrg=function(id){var r=_openOrg169.apply(this,arguments);Promise.resolve(r).then(function(){return A.need(TJ_DEPS)}).then(function(){try{orgTalPaint(Number(id))}catch(e){console.warn(e)}},function(){});return r}}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-otal]");if(!b)return;ev.preventDefault();var n=+b.getAttribute("data-otal");if(typeof closeModal==="function"){try{closeModal()}catch(e){}}if(typeof window.openTalentDrawer==="function")window.openTalentDrawer(n)});
 })();
 </script>
 </body>
