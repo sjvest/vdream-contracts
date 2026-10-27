@@ -8852,11 +8852,13 @@ onbPlanHtml=function(){var R=onbPlanRows2();if(!(tst("onbp").sort&&tst("onbp").s
    ================================================================ */
 /* ---- 장애 표시 ---- */
 function disTL(w){if(!w)return"";if(w.non_dis)return"비장애인 판정";var a=[String(w.dis_type||"").replace(/장애$/,""),w.dis_level||""].filter(Boolean);return a.join(" · ")}
+function disTypeOf(w){if(!w)return"미입력";if(w.non_dis)return"비장애인 판정";return String(w.dis_type||"").replace(/장애$/,"")||"미입력"}
+function disLvlOf(w){if(!w)return"미입력";if(w.non_dis)return"비장애인 판정";return w.dis_level||"미입력"}
 function disTH(w){var t=disTL(w);if(!t)return'<span class="muted small">미입력</span>';if(w.non_dis)return'<span class="b sm bad">비장애인 판정</span>';return esc(t).replace("중증",'<b style="color:#C2410C">중증</b>')}
 var _dtable41=dtable;dtable=function(k,cols,rows,rowFn,empty){
   if(/^wk-(act|out|all|pre)$/.test(k)&&rowFn){var pi=cols.findIndex(function(c){return c.k==="p"});
-    if(pi>=0){var W=k==="wk-pre"?function(r){return r.w}:function(w){return w};cols=cols.slice();cols.splice(pi+1,0,{k:"dl",h:"장애",t:"text",f:function(x){return disTL(W(x))||"미입력"}});
-      var rf=rowFn;rowFn=function(x){var h=rf(x),n=0,i=-1;while(n<pi+1){i=h.indexOf("</td>",i+1);if(i<0)return h;n++}i+=5;return h.slice(0,i)+'<td>'+disTH(W(x))+'</td>'+h.slice(i)}}}
+    if(pi>=0){var W=k==="wk-pre"?function(r){return r.w}:function(w){return w};cols=cols.slice();cols.splice(pi+1,0,{k:"dt",h:"장애유형",t:"text",f:function(x){return disTypeOf(W(x))}},{k:"dl",h:"장애정도",t:"text",al:"c",f:function(x){return disLvlOf(W(x))}});
+      var rf=rowFn;rowFn=function(x){var h=rf(x),n=0,i=-1;while(n<pi+1){i=h.indexOf("</td>",i+1);if(i<0)return h;n++}i+=5;var w0=W(x),lv=disLvlOf(w0);return h.slice(0,i)+'<td>'+(w0&&w0.non_dis?'<span class="b sm bad">비장애인 판정</span>':esc(disTypeOf(w0)).replace('미입력','<span class="muted small">미입력</span>'))+'</td><td>'+(lv==='중증'?'<b style="color:#C2410C">중증</b>':lv==='미입력'?'<span class="muted small">미입력</span>':lv==='비장애인 판정'?'<span class="muted">—</span>':esc(lv))+'</td>'+h.slice(i)}}}
   return _dtable41(k,cols,rows,rowFn,empty)};
 var _pWk41=pWk;pWk=function(w){var h=_pWk41(w);if(!w)return h;var t=disTL(w);return h.replace('<div class="tags">','<div class="tags">'+(t?'<span class="b'+(w.non_dis?" bad":w.dis_level==="중증"?" warn":"")+'">'+esc(t)+'</span>':'<span class="b">장애 정보 미입력</span>'))};
 
@@ -16971,7 +16973,7 @@ var _exportCsv187=exportCsv;exportCsv=function(){var a=arguments,me=this;if(S.vi
 function tdIn(td){return String(td||"").replace(/^<td\b[^>]*>/,"").replace(/<\/td>$/,"")}
 var _dtable187=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k!=="rreq"||!Array.isArray(cols)||!rowFn||!cols.some(function(c){return c.k==="rq"}))return _dtable187.apply(this,arguments);
   var I={};cols.forEach(function(c,i){I[c.k]=i});if(["sel","c","du","st","j","cd","pg","cn","nx","la","m"].some(function(x){return I[x]==null}))return _dtable187.apply(this,arguments);
-  var C=[cols[I.sel],Object.assign({},cols[I.c],{h:"기업"}),{k:"sch",h:"일정",t:"date",v:function(r){return r.due_date||""}},Object.assign({},cols[I.j],{h:"직무 · 조건"}),Object.assign({},cols[I.pg],{h:"진행",al:""}),{k:"nx",h:"다음 할 일",t:"num",al:"",v:cols[I.la].v},cols[I.m]];
+  var C=[cols[I.sel],Object.assign({},cols[I.c],{h:"기업"}),{k:"sch",h:"일정",t:"date",v:function(r){return r.due_date||""}},Object.assign({},cols[I.j],{h:"직무 · 조건",mv:function(r){var J=(r.jobs||[]).map(function(j){return j&&j.job}).filter(Boolean);return J.length?J:["미입력"]}}),Object.assign({},cols[I.pg],{h:"진행",al:""}),{k:"nx",h:"다음 할 일",t:"num",al:"",v:cols[I.la].v},cols[I.m]];
   var fn=function(r){var h=rowFn.apply(this,arguments);if(typeof h!=="string")return h;var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);
     var mem=!!(T&&/\brrgm\b/.test(m[1])&&T.length===cols.length-1);if(mem)T.splice(I.c,0,"");if(!T||T.length!==cols.length)return h.replace(/colspan="(\d+)"/,function(a,n){return'colspan="'+Math.max(1,+n-cols.length+C.length)+'"'});
     var done=rrState(r)==="완료",cn=(comp(r.company)||{}).name||"";
@@ -17488,6 +17490,51 @@ document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.datase
   if(t.dataset.nrd!=null&&S.nr){S.nr.D.job[t.dataset.nrd].det=t.value.trim();return}if(t.dataset.nrw!=null&&S.nr){S.nr.D.hrs[t.dataset.nrw].d=t.value;nrDlg();return}},true);
 document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset)return;if(t.dataset.ld&&S.ldF)S.ldF[t.dataset.ld]=t.value;if(t.dataset.ldp!=null&&S.ldP)S.ldP.text=t.value;if(t.dataset.ldwhy!=null)S.ldWhy=t.value},true);
 var _render191=render;render=function(){try{nrSync()}catch(e){console.warn(e)}return _render191.apply(this,arguments)};
+
+/* ================================================================
+   v192
+     ① 표 헤더 필터: 값이 여러 개인 칸 = 낱개 값으로 고르기 · 하나라도 맞으면 보임 (mv)
+        · 추천인재 희망 직무 · 채용 요청 직무 · 영업용 인재 풀 직무
+     ② 추천인재 희망 근무 → 하루 시간 · 주 근무일 두 칸 · '희망 근무 미입력 N명' 바로가기
+     ③ 장애 → 장애유형 · 장애정도 두 칸 (근로자 DB · 추천인재)
+   ================================================================ */
+APP_VER="v192";APP_VER_ON="10/27";APP_NOTE="여러 값 필터 · 희망 근무 하루 시간 · 주 근무일 · 장애유형 · 장애정도 나눔";
+/* ---------- ① 여러 값 필터 ---------- */
+function mvVals(c,r){var L=c.mv(r)||[];L=L.map(function(x){return String(x==null?"":x).trim()}).filter(Boolean);return L.length?L:["미입력"]}
+var _tFilter192=tFilter;tFilter=function(k,rows,cols,skip){var s=tst(k);var M=(cols||[]).filter(function(c){return c.mv&&c.k!==skip&&s.f[c.k]&&s.f[c.k].length});if(!M.length)return _tFilter192.apply(this,arguments);
+  var rows2=rows.filter(function(r){return M.every(function(c){var f=s.f[c.k];return mvVals(c,r).some(function(v){return f.indexOf(v)>=0})})});var cols2=cols.filter(function(c){return M.indexOf(c)<0});return _tFilter192.call(this,k,rows2,cols2,skip)};
+var _popHtml192=popHtml;popHtml=function(){if(!S.pop)return _popHtml192.apply(this,arguments);var p=String(S.pop).split("|"),k=p[0],ck=p[1],R=RAW[k];if(!R)return _popHtml192.apply(this,arguments);var c=R.cols.find(function(x){return x.k===ck});if(!c||!c.mv)return _popHtml192.apply(this,arguments);
+  var cnt={};tFilter(k,R.rows,R.cols,ck).forEach(function(r){mvVals(c,r).forEach(function(v){cnt[v]=(cnt[v]||0)+1})});R.rows.forEach(function(r){mvVals(c,r).forEach(function(v){if(!(v in cnt))cnt[v]=0})});
+  var f=tst(k).f[ck]||[],q=(S.popq||"").trim(),ord=c.mvOrder||null;
+  var vals=Object.keys(cnt).sort(function(a,b){if(ord){var ia=ord.indexOf(a),ib=ord.indexOf(b);if(ia<0)ia=99;if(ib<0)ib=99;if(ia!==ib)return ia-ib}if(a==="미입력")return 1;if(b==="미입력")return-1;return a.localeCompare(b,"ko")}).filter(function(v){return!q||v.indexOf(q)>=0});
+  return'<div class="poph"><b>'+esc(c.h)+'</b><button class="linkbtn small" data-act="t-fclear" data-t="'+k+'" data-c="'+ck+'">선택 해제</button></div>'+(Object.keys(cnt).length>8?'<input id="pop-q" class="popq" data-in="popq" placeholder="값 찾기" aria-label="값 찾기" value="'+esc(S.popq||"")+'">':"")+
+    '<div class="popl">'+(vals.length?vals.map(function(v){return'<label><input type="checkbox" data-ch="t-fv" data-t="'+k+'" data-c="'+ck+'" value="'+esc(v)+'"'+(f.indexOf(v)>=0?" checked":"")+'><span>'+esc(v)+'</span><small>'+cnt[v]+'</small></label>'}).join(""):'<p class="hint">일치하는 값이 없습니다.</p>')+'</div>'+
+    '<p class="hint">여러 개를 고를 수 있어요 · 값이 여러 개인 사람은 하나라도 맞으면 보여요</p>'};
+/* ---------- ②③ 추천인재 표 ---------- */
+var HRS_ORD=["2시간","3시간","4시간","5시간","6시간","8시간","무관","기타","미입력"],JOB_ORD=STD_JOBS.concat(["미입력"]);
+function uniRaw(r){var raw=r.t?tHrsRaw(r.t):"";if(!raw&&r.p)raw=pHrsRaw(r.p);return raw}
+function uniHrsL(r){var raw=uniRaw(r);if(!raw)return["미입력"];var o=hrsGuess(raw);if(o.any)return["무관"];if(o.h.length)return o.h.map(function(x){return x+"시간"});return o.d?["미입력"]:["기타"]}
+function uniDays(r){var raw=uniRaw(r);if(!raw)return"미입력";var o=hrsGuess(raw);return o.d?"주 "+o.d+"일":"미입력"}
+function uniJobL(r){var J=[];if(r.t)(r.t.jobs||[]).forEach(function(j){if(j&&J.indexOf(j)<0)J.push(j)});if(!J.length&&r.p)(r.p.jobs||[]).forEach(function(j){if(j&&J.indexOf(j)<0)J.push(j)});J=J.map(function(j){return STD_JOBS.indexOf(j)>=0?j:"기타"}).filter(function(v,i,a){return a.indexOf(v)===i});return J.length?J:["미입력"]}
+function uniDisW(r){var w=r.wid&&wk(r.wid);if(w)return w;var p=r.p;return p?{dis_type:p.dis_type,dis_level:p.dis_level}:null}
+var _dtable192=dtable;dtable=function(k,cols,rows,rowFn,empty){
+  if(k==="uni"&&Array.isArray(cols)&&rowFn){var I={};cols.forEach(function(c,i){I[c.k]=i});if(I.d!=null&&I.j!=null&&I.h!=null){
+    var C=[];cols.forEach(function(c){if(c.k==="d"){C.push({k:"dt",h:"장애유형",t:"text",f:function(r){return disTypeOf(uniDisW(r))}});C.push({k:"dlv",h:"장애정도",t:"text",al:"c",f:function(r){return disLvlOf(uniDisW(r))}})}
+      else if(c.k==="j")C.push(Object.assign({},c,{mv:uniJobL,mvOrder:JOB_ORD}));
+      else if(c.k==="h"){C.push({k:"hd",h:"하루 시간",t:"text",f:function(r){var L=uniHrsL(r);return L.join("·")},mv:uniHrsL,mvOrder:HRS_ORD});C.push({k:"wd",h:"주 근무일",t:"text",al:"c",f:uniDays})}
+      else C.push(c)});
+    var rf=rowFn;var fn=function(r){var h=rf.apply(this,arguments);var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);if(!T||T.length!==cols.length)return h;
+      var w=uniDisW(r),lv=disLvlOf(w),ty=disTypeOf(w),hl=uniHrsL(r),dy=uniDays(r),out=[];
+      T.forEach(function(td,i){var kk=cols[i].k;if(kk==="d"){out.push('<td>'+(ty==="미입력"?'<span class="muted small">미입력</span>':ty==="비장애인 판정"?'<span class="b sm bad">비장애인 판정</span>':esc(ty))+'</td>');out.push('<td>'+(lv==="중증"?'<b style="color:#C2410C">중증</b>':lv==="미입력"||lv==="비장애인 판정"?'<span class="muted small">'+esc(lv==="미입력"?"미입력":"—")+'</span>':esc(lv))+'</td>')}
+        else if(kk==="h"){out.push('<td>'+(hl[0]==="미입력"?'<span class="muted small">미입력</span>':esc(hl.join(" · ")))+'</td>');out.push('<td class="small">'+(dy==="미입력"?'<span class="muted">—</span>':esc(dy))+'</td>')}
+        else out.push(td)});return m[1]+out.join("")+m[3]};
+    return _dtable192.call(this,k,C,rows,fn,empty)}}
+  if(k==="spool"&&Array.isArray(cols))cols=cols.map(function(c){return c.k==="j"?Object.assign({},c,{mv:function(r){return r.jobs.length?r.jobs:["미입력"]},mvOrder:JOB_ORD}):c});
+  return _dtable192.apply(this,[k,cols,rows,rowFn,empty])};
+/* 희망 근무 미입력 바로가기 */
+var _vUni192=vUni;vUni=function(){var h=_vUni192.apply(this,arguments);try{var n=uniRows().filter(function(r){return(S.uniTab==="all"||r.st===S.uniTab)&&!uniRaw(r)}).length;if(!n)return h;var on=(tst("uni").f.hd||[]).join()==="미입력";
+  var bar='<div class="fbbar"><span class="small">희망 근무 미입력 <b>'+n+'명</b> · 인재 풀 · 사전 공유 조건 맞추기가 정확해지려면 채워 주세요</span><span class="grow"></span><button class="btn sm'+(on?"":" pri")+'" data-act="uni-hmiss">'+(on?"미입력만 보기 해제":"미입력만 보기")+'</button></div>';var k=h.indexOf('<div class="tabs" role="tablist">');return k>0?h.slice(0,k)+bar+h.slice(k):h}catch(e){return h}};
+var _v139Act192=v139Act;v139Act=function(a,el){if(a==="uni-hmiss"){var s=tst("uni"),on=(s.f.hd||[]).join()==="미입력";s.f.hd=on?[]:["미입력"];s.page=1;render();return true}return _v139Act192(a,el)};
 
 /* ============ 렌더 ============ */
 function renderMain(){
