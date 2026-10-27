@@ -2436,7 +2436,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='pl-v169';
+const APP_BUILD_VERSION='pl-v170';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -10654,7 +10654,7 @@ document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.targe
 /* ================================================================
    ④ 채용 건: 인재 매칭 + 추천 결과
    ================================================================ */
-var REC_C={"검토 대기":"a","후보 추가":"g","보류":"r"};
+var REC_C={"검토 대기":"a","후보 추가":"g","보류":"r","반려":"r"};
 function stepChip(f){if(!f)return"";var st=A.candStatus(f.c),cl=/합격$/.test(st)&&!/불합격/.test(st)?"g":/불합격|취소/.test(st)?"r":"a";return'<span class="vwchip '+cl+'">'+E(st)+'</span> <span class="vwmuted">'+E(A.candStep(f))+'</span>'}
 function recHtml(job){var rid=A.txt("rr",job.id);if(!rid)return"";var L=raw("org_recommends").filter(function(x){return x.request_id===rid}).sort(function(a,b){return String(b.created_on||"").localeCompare(String(a.created_on||""))});
   var cnt={};L.forEach(function(x){cnt[x.status]=(cnt[x.status]||0)+1});
@@ -10663,7 +10663,7 @@ function recHtml(job){var rid=A.txt("rr",job.id);if(!rid)return"";var L=raw("org
   var h='<div class="vwsec" style="margin-top:12px"><h5>🔗 추천 결과 · 진행 '+Object.keys(cnt).map(function(s){return'<span class="vwchip '+(REC_C[s]||"x")+'">'+E(s)+' '+cnt[s]+'</span>'}).join(" ")+(D.length?' <span class="vwchip x">채용파트 직접 추가 '+D.length+'</span>':"")+'<span style="flex:1"></span><button class="vwbtn p" onclick="event.stopPropagation();vwMatch('+job.id+')">🔎 인재 매칭</button></h5>';
   if(!L.length&&!D.length)return h+'<p class="vwmuted" style="margin:0">아직 추천한 인재가 없어요 · [인재 매칭]에서 기관을 고르면 그 기관 인재가 조건 순으로 나와요 · 보내면 운영페이지 채용 요청에 \'검토 대기\'로 올라가요</p></div>';
   return h+'<table><tr><th>인재</th><th>기관</th><th>추천</th><th>진행 (채용파트 기록)</th><th>추천일</th></tr>'+L.map(function(x){var o=x.org_id&&A.find("organizations",x.org_id),f=(x.kind==="tl"||x.kind==="pf")?A.candFind(rid,x.kind,x.person_id):null;
-    return'<tr><td><b>'+E(personName(x.kind,x.person_id))+'</b></td><td class="vwmuted">'+E(oShort(o))+'</td><td><span class="vwchip '+(REC_C[x.status]||"x")+'">'+E(x.status||"")+'</span>'+(x.status==="보류"?'<div class="vwmuted">'+E(x.hold_reason||"")+'</div>':"")+'</td><td>'+(f?stepChip(f):'<span class="vwmuted">'+(x.status==="검토 대기"?"채용파트 검토 전":x.status==="보류"?"—":"후보로 추가됨 · 아직 진행 기록 없음")+'</span>')+'</td><td class="vwmuted">'+md(x.created_on||"")+'</td></tr>'}).join("")+
+    return'<tr><td><b>'+E(personName(x.kind,x.person_id))+'</b></td><td class="vwmuted">'+E(oShort(o))+'</td><td><span class="vwchip '+(REC_C[x.status]||"x")+'">'+E(x.status||"")+'</span>'+((x.status==="보류"||x.status==="반려")?'<div class="vwmuted">'+E(x.hold_reason||"")+'</div>':"")+'</td><td>'+(f?stepChip(f):'<span class="vwmuted">'+(x.status==="검토 대기"?"채용파트 검토 전":(x.status==="보류"||x.status==="반려")?"—":"후보로 추가됨 · 아직 진행 기록 없음")+'</span>')+'</td><td class="vwmuted">'+md(x.created_on||"")+'</td></tr>'}).join("")+
     D.map(function(d){var o=A.find("organizations",d.org);return'<tr><td><b>'+E(personName(d.k,d.pid))+'</b></td><td class="vwmuted">'+E(oShort(o))+'</td><td><span class="vwchip x">채용파트 직접 추가</span></td><td>'+stepChip(d.f)+'</td><td class="vwmuted">'+md(d.f.c.sent||"")+'</td></tr>'}).join("")+'</table></div>'}
 /* 공고 내용 (운영페이지 채용 요청 그대로) */
 function won(n){n=+n||0;return n?n.toLocaleString("ko-KR")+"원":""}
