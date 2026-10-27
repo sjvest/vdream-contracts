@@ -1090,6 +1090,10 @@ aside.pnl:has(.rr2){align-content:start}
 .plfil .pfl{display:flex;align-items:center;gap:6px}.plfil .mclab{min-width:0}
 .hoLine{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px;background:#F5F8FF}
 @media (max-width:1100px){.stiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+td.grp .gname{max-width:170px}
+.rrnx{max-width:190px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+#main td.rrtl,#main td.rrtl .rsub{text-align:left!important}
+#main td.rrtc,#main td.rrtc .rsub{text-align:center!important}
 </style>
 </head>
 <body>
@@ -16587,7 +16591,7 @@ var _dtable182=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k!=="rreq"||!A
   var iC=cols.findIndex(function(c){return c.k==="c"}),iD=cols.findIndex(function(c){return c.k==="du"}),iM=cols.findIndex(function(c){return c.k==="m"});if(iC<0)return _dtable182.apply(this,arguments);
   var C=cols.map(function(c){return c.k==="du"?Object.assign({},c,{h:"이력서 마감"}):c});C.splice(iC+1,0,{k:"kd",h:"구분",t:"text",al:"c",f:function(r){return r.kind||""}});
   var rf=rowFn,fn=function(r){var h=rf.apply(this,arguments);if(typeof h!=="string")return h;var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);
-    if(!T||T.length!==cols.length){return h.replace(/colspan="(\d+)"/,function(a,n){return'colspan="'+(+n+1)+'"'})}
+    if(T&&/\brrgm\b/.test(m[1])&&T.length===cols.length-1){var kv2=r&&r.kind||"";T=T.map(function(td){return td.replace(/<span class="b sm\s*(?:p|t)?\s*">(?:신규|추가|대체)<\/span>\s*/,"")});T.splice(1,0,'<td class="c">'+(kv2?'<span class="b sm '+(kv2==="대체"?"p":kv2==="추가"?"t":"")+'">'+esc(kv2)+'</span>':"")+'</td>');if(r&&!r.recruiter&&rrState(r)!=="완료")T[T.length-1]='<td><span class="b sm warn">미배정</span></td>';return m[1]+T.join("")+m[3]}if(!T||T.length!==cols.length){return h.replace(/colspan="(\d+)"/,function(a,n){return'colspan="'+(+n+1)+'"'})}
     var kb="";var rt="";T[iC]=T[iC].replace(/\s*<span class="b sm\s*(?:p|t)?\s*"(?: title="([^"]*)")?>(신규|추가|대체)<\/span>/,function(a,t,v){kb=v;rt=t||"";return""});var kv=kb||r.kind||"";
     if(iD>=0&&r&&r.due_date&&rrState(r)!=="완료"&&r.due_date>=TODAY&&!/D-\d|초과|오늘/.test(T[iD]))T[iD]=T[iD].replace(/<\/td>$/,' '+rr2Dday(r.due_date)+'</td>');
     if(iM>=0&&r&&!r.recruiter&&rrState(r)!=="완료")T[iM]='<td><span class="b sm warn">미배정</span></td>';
@@ -16887,7 +16891,7 @@ var _render186=render;render=function(){var x=_render186.apply(this,arguments);t
         · 이관: 첫 입사 → 영업이 기업 정보 채우고 [이관 요청] → 운영파트 관리자가 담당자 · 대무자 지정
    SQL (v187): workers.contact_channel · talent_picks/portfolios.avail_from·avail_now·wish_term · companies.handover_*
    ================================================================ */
-APP_VER="v187";APP_VER_ON="10/27";APP_NOTE="주 소통 바로 변경 · 주 소통 채널 · 채용 요청 표 정리 · 영업 화면 · 입사 가능일 · 희망 근무 기간";
+APP_VER="v188";APP_VER_ON="10/27";APP_NOTE="채용 요청 표: 같은 기업 묶음 줄 정렬 · 주 소통 바로 변경 · 주 소통 채널 · 채용 요청 표 정리 · 영업 화면 · 입사 가능일 · 희망 근무 기간";
 /* ---------- DB 칸 (SQL 전이면 저장 안 함) ---------- */
 var C187=[["workers","contact_channel",[["channel","contact_channel"]]],["talent_picks","avail_from",[["av_from","avail_from","date"],["av_now","avail_now","bool"],["wterm","wish_term"]]],["portfolios","avail_from",[["av_from","avail_from","date"],["av_now","avail_now","bool"],["wterm","wish_term"]]],["companies","handover_status",[["ho_st","handover_status"],["ho_on","handover_req_on","date"],["ho_note","handover_note"],["ho_from","handover_from"]]]];
 function c187Ok(t){return!LIVE||!!OKC[t+".v187"]}
@@ -16927,19 +16931,20 @@ var _dtable187=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k!=="rreq"||!A
   var I={};cols.forEach(function(c,i){I[c.k]=i});if(["sel","c","du","st","j","cd","pg","cn","nx","la","m"].some(function(x){return I[x]==null}))return _dtable187.apply(this,arguments);
   var C=[cols[I.sel],Object.assign({},cols[I.c],{h:"기업"}),{k:"sch",h:"일정",t:"date",v:function(r){return r.due_date||""}},Object.assign({},cols[I.j],{h:"직무 · 조건"}),Object.assign({},cols[I.pg],{h:"진행",al:""}),{k:"nx",h:"다음 할 일",t:"num",al:"",v:cols[I.la].v},cols[I.m]];
   var fn=function(r){var h=rowFn.apply(this,arguments);if(typeof h!=="string")return h;var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);
-    if(!T||T.length!==cols.length)return h.replace(/colspan="(\d+)"/,function(a,n){return'colspan="'+Math.max(1,+n-cols.length+C.length)+'"'});
+    var mem=!!(T&&/\brrgm\b/.test(m[1])&&T.length===cols.length-1);if(mem)T.splice(I.c,0,"");if(!T||T.length!==cols.length)return h.replace(/colspan="(\d+)"/,function(a,n){return'colspan="'+Math.max(1,+n-cols.length+C.length)+'"'});
     var done=rrState(r)==="완료",cn=(comp(r.company)||{}).name||"";
     var du=tdIn(T[I.du]);if(!done&&r.due_date&&r.due_date>=TODAY&&!/D-\d|초과|오늘|지남/.test(du))du+=' '+rr2Dday(r.due_date);
     var st0=tdIn(T[I.st]).replace(/<[^>]*>/g,"").trim(),la=tdIn(T[I.la]).replace(/<[^>]*>/g,"").trim(),late=/\blate\b/.test((T[I.la].match(/^<td[^>]*>/)||[""])[0]),n=rrCnt(r);
     var nx=done?'<span class="small">'+esc((r.status||"완료")+(r.status_note?" · "+r.status_note:""))+'</span>':tdIn(T[I.nx]);
-    var out=[T[I.sel],
+    var jc=tdIn(T[I.j]);if(mem||/class="grp"/.test(T[I.c]))jc=jc.replace(/<span class="b sm\s*(?:p|t)?\s*">(?:신규|추가|대체)<\/span>\s*/,"");
+    var out=[T[I.sel],mem?null:/class="grp"/.test(T[I.c])?T[I.c]:
       '<td class="rrc2"><div class="rr1" title="'+esc(cn)+'">'+tdIn(T[I.c])+'</div><div class="rsub num">'+(r.requested?esc(yymd(r.requested))+" 요청":"")+'</div></td>',
-      '<td class="nowrap"><div>'+(r.due_date?'<span class="small muted">마감</span> ':"")+du+'</div><div class="rsub">'+(st0&&st0!=="-"?"입사 "+esc(st0):"")+'</div></td>',
-      '<td><div>'+tdIn(T[I.j])+'</div><div class="rsub rsub-cd">'+tdIn(T[I.cd])+'</div></td>',
-      '<td class="nowrap"><div>'+tdIn(T[I.pg])+'</div><div class="rsub num">'+(n.a?"지원 "+n.a+" · 합격 "+n.ok+" · 불합격 "+n.no:"지원 없음")+'</div></td>',
-      '<td><div>'+(nx||'<span class="muted">—</span>')+'</div><div class="rsub'+(late&&!done?" late":"")+'">'+(la&&la!=="-"?esc(la)+" 활동":"")+'</div></td>',
+      '<td class="nowrap rrtc"><div>'+(r.due_date?'<span class="small muted">마감</span> ':"")+du+'</div><div class="rsub">'+(st0&&st0!=="-"?"입사 "+esc(st0):"")+'</div></td>',
+      '<td class="rrtl"><div>'+jc+'</div><div class="rsub rsub-cd">'+tdIn(T[I.cd])+'</div></td>',
+      '<td class="nowrap rrtl"><div>'+tdIn(T[I.pg])+'</div><div class="rsub num">'+(n.a?"지원 "+n.a+" · 합격 "+n.ok+" · 불합격 "+n.no:"지원 없음")+'</div></td>',
+      '<td class="rrtl"><div>'+(nx||'<span class="muted">—</span>')+'</div><div class="rsub'+(late&&!done?" late":"")+'">'+(la&&la!=="-"?esc(la)+" 활동":"")+'</div></td>',
       T[I.m]];
-    return m[1]+out.join("")+m[3]};
+    return m[1]+out.filter(function(x){return x!==null}).join("")+m[3]};
   return _dtable187.call(this,k,C,rows,fn,empty)};
 
 /* ================= ③ 입사 가능일 · 희망 근무 기간 ================= */
