@@ -1200,6 +1200,17 @@ table.rrc input[data-cd$="|name"]{display:inline-block;vertical-align:middle}
 .lkinfo{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:8px}
 .lkcard{background:#F7F6FB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
 .lklab{font-size:11.5px;color:var(--ink-2);min-width:76px}
+/* v199 채용 요청사항 */
+.pnl .rrround>.rrcomm,.rrround .rrcomm{display:none}
+.tkcs,.tkcomm{background:#F7F6FB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
+.tkcs .tkh,.tkcomm .tkh{font-size:12.5px;font-weight:600;margin-bottom:6px}
+.tkcsr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0;border-top:1px dashed var(--line)}
+.tkcsr:first-of-type{border-top:0}
+.tkcsr>b{min-width:64px}
+.tkcomm .memo-in{display:flex;gap:6px;margin-top:6px}
+.tkcomm .memo-in input{flex:1}
+.tkreq{margin-bottom:12px}
+.tkreq table{width:100%}
 </style>
 </head>
 <body>
@@ -17229,7 +17240,7 @@ function tkProbe(){if(!LIVE||typeof sb==="undefined"||!sb){tkTbAdd();return Prom
   return sb.from("recruit_talks").select("id").limit(1).then(function(r){OKC.recruit_talks=!r.error;TK_OK=!r.error},function(){OKC.recruit_talks=false}).then(tkTbAdd)}
 var _loadAll190=loadAll;loadAll=function(){var a=arguments,self=this;return tkProbe().then(function(){return _loadAll190.apply(self,a)}).then(function(x){DB.talks=DB.talks||[];return x})};
 tkTbAdd();
-function tkSave(){if(!TK_OK&&LIVE){toast("조율 표가 아직 없어 화면에만 남아요 · v190 SQL을 먼저 실행해 주세요")}if(LIVE&&READY)schedulePersist()}
+function tkSave(){if(!TK_OK&&LIVE){toast("요청사항 표가 아직 없어 화면에만 남아요 · v190 SQL을 먼저 실행해 주세요")}if(LIVE&&READY)schedulePersist()}
 /* ---------- 기본 ---------- */
 var TK_KIND=["면접 일정","처우 협의","입사일","서류 보완","기타"];
 var TK_TURN={ops:["운영 차례","p","고객사에 연락"],rec:["채용 차례","t","후보자에게 연락"],cw:["고객사 회신 대기","","고객사 답 기다림"],pw:["후보자 회신 대기","","후보자 답 기다림"],done:["완료","ok",""]};
@@ -17290,36 +17301,36 @@ function tkCard(t){var r=rcOf(t.rr),open=S.tkSel===t.id,N=tkNames(t),last=(t.msg
   h+='<div class="tkmsgs">'+(t.msgs||[]).map(function(m){return'<div class="tkm '+(m.who==="고객사"?"co":m.who==="후보자"?"pe":m.who==="자동"?"sy":"in")+'"><span class="tkmw">'+esc(m.who||"")+'</span> '+esc(m.text||"")+' <small class="muted">'+esc((m.by?m.by+" · ":"")+String(m.at||"").slice(5,16))+'</small></div>'}).join("")+'</div>';
   if(t.st!=="완료")h+='<div class="tkin"><div class="seg sm">'+["고객사","후보자","내부"].map(function(w){return'<button type="button" class="'+((S.tkWho||"내부")===w?"on":"")+'" data-act="tk-who" data-v="'+w+'">'+w+'</button>'}).join("")+'</div><input data-tkm="'+t.id+'" placeholder="받은 말 · 전한 말 · 메모 (Enter 기록)"><button class="btn xs" data-act="tk-msg" data-id="'+t.id+'">기록</button></div>';
   h+='<div class="tkfoot">'+(t.st==="완료"?'<span class="small">결과: <b>'+esc(t.result||"")+'</b></span><span class="grow"></span><button class="btn xs" data-act="tk-copy" data-id="'+t.id+'">📋 문구 복사</button><button class="btn xs" data-act="tk-reopen" data-id="'+t.id+'">다시 열기</button>':
-    (t.kind==="면접 일정"?'<button class="btn sm pri" data-act="tk-fix" data-id="'+t.id+'">면접 확정</button><span class="small muted">후보 면접일 · 시각에 들어가고 처리 기록에 한 줄 남아요</span>':'<input data-tkr="'+t.id+'" placeholder="합의 내용 (예: 하루 4시간 오전 · 11/03 입사)" value="'+esc(t.result||"")+'" style="flex:1"><button class="btn sm pri" data-act="tk-fix" data-id="'+t.id+'">합의 · 완료</button>')+'<span class="grow"></span><button class="btn xs" data-act="tk-cancel" data-id="'+t.id+'">조율 취소</button>')+'</div>';
+    (t.kind==="면접 일정"?'<button class="btn sm pri" data-act="tk-fix" data-id="'+t.id+'">면접 확정</button><span class="small muted">후보 면접일 · 시각에 들어가고 처리 기록에 한 줄 남아요</span>':'<input data-tkr="'+t.id+'" placeholder="합의 내용 (예: 하루 4시간 오전 · 11/03 입사)" value="'+esc(t.result||"")+'" style="flex:1"><button class="btn sm pri" data-act="tk-fix" data-id="'+t.id+'">합의 · 완료</button>')+'<span class="grow"></span><button class="btn xs" data-act="tk-cancel" data-id="'+t.id+'">요청 취소</button>')+'</div>';
   return h+'</div>'}
 function tkNewForm(rid){var F=S.tkNew,C=tkCands(rid).filter(function(o){return!cdClosed(o.c)||F.ck.indexOf(o.k)>=0});
-  return'<div class="tkcard open tknew"><div class="tkhd"><b>새 조율</b><span class="grow"></span><button class="btn xs" data-act="tk-newx">닫기</button></div>'+
+  return'<div class="tkcard open tknew"><div class="tkhd"><b>새 요청 건</b><span class="grow"></span><button class="btn xs" data-act="tk-newx">닫기</button></div>'+
     '<div class="tkrow"><span class="mclab">종류</span><div class="seg sm">'+TK_KIND.map(function(k){return'<button type="button" class="'+(F.kind===k?"on":"")+'" data-act="tk-nf" data-k="kind" data-v="'+k+'">'+k+'</button>'}).join("")+'</div></div>'+
     (F.kind==="면접 일정"?'<div class="tkrow"><span class="mclab">방식</span><div class="seg sm">'+TK_MODE.map(function(m){return'<button type="button" class="'+(F.mode===m[0]?"on":"")+'" data-act="tk-nf" data-k="mode" data-v="'+m[0]+'" title="'+esc(m[1])+'">'+esc(m[1])+'</button>'}).join("")+'</div></div>':"")+
     '<div class="tkrow"><span class="mclab">대상 후보</span><div class="tkck">'+(C.length?C.map(function(o){return'<label class="ckl"><input type="checkbox" data-tknc="'+esc(o.k)+'"'+(F.ck.indexOf(o.k)>=0?" checked":"")+'> '+esc(o.name)+' <small class="muted">'+(o.seq||"")+'차</small></label>'}).join(""):'<span class="small muted">후보가 없어요 · 요청 전체로 만들어져요</span>')+'</div></div>'+
     '<div class="tkrow"><span class="mclab">누가 요청</span><div class="seg sm">'+["고객사","후보자","내부"].map(function(w){return'<button type="button" class="'+(F.org===w?"on":"")+'" data-act="tk-nf" data-k="org" data-v="'+w+'">'+w+'</button>'}).join("")+'</div><span class="mclab" style="margin-left:12px">회신 기한</span><input type="date" data-tkn="due" value="'+esc(F.due||"")+'"></div>'+
     '<div class="tkrow"><span class="mclab">받은 내용</span><textarea data-tkn="text" rows="2" placeholder="고객사 · 후보자 메시지를 붙여 넣어요 (면접 일정이면 시간을 자동으로 읽어요)">'+esc(F.text||"")+'</textarea></div>'+
-    '<div class="tkfoot"><span class="grow"></span><button class="btn sm pri" data-act="tk-create" data-rr="'+esc(rid)+'">조율 시작</button></div></div>'}
-function tkSection(rid){var L=tksOf(rid),r=rcOf(rid);var h='<div class="ps wide tksec"><h3>조율 <span class="small muted" style="font-weight:400">면접 일정 · 처우 · 입사일 등 답을 기다리는 일 · 고객사 연락은 운영파트 · 후보자 연락은 채용파트</span><span class="grow"></span>'+(S.tkNew?"":'<button class="btn sm pri" data-act="tk-new" data-rr="'+esc(rid)+'">+ 조율</button>')+'</h3>';
-  if(!TK_OK&&LIVE)h+='<p class="hint" style="color:#B42318">조율 표(recruit_talks)가 아직 없어요 · v190 SQL을 실행하면 저장돼요</p>';
+    '<div class="tkfoot"><span class="grow"></span><button class="btn sm pri" data-act="tk-create" data-rr="'+esc(rid)+'">요청 등록</button></div></div>'}
+function tkSection(rid){var L=tksOf(rid),r=rcOf(rid);var h='<div class="ps wide tksec"><h3>요청사항 <span class="small muted" style="font-weight:400">면접 일정 · 처우 · 입사일 등 답을 기다리는 일 · 고객사 연락은 운영파트 · 후보자 연락은 채용파트</span><span class="grow"></span>'+(S.tkNew?"":'<button class="btn sm pri" data-act="tk-new" data-rr="'+esc(rid)+'">+ 요청 건</button>')+'</h3>';
+  if(!TK_OK&&LIVE)h+='<p class="hint" style="color:#B42318">요청사항 표(recruit_talks)가 아직 없어요 · v190 SQL을 실행하면 저장돼요</p>';
   if(S.tkNew&&S.tkNew.rr===rid)h+=tkNewForm(rid);
-  h+=L.length?L.map(tkCard).join(""):(S.tkNew?"":'<p class="hint">진행 중인 조율이 없어요.</p>');return h+'</div>'}
+  h+=L.length?L.map(tkCard).join(""):(S.tkNew?"":'<p class="hint">진행 중인 요청사항이 없어요.</p>');return h+'</div>'}
 /* 탭 */
 function tkTabPaint(){var p=document.querySelector('#main aside.pnl.pnl-w');if(!p||!S.rrSel||S.rrSel==="new"||p.dataset.tkt)return;var nav=p.querySelector("nav.rrpt");if(!nav)return;p.dataset.tkt="1";
   var L=tksOf(S.rrSel).filter(function(t){return t.st!=="완료"}),mine=L.filter(function(t){return tkMine(t)&&(t.turn==="ops"||t.turn==="rec")}).length;
-  nav.insertAdjacentHTML("beforeend",'<button class="'+(S.rrPT==="talk"?"on":"")+'" data-act="rr-pt" data-v="talk">조율'+(L.length?' <span class="cnt">'+L.length+'</span>':"")+(mine?' <span class="b sm p">내 차례 '+mine+'</span>':"")+'</button>');
+  nav.insertAdjacentHTML("beforeend",'<button class="'+(S.rrPT==="talk"?"on":"")+'" data-act="rr-pt" data-v="talk">요청사항'+(L.length?' <span class="cnt">'+L.length+'</span>':"")+(mine?' <span class="b sm p">내 차례 '+mine+'</span>':"")+'</button>');
   if(S.rrPT==="talk"){[].forEach.call(p.children,function(c){if(c.dataset&&c.dataset.rrk)c.style.display="none"});var cs=p.querySelector(".rr2cs");if(cs)cs.style.display="none";nav.insertAdjacentHTML("afterend",tkSection(S.rrSel))}}
 var _render190=render;render=function(){var x=_render190.apply(this,arguments);try{tkTabPaint()}catch(e){console.warn(e)}return x};
 /* 표 '다음 할 일' 앞줄 */
 function rrTalkNx(r){var L=tksOf(r.id).filter(function(t){return t.st!=="완료"});if(!L.length)return"";var pri={ops:0,rec:0,cw:1,pw:1};L.sort(function(a,b){return(tkLate(b)-tkLate(a))||(pri[a.turn]-pri[b.turn])});var t=L[0],T=TK_TURN[t.turn]||TK_TURN.ops,ag=t.msgs&&t.msgs.length?dAgo(String(t.msgs[t.msgs.length-1].at).slice(0,10)):null;
-  return'<div class="tkmini"><span class="b sm tkt '+T[1]+'">조율</span> '+esc(t.kind)+' · '+esc(T[0])+(ag?" · "+ag+"일":"")+(L.length>1?' <span class="small muted">외 '+(L.length-1)+'</span>':"")+(tkLate(t)?' <span class="b sm bad">기한 지남</span>':"")+'</div>'}
+  return'<div class="tkmini"><span class="b sm tkt '+T[1]+'">요청</span> '+esc(t.kind)+' · '+esc(T[0])+(ag?" · "+ag+"일":"")+(L.length>1?' <span class="small muted">외 '+(L.length-1)+'</span>':"")+(tkLate(t)?' <span class="b sm bad">기한 지남</span>':"")+'</div>'}
 /* 내 할 일 */
 var _buildTodos190=buildTodos;buildTodos=function(){var L=_buildTodos190.apply(this,arguments);try{(DB.talks||[]).forEach(function(t){if(t.st!=="진행")return;var r=rcOf(t.rr);if(!r||rrState(r)==="완료")return;var late=tkLate(t);if(!(t.turn==="ops"||t.turn==="rec"||late))return;
   var cn=(comp(r.company)||{}).name||r.company_label||"",N=tkNames(t),act=t.turn==="ops"?"고객사에 연락":t.turn==="rec"?"후보자에게 확인":t.turn==="cw"?"고객사 회신 독촉":"후보자 회신 독촉";
   if(t.kind==="면접 일정"&&t.mode==="배정"&&t.turn==="rec"){var A=(t.asg||{}).L||[];act="후보자 시간 확인 ("+A.filter(function(x){return x.s==="확인"}).length+"/"+A.length+")"}
-  tdPush(L,{key:"talk:"+t.id,type:"talk",cat:"채용",task:"[조율] "+cn+" · "+t.kind+(N.length?" · "+N.join(", "):"")+" · "+act,worker:"",emp:"",company:r.company,base:String(t.at||TODAY).slice(0,10),auto:false,fixedDue:t.due&&!late?t.due:addD(String(((t.msgs||[]).slice(-1)[0]||{}).at||t.at||TODAY).slice(0,10),1),rr:r.id,tk:t.id});
+  tdPush(L,{key:"talk:"+t.id,type:"talk",cat:"채용",task:"[채용 요청사항] "+cn+" · "+t.kind+(N.length?" · "+N.join(", "):"")+" · "+act,worker:"",emp:"",company:r.company,base:String(t.at||TODAY).slice(0,10),auto:false,fixedDue:t.due&&!late?t.due:addD(String(((t.msgs||[]).slice(-1)[0]||{}).at||t.at||TODAY).slice(0,10),1),rr:r.id,tk:t.id});
   var o=L[L.length-1];o.assignee=(t.turn==="ops"||t.turn==="cw")?(assignee(r.company).who||""):(rrRecruiter(r)||rr2Mgr());o.proxy=false;o.orig=""})}catch(e){console.warn(e)}return L};
-var _pTodo190=pTodo;pTodo=function(t){var h=_pTodo190.apply(this,arguments);if(!h||!t||t.type!=="talk")return h;var k=tkOf(t.tk);var b='<div class="ps wide"><h3>조율 '+(k?tkTurnBadge(k):"")+'</h3><div class="obt"><button class="btn pri" data-act="tk-go" data-rr="'+esc(t.rr)+'" data-id="'+esc(t.tk)+'">조율 열기</button></div></div>';
+var _pTodo190=pTodo;pTodo=function(t){var h=_pTodo190.apply(this,arguments);if(!h||!t||t.type!=="talk")return h;var k=tkOf(t.tk);var b='<div class="ps wide"><h3>채용 요청사항 '+(k?tkTurnBadge(k):"")+'</h3><div class="obt"><button class="btn pri" data-act="tk-go" data-rr="'+esc(t.rr)+'" data-id="'+esc(t.tk)+'">요청사항 열기</button></div></div>';
   return/<\/div><\/aside>$/.test(h)?h.replace(/<\/div><\/aside>$/,b+'</div></aside>'):h.replace(/<\/aside>$/,b+'</aside>')};
 /* ---------- 동작 ---------- */
 function tkTurn(t,v,q){var b=t.turn;if(b===v)return;t.turn=v;var lab={ops:"운영 차례",rec:"채용 차례",cw:"고객사 회신 대기",pw:"후보자 회신 대기"};tkMsg(t,"자동",(lab[b]||b)+" → "+lab[v]);if((v==="cw"||v==="pw")&&!t.due)t.due=addD(TODAY,2)}
@@ -17330,8 +17341,8 @@ function tkFix(t){var r=rcOf(t.rr),cn=(comp(r&&r.company)||{}).name||"";if(t.kin
     P.forEach(function(p){var o=tkCand(t.rr,p.k);if(!o)return;var C=o.x.cands.slice();C[o.i]=Object.assign({},C[o.i],{iv:C[o.i].iv&&C[o.i].iv!=="진행 예정"&&C[o.i].iv!==""?C[o.i].iv:"진행 예정",iv_on:p.d,iv_at:p.t});o.x.cands=C});
     t.result="면접 "+P.map(function(p){var o=tkCand(t.rr,p.k);return md(p.d)+" "+p.t+" "+(o?o.name:"")}).join(" / ")}
   else{var i=document.querySelector('[data-tkr="'+t.id+'"]');var v=i?i.value.trim():t.result;if(!v){toast("합의 내용을 적어 주세요");return false}t.result=v}
-  t.st="완료";t.turn="done";t.done=stamp();tkMsg(t,"자동","확정 · "+t.result);DB.memos.push({id:nid(),table:"recruit_requests",tid:t.rr,body:"[조율] "+t.kind+" 확정 · "+t.result,author:st(S.me).name,at:stamp()});
-  logChange("recruit_requests",t.rr,cn,"조율 "+t.kind,"진행","확정 · "+t.result,"브이드림 내부");return true}
+  t.st="완료";t.turn="done";t.done=stamp();tkMsg(t,"자동","확정 · "+t.result);DB.memos.push({id:nid(),table:"recruit_requests",tid:t.rr,body:"[채용 요청사항] "+t.kind+" 확정 · "+t.result,author:st(S.me).name,at:stamp()});
+  logChange("recruit_requests",t.rr,cn,"요청사항 "+t.kind,"진행","확정 · "+t.result,"브이드림 내부");return true}
 var _v139Act190=v139Act;v139Act=function(a,el){var D0=el.dataset||{},t=D0.id?tkOf(D0.id):null;switch(a){
   case"tk-new":S.tkNew={rr:D0.rr,kind:"면접 일정",mode:"제시",ck:[],org:"고객사",due:"",text:""};S.tkSel=null;render();return true;
   case"tk-newx":S.tkNew=null;render();return true;
@@ -17341,7 +17352,7 @@ var _v139Act190=v139Act;v139Act=function(a,el){var D0=el.dataset||{},t=D0.id?tkO
     if(x.mode==="배정"&&!x.asg)x.asg={d:"",t:"",per:tkLastPer(r.company),gap:0,L:[]};
     if(x.mode==="배정"&&x.asg&&x.asg.t&&x.ck.length)x.asg.L=tkGenL(x);
     if(F.org==="내부"&&x.kind!=="면접 일정")x.turn="ops";
-    DB.talks.push(x);S.tkNew=null;S.tkSel=x.id;logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"","조율 시작","",x.kind+(tkNames(x).length?" · "+tkNames(x).join(", "):""),"브이드림 내부");tkSave();render()})();return true;
+    DB.talks.push(x);S.tkNew=null;S.tkSel=x.id;logChange("recruit_requests",r.id,(comp(r.company)||{}).name||"","요청사항 등록","",x.kind+(tkNames(x).length?" · "+tkNames(x).join(", "):""),"브이드림 내부");tkSave();render()})();return true;
   case"tk-open":S.tkSel=S.tkSel===D0.id?null:D0.id;render();return true;
   case"tk-go":go("rreq");S.rrSel=D0.rr;S.rrPT="talk";S.tkSel=D0.id;render();return true;
   case"tk-who":S.tkWho=D0.v;render();return true;
@@ -17359,7 +17370,7 @@ var _v139Act190=v139Act;v139Act=function(a,el){var D0=el.dataset||{},t=D0.id?tkO
     if(D0.v==="변경"&&t.turn!=="rec")tkTurn(t,"rec");else if(L.every(function(x){return x.s==="확인"})&&t.turn!=="ops"){tkTurn(t,"ops");toast("전원 확인 · 고객사에 최종 명단을 전달해 주세요")}tkSave();render()})();return true;
   case"tk-fix":if(!t)return true;if(tkFix(t)){tkSave();toast("확정했어요");render()}return true;
   case"tk-reopen":if(!t)return true;t.st="진행";t.turn="ops";t.done="";tkMsg(t,"자동","다시 열기");tkSave();render();return true;
-  case"tk-cancel":if(!t)return true;ovAsk("조율 취소","<p style='margin:0'>이 조율을 취소할까요? 기록은 남아요.</p>",[{k:"ok",l:"취소하기",pri:true},{k:"x",l:"닫기"}],function(r){if(r!=="ok")return;t.st="취소";tkMsg(t,"자동","조율 취소");tkSave();render()});return true}
+  case"tk-cancel":if(!t)return true;ovAsk("요청 건 취소","<p style='margin:0'>이 요청 건을 취소할까요? 기록은 남아요.</p>",[{k:"ok",l:"취소하기",pri:true},{k:"x",l:"닫기"}],function(r){if(r!=="ok")return;t.st="취소";tkMsg(t,"자동","요청 건 취소");tkSave();render()});return true}
   return _v139Act190(a,el)};
 function tkLastPer(cid){var L=(DB.talks||[]).filter(function(t){var r=rcOf(t.rr);return r&&r.company===cid&&t.asg&&t.asg.per}).sort(function(a,b){return String(b.at).localeCompare(String(a.at))});return L[0]?+L[0].asg.per:30}
 function tkGenL(t){var A=t.asg||{},per=+A.per||30,gap=+A.gap||0,m=/^(\d{1,2}):(\d{2})$/.exec(A.t||"");if(!m)return[];var base=+m[1]*60+(+m[2]),old={};((A.L)||[]).forEach(function(x){old[x.k]=x});
@@ -18013,6 +18024,41 @@ var _vRreq198=vRreq;vRreq=function(){var h=_vRreq198.apply(this,arguments);if(S.
 var _v139Act198=v139Act;v139Act=function(a,el){if(a==="lk-endall"){var L=lkPending();if(!L.length){toast("대기 중인 연계 검토가 없어요");return true}
   ovAsk("연계 검토 한 번에 종결",'<p style="margin:0">지금 대기 중인 <b>'+L.length+'명</b>을 모두 <b>연계 종료 · 기타</b>로 정리할까요?<br><span class="small muted">'+esc(L.slice(0,8).map(function(o){return o.c.name+"("+lkCo(o.r)+")"}).join(" · "))+(L.length>8?" 외":"")+'</span></p>',[{k:"ok",l:L.length+"명 종결",pri:true},{k:"x",l:"취소"}],function(r){if(r!=="ok")return;L.forEach(function(o){lkSetC(o.x.id,o.i,function(cc){cc.lk={st:"end",why:"기타",by:st(S.me).name,at:stamp()}})});logChange("recruit_requests","lk-endall","연계 검토","일괄 종결","",L.length+"명 · 기타","브이드림 내부");if(LIVE&&READY)schedulePersist();toast(L.length+"명을 연계 종료(기타)로 정리했어요");render()});return true}
   return _v139Act198(a,el)};
+
+/* ================================================================
+   v199 채용 요청 안의 요청사항 (조율 → 요청사항)
+     · 요청 건 = 하나의 채용 요청 안에서 여러 후보에 대한 같은 소통 요청 (면접 일정 · 처우 · 입사일 · 서류 보완 · 근무 조건 변경 · 기타)
+     · 후보별 상태 (대기 · 진행 · 완료) + 메모 · 전원 완료면 요청 건 완료 · 처리 기록 한 줄
+     · 차수 카드 '기업 소통' 기록 → 요청사항 탭 '기업 소통 기록'으로 모음 (차수 표시)
+     · 고객사 요청사항 메뉴 위: 채용 요청사항 진행 중 목록
+   ================================================================ */
+APP_VER="v199";APP_VER_ON="10/27";APP_NOTE="채용 요청 안의 요청사항 · 후보별 상태 · 기업 소통 기록 모음 · 고객사 요청사항에 표시";
+if(TK_KIND.indexOf("근무 조건 변경")<0)TK_KIND.splice(TK_KIND.length-1,0,"근무 조건 변경");
+function tkCs(t,k){var c=(t.conf||{})[k]||{};return{s:c.s||(c.d&&c.t?"완료":"대기"),m:c.m||""}}
+function tkProg(t){var K=t.ck||[];if(!K.length)return null;var d=K.filter(function(k){return tkCs(t,k).s==="완료"}).length;return{d:d,n:K.length}}
+function tkCandRows(t){var K=t.ck||[];if(!K.length)return"";return'<div class="tkcs"><div class="tkh">대상 후보 <span class="small muted">후보마다 진행 상태 · 모두 완료되면 요청 건이 완료돼요</span></div>'+K.map(function(k){var o=tkCand(t.rr,k),c=tkCs(t,k);return'<div class="tkcsr"><b>'+esc(o?o.name:"(후보 없음)")+'</b><div class="seg sm">'+["대기","진행","완료"].map(function(v){return'<button type="button" class="'+(c.s===v?"on":"")+'" data-act="tkc-s" data-id="'+t.id+'" data-k="'+esc(k)+'" data-v="'+v+'">'+v+'</button>'}).join("")+'</div><input data-tkcm="'+t.id+'|'+esc(k)+'" value="'+esc(c.m)+'" placeholder="메모 (예: 11/3 서류 받음)" style="flex:1;min-width:160px"></div>'}).join("")+'</div>'}
+var _tkCard199=tkCard;tkCard=function(t){var h=_tkCard199.apply(this,arguments);try{var P=tkProg(t);if(P&&P.n>1||P&&t.kind!=="면접 일정")h=h.replace(/(<span class="grow"><\/span>)/,'<span class="b sm">완료 '+P.d+'/'+P.n+'</span>$1');
+  if(S.tkSel===t.id&&t.st!=="완료"&&t.kind!=="면접 일정"){var i=h.indexOf('<div class="tkwo">');var rows=tkCandRows(t);if(i>0)h=h.slice(0,i)+rows+h.slice(i)}}catch(e){console.warn(e)}return h};
+function tkAllDone(t){var P=tkProg(t);if(!P||P.d<P.n||t.st==="완료")return;t.st="완료";t.turn="done";t.done=stamp();if(!t.result)t.result="대상 "+P.n+"명 모두 완료";tkMsg(t,"자동","전원 완료");
+  DB.memos.push({id:nid(),table:"recruit_requests",tid:t.rr,body:"[채용 요청사항] "+t.kind+" 완료 · "+t.result,author:st(S.me).name,at:stamp()});toast("대상 후보가 모두 완료돼서 요청 건을 완료했어요")}
+/* 기업 소통 기록 모음 */
+function commAll(rid){var L=[];rrRounds(rid).forEach(function(x){(x.comm||[]).forEach(function(m,i){L.push({x:x,m:m,i:i})})});return L.sort(function(a,b){return String(b.m.d||"").localeCompare(String(a.m.d||""))||b.i-a.i})}
+var _tkSection199=tkSection;tkSection=function(rid){var h=_tkSection199.apply(this,arguments);try{var R=rrRounds(rid),L=commAll(rid);
+  var box='<div class="tkcomm"><div class="tkh">기업 소통 기록 <span class="small muted">고객사와 주고받은 내용 · 차수별로 남아요 (예전 차수 카드 \'기업 소통\')</span></div>'+(L.length?L.map(function(o){return'<div class="memo"><span class="b sm">'+o.x.seq+'차</span> '+esc(o.m.t||"")+'<small>'+esc((o.m.by||"")+" · "+(o.m.d||""))+'</small></div>'}).join(""):'<p class="hint" style="margin:4px 0">아직 기록이 없어요</p>')+
+    (R.length?'<div class="memo-in"><select data-tkcx data-nosbx>'+R.slice().reverse().map(function(x){return'<option value="'+esc(x.id)+'">'+x.seq+'차</option>'}).join("")+'</select><input data-tkcomm="'+esc(rid)+'" placeholder="기업과 주고받은 내용 (Enter)"><button class="btn sm" data-act="tkcomm-add" data-rr="'+esc(rid)+'">기록</button></div>':'<p class="hint">차수를 먼저 만들면 기록할 수 있어요</p>')+'</div>';
+  return h.replace(/<\/div>$/,box+'</div>')}catch(e){console.warn(e);return h}};
+/* 고객사 요청사항 메뉴: 채용 요청사항 */
+var _vReq199=vReq;vReq=function(){var h=_vReq199.apply(this,arguments);try{var L=(DB.talks||[]).filter(function(t){var r=rcOf(t.rr);return t.st==="진행"&&r&&rrState(r)!=="완료"&&scopeOK(r.company)});if(!L.length)return h;
+  var box='<div class="soonbar tkreq"><b>채용 요청사항 진행 중 '+L.length+'건</b> <span class="small muted">채용 요청 안의 소통 요청 · 면접 일정 · 처우 · 서류 보완 등</span><table class="t" style="margin-top:8px"><thead><tr><th>기업</th><th>요청</th><th>대상</th><th>차례</th><th>기한</th><th></th></tr></thead><tbody>'+
+    L.sort(function(a,b){return(tkLate(b)-tkLate(a))||String(a.due||"9").localeCompare(String(b.due||"9"))}).slice(0,20).map(function(t){var r=rcOf(t.rr),P=tkProg(t);return'<tr><td>'+esc(lkCo(r))+'</td><td>'+esc(t.kind)+'</td><td class="small">'+esc(tkNames(t).join(", ")||"요청 전체")+(P?' <span class="muted">('+P.d+'/'+P.n+')</span>':"")+'</td><td>'+tkTurnBadge(t)+'</td><td class="small num">'+esc(t.due?md(t.due):"—")+'</td><td><button class="btn xs" data-act="tk-go" data-rr="'+esc(t.rr)+'" data-id="'+esc(t.id)+'">열기</button></td></tr>'}).join("")+'</tbody></table></div>';
+  var k=h.indexOf('<div class="tabs');return k>0?h.slice(0,k)+box+h.slice(k):box+h}catch(e){console.warn(e);return h}};
+var _v139Act199=v139Act;v139Act=function(a,el){var D0=el.dataset||{};switch(a){
+  case"tk-go":go("rreq");S.rrSel=D0.rr;RR_LAST=D0.rr;S.rrPT="talk";S.tkSel=D0.id;render();return true;
+  case"tkc-s":(function(){var t=tkOf(D0.id);if(!t)return;t.conf=Object.assign({},t.conf||{});var c=Object.assign({},t.conf[D0.k]||{});var b=c.s||"대기";if(b===D0.v)return;c.s=D0.v;t.conf[D0.k]=c;var o=tkCand(t.rr,D0.k);tkMsg(t,"내부",(o?o.name:"")+" · "+b+" → "+D0.v);tkAllDone(t);tkSave();render()})();return true;
+  case"tkcomm-add":(function(){var i=document.querySelector('[data-tkcomm="'+D0.rr+'"]'),s=document.querySelector("[data-tkcx]");var v=i&&i.value.trim();if(!v){toast("내용을 적어 주세요");return}var x=DB.rrr.find(function(y){return y.id===(s&&s.value)});if(!x)return;x.comm=(x.comm||[]).concat([{t:v,by:st(S.me).name,d:TODAY}]);if(LIVE&&READY)schedulePersist();render()})();return true}
+  return _v139Act199(a,el)};
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.tkcm)return;var p=t.dataset.tkcm.split("|"),k=tkOf(p[0]);if(!k)return;k.conf=Object.assign({},k.conf||{});var c=Object.assign({},k.conf[p[1]]||{});c.m=t.value.trim();k.conf[p[1]]=c;tkSave()},true);
+document.addEventListener("keydown",function(ev){var t=ev.target;if(ev.key==="Enter"&&!ev.shiftKey&&t&&t.dataset&&t.dataset.tkcomm){ev.preventDefault();var b=document.querySelector('[data-act="tkcomm-add"][data-rr="'+t.dataset.tkcomm+'"]');if(b)b.click()}},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
