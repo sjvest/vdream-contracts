@@ -254,7 +254,7 @@ VT.talents={deps:["staff","organizations","talent_picks","portfolios","workers",
     /* 기관 소속 근로자 중 입사 기록이 있는 사람 (운영페이지 근로자 DB) */
     (raw.workers||[]).forEach(function(w){if(!w.org_id||seenW[w.id]||w.merged_into)return;var E=(raw.employments||[]).filter(function(e){return e.worker_id===w.id&&!e.cancelled});if(!E.length)return;L.push(wkTal(w))});return L},
   blobs:function(sel,rows){if(!/(^|,)\s*files\s*(,|$)/.test(sel))return Promise.resolve();return blobGet(rows.map(function(r){return"tfiles:"+talKey(r._k,r._vw)}))},
-  ins:function(p){var id=uid(),m=talPatch("tl",null,p);var o=txt("org",p.source_org_id||p.org_id);
+  ins:function(p){var id=uid(),m=talPatch("tl",null,p);try{var R0=(raw.talent_picks||[]).find(function(r){return r&&("avail_from" in r)});if(R0)Object.assign(m.x,plAvRead())}catch(e){}var o=txt("org",p.source_org_id||p.org_id);
     var row=Object.assign({id:id,source:o?"기관 추천":"담당자 추천",origin:o?"기관 추천":"담당자 추천",status:"대기",reason:p.memo||"",links:[],wish_hours_list:[],created_by_name:p.created_by_name||myName(),created_at:new Date().toISOString(),pl:Object.assign({src:"pl"},m.pl)},m.x);
     if(!("birth_date" in((raw.talent_picks||[])[0]||{birth_date:1})))delete row.birth_date;
     return rIns("talent_picks",row).then(function(x){return talOld("tl",x)})},
@@ -409,7 +409,7 @@ window.fetch=function(u,o){var url=String(u&&u.url||u||"");
   if(/chat\.googleapis\.com/.test(url)){var text="";try{text=JSON.parse(o&&o.body||"{}").text||""}catch(e){}
     if(!R||!text)return Promise.resolve(new Response("{}",{status:200}));
     return R.from("gas_jobs").insert({id:uid(),kind:"chat_msg",ref_id:"pl",payload:{text:text,by:myName()},status:"queued",attempts:0,requested_by:ME&&ME.id||null,requested_by_name:myName()}).then(function(){return new Response("{}",{status:200})},function(){return new Response("{}",{status:200})})}
-  if(/generativelanguage\.googleapis\.com/.test(url)){var bd=null,img=null,mime="image/jpeg",pp0=null;try{bd=JSON.parse(o&&o.body||"{}");(bd.contents||[]).forEach(function(c){(c.parts||[]).forEach(function(pp){if(pp.inline_data){pp0=pp;img=pp.inline_data.data;mime=pp.inline_data.mime_type||mime}})})}catch(e){}
+  if(/generativelanguage\.googleapis\.com\/.*:generateContent/.test(url)){var bd=null,img=null,mime="image/jpeg",pp0=null;try{bd=JSON.parse(o&&o.body||"{}");(bd.contents||[]).forEach(function(c){(c.parts||[]).forEach(function(pp){if(pp.inline_data){pp0=pp;img=pp.inline_data.data;mime=pp.inline_data.mime_type||mime}})})}catch(e){}
     if(!img)return Promise.resolve(new Response(JSON.stringify({error:{message:"사진을 읽지 못했어요"}}),{status:200}));
     var K=plGemKey();
     return plShrink(img,mime).then(function(sm){
@@ -424,8 +424,12 @@ window.fetch=function(u,o){var url=String(u&&u.url||u||"");
         var j={org_name:c.org||null,contact_name:c.name||null,contact_title:c.title||null,mobile:c.mobile||null,fax:c.fax||null,phone:c.phone||null,email:c.email||null,address:c.address||null,website:c.website||null};
         return new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify(j)}]}}]}),{status:200,headers:{"Content-Type":"application/json"}})},function(e){return new Response(JSON.stringify({error:{message:"명함 글자 읽기 실패 · "+String(e&&e.message||e)}}),{status:200})})})}
   return _fetch(u,o)};
-})();
-</script>
+
+/* pl-v167: 인재 등록 · 입사 가능 · 희망 근무 기간 (운영페이지 영업용 인재 풀과 같은 칸) */
+function plAvRead(){var g=function(i){var e=document.getElementById(i);return e?e.value:""};var md=g("t-avail-mode"),d=g("t-avail-date"),t=g("t-wterm"),x={};
+  if(md==="now"){x.avail_now=true;x.avail_from=null}else if(md==="date"&&d){x.avail_now=false;x.avail_from=d}if(t)x.wish_term=t;return x}
+window.plAvReset=function(){["t-avail-mode","t-avail-date","t-wterm"].forEach(function(i){var e=document.getElementById(i);if(e)e.value=""});var d=document.getElementById("t-avail-date");if(d)d.style.display="none"};
+})();</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -2158,7 +2162,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <option value="기타온라인"> 기타 온라인</option>
         </select>
       </div>
-      <div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option></select></div>
+      <div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option></select></div><div class="fg"><label>입사 가능</label><div style="display:flex;gap:6px"><select id="t-avail-mode" onchange="document.getElementById('t-avail-date').style.display=this.value==='date'?'':'none'"><option value="">미입력</option><option value="now">지금 가능</option><option value="date">날짜 지정</option></select><input type="date" id="t-avail-date" style="display:none"></div></div><div class="fg"><label>희망 근무 기간</label><select id="t-wterm"><option value="">미입력</option><option>6개월</option><option>12개월</option><option>무관</option></select></div>
     </div>
     <div id="t-org-wrap" class="fg"><label>연결 기관</label>
       <div style="position:relative;">
@@ -2426,7 +2430,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='pl-v166';
+const APP_BUILD_VERSION='pl-v167';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -5547,7 +5551,7 @@ function toggleChannelFields(){
   document.getElementById('t-org-wrap').style.display=isOrg?'':'none';
   document.getElementById('t-referrer-wrap').style.display=isRef?'':'none';
 }
-async function openAddTalent(){
+async function openAddTalent(){if(window.plAvReset)plAvReset();
   renderTalent();
   jobScopedRegistration=null; // 일반 등록 진입 시 이전 채용건 컨텍스트가 남아있지 않도록 초기화
   talentLinkMap={}; // 이전에 연결해둔 기존 인재 매칭도 초기화
@@ -5565,7 +5569,7 @@ async function openAddTalent(){
 }
 // 채용건 상세에서 "+ 지원자 등록"으로 들어올 때: job_id를 사람이 다시 고르지 않도록
 // jobScopedRegistration에 자동으로 실어두고, 지원 회사명/직무/상태를 미리 채워준다.
-async function openAddTalentForJob(jobId){
+async function openAddTalentForJob(jobId){if(window.plAvReset)plAvReset();
   const job=cache.jobs.find(x=>x.id===jobId);
   if(!job){toast('채용건을 찾을 수 없어요');return;}
   await openAddTalent();
