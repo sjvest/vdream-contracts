@@ -242,7 +242,7 @@ function talPatch(k,t,p){var x={},pl={},has=function(kk){return kk in p};
   if(has("birth_date")){if(k==="pf"||"birth_date" in(t||{birth_date:1}))x.birth_date=d10(p.birth_date)}
   if(k==="pf"){if(has("disability_type"))x.dis_type=p.disability_type||"";if(has("disability_grade"))x.dis_level=p.disability_grade||""}
   if(has("source_org_id")||has("org_id")){var o=txt("org",has("source_org_id")?p.source_org_id:p.org_id);x.src_org_id=o||null}
-  if(has("job")){var J=S(p.job).split(/[,·\/]/).map(function(s){return s.trim()}).filter(Boolean);if(k==="pf")x.jobs=J;else{x.wish_jobs=J;x.wish_job=J[0]||""}pl.job=p.job||""}
+  if(has("job")){var J=S(p.job).split(/[,·\/]/).map(function(s){return s.trim()}).filter(Boolean);var NJ=plJobStd(J);if(k==="pf"){x.jobs=NJ.jobs;if(NJ.det)x.job_detail=NJ.det}else{x.wish_jobs=NJ.jobs;x.wish_job=NJ.jobs[0]||"";x.wish_job_etc=NJ.det||null}pl.job=p.job||""}
   if(has("status")){var ns=(k==="pf"?PF_O2N:TL_O2N)[p.status];if(ns)x.status=ns;pl.status=p.status;if(t&&"st_manual" in t){x.st_manual=true;x.st_reason="발굴 앱 상태 변경"}}
   if(has("memo")){pl.memo=p.memo||"";if(k==="pf")x.note=p.memo||""}
   ["channel","referrer","member","date","hire_company","contract_end_date","join_date","status_history","updated_by_name","is_test","availability_status","created_by","disability_type","disability_grade"].forEach(function(kk){if(has(kk))pl[kk]=p[kk]});
@@ -429,6 +429,12 @@ window.fetch=function(u,o){var url=String(u&&u.url||u||"");
 function plAvRead(){var g=function(i){var e=document.getElementById(i);return e?e.value:""};var md=g("t-avail-mode"),d=g("t-avail-date"),t=g("t-wterm"),x={};
   if(md==="now"){x.avail_now=true;x.avail_from=null}else if(md==="date"&&d){x.avail_now=false;x.avail_from=d}if(t)x.wish_term=t;return x}
 window.plAvReset=function(){["t-avail-mode","t-avail-date","t-wterm"].forEach(function(i){var e=document.getElementById(i);if(e)e.value=""});var d=document.getElementById("t-avail-date");if(d)d.style.display="none"};
+
+/* pl-v168: 직무 표준화 (운영페이지 v191과 같은 규칙) · 원래 글은 상세로 */
+var PL_STD=["사무행정","뉴스스크랩","디자인","미술","음악","체육","기타"],PL_KW=[["사무행정",/사무|행정|보조|문서|데이터|입력|블로그|엑셀|회계|경리|총무|타이핑|전산|콘텐츠/],["뉴스스크랩",/뉴스|스크랩|모니터링/],["디자인",/디자인|편집|포토샵|일러|영상|그래픽|웹툰/],["미술",/미술|그림|드로잉|회화|공예|도예|작가/],["음악",/음악|합창|피아노|악기|노래|바이올린|첼로|성악|밴드|연주|오케스트라/],["체육",/체육|슐런|운동|탁구|볼링|보치아|수영|스포츠|육상|배드민턴|론볼/]];
+function plJobStd(J){var out=[],det=[];(J||[]).forEach(function(tok){tok=String(tok||"").trim();if(!tok)return;if(PL_STD.indexOf(tok)>=0&&tok!=="기타"){if(out.indexOf(tok)<0)out.push(tok);return}
+  var m=/^([^(]*)\((.*)\)\s*$/.exec(tok),inner=m?m[2]:tok,hit=0;inner.split(/[\/,·&+]/).forEach(function(pc){var h=PL_KW.find(function(k){return k[1].test(pc)});if(h){hit=1;if(out.indexOf(h[0])<0)out.push(h[0])}});if(!hit&&out.indexOf("기타")<0)out.push("기타");det.push(m?m[2].trim():tok)});
+  return{jobs:out,det:det.join(" · ")}}
 })();</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -2430,7 +2436,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='pl-v167';
+const APP_BUILD_VERSION='pl-v168';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
