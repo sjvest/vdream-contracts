@@ -18153,7 +18153,7 @@ var _pRr200=pRr;pRr=function(){var h=_pRr200.apply(this,arguments);if(typeof h!=
 if(typeof pSupq==="function"){var _pSupq200=pSupq;pSupq=function(){var h=_pSupq200.apply(this,arguments);try{var q=(DB.supq||[]).find(function(x){return x.id===S.sqSel});if(!q||typeof h!=="string")return h;var i=h.indexOf("<h3>연결 인재 ");if(i<0)return h;var b=h.lastIndexOf('<div class="ps wide">',i);if(b<0)return h;
   var L=(q.links||[]).filter(function(l){return sqPerson(l.k,l.id)}).map(function(l){return sqOrecOf(q,l)||null});return orecFold(h,b,L,null,function(o){return o?o.status:""},"sq:"+q.id)}catch(e){console.warn(e);return h}}}
 /* ---------- ⑥ 내 할 일: 미등록 기업 이름 ---------- */
-function tdLb(t){if(!t||t.company)return"";var r=null;if(t.rr)r=rcOf(t.rr);if(!r&&t.lkx){var x=(DB.rrr||[]).find(function(y){return y.id===t.lkx});r=x&&rcOf(x.req)}if(!r&&t.tk){var k=typeof tkOf==="function"&&tkOf(t.tk);r=k&&rcOf(k.rr)}if(!r||r.company)return"";return String(r.company_label||rrSheetName(r)||"").trim()}
+function tdLb(t){if(!t||t.company)return"";var r=null;if(t.rr)r=rcOf(t.rr);if(!r&&t.lkx){var x=(DB.rrr||[]).find(function(y){return y.id===t.lkx});r=x&&rcOf(x.req)}if(!r&&t.tk){var k=typeof tkOf==="function"&&tkOf(t.tk);r=k&&rcOf(k.rr)}if(!r&&t.orec){var o=(DB.orec||[]).find(function(x){return x.id===t.orec});r=o&&rcOf(o.rr)}if(!r&&/^osup:/.test(t.key||"")){var q=(DB.supq||[]).find(function(x){return t.key.indexOf(x.id)>=0});r=q&&rcOf(q.rr)}if(!r||r.company)return"";return String(r.company_label||rrSheetName(r)||"").trim()}
 function lbHtml(n){return'<span class="lbco">'+esc(n)+' <span class="b sm warn">미등록</span></span>'}
 var TD_LB=false;
 var _bt200b=buildTodos;buildTodos=function(){var L=_bt200b.apply(this,arguments);if(!TD_LB)return L;return L.map(function(t){var n=tdLb(t);return n?Object.assign({},t,{company:"__lb__"+n}):t})};
@@ -18207,6 +18207,23 @@ var _schedulePersist201=schedulePersist;schedulePersist=function(){try{lbSweep()
 var _vRreq201=vRreq;vRreq=function(){var h=_vRreq201.apply(this,arguments);try{var L=DB.rr.filter(function(r){return!r.company&&String(r.company_label||rrSheetName(r)||"").trim()&&rrState(r)!=="완료"&&!tRr(r)});if(!L.length)return h;
   var bar='<div class="fbbar lbbar"><span class="small">기업 DB에 없는 <b>미등록 기업 '+L.length+'건</b> · 담당 · 기업별 집계에서 빠져요 · 열어서 [기업 DB에 등록하고 연결]</span><span class="grow"></span>'+L.slice(0,8).map(function(r){return'<button class="btn xs" data-act="rr-open" data-id="'+esc(r.id)+'">'+esc(String(r.company_label||rrSheetName(r)).trim())+'</button>'}).join("")+(L.length>8?'<span class="small muted">외 '+(L.length-8)+'건</span>':"")+'</div>';
   var m=/<div class="tabs[^"]*"[^>]*role="tablist"/.exec(h),k=m?m.index:h.indexOf('<div class="fbar">');return k>0?h.slice(0,k)+bar+h.slice(k):bar+h}catch(e){console.warn(e);return h}};
+
+/* ================================================================
+   v202
+     ① 내 할 일: 발굴 추천 검토 · 수급 요청 할 일도 미등록 기업명
+     ② 영업 홈 계약완료: 같은 기업에 진행 중인 채용 요청이 있으면 '기존 건에 연결 / 새로 만들기' 먼저 묻기
+   ================================================================ */
+APP_VER="v202";APP_VER_ON="10/28";APP_NOTE="발굴 추천 할 일 미등록 기업명 · 계약완료 때 기존 채용 요청 연결";
+function ldOpenRrs(L){var c=L.cid&&comp(L.cid)||DB.companies.find(function(x){return mNorm(x.name)===mNorm(L.cname)}),nm=mNorm(L.cname);
+  return DB.rr.filter(function(r){if(rrState(r)==="완료"||r.status==="취소")return false;if(c&&r.company===c.id)return true;return!r.company&&nm&&mNorm(r.company_label||rrSheetName(r)||"")===nm}).sort(function(a,b){return String(b.created||"").localeCompare(String(a.created||""))})}
+function ldLinkRr(L,r){var c=comp(r.company);L.res="계약완료";L.rr=r.id;if(c)L.cid=c.id;
+  DB.memos.push({id:nid(),table:"recruit_requests",tid:r.id,body:"[사전 공유 연결] "+md(L.on)+" · 영업 "+(st(L.sid).name||"")+" · "+(typeof ldJobsTxt==="function"?ldJobsTxt(L):(L.job||""))+(L.pay?" · 급여 "+L.pay:"")+(L.note?" · "+L.note:""),author:st(S.me).name,at:stamp()});
+  logChange("sales_leads",L.id,L.cname,"결과","진행 중","계약완료 → 기존 채용 요청에 연결","브이드림 내부");logChange("recruit_requests",r.id,(coR(r)||{}).name||"","사전 공유 연결","",L.cname+" 계약완료","브이드림 내부");
+  ldSave();toast("기존 채용 요청에 연결했어요");go("rreq");S.rrSel=r.id;render()}
+var _ldDoneDlg202=ldDoneDlg;ldDoneDlg=function(L){var R=ldOpenRrs(L);if(!R.length)return _ldDoneDlg202.apply(this,arguments);var self=this,args=arguments;
+  ovAsk("이미 진행 중인 채용 요청이 있어요",'<p style="margin:0 0 8px"><b>'+esc(L.cname)+'</b>에 진행 중인 채용 요청이 '+R.length+'건 있어요. 같은 건이면 연결하고, 다른 채용이면 새로 만들어 주세요.</p><ul style="margin:0;padding-left:18px">'+R.slice(0,4).map(function(r){return'<li><b>'+esc(r.kind||"")+'</b> · '+esc(rrJobsTxt(r))+' · '+esc(rrState(r))+' <span class="small muted">등록 '+esc(md(String(r.created||r.requested||"").slice(0,10)))+(r.recruiter?" · 채용 "+esc(st(r.recruiter).name):"")+'</span></li>'}).join("")+'</ul>',
+    R.slice(0,4).map(function(r,i){return{k:"l"+i,l:(R.length>1?(i+1)+"번 ":"")+"기존 건에 연결",pri:i===0}}).concat([{k:"new",l:"새로 만들기"},{k:"x",l:"취소"}]),
+    function(k){if(k==="x")return;if(k==="new")return _ldDoneDlg202.apply(self,args);var r=R[+k.slice(1)];if(r)ldLinkRr(L,r)})};
 
 /* ============ 렌더 ============ */
 function renderMain(){
