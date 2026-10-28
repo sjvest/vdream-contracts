@@ -1307,6 +1307,10 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .mrow .sh{white-space:nowrap}.mrow .lk{opacity:1;font-size:10.5px;border-radius:4px;padding:0 4px;background:#F1F0F5;color:var(--ink-3);font-weight:700;white-space:nowrap}
 .rqint{font-size:10.5px;border-radius:4px;padding:0 4px;background:#F1F0F5;color:var(--ink-3);font-weight:700;margin-left:2px}
 .ldnr{max-width:140px;display:inline-block;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom;white-space:nowrap}
+
+/* v209 */
+#savest .savewait{color:#B45309;font-weight:700;font-size:inherit;text-decoration:underline}
+#toast.tlong{background:#7A2E0E;cursor:pointer;max-width:min(720px,calc(100vw - 32px))}
 </style>
 </head>
 <body>
@@ -11067,9 +11071,13 @@ function rtApply(p){var t=p.table,ev=p.eventType,nw=p["new"]||{},od=p.old||{};
   var hit=false;TB.forEach(function(d){if(d.t!==t)return;var pk=colName(d.cols[0]),id=nw[pk]!=null?nw[pk]:od[pk];if(id==null)return;hit=true;
     var K=[d.k].concat(d.k==="workers"||d.k==="companies"?[d.k+"M"]:[]),find=function(){for(var a=0;a<K.length;a++){var L=DB[K[a]]||[];for(var b=0;b<L.length;b++){var o=L[b],r=toRow(d,o);if(String(r[pk])===String(id))return{k:K[a],i:b}}}return null},at=find();
     if(ev==="DELETE"){if(at)DB[at.k].splice(at.i,1);if(SNAP[d.k])delete SNAP[d.k][id];rtEditHit(d.k,id,true);return}
-    var prev=SNAP[d.k]&&SNAP[d.k][id]?JSON.parse(SNAP[d.k][id]):{},row=Object.assign({},prev,nw),o=fromRow(d,row),j=JSON.stringify(toRow(d,o));
+    var prev=SNAP[d.k]&&SNAP[d.k][id]?JSON.parse(SNAP[d.k][id]):{},row=lwvGuard(d,id,Object.assign({},prev,nw)),o=fromRow(d,row),j=JSON.stringify(toRow(d,o));
     if(SNAP[d.k]&&SNAP[d.k][id]===j&&at)return;/* 내가 방금 저장한 것과 같음 */
-    if(at)DB[at.k].splice(at.i,1);var dest=(d.k==="workers"||d.k==="companies")&&o.merged_into?d.k+"M":d.k;DB[dest]=DB[dest]||[];if(d.k==="logs")DB[dest].unshift(o);else DB[dest].push(o);
+    var dest=(d.k==="workers"||d.k==="companies")&&o.merged_into?d.k+"M":d.k;DB[dest]=DB[dest]||[];
+    /* v209: 같은 목록 안이면 객체를 바꾸지 않고 값만 갱신 (열린 창이 들고 있는 객체가 끊기지 않게) · 아직 저장 안 한 내 칸은 지킴 */
+    if(at&&at.k===dest){var cur=DB[at.k][at.i],loc=toRow(d,cur),keep={},kn=0;if(SNAP[d.k]&&SNAP[d.k][id])Object.keys(loc).forEach(function(c){if(c!==pk&&JSON.stringify(loc[c])!==JSON.stringify(prev[c])){keep[c]=loc[c];kn++}});
+      Object.assign(cur,kn?fromRow(d,Object.assign({},row,keep)):o)}
+    else{if(at)DB[at.k].splice(at.i,1);if(d.k==="logs")DB[dest].unshift(o);else DB[dest].push(o)}
     if(SNAP[d.k])SNAP[d.k][id]=j;if(at)rtEditHit(d.k,id,false)});
   return hit}
 /* 내가 고치는 중인 건을 다른 사람이 바꿨을 때 */
@@ -11965,7 +11973,7 @@ function syncNow(force,quiet){if(!SYNC.ok||!LIVE||typeof sb==="undefined"||!sb)r
         x.rows.forEach(function(row){if(x.t==="change_logs"&&DB.logs.some(function(l){return l.id===row.id}))return;try{if(rtApply({table:x.t,eventType:"UPDATE",new:row,old:{}}))n++}catch(e){console.warn("sync",x.t,e)}})});
       if(DB.logs&&DB.logs.length)DB.logs.sort(function(a,b){return String(b.at).localeCompare(String(a.at))});
       SYNC.since=new Date(t0-2*60e3).toISOString();SYNC.last=Date.now();SYNC.run=false;SYNC.pend=false;if(n&&READY){RT.dirty=true;if(quiet)render();else rtRender()}cacheSave();return true})}).catch(function(e){SYNC.run=false;console.warn("sync",e);return false})}
-function _maybeReloadFull(){var t0=Date.now();return loadAllNet().then(function(){SYNC.full=t0;SYNC.since=new Date(t0-5*60e3).toISOString();SYNC.last=Date.now();autoLinkMine();render();cacheSave()})}
+function _maybeReloadFull(){var t0=Date.now();return loadAllNet().then(function(){try{lwvPatchAll()}catch(e){}SYNC.full=t0;SYNC.since=new Date(t0-5*60e3).toISOString();SYNC.last=Date.now();autoLinkMine();render();cacheSave()})}
 function loadAllNet(){RESTORE=null;FETCH_MEMO={};return Promise.resolve(_loadAll130.apply(this)).then(function(x){FETCH_MEMO=null;return x},function(e){FETCH_MEMO=null;throw e})}
 /* 전체 다시 읽기 → 바뀐 행만 (재연결 · 3분 대비 조회 · 탭 돌아올 때) */
 var _maybeReload130=maybeReload;maybeReload=function(force){if(!SYNC.ok)return _maybeReload130.apply(this,arguments);if(!LIVE||!READY)return;
@@ -18679,8 +18687,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v208 — 대시보드 결정 전 · 특이사항 정렬 고정 · 탭 바꿀 때 뒤 화면 위치 · 고객사 공유 칩 · 영업 채용 요청 없이 완료 */
-APP_VER="v208";APP_VER_ON="10/28";APP_NOTE="대시보드 결정 전 · 정렬 고정 · 뒤 화면 위치 · 고객사 공유 칩 · 채용 요청 없이 완료";
+/* v209 — 저장 안정화: 줄마다 저장 · 0줄 수정 감지 · 자동 다시 시도 · 옛 값 덮어쓰기 막기 · 저장 오류 기록 */
+APP_VER="v209";APP_VER_ON="10/28";APP_NOTE="저장 안정화 · 실패한 줄만 되돌림 · 자동 다시 시도 · 저장 오류 기록";
 
 /* ================================================================
    v208
@@ -18715,6 +18723,51 @@ function ldNoRrDlg(L){S.ldWhy="";
 regAct("ld-undo",function(D0){var L=ldOf(D0.id);if(!ldNoRr(L))return;
   ovAsk("계약완료 되돌리기",'<p style="margin:0"><b>'+esc(L.cname)+'</b>을(를) <b>진행 중</b>으로 되돌려요. 적어 둔 사유는 변경 이력에 남아 있어요.</p>',[{k:"ok",l:"되돌리기",pri:true},{k:"x",l:"취소"}],function(r){if(r!=="ok")return;
     var w=L.rnote||"";L.res="진행 중";L.rnote="";logChange("sales_leads",L.id,L.cname,"결과","계약완료"+(w?" · "+w:""),"진행 중 (되돌림)","브이드림 내부");ldSave();toast("진행 중으로 되돌렸어요");render()})});
+
+/* ================================================================
+   v209 — 저장 안정화 (저장 함수 본체는 core/0251-Supabase-연결-계층-08.js · 실시간 반영은 core/0129-…-00.js)
+     ① 늦게 도착한 옛 값이 방금 저장한 값을 덮어쓰지 못하게 (LWV · 2분)
+     ② 저장 오류 기록: 서버 save_errors 표(v209 SQL) + 이 브라우저 기록 · 관리자 › 설정 › 저장 오류 기록
+     ③ [저장 대기 · 다시 시도]
+   ================================================================ */
+/* ① 내가 저장한 칸 값 잠깐 기억: 같은 값이 서버에서 돌아오면(내 저장의 메아리) 기억을 지움 · 다른 값이면 2분 동안은 내 값을 지킴 */
+var LWV={},LWV_MS=120000;
+function lwvNote(d,id,cols){if(!d||id==null||!cols)return;var k=d.t+"|"+id,e=LWV[k]||(LWV[k]={at:0,c:{}});e.at=Date.now();Object.keys(cols).forEach(function(c){e.c[c]=JSON.stringify(cols[c])})}
+function lwvGuard(d,id,row){var k=d.t+"|"+id,e=LWV[k];if(!e)return row;if(Date.now()-e.at>LWV_MS){delete LWV[k];return row}
+  Object.keys(e.c).forEach(function(c){if(!(c in row))return;if(JSON.stringify(row[c])===e.c[c]){delete e.c[c];return}try{row[c]=JSON.parse(e.c[c])}catch(_){}});
+  if(!Object.keys(e.c).length)delete LWV[k];return row}
+/* 전체 다시 읽기 · 입구서 조회 뒤에도 같은 보호 */
+function lwvPatchAll(){Object.keys(LWV).forEach(function(k){var i=k.indexOf("|"),t=k.slice(0,i),id=k.slice(i+1),e=LWV[k];if(Date.now()-e.at>LWV_MS){delete LWV[k];return}
+  TB.forEach(function(d){if(d.t!==t||d.ro)return;var pk=colName(d.cols[0]),L=DB[d.k]||[],o=L.find(function(x){return String(toRow(d,x)[pk])===String(id)});if(!o)return;
+    var r0=toRow(d,o),r1=lwvGuard(d,id,Object.assign({},r0));if(JSON.stringify(r0)===JSON.stringify(r1))return;Object.assign(o,fromRow(d,r1));if(SNAP[d.k])SNAP[d.k][id]=JSON.stringify(toRow(d,o))})})}
+var _loadAll209=loadAll;loadAll=function(){return Promise.resolve(_loadAll209.apply(this,arguments)).then(function(r){try{lwvPatchAll()}catch(e){console.warn("lwv",e)}return r})};
+
+/* ② 저장 오류 기록 */
+var SAVE_ERR_LOCAL=[];
+function saveErrLog(t,id,cols,e,kind,nm){var r={tbl:t||"",row_id:String(id||""),row_label:nm||"",cols:(cols||[]).join(", "),code:String(e&&e.code||kind||""),message:String(e&&e.message||e||"").slice(0,500),kind:kind||"",by_name:(st(S.me)||{}).name||"",app_ver:APP_VER};
+  SAVE_ERR_LOCAL.unshift(Object.assign({at:stamp()},r));if(SAVE_ERR_LOCAL.length>200)SAVE_ERR_LOCAL.length=200;
+  try{console.warn("[저장 오류]",r)}catch(_){}
+  if(LIVE&&typeof sb!=="undefined"&&sb&&SAVE_ERR.ok!==false){try{Promise.resolve(sb.from("save_errors").insert(r)).then(function(x){if(x&&x.error&&/save_errors|PGRST205|42P01|does not exist/i.test(String(x.error.message||x.error.code)))SAVE_ERR.ok=false},function(){})}catch(_){}}}
+var SAVE_ERR={ok:null,rows:null,loading:false};
+function saveErrLoad(){if(!LIVE||SAVE_ERR.loading||SAVE_ERR.ok===false)return;SAVE_ERR.loading=true;
+  Promise.resolve(sb.from("save_errors").select("*").order("at",{ascending:false}).limit(300)).then(function(r){SAVE_ERR.loading=false;if(r.error){SAVE_ERR.ok=false;render();return}SAVE_ERR.ok=true;SAVE_ERR.rows=r.data||[];render()},function(){SAVE_ERR.loading=false})}
+function saveErrHtml(){if(S.role!=="admin")return"";var L=SAVE_ERR.rows||[],loc=SAVE_ERR_LOCAL;
+  if(LIVE&&SAVE_ERR.rows==null&&SAVE_ERR.ok!==false)setTimeout(saveErrLoad,0);
+  var kindT={ins:"새로 저장",upd:"수정",del:"삭제",perm:"권한(0줄)",net:"네트워크",auth:"로그인 만료"};
+  var rows=(L.length?L:loc).slice(0,100);
+  return'<div class="box setbox" style="margin-top:14px" id="save-errs"><div class="dcard-h" style="display:flex;gap:8px;align-items:center"><b>저장 오류 기록</b><span class="small muted">저장이 안 돼서 되돌린 내용 · '+(LIVE?(SAVE_ERR.ok===false?"서버 기록 표 없음(v209 SQL 실행 필요) · 이 브라우저 기록만":"모든 담당자 · 최근 300건"):"예시")+'</span><span class="grow"></span>'+(LIVE&&SAVE_ERR.ok!==false?'<button class="btn sm" data-act="save-err-reload">새로 보기</button>':"")+'</div>'+
+    (rows.length?'<table class="t mini"><thead><tr><th>시각</th><th>담당자</th><th>표</th><th>대상</th><th>칸</th><th>종류</th><th>이유</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td class="num nowrap">'+esc(String(r.at||"").replace("T"," ").slice(0,16))+'</td><td>'+esc(r.by_name||"")+'</td><td>'+esc(SAVE_TNAME[r.tbl]||r.tbl||"")+'</td><td>'+esc(r.row_label||String(r.row_id||"").slice(0,8))+'</td><td class="small">'+esc(r.cols||"")+'</td><td>'+esc(kindT[r.kind]||r.kind||"")+'</td><td class="small" title="'+esc(r.message||"")+'">'+esc(saveErrText({code:r.code,message:r.message}))+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint" style="margin:6px 0 0">저장 오류가 없어요.</p>')+'</div>'}
+var _vSet209=vSet;vSet=function(){return _vSet209.apply(this,arguments)+saveErrHtml()};
+regAct("save-err-reload",function(){SAVE_ERR.rows=null;SAVE_ERR.ok=null;saveErrLoad()});
+
+/* ③ 저장 대기 → 다시 시도 */
+regAct("save-retry",function(){SAVE_RETRY=0;setSaving("다시 저장 중…");schedulePersist()});
+window.addEventListener("online",function(){if(SAVE_WAIT){SAVE_RETRY=0;schedulePersist()}});
+/* 저장 대기 중 창을 닫거나 새로고침하면 경고 */
+window.addEventListener("beforeunload",function(ev){if(LIVE&&(pending||persisting||SAVE_WAIT)){ev.preventDefault();ev.returnValue="";return""}});
+/* 저장 실패 알림은 10초 동안 · 눌러서 닫기 */
+function toastLong(m){toast(m);var t=$("#toast");if(!t)return;clearTimeout(toast._t);t.classList.add("tlong");toast._t=setTimeout(function(){t.hidden=true;t.classList.remove("tlong")},10000)}
+document.addEventListener("click",function(ev){var t=ev.target;if(t&&t.id==="toast"&&t.classList.contains("tlong")){t.hidden=true;t.classList.remove("tlong")}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
@@ -19234,12 +19287,19 @@ function loadAll(){
 function reloadStaff(){return fetchAll("staff").then(function(rows){DB.staff=rows.map(staffFrom)})}
 function setSaving(t){SAVEST=t;var el=document.getElementById("savest");if(el)el.textContent=t}
 function schedulePersist(){if(!LIVE||!READY)return;pending=true;clearTimeout(pT);pT=setTimeout(persist,300)}
+/* v209 저장: 표마다 · 줄마다 따로 처리
+   - 성공한 것은 바로 저장본(SNAP)에 반영 · 실패한 줄만 따로 처리 (예전: 하나만 실패해도 전체를 버리고 다시 불러옴)
+   - 수정은 실제로 바뀐 줄 수를 확인 (권한에 막혀 0줄이면 실패로 봄)
+   - 네트워크 · 로그인 만료: 화면 값은 그대로 두고 자동으로 다시 시도
+   - 규칙 · 권한 오류: 그 줄만 서버 값으로 되돌리고 무엇이 안 됐는지 알림 · 오류 기록(save_errors)에 남김
+   - 성공한 수정 값은 LWV에 잠깐 기억 → 늦게 도착한 옛 값(실시간 · 바뀐 행 받기)이 덮어쓰지 못하게 */
+var SAVE_RETRY=0,SAVE_RT=null,SAVE_WAIT=false;
 function persist(){
   pending=false;
   if(persisting){dirty=true;return}
-  var steps=[],next={};
+  var jobs=[];
   TB.forEach(function(d){
-    if(d.ro){next[d.k]=SNAP[d.k]||{};return}
+    if(d.ro)return;
     var pk=colName(d.cols[0]),old=SNAP[d.k]||{},cur={},ins=[],upd=[],dels=[];
     DB[d.k].forEach(function(o){var r=toRow(d,o),id=r[pk];if(id==null)return;var j=JSON.stringify(r);cur[id]=j;
       if(old[id]===undefined){ins.push(r);return}
@@ -19247,20 +19307,73 @@ function persist(){
       /* 바뀐 칸만 보냄 → Apps Script 가 같은 행의 다른 칸(발송 결과 등)을 써도 덮어쓰지 않음 */
       var o0=JSON.parse(old[id]),diff={};Object.keys(r).forEach(function(k){if(JSON.stringify(r[k])!==JSON.stringify(o0[k]))diff[k]=r[k]});upd.push([id,diff])});
     if(d.del)Object.keys(old).forEach(function(id){if(!(id in cur))dels.push(id)});
-    for(var ci=0;ci<ins.length;ci+=500)(function(chunk){steps.push(function(){return d.ins?sb.from(d.t).insert(chunk):sb.from(d.t).upsert(chunk,{onConflict:pk})})})(ins.slice(ci,ci+500));
-    if(upd.length)steps.push(function(){return Promise.all(upd.map(function(u){return sb.from(d.t).update(u[1]).eq(pk,u[0])})).then(function(rs){return rs.find(function(x){return x&&x.error})||{}})});
-    if(dels.length)steps.push(function(){return sb.from(d.t).delete().in(pk,dels)});
-    next[d.k]=cur;
+    if(ins.length||upd.length||dels.length)jobs.push({d:d,pk:pk,cur:cur,ins:ins,upd:upd,dels:dels});
   });
-  var mc={},mu=[];metaRows().forEach(function(r){var j=JSON.stringify(r);mc[r.todo_key]=j;if((SNAP.meta||{})[r.todo_key]!==j)mu.push(r)});next.meta=mc;
-  if(mu.length)steps.push(function(){return sb.from("todos").upsert(mu,{onConflict:"todo_key"})});
-  if(!steps.length)return;
+  var mc={},mu=[];metaRows().forEach(function(r){var j=JSON.stringify(r);mc[r.todo_key]=j;if((SNAP.meta||{})[r.todo_key]!==j)mu.push(r)});
+  if(!jobs.length&&!mu.length){if(SAVE_WAIT){SAVE_WAIT=false;setSaving("저장됨")}return}
   persisting=true;setSaving("저장 중…");
-  steps.reduce(function(p,f){return p.then(function(){return f().then(function(r){if(r&&r.error)throw r.error})})},Promise.resolve())
-  .then(function(){SNAP=next;setSaving("저장됨")})
-  .catch(function(e){console.error(e);setSaving("저장 실패");toast("저장하지 못했습니다: "+(e&&e.message||e)+" · 서버 데이터를 다시 불러옵니다");return loadAll().then(render)})
+  var fails=[],net=null;
+  var snapSet=function(k,id,j){if(!SNAP[k])SNAP[k]={};if(j==null)delete SNAP[k][id];else SNAP[k][id]=j};
+  var res=function(pr){return Promise.resolve(pr).then(function(r){return r||{}},function(e){return{error:e||{message:"network"},status:0}})};
+  var bad=function(J,r,ids,kind,cols){var e=r.error||{},k=saveErrKind(e,r.status);if(k!=="rule"&&kind!=="perm"){net=net||{e:e,k:k};return}fails.push({d:J.d,pk:J.pk,ids:ids,kind:kind,e:e,cols:cols||[]})};
+  var runJob=function(J){var d=J.d,steps=[];
+    /* 새 줄: 500줄씩 · 실패하면 한 줄씩 다시 (어느 줄이 문제인지 찾기) */
+    for(var ci=0;ci<J.ins.length;ci+=500)(function(chunk){steps.push(function(){
+      var one=function(rows){return res(d.ins?sb.from(d.t).insert(rows):sb.from(d.t).upsert(rows,{onConflict:J.pk}))};
+      return one(chunk).then(function(r){
+        if(!r.error){chunk.forEach(function(x){var id=x[J.pk];snapSet(d.k,id,J.cur[id]);lwvNote(d,id,x)});return}
+        if(saveErrKind(r.error,r.status)!=="rule"||chunk.length===1||chunk.length>50){bad(J,r,chunk.map(function(x){return x[J.pk]}),"ins");return}
+        return chunk.reduce(function(p,x){return p.then(function(){return one([x]).then(function(r1){var id=x[J.pk];if(r1.error)bad(J,r1,[id],"ins");else{snapSet(d.k,id,J.cur[id]);lwvNote(d,id,x)}})})},Promise.resolve())})})})(J.ins.slice(ci,ci+500));
+    /* 바뀐 줄: 줄마다 · 실제로 바뀐 줄 수 확인 */
+    if(J.upd.length)steps.push(function(){return Promise.all(J.upd.map(function(u){
+      return res(sb.from(d.t).update(u[1]).eq(J.pk,u[0]).select(J.pk)).then(function(r){
+        if(r.error){bad(J,r,[u[0]],"upd",Object.keys(u[1]));return}
+        if(Array.isArray(r.data)&&!r.data.length){bad(J,{error:{code:"0ROWS",message:"0줄 수정 (권한에 막혔거나 이미 지워진 줄)"},status:200},[u[0]],"perm",Object.keys(u[1]));return}
+        var o0=JSON.parse((SNAP[d.k]||{})[u[0]]||"{}");snapSet(d.k,u[0],JSON.stringify(Object.assign(o0,u[1])));lwvNote(d,u[0],u[1])})}))});
+    if(J.dels.length)steps.push(function(){return res(sb.from(d.t).delete().in(J.pk,J.dels).select(J.pk)).then(function(r){
+      if(r.error){bad(J,r,J.dels,"del");return}
+      var got={};(r.data||[]).forEach(function(x){got[x[J.pk]]=1});var miss=Array.isArray(r.data)?J.dels.filter(function(id){return!got[id]}):[];
+      J.dels.forEach(function(id){if(!miss.length||got[id])snapSet(d.k,id,null)});
+      /* 지우기 0줄: 이미 없는 줄이면 그대로 지운 걸로 · 권한이면 되살림 */
+      if(miss.length)return res(sb.from(d.t).select(J.pk).in(J.pk,miss)).then(function(r2){var still={};(r2.data||[]).forEach(function(x){still[x[J.pk]]=1});
+        miss.forEach(function(id){if(!still[id])snapSet(d.k,id,null)});var keep=miss.filter(function(id){return still[id]});if(keep.length)bad(J,{error:{code:"0ROWS",message:"지우기 권한이 없어요"},status:200},keep,"perm")})})});
+    return steps.reduce(function(p,f){return p.then(function(){if(net)return;return f()})},Promise.resolve())};
+  var all=jobs.reduce(function(p,J){return p.then(function(){if(net)return;return runJob(J)})},Promise.resolve());
+  if(mu.length)all=all.then(function(){if(net)return;return res(sb.from("todos").upsert(mu,{onConflict:"todo_key"})).then(function(r){if(r.error){var k=saveErrKind(r.error,r.status);if(k!=="rule"){net=net||{e:r.error,k:k};return}saveErrLog("todos","",[],r.error,"upd");return}
+    if(!SNAP.meta)SNAP.meta={};mu.forEach(function(x){SNAP.meta[x.todo_key]=mc[x.todo_key]})})});
+  all.then(function(){
+    if(fails.length)saveFailHandle(fails);
+    if(net){SAVE_WAIT=true;saveRetry(net);return}
+    SAVE_RETRY=0;SAVE_WAIT=false;setSaving(fails.length?"일부 저장 안 됨":"저장됨");
+  },function(e){console.error(e);SAVE_WAIT=true;saveRetry({e:e,k:"net"})})
   .then(function(){persisting=false;if(dirty){dirty=false;persist()}});
 }
+function saveErrKind(e,st){var m=String((e&&(e.message||e.code||e.msg))||e||"");
+  if(/JWT|token|expired|PGRST30[0-3]|invalid claim/i.test(m)||st===401)return"auth";
+  if(/Failed to fetch|NetworkError|network|timeout|ECONN|Load failed|fetch failed|aborted/i.test(m)||st===0||st===408||st===429||st>=500)return"net";
+  return"rule"}
+/* 네트워크 · 로그인 만료: 2초 · 8초 · 20초 뒤 다시 · 그다음은 [다시 시도] */
+function saveRetry(n){var w=[2000,8000,20000][SAVE_RETRY];SAVE_RETRY++;
+  if(w==null){setSaving("저장 대기 · 연결 확인");toastLong("서버에 저장하지 못했어요 · 바뀐 내용은 화면에 남아 있어요 · 위쪽 [저장 대기]를 눌러 다시 시도해 주세요");saveErrLog("","",[],n.e,n.k);saveWaitBtn();return}
+  setSaving(n.k==="auth"?"로그인 갱신 후 다시 저장…":"저장 대기 · 다시 시도 중…");clearTimeout(SAVE_RT);
+  SAVE_RT=setTimeout(function(){var go=function(){schedulePersist()};if(n.k==="auth"&&sb&&sb.auth&&sb.auth.refreshSession)Promise.resolve(sb.auth.refreshSession()).then(go,go);else go()},w)}
+function saveWaitBtn(){var el=document.getElementById("savest");if(!el)return;el.innerHTML='<button class="linkbtn savewait" data-act="save-retry" title="눌러서 다시 저장">저장 대기 · 다시 시도</button>'}
+/* 규칙 · 권한 오류: 그 줄만 서버 값으로 되돌리고 알림 */
+var SAVE_TNAME={workers:"근로자",companies:"기업",employments:"고용",contract_terms:"계약",expiry_checks:"계약만료",case_documents:"입사 서류",exit_documents:"퇴사 서류",client_requests:"고객사 요청",client_request_workers:"고객사 요청(근로자)",memos:"특이사항",change_logs:"변경 이력",recruit_requests:"채용 요청",recruit_rounds:"채용 요청 차수",worker_requests:"근로자 요청",attend_issues:"근태",talent_picks:"인재 풀",portfolios:"포트폴리오",sales_leads:"사전 공유",org_recommends:"발굴 추천",organizations:"기관",gas_jobs:"작업 대기열",due_settings:"기한 설정",custom_todos:"할 일",intake_applicants:"입구서",recruit_talks:"조율 요청"};
+function saveErrText(e){var c=String(e&&e.code||""),m=String(e&&e.message||e||""),col=(m.match(/column "([^"]+)"/)||[])[1]||"",rule=(m.match(/constraint "([^"]+)"/)||[])[1]||"";
+  if(c==="0ROWS")return m;if(c==="23502")return"필수 값이 비어 있어요"+(col?" ("+col+")":"");if(c==="23514")return"허용되지 않는 값이에요"+(rule?" ("+rule+")":"");if(c==="23505")return"같은 값이 이미 있어요";if(c==="23503")return"연결된 데이터가 없어요";
+  if(c==="42501"||/permission|row-level security|policy/i.test(m))return"권한이 없어요";if(c==="PGRST204"||c==="42703")return"DB에 칸이 없어요 · SQL 실행 필요"+(col?" ("+col+")":"");if(c==="42P01"||c==="PGRST205")return"DB에 표가 없어요 · SQL 실행 필요";return m.slice(0,120)}
+function saveFailHandle(F){var msgs=[];
+  F.forEach(function(f){var d=f.d,L=DB[d.k]||[];
+    f.ids.forEach(function(id){var old=(SNAP[d.k]||{})[id],i=L.findIndex(function(o){return String(toRow(d,o)[f.pk])===String(id)}),nm="";
+      if(i>=0){var o=L[i];nm=o.name||o.cname||o.title||o.label||"";if(f.kind==="ins"){if(d.k==="logs"||d.ins){/* 기록은 버리지 않고 두 번 다시 안 보냄 */snapSet0(d.k,id,JSON.stringify(toRow(d,o)))}else L.splice(i,1)}else if(old)Object.assign(o,fromRow(d,JSON.parse(old)))}
+      else if((f.kind==="del"||f.kind==="perm")&&old){L.push(fromRow(d,JSON.parse(old)))}
+      saveErrLog(d.t,id,f.cols,f.e,f.kind,nm)});
+    msgs.push((SAVE_TNAME[d.t]||d.t)+(f.cols.length?" · "+f.cols.slice(0,3).join(", "):"")+" → "+saveErrText(f.e))});
+  var u=msgs.filter(function(x,i){return msgs.indexOf(x)===i});
+  toastLong("저장 안 됨 · 되돌렸어요: "+u.slice(0,2).join(" / ")+(u.length>2?" 외 "+(u.length-2)+"건":"")+" · 관리자 › 설정 › 저장 오류 기록");
+  try{render()}catch(e){}}
+function snapSet0(k,id,j){if(!SNAP[k])SNAP[k]={};SNAP[k][id]=j}
 /* 다른 담당자가 바꾼 내용: 탭으로 돌아오거나 3분마다 다시 읽음(입력 중이거나 저장 대기 중이면 건너뜀) */
 function maybeReload(force){
   if(!LIVE||!READY||persisting||pending)return;
@@ -19277,7 +19390,7 @@ function pollIntake(){
   Promise.all(ds.map(function(d){return fetchAll(d.t)})).then(function(res){
     if(persisting||pending)return;
     ds.forEach(function(d,i){DB[d.k]=res[i].map(function(r){return fromRow(d,r)});var m={},pk=colName(d.cols[0]);DB[d.k].forEach(function(o){var r=toRow(d,o);m[r[pk]]=JSON.stringify(r)});SNAP[d.k]=m});
-    autoLinkMine();
+    lwvPatchAll();autoLinkMine();
     var a=document.activeElement;if(a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable))return;if($("#modal").innerHTML)return;render();
   }).catch(function(e){console.warn(e)});
 }
