@@ -1297,6 +1297,16 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 /* v207 도움말 */
 .helpq{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:13px;font-weight:700;text-decoration:none;vertical-align:4px;margin-left:6px}
 .helpq:hover{background:var(--acc,#5B4BC4);color:#fff;border-color:transparent}
+
+/* v208 */
+.dtile .dund{font-size:inherit;color:#B45309;font-weight:700;padding:0;text-decoration:underline dotted}.dtile .dundl{color:var(--bad,#B91C1C);font-weight:700}
+.memo-in .ckl input{flex:0 0 16px;width:16px;height:16px;min-height:0;padding:0;border:0;margin:0}
+.memo-in .ckl.shchip{flex:0 0 auto;align-self:center;white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:5px 11px;background:#fff;color:var(--ink-2,#4A4660);user-select:none}
+.memo-in .ckl.shchip:has(input:checked){border-color:var(--p);background:#F1EEFD;color:var(--p);font-weight:700}
+.mrow .meta .mshv{color:var(--ink-3)}.mrow .meta .mshv:hover{color:var(--p)}
+.mrow .sh{white-space:nowrap}.mrow .lk{opacity:1;font-size:10.5px;border-radius:4px;padding:0 4px;background:#F1F0F5;color:var(--ink-3);font-weight:700;white-space:nowrap}
+.rqint{font-size:10.5px;border-radius:4px;padding:0 4px;background:#F1F0F5;color:var(--ink-3);font-weight:700;margin-left:2px}
+.ldnr{max-width:140px;display:inline-block;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -4117,15 +4127,15 @@ function dashBuckets(a,b){var n=dd(a,b)+1,unit=n<=14?"day":n<=93?"week":"month",
   return{unit:unit,L:L}}
 function dashChart(title,series,buckets,val){
   var W=640,H=180,pl=30,pb=26,pt=10,bw=Math.max(4,Math.min(36,(W-pl-10)/buckets.length-6));
-  var tot=buckets.map(function(bk){return series.reduce(function(s,se){return s+val(bk,se[0])},0)}),mx=Math.max(1,Math.max.apply(null,tot)),sc=(H-pb-pt)/mx;
+  var tot=buckets.map(function(bk){return series.reduce(function(s,se){return se[2]?s:s+val(bk,se[0])},0)}),mx=Math.max(1,Math.max.apply(null,buckets.map(function(bk){return series.reduce(function(s,se){return s+val(bk,se[0])},0)}))),sc=(H-pb-pt)/mx;
   var step=(W-pl-10)/buckets.length,svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(title)+'" class="dsvg">';
   (mx%2===0?[0,mx/2,mx]:[0,mx]).forEach(function(v){var y=H-pb-(H-pb-pt)*v/mx;svg+='<line x1="'+pl+'" x2="'+(W-6)+'" y1="'+y+'" y2="'+y+'" stroke="#E4E1EE"/><text x="'+(pl-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="#6B6880">'+v+'</text>'});
   buckets.forEach(function(bk,i){var x=pl+step*i+(step-bw)/2,y=H-pb;
-    series.forEach(function(se){var v=val(bk,se[0]);if(!v)return;var hh=v*sc;svg+='<rect x="'+x.toFixed(1)+'" y="'+(y-hh+1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,hh-2).toFixed(1)+'" rx="2" fill="'+se[1]+'"><title>'+esc(bk.l+" "+se[0]+" "+v+"명")+'</title></rect>';y-=hh});
+    series.forEach(function(se){var v=val(bk,se[0]);if(!v)return;var hh=v*sc;svg+='<rect x="'+x.toFixed(1)+'" y="'+(y-hh+1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,hh-2).toFixed(1)+'" rx="2" fill="'+se[1]+'"'+(se[2]?' stroke="#8D89A3" stroke-dasharray="3 2" fill-opacity=".55"':"")+'><title>'+esc(bk.l+" "+se[0]+" "+v+"명"+(se[2]?" (합계 제외)":""))+'</title></rect>';y-=hh});
     if(tot[i])svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-3).toFixed(1)+'" text-anchor="middle" font-size="10" fill="#1F1B2E">'+tot[i]+'</text>';
     if(buckets.length<=16||i%Math.ceil(buckets.length/16)===0)svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#6B6880">'+esc(bk.l)+'</text>'});
   svg+='</svg>';
-  return'<div class="dcard"><div class="dcard-h"><b>'+esc(title)+'</b><span class="dleg">'+series.map(function(se){return'<span><i style="background:'+se[1]+'"></i>'+se[0]+'</span>'}).join("")+'</span></div>'+svg+
+  return'<div class="dcard"><div class="dcard-h"><b>'+esc(title)+'</b><span class="dleg">'+series.map(function(se){return'<span><i style="background:'+se[1]+(se[2]?';opacity:.55;outline:1px dashed #8D89A3':"")+'"></i>'+se[0]+(se[2]?' (합계 제외)':"")+'</span>'}).join("")+'</span></div>'+svg+
     '<details class="dtbl"><summary>표로 보기</summary><table class="mini"><thead><tr><th>기간</th>'+series.map(function(se){return'<th class="r">'+se[0]+'</th>'}).join("")+'<th class="r">합계</th></tr></thead><tbody>'+buckets.map(function(bk,i){return'<tr><td>'+esc(bk.from===bk.to?bk.from:bk.from+" ~ "+bk.to)+'</td>'+series.map(function(se){return'<td class="num r">'+val(bk,se[0])+'</td>'}).join("")+'<td class="num r">'+tot[i]+'</td></tr>'}).join("")+'</tbody></table></details></div>';
 }
 function dashDone(a,b){
@@ -4147,6 +4157,8 @@ function vDash(){
   var ins=Es.filter(function(e){var t=termsOf(e.id)[0];return!e.cancelled&&t&&inR(t.start,a,b)});
   var outs=Es.filter(function(e){return(e.cancelled||e.end_type==="계약만료"||e.end_type==="중도퇴사")&&inR(e.end_date,a,b)});
   var outType=function(e){return e.cancelled?"입사취소":e.end_type};
+  /* v208 결정 전: 재직 중 · 지금 계약 만료일이 기간 안 · 계약만료 결정이 비어 있음 (퇴사 합계에는 안 넣음) */
+  var undEnd=function(e){var t=curTerm(e.id);return t&&t.end},und=Es.filter(function(e){if(e.cancelled||e.end_type)return false;var x=xOf(e.id);return inR(undEnd(e),a,b)&&!(x&&x.decision)}),undLate=und.filter(function(e){return undEnd(e)<TODAY}).length;
   var headEnd=Es.filter(function(e){return dashActiveOn(e,b)}).length,headStart=Es.filter(function(e){return dashActiveOn(e,addD(a,-1))}).length;
   var B=dashBuckets(a,b);
   var Q=[["today","오늘"],["yday","어제"],["tweek","이번 주"],["lweek","저번 주"],["tmonth","이번 달"],["lmonth","저번 달"]];
@@ -4157,11 +4169,11 @@ function vDash(){
   var cnt=function(L,f,v){return L.filter(function(e){return f(e)===v}).length};
   h+='<div class="dtiles">'+
     '<div class="dtile"><span>입사</span><b>'+ins.length+'</b><small>신규 '+cnt(ins,function(e){return e.hire_type},"신규")+' · 추가 '+cnt(ins,function(e){return e.hire_type},"추가")+' · 대체 '+cnt(ins,function(e){return e.hire_type},"대체")+'</small></div>'+
-    '<div class="dtile"><span>퇴사</span><b>'+outs.filter(function(e){return!e.cancelled}).length+'</b><small>계약만료 '+cnt(outs,outType,"계약만료")+' · 중도퇴사 '+cnt(outs,outType,"중도퇴사")+'</small></div>'+
+    '<div class="dtile"><span>퇴사</span><b>'+outs.filter(function(e){return!e.cancelled}).length+'</b><small>계약만료 '+cnt(outs,outType,"계약만료")+' · 중도퇴사 '+cnt(outs,outType,"중도퇴사")+(und.length?' · <button class="linkbtn dund" data-act="dash-und" title="계약만료일이 기간 안인데 연장 · 종료 결정이 아직 없는 사람 · 누르면 계약만료(최종 미확정만)로 가요">결정 전 '+und.length+'</button>'+(undLate?' <span class="dundl" title="계약만료일이 지났는데 결정이 없어요">기한 경과 '+undLate+'</span>':""):"")+'</small></div>'+
     '<div class="dtile"><span>입사취소</span><b>'+cnt(outs,outType,"입사취소")+'</b><small>취소일 기준</small></div>'+
     '<div class="dtile"><span>재직 (기간 끝)</span><b>'+headEnd+'</b><small>기간 시작 전날 '+headStart+' · 순증감 '+(headEnd-headStart>=0?"+":"")+(headEnd-headStart)+'</small></div></div>';
   h+='<div class="dgrid">'+dashChart("입사 추세 ("+{day:"일별",week:"주별",month:"월별"}[B.unit]+" · 1차 계약시작일)",DASH_IN,B.L,function(bk,s){return ins.filter(function(e){return e.hire_type===s&&inR(termsOf(e.id)[0].start,bk.from,bk.to)}).length})+
-    dashChart("퇴사 추세 ("+{day:"일별",week:"주별",month:"월별"}[B.unit]+" · 퇴사일 · 취소일)",DASH_OUT,B.L,function(bk,s){return outs.filter(function(e){return outType(e)===s&&inR(e.end_date,bk.from,bk.to)}).length})+'</div>';
+    dashChart("퇴사 추세 ("+{day:"일별",week:"주별",month:"월별"}[B.unit]+" · 퇴사일 · 취소일"+(und.length?" · 결정 전은 계약만료일":"")+")",und.length?DASH_OUT.concat([["결정 전","#C9C6D6","x"]]):DASH_OUT,B.L,function(bk,s){if(s==="결정 전")return und.filter(function(e){return inR(undEnd(e),bk.from,bk.to)}).length;return outs.filter(function(e){return outType(e)===s&&inR(e.end_date,bk.from,bk.to)}).length})+'</div>';
   /* 업무별 */
   var T=buildTodos().filter(function(t){return sOK(t.company)}),done=dashDone(a,b),cats=TODO_CATS;
   var keep=function(L){return L.filter(function(cid){return!cid||sOK(cid)})};
@@ -7788,12 +7800,13 @@ function lastCatW(wid){var L=mSort(DB.memos.filter(function(m){return m.table===
 function mrow(m,o){o=o||{};var id=m.id,ed=S.memoEdit===id,adm=S.role==="admin",H=m.hist||[];
   if(ed)return'<div class="mrow edit '+(o.cls||"")+'"><span class="lab">'+(o.lab||"")+'</span>'+(m.table==="workers"?'<select class="mcosel" data-medit-cat>'+opt(WCAT,m.cat||"기타")+'</select>':"")+'<input data-medit value="'+esc(m.body)+'" aria-label="메모 수정"><button class="btn xs pri" data-act="memo-esave" data-id="'+id+'">저장</button><button class="btn xs" data-act="memo-ecancel">취소</button></div>';
   var A=[];
-  if(o.share)A.push('<button class="linkbtn" data-act="memo-share" data-id="'+id+'">'+(m.shared?"공유 해제":"공유")+'</button>');
+  /* v208: 공유 버튼은 늘 보이게 (마우스 올릴 때만 X) */
+  var SHB=o.share?'<button class="linkbtn mshv" data-act="memo-share" data-id="'+id+'" title="'+(m.shared?"고객사에 안 보이게":"목록 · 고객사 메일 진행 현황에 보이게")+'">'+(m.shared?"공유 해제":"고객사 공유")+'</button>':"";
   if(o.tow)A.push('<button class="linkbtn" data-act="memo-tow" data-id="'+id+'" title="근로자 특이사항에도 보이게">'+(m.tow?"⚑ 근로자 표시 해제":"⚑ 근로자에 표시")+'</button>');
   if(o.pin)A.push('<button class="linkbtn" data-act="memo-pin" data-id="'+id+'">'+(m.pin?"고정 해제":"📌 고정")+'</button>');
   if(canEditM(m))A.push('<button class="linkbtn" data-act="memo-edit" data-id="'+id+'">수정</button>');
   if(adm)A.push('<button class="linkbtn danger" data-act="memo-del" data-id="'+id+'">삭제</button>');
-  var r='<div class="mrow '+(o.cls||"")+'">'+(o.lab?'<span class="lab">'+o.lab+'</span>':"")+'<span class="txt">'+(o.share?(m.shared?'<span class="sh">공유</span>':'<span class="lk" title="이력에만 남아요">🔒</span>'):"")+(m.tow&&o.tow?'<span class="twf" title="근로자 특이사항에도 보여요">⚑</span>':"")+esc(m.body)+(o.tag||"")+'</span><span class="meta">'+esc(m.author||"")+' · '+esc(sdt(m.at))+(H.length?' <button class="linkbtn" data-act="memo-hist" data-id="'+id+'">수정됨 '+H.length+'</button>':"")+(A.length?'<span class="macts">'+A.join("")+'</span>':"")+'</span></div>';
+  var r='<div class="mrow '+(o.cls||"")+'">'+(o.lab?'<span class="lab">'+o.lab+'</span>':"")+'<span class="txt">'+(o.share?(m.shared?'<span class="sh">고객사 공유</span>':'<span class="lk" title="이력에만 남아요 · 고객사에 안 보여요">내부</span>'):"")+(m.tow&&o.tow?'<span class="twf" title="근로자 특이사항에도 보여요">⚑</span>':"")+esc(m.body)+(o.tag||"")+'</span><span class="meta">'+esc(m.author||"")+' · '+esc(sdt(m.at))+(H.length?' <button class="linkbtn" data-act="memo-hist" data-id="'+id+'">수정됨 '+H.length+'</button>':"")+SHB+(A.length?'<span class="macts">'+A.join("")+'</span>':"")+'</span></div>';
   if(S.memoHist===id&&H.length)r+='<div class="mhist">'+H.slice().reverse().map(function(x){return'<div><span class="muted">'+esc(sdt(x.at))+' '+esc(x.by)+' 수정 전:</span> '+esc(x.b)+'</div>'}).join("")+'<div class="muted">처음 작성: '+esc(m.author||"")+' · '+esc(sdt(m.at))+'</div></div>';
   return r}
 function tagFor(m,here){var cx=m.src_t&&!(here&&m.src_t===here.t&&m.src_id===here.id)?memoCtx({table:m.src_t,tid:m.src_id}):null;if(!cx&&m.table!=="workers"&&m.table!=="companies"&&!(here&&m.table===here.t&&m.tid===here.id))cx=memoCtx(m);return cx&&cx.k!==""?' <button class="mtag" data-act="'+cx.a+'" data-id="'+esc(m.src_t?m.src_id:m.tid)+'"'+(cx.k?' data-k="'+esc(cx.k)+'"':"")+'>'+esc(cx.l)+' ›</button>':""}
@@ -7814,7 +7827,7 @@ plainNotes=function(table,id){var M=mSort(DB.memos.filter(function(m){return m.t
 progBox=function(table,id){var share=!!PROG_SHARE[table],k="p:"+table+":"+id,all=S.memoAll===k,P=progsOf(table,id),wid=memoWorker({table:table,tid:id});
   if(share){var f=P.find(function(m){return m.shared});if(f)P=[f].concat(P.filter(function(m){return m!==f}))}
   var L=all?P:P.slice(0,MEMO_N);
-  return'<div class="ps wide progbox"><div class="mth">처리 내용 <span class="small muted" style="font-weight:400">'+(P.length?P.length+"건 · ":"")+'케이스 진행 기록</span></div><div class="memo-in">'+(share?'<label class="ckl small" title="체크하면 목록 · 고객사 메일 진행 현황에 보여요"><input type="checkbox" data-mshare> 고객사 공유</label>':"")+'<input id="pi-'+esc(id)+'" data-memo-in placeholder="처리 진행 사항 (Enter)" aria-label="처리 내용"><button class="btn sm pri" data-act="memo-add" data-kind="prog" data-t="'+table+'" data-id="'+id+'">기록</button></div>'+
+  return'<div class="ps wide progbox"><div class="mth">처리 내용 <span class="small muted" style="font-weight:400">'+(P.length?P.length+"건 · ":"")+'케이스 진행 기록</span></div><div class="memo-in">'+(share?'<label class="ckl small shchip" title="켜면 목록 · 고객사 메일 진행 현황에 보여요 · 기록한 뒤에도 줄마다 [고객사 공유] · [공유 해제]로 바꿀 수 있어요"><input type="checkbox" data-mshare> 고객사 공유</label>':"")+'<input id="pi-'+esc(id)+'" data-memo-in placeholder="처리 진행 사항 (Enter)" aria-label="처리 내용"><button class="btn sm pri" data-act="memo-add" data-kind="prog" data-t="'+table+'" data-id="'+id+'">기록</button></div>'+
     (L.length?L.map(function(m){var sys=m.cat==="쪽지 발송"||m.cat==="메일 발송";return mrow(m,{cls:sys?"sys":"p",lab:sys?esc(m.cat):"",share:share&&!sys,tow:!!wid&&!sys})}).join(""):'<p class="hint" style="margin-top:6px">처리 내용이 없어요.</p>')+moreBtn(k,P.length,all)+'</div>'};
 function caseNotes2(table,id){var wid=memoWorker({table:table,tid:id}),co=memoDefCo(table,id),k="n:"+table+":"+id,all=S.memoAll===k,here={t:table,id:id};
   var M=mSort(DB.memos.filter(function(m){return(wid&&!m.pin&&((m.table==="workers"&&m.tid===wid)||(m.tow&&CASE_T[m.table]&&memoWorker(m)===wid&&!(m.table===table&&m.tid===id))))||(co&&m.table==="companies"&&m.tid===co)})),L=all?M:M.slice(0,MEMO_N);
@@ -17622,7 +17635,7 @@ function ldSection(){var L=ldList(),open=L.filter(function(x){return ldRes(x)===
   var h=ldForm()+ldPasteBox()+'<div class="card sbox" id="s-ld"><h3>사전 공유 <span class="small muted">진행 중 '+open.length+'건</span><span class="grow"></span><button class="btn xs" data-act="ld-paste">시트 붙여 넣기</button><button class="btn xs pri" data-act="ld-new">+ 사전 공유</button></h3>';
   if(!LD_OK&&LIVE)h+='<p class="hint" style="color:#B42318">사전 공유 표(sales_leads)가 아직 없어요 · v191 SQL을 실행하면 저장돼요</p>';
   var row=function(x){var res=ldRes(x);return'<tr class="'+(res!=="진행 중"?"dim":"")+'"><td class="num small">'+esc(yymd(x.on))+'</td><td><button class="linkbtn" data-act="ld-edit" data-id="'+esc(x.id)+'">'+esc(x.cname)+'</button>'+(x.cid?"":' <span class="b sm">기업 DB 없음</span>')+'</td><td class="small">'+esc(st(x.sid).name||"—")+'</td><td class="c num">'+(x.prob!=null?'<span class="ldp'+(+x.prob>=70?" hi":+x.prob>=50?" mid":"")+'">'+x.prob+'%</span>':"—")+'</td><td class="small">'+esc((x.n||1)+"명 · "+(x.lvl||"—"))+'</td><td class="small num">'+esc(x.jm?(+x.jm.slice(5,7))+"월":"—")+'</td><td class="small">'+esc(x.term||"—")+'</td><td class="small">'+esc(x.job||"")+(x.jdet?' <span class="muted">'+esc(x.jdet)+'</span>':"")+'</td><td class="small">'+esc(x.hrs||"—")+'</td><td class="small">'+esc(x.pay||"—")+'</td><td class="small">'+(res==="진행 중"?ldMatchCell(x):"")+'</td><td class="nowrap">'+
-    (res==="계약완료"?'<span class="b sm ok">계약완료</span>'+(x.rr&&rcOf(x.rr)?' <button class="linkbtn small" data-act="s-rropen" data-id="'+esc(x.rr)+'">채용 요청 →</button>':""):'<div class="seg sm">'+["진행 중","미진행","계약완료"].map(function(v){return'<button type="button" class="'+(res===v?"on":"")+'" data-act="ld-res" data-id="'+esc(x.id)+'" data-v="'+v+'"'+(res==="미진행"&&x.rnote&&v==="미진행"?' title="'+esc(x.rnote)+'"':"")+'>'+v+'</button>'}).join("")+'</div>')+'</td></tr>'};
+    (res==="계약완료"?'<span class="b sm ok">계약완료</span>'+ldNoRrTag(x)+(x.rr&&rcOf(x.rr)?' <button class="linkbtn small" data-act="s-rropen" data-id="'+esc(x.rr)+'">채용 요청 →</button>':""):'<div class="seg sm">'+["진행 중","미진행","계약완료"].map(function(v){return'<button type="button" class="'+(res===v?"on":"")+'" data-act="ld-res" data-id="'+esc(x.id)+'" data-v="'+v+'"'+(res==="미진행"&&x.rnote&&v==="미진행"?' title="'+esc(x.rnote)+'"':"")+'>'+v+'</button>'}).join("")+'</div>')+'</td></tr>'};
   h+=L.length?'<div class="ldwrap"><table class="t ldt"><thead><tr><th>공유</th><th>기업명</th><th>영업</th><th class="c">가능성</th><th>인원 · 장애</th><th>입사</th><th>계약</th><th>직무</th><th>근무 시간</th><th>급여</th><th>조건 맞는 인재</th><th>결과</th></tr></thead><tbody>'+open.map(row).join("")+(rest.length?'<tr class="ldsep"><td colspan="12"><button class="linkbtn small" data-act="ld-rest">'+(S.ldRest?"▾":"▸")+' 끝난 건 '+rest.length+'건 (계약완료 · 미진행)</button></td></tr>'+(S.ldRest?rest.map(row).join(""):""):"")+'</tbody></table></div>':'<p class="hint">사전 공유가 없어요. [+ 사전 공유] 또는 [시트 붙여 넣기]로 넣어 주세요.</p>';
   return h+'</div>'}
 var _vSHome191=vSHome;vSHome=function(){var h=_vSHome191.apply(this,arguments);var i=h.indexOf('<div class="card sbox"><h3>신규 채용 진행');return i>0?h.slice(0,i)+ldSection()+h.slice(i):h+ldSection()};
@@ -17798,7 +17811,7 @@ ldToRr=function(L){ldNorm(L);var c=L.cid&&comp(L.cid)||DB.companies.find(functio
   L.res="계약완료";L.rr=r.id;if(c)L.cid=c.id;return r};
 ldDoneDlg=function(L){ldNorm(L);var c=L.cid&&comp(L.cid)||DB.companies.find(function(x){return mNorm(x.name)===mNorm(L.cname)});
   ovAsk("계약완료 → 채용 요청",'<p style="margin:0 0 8px">이 내용으로 <b>신규 채용 요청</b>을 만들어요.</p><div class="kv" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+[["기업",(c?c.name:L.cname+" (기업 DB 없음)")],["직무 · 인원",ldJobsTxt(L)||"—"],["장애 정도",L.lvl||"—"],["입사 예상",L.jm||"—"],["근무",ldWorkTxt(L)||"—"],["계약",ldTermTxt(L)||"—"],["급여",L.pay||"—"],["특이사항",L.note||"—"]].map(function(x){return'<div><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>'}).join("")+'</div>'+(ldNeedChk(L)?'<p class="small" style="color:#B45309;margin:8px 0 0">비어 있는 칸이 있어요 · 채용 요청에서 채워 주세요</p>':"")+'<p class="small muted" style="margin:8px 0 0">채용 담당은 비워 두고 채용파트 관리자에게 [배정] 할 일이 가요</p>',
-    [{k:"ok",l:"채용 요청 만들기",pri:true},{k:"x",l:"취소"}],function(a){if(a!=="ok")return;var r=ldToRr(L);logChange("sales_leads",L.id,L.cname,"결과","진행 중","계약완료 → 채용 요청","브이드림 내부");ldSave();toast("채용 요청을 만들었어요");go("rreq");S.rrSel=r.id;render()})};
+    [{k:"ok",l:"채용 요청 만들기",pri:true},{k:"norr",l:"채용 요청 없이 완료"},{k:"x",l:"취소"}],function(a){if(a==="norr")return ldNoRrDlg(L);if(a!=="ok")return;var r=ldToRr(L);logChange("sales_leads",L.id,L.cname,"결과","진행 중","계약완료 → 채용 요청","브이드림 내부");ldSave();toast("채용 요청을 만들었어요");go("rreq");S.rrSel=r.id;render()})};
 ldNew=function(){return{id:"",on:TODAY,cname:"",cid:"",sid:meSales()?S.me:"",prob:50,n:1,lvl:"중증",jm:"",jobs:[{job:"사무행정",n:1,det:""}],wd:5,ts:"09:00",te:"13:30",brk:30,dh:4,tany:false,tm:12,pm:0,pay:"최저시급",note:"",res:"진행 중",rnote:"",rr:"",raw:""}};
 /* ================= ① 영업 진행 현황 ================= */
 SALES_MENU.push(["sleads","영업 진행 현황","s"]);if(!MP_VIEWS.some(function(y){return y[0]==="sleads"}))MP_VIEWS.push(["sleads","영업 진행 현황","s"]);VIEW_CAT.sleads=["sales"];
@@ -17832,7 +17845,7 @@ function vSLeads(){var A=ldRows(),cnt={"진행 중":0,"계약완료":0,"미진�
   if(!(tst("sleads").sort&&tst("sleads").sort.k))rows.sort(function(a,b){return(+b.prob||0)-(+a.prob||0)||String(b.on).localeCompare(String(a.on))});
   h+=dtable("sleads",cols,rows,function(L,i){var res=ldRes(L),stl=ldStale(L);return'<tr class="'+(S.ldSel===L.id?"sel ":"")+(stl?"ldstale":"")+'" data-act="ld-open" data-id="'+esc(L.id)+'"><td class="c num small">'+(i+1)+'</td><td class="num small">'+esc(yymd(L.on))+(stl?' <span class="b sm warn">업데이트 필요</span>':"")+'</td><td><b>'+esc(L.cname)+'</b>'+(L.cid?"":' <span class="b sm">기업 DB 없음</span>')+'</td><td class="small">'+esc(st(L.sid).name||"—")+'</td><td class="c num">'+(L.prob!=null?'<span class="ldp'+(+L.prob>=70?" hi":+L.prob>=50?" mid":"")+'">'+L.prob+'%</span>':"—")+'</td>'+
     '<td class="small">'+ldHead(L)+'명 · '+esc(L.lvl||"—")+'</td><td class="c small">'+esc(L.jm?(+L.jm.slice(5,7))+"월":"—")+'</td><td class="c small">'+esc(ldTermTxt(L)||"—")+'</td><td class="small">'+esc(ldJobsTxt(L)||"—")+'</td><td class="small">'+esc(ldWorkTxt(L)||"—")+(ldNeedChk(L)?' <span class="b sm warn">확인</span>':"")+'</td><td class="small">'+esc(L.pay||"—")+'</td><td class="small"><span class="ldnote" title="'+esc(L.note||"")+'">'+esc(L.note||"")+'</span></td><td class="small" data-act="noop">'+(res==="진행 중"?ldMatchCell(L):"")+'</td>'+
-    '<td class="nowrap" data-act="noop">'+(res==="계약완료"?'<span class="b sm ok">계약완료</span>'+(L.rr&&rcOf(L.rr)?' <button class="linkbtn small" data-act="s-rropen" data-id="'+esc(L.rr)+'">요청 →</button>':""):'<div class="seg sm">'+["진행 중","미진행","계약완료"].map(function(v){return'<button type="button" class="'+(res===v?"on":"")+'" data-act="ld-res" data-id="'+esc(L.id)+'" data-v="'+v+'">'+v+'</button>'}).join("")+'</div>')+'</td></tr>'},"사전 공유가 없어요.");
+    '<td class="nowrap" data-act="noop">'+(res==="계약완료"?'<span class="b sm ok">계약완료</span>'+ldNoRrTag(L)+(L.rr&&rcOf(L.rr)?' <button class="linkbtn small" data-act="s-rropen" data-id="'+esc(L.rr)+'">요청 →</button>':""):'<div class="seg sm">'+["진행 중","미진행","계약완료"].map(function(v){return'<button type="button" class="'+(res===v?"on":"")+'" data-act="ld-res" data-id="'+esc(L.id)+'" data-v="'+v+'">'+v+'</button>'}).join("")+'</div>')+'</td></tr>'},"사전 공유가 없어요.");
   return h+pLd()}
 /* 영업 홈: 숫자 카드만 */
 ldSection=function(){var L=ldRows(),open=L.filter(function(x){return ldRes(x)==="진행 중"}),mon=TODAY.slice(0,7),thisM=open.filter(function(x){return x.jm===mon}).length,hi=open.filter(function(x){return+x.prob>=70}).length;
@@ -18319,8 +18332,8 @@ function ldLinkRr(L,r){var c=comp(r.company);L.res="계약완료";L.rr=r.id;if(c
   ldSave();toast("기존 채용 요청에 연결했어요");go("rreq");S.rrSel=r.id;render()}
 var _ldDoneDlg202=ldDoneDlg;ldDoneDlg=function(L){var R=ldOpenRrs(L);if(!R.length)return _ldDoneDlg202.apply(this,arguments);var self=this,args=arguments;
   ovAsk("이미 진행 중인 채용 요청이 있어요",'<p style="margin:0 0 8px"><b>'+esc(L.cname)+'</b>에 진행 중인 채용 요청이 '+R.length+'건 있어요. 같은 건이면 연결하고, 다른 채용이면 새로 만들어 주세요.</p><ul style="margin:0;padding-left:18px">'+R.slice(0,4).map(function(r){return'<li><b>'+esc(r.kind||"")+'</b> · '+esc(rrJobsTxt(r))+' · '+esc(rrState(r))+' <span class="small muted">등록 '+esc(md(String(r.created||r.requested||"").slice(0,10)))+(r.recruiter?" · 채용 "+esc(st(r.recruiter).name):"")+'</span></li>'}).join("")+'</ul>',
-    R.slice(0,4).map(function(r,i){return{k:"l"+i,l:(R.length>1?(i+1)+"번 ":"")+"기존 건에 연결",pri:i===0}}).concat([{k:"new",l:"새로 만들기"},{k:"x",l:"취소"}]),
-    function(k){if(k==="x")return;if(k==="new")return _ldDoneDlg202.apply(self,args);var r=R[+k.slice(1)];if(r)ldLinkRr(L,r)})};
+    R.slice(0,4).map(function(r,i){return{k:"l"+i,l:(R.length>1?(i+1)+"번 ":"")+"기존 건에 연결",pri:i===0}}).concat([{k:"new",l:"새로 만들기"},{k:"norr",l:"채용 요청 없이 완료"},{k:"x",l:"취소"}]),
+    function(k){if(k==="x")return;if(k==="norr")return ldNoRrDlg(L);if(k==="new")return _ldDoneDlg202.apply(self,args);var r=R[+k.slice(1)];if(r)ldLinkRr(L,r)})};
 
 /* ================================================================
    v203
@@ -18424,13 +18437,13 @@ function rqMemos(kid){return(DB.memos||[]).filter(function(m){return m.table==="
 function rqProgBox(kid){var h=memoTop("client_request_workers",kid);var i=h.indexOf('<div class="ps wide progbox">');if(i<0)return"";var e=divEnd(h,i);if(e<0)return"";return h.slice(i,e).replace('class="ps wide progbox"','class="progbox rqaccprog"')}
 function rqAccOpen(k){if(k.id in S.rqAcc)return!!S.rqAcc[k.id];return k.status!=="완료"&&k.status!=="취소"&&(k.status==="진행 중"||rqMemos(k.id).length>0||!!k.prog)}
 function rqAccHtml(r,skip){var K=reqKids(r.id).filter(function(k){return k.id!==skip});if(!K.length)return"";var p={n:K.length,d:K.filter(function(k){return k.status==="완료"}).length};
-  var ord=function(k){return k.status==="취소"?3:k.status==="완료"?2:rqAccOpen(k)?0:1};K=K.slice().sort(function(a,b){return ord(a)-ord(b)});var allOpen=K.every(rqAccOpen);
+  var ord=function(k){return k.status==="취소"?2:k.status==="완료"?1:0},K0=K;K=K.slice().sort(function(a,b){return ord(a)-ord(b)||K0.indexOf(a)-K0.indexOf(b)});var allOpen=K.every(rqAccOpen);
   return'<div class="ps wide rqacc"><h3>'+(skip?"같은 요청의 다른 근로자":"근로자별 진행")+' <span class="small muted" style="font-weight:400">'+p.n+'명 중 '+p.d+'명 완료 · 누르면 기록이 펼쳐져요</span><span class="grow"></span><button class="btn xs" data-act="rqacc-all" data-r="'+esc(r.id)+'" data-v="'+(allOpen?"0":"1")+'">'+(allOpen?"모두 접기":"모두 펼치기")+'</button>'+(!skip&&p.n>p.d?'<button class="btn xs" data-act="reqg-all" data-id="'+r.id+'">남은 '+(p.n-p.d)+'명 모두 완료</button>':"")+'</h3>'+
     K.map(function(k){var w=wk(k.worker)||{},M=rqMemos(k.id),o=rqAccOpen(k),last=M[0];
       return'<div class="rqai'+(o?" on":"")+(k.status==="완료"?" dn":"")+'"><div class="rqah" data-rqh="'+k.id+'"><button type="button" class="rqat" data-act="rqacc" data-id="'+k.id+'" aria-expanded="'+o+'" aria-label="기록 펼치기"><i>'+(o?"▾":"▸")+'</i></button><b class="rqan">'+(k.worker?wlink(k.worker):esc(w.name||"(근로자 없음)"))+'</b><span class="small">'+mtel(w)+'</span>'+
         '<select data-ch="reqw-st" data-id="'+k.id+'" aria-label="상태">'+opt(SLO(REQ_ST),k.status)+'</select>'+(k.done?'<span class="small muted num">'+md(k.done)+' 완료</span>':"")+
         '<span class="rqal small'+(M.length?"":" muted")+'">'+(M.length?'💬 '+M.length+' · 최근 '+esc(md(String(last.at||"").slice(0,10)))+' '+esc(String(last.body||"").replace(/\s+/g," ").slice(0,30)):"기록 없음")+'</span>'+'</div>'+
-        (o?'<div class="rqab"><label class="rqaprog"><span class="small muted">특이사항</span><textarea class="mta" rows="1" data-rqprog="'+k.id+'" placeholder="한 줄 요약 · 예: 보호자 동행 필요 (적고 나가면 저장)">'+esc(k.prog||"")+'</textarea></label>'+rqProgBox(k.id)+'</div>':"")+'</div>'}).join("")+'</div>'}
+        (o?'<div class="rqab"><label class="rqaprog"><span class="small muted">특이사항 <span class="rqint" title="고객사에 안 보여요 · 고객사에 알릴 내용은 아래 처리 내용에 [고객사 공유]로 기록">내부용</span></span><textarea class="mta" rows="1" data-rqprog="'+k.id+'" placeholder="한 줄 요약 · 예: 보호자 동행 필요 (적고 나가면 저장)">'+esc(k.prog||"")+'</textarea></label>'+rqProgBox(k.id)+'</div>':"")+'</div>'}).join("")+'</div>'}
 var _reqGroupPanel205=reqGroupPanel;reqGroupPanel=function(r){var h=_reqGroupPanel205.apply(this,arguments);try{if(typeof h!=="string")return h;var i=h.indexOf('<div class="ps wide"><h3>근로자별 상태');if(i<0)return h;var e=divEnd(h,i);if(e<0)return h;return h.slice(0,i)+rqAccHtml(r)+h.slice(e)}catch(err){console.warn(err);return h}};
 regSection("todo",{id:"req-others",order:90,at:"end",when:function(t){return t&&t.type==="req"&&t.req},html:function(t){var k=reqwOf(t.req),r=k&&reqOf(k.req);return r?rqAccHtml(r,k.id):""}});
 regActs({
@@ -18578,7 +18591,9 @@ function openPanel(kind,id){var f=PANEL_OPEN[kind];if(f)return f(id);console.war
 var _v139ActReg=v139Act;v139Act=function(a,el){var f=REG().act[a];if(f){var r=f((el&&el.dataset)||{},el,a);if(r===REG_NEXT)return _v139ActReg(a,el);return f._raw?r:r!==false}return _v139ActReg(a,el)};
 var _btReg=buildTodos;buildTodos=function(){var L=_btReg.apply(this,arguments);REG().todo.forEach(function(o){try{var r=o.fn(L);if(Array.isArray(r))L=r}catch(e){console.warn("[할 일]",o.k,e)}});
   if(typeof TD_LB!=="undefined"&&TD_LB)L=L.map(function(t){var n=!t.company&&tdLb(t);return n?Object.assign({},t,{company:"__lb__"+n}):t});return L};
-var _renderReg=render;render=function(){var r=_renderReg.apply(this,arguments);REG().after.forEach(function(o){try{o.fn()}catch(e){console.warn("[후처리]",o.k,e)}});return r};
+/* v208: 창 · 모달이 열린 채 다시 그릴 때 뒤 화면 스크롤 위치 지키기 (탭 바꾸기 등) */
+var _renderReg=render;render=function(){var y0=window.scrollY,v0=S.view,op=!!document.querySelector("#modal .ov,aside.pnl,.holov");var r=_renderReg.apply(this,arguments);REG().after.forEach(function(o){try{o.fn()}catch(e){console.warn("[후처리]",o.k,e)}});
+  if(op&&y0>0&&S.view===v0){if(Math.abs(window.scrollY-y0)>2)window.scrollTo(0,y0);if(typeof KEEPY!=="undefined")KEEPY={y:y0,v:v0,until:Date.now()+600}}return r};
 var _pTodoReg=pTodo;pTodo=function(t){return secApply("todo",_pTodoReg.apply(this,arguments),t)};
 regAct("open-panel",function(D0){openPanel(D0.k,D0.id)});
 
@@ -18664,8 +18679,42 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v207 — 리팩터링(기능 · 창 폴더 · 등록 방식) · 자동 처리 스위치 · 용어 통일 · 상태 색 정리 · [?] 도움말 */
-APP_VER="v207";APP_VER_ON="10/28";APP_NOTE="소스 정리(등록 방식) · 자동 처리 스위치 · 용어 통일 · 상태 색 · 도움말";
+/* v208 — 대시보드 결정 전 · 특이사항 정렬 고정 · 탭 바꿀 때 뒤 화면 위치 · 고객사 공유 칩 · 영업 채용 요청 없이 완료 */
+APP_VER="v208";APP_VER_ON="10/28";APP_NOTE="대시보드 결정 전 · 정렬 고정 · 뒤 화면 위치 · 고객사 공유 칩 · 채용 요청 없이 완료";
+
+/* ================================================================
+   v208
+     ① 대시보드 퇴사 칸: 결정 전(계약만료일이 기간 안 · 연장/종료 결정 없음) 따로 · 누르면 계약만료(최종 미확정만)
+     ② 창 · 모달 안에서 탭을 바꿔도 뒤 화면 스크롤 위치 그대로
+     ③ 처리 내용 [고객사 공유] 칩 · 켜면 버튼이 '공유 기록' · 기록마다 [고객사 공유]/[공유 해제] 늘 보임
+     ④ 영업 사전 공유: [채용 요청 없이 완료] (사유 필수) · [되돌리기]
+   (대시보드 · 정렬 · 공유 표시는 각 원본 파일에서 고침)
+   ================================================================ */
+/* ① */
+regAct("dash-und",function(){go("exp");S.expTab="open";S.expNoDec=true;S.sel=null;render();toast("최종 미확정 건만 보여요 · 끄려면 [최종 미확정만] 체크 해제")});
+
+/* ② 다시 그린 뒤 브라우저가 늦게 뒤 화면을 올려 버리는 것(탭 버튼 포커스) 막기
+      창 · 모달이 열려 있고 같은 화면일 때만 · 0.6초 안 · 사용자가 직접 스크롤하면 바로 풀림 */
+var KEEPY=null;
+/* 다시 그리기 직후 위치 되돌림 · KEEPY 설정은 core/9000-registry.js render 연결부에서 */
+window.addEventListener("scroll",function(){var k=KEEPY;if(!k)return;if(Date.now()>k.until||S.view!==k.v){KEEPY=null;return}if(Math.abs(window.scrollY-k.y)>2)window.scrollTo(0,k.y)},{passive:true});
+["wheel","touchmove","keydown"].forEach(function(n){window.addEventListener(n,function(){KEEPY=null},{passive:true,capture:true})});
+
+/* ③ 공유 칩: 켜면 기록 버튼 글자 바꾸기 */
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.matches||!t.matches("[data-mshare]"))return;var row=t.closest(".memo-in"),b=row&&row.querySelector('[data-act="memo-add"]');if(b)b.textContent=t.checked?"공유 기록":"기록"},true);
+
+/* ④ 영업 사전 공유: 채용 요청 없이 완료 (이미 채용까지 끝난 건 등) · 사유는 결과 메모(result_note)에 저장 */
+function ldNoRr(L){return!!L&&ldRes(L)==="계약완료"&&!L.rr}
+function ldNoRrTag(L){if(!ldNoRr(L))return"";var w=String(L.rnote||"").replace(/^\[채용 요청 없음\]\s*/,"");
+  return' <span class="b sm" title="'+esc(w||"사유 없음")+'">채용 요청 없음</span>'+(w?' <span class="small muted ldnr" title="'+esc(w)+'">'+esc(drepCut(w,18))+'</span>':"")+' <button class="linkbtn small" data-act="ld-undo" data-id="'+esc(L.id)+'">되돌리기</button>'}
+function ldNoRrDlg(L){S.ldWhy="";
+  ovAsk("채용 요청 없이 완료",'<p style="margin:0 0 8px"><b>'+esc(L.cname)+'</b>을(를) <b>계약완료</b>로 두고 <b>채용 요청은 만들지 않아요</b>. 할 일도 생기지 않아요.</p><input data-ldwhy style="width:100%" placeholder="사유 (필수) · 예: 이미 채용 완료 · 브이원에서 처리">',
+    [{k:"ok",l:"계약완료로",pri:true},{k:"x",l:"취소"}],function(r){if(r!=="ok")return;var w=String(S.ldWhy||"").trim();if(!w){toast("사유를 적어 주세요");return ldNoRrDlg(L)}
+      var b=ldRes(L);L.res="계약완료";L.rr="";L.rnote="[채용 요청 없음] "+w;logChange("sales_leads",L.id,L.cname,"결과",b,"계약완료 · 채용 요청 없이 · "+w,"브이드림 내부");ldSave();toast("계약완료로 바꿨어요 (채용 요청 없음)");render()});
+  setTimeout(function(){var i=document.querySelector(".holov [data-ldwhy]");if(i)i.focus()},0)}
+regAct("ld-undo",function(D0){var L=ldOf(D0.id);if(!ldNoRr(L))return;
+  ovAsk("계약완료 되돌리기",'<p style="margin:0"><b>'+esc(L.cname)+'</b>을(를) <b>진행 중</b>으로 되돌려요. 적어 둔 사유는 변경 이력에 남아 있어요.</p>',[{k:"ok",l:"되돌리기",pri:true},{k:"x",l:"취소"}],function(r){if(r!=="ok")return;
+    var w=L.rnote||"";L.res="진행 중";L.rnote="";logChange("sales_leads",L.id,L.cname,"결과","계약완료"+(w?" · "+w:""),"진행 중 (되돌림)","브이드림 내부");ldSave();toast("진행 중으로 되돌렸어요");render()})});
 
 /* ============ 렌더 ============ */
 function renderMain(){
