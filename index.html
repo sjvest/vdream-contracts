@@ -7441,7 +7441,7 @@ function ovHtml(v){var h="";
 var _pTodo26=pTodo;pTodo=function(t){var h=_pTodo26(t),n=tdSibs(t);if(!n)return h;var m=h.match(/<button class="close"[^>]*>×<\/button><\/div>/);if(!m)return h;var e=h.indexOf(m[0])+m[0].length;return h.slice(0,e)+'<div class="ps wide ovbar"><div class="tdstrip"><span class="grow"></span>'+n+'</div></div>'+h.slice(e)};
 var _go26=go;go=function(v){ovClear();S.ovTd=null;return _go26.apply(this,arguments)};
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-act]");if(!b)return;var a=b.dataset.act;
-  if(a==="todo-open"){var t=buildTodos().find(function(x){return x.key===b.dataset.k});if(!t)return;
+  if(a==="todo-open"){var t=(typeof btLast==="function"&&btLast(b.dataset.k))||buildTodos().find(function(x){return x.key===b.dataset.k});if(!t)return;
     ovClear();S.ovTd=null;if(NATIVE_TD[t.type]&&NATIVE_TD[t.type](t)){ev.stopImmediatePropagation();ev.preventDefault();S.sel=null;if(S.view==="todo"){S.wm=null;S.cm=null}S.ovTd=t.key;render();return}
     if(S.view!=="todo"){ev.stopImmediatePropagation();ev.preventDefault();S.xm=null;$("#modal").innerHTML="";S.tdOv=t.key;render()}
     return}
@@ -18620,8 +18620,8 @@ function stLegend(){if(!/^(req|wreq|att|todo|rreq)$/.test(S.view))return;var m=$
 /* ---------- ② 표 정리 ---------- */
 function tblTidy(){var m=$("#main");if(!m)return;
   [].forEach.call(document.querySelectorAll("#main .box table tbody td, .pnl table.mini tbody td"),function(td){if(td.dataset.tidy)return;td.dataset.tidy=1;if(td.querySelector("input,select,textarea,button,.b"))return;var t=td.textContent.replace(/\s+/g," ").trim();if(t.length>36){td.title=t;td.innerHTML='<div class="clamp2">'+td.innerHTML+"</div>"}});
-  [].forEach.call(m.querySelectorAll(".box table"),function(t){var bx=t.closest(".box");if(!bx||t.scrollWidth<=bx.clientWidth+4)return;var ths=[].slice.call(t.querySelectorAll("thead th"));var ni=ths.findIndex(function(th){return/^(이름|근로자|후보자|입사자|성명|기관)/.test(th.textContent.trim())});if(ni<0)return;var left=0;for(var i=0;i<ni;i++)left+=ths[i].getBoundingClientRect().width;
-    [].forEach.call(t.querySelectorAll("tr"),function(tr){var c=tr.children[ni];if(!c)return;c.classList.add("stick");c.style.left=left+"px";for(var j=0;j<ni;j++){var d=tr.children[j];if(d){d.classList.add("stick");var l2=0;for(var q=0;q<j;q++)l2+=ths[q].getBoundingClientRect().width;d.style.left=l2+"px"}}})})}
+  [].forEach.call(m.querySelectorAll(".box table"),function(t){var bx=t.closest(".box");if(!bx||t.scrollWidth<=bx.clientWidth+4)return;var ths=[].slice.call(t.querySelectorAll("thead th"));var ni=ths.findIndex(function(th){return/^(이름|근로자|후보자|입사자|성명|기관)/.test(th.textContent.trim())});if(ni<0)return;var X=[],left=0;for(var i=0;i<=ni;i++){X.push(left);if(i<ni)left+=ths[i].getBoundingClientRect().width}/* v215 너비는 한 번만 재기 */
+    [].forEach.call(t.querySelectorAll("tr"),function(tr){var c=tr.children[ni];if(!c)return;c.classList.add("stick");c.style.left=X[ni]+"px";for(var j=0;j<ni;j++){var d=tr.children[j];if(d){d.classList.add("stick");d.style.left=X[j]+"px"}}})})}
 var CD_PH={doc:"서류",iv:"면접",final:"최종",why:"사유"};
 /* v210: 둘째 줄은 마우스 올리면 보이게 · 단 근무 조건(주n · nh · 재택)과 입사 예정일은 늘 보이게 */
 function rrWorkShort(r){if(!r)return"";return[r.wk_days?"주"+r.wk_days:"",r.day_hours?(+r.day_hours)+"h":"",r.work_type||""].filter(Boolean).join(" · ")}
@@ -18727,8 +18727,10 @@ var _v139ActReg=v139Act;v139Act=function(a,el){var f=REG().act[a];if(f){var r=f(
 var _btReg=buildTodos;buildTodos=function(){var L=_btReg.apply(this,arguments);REG().todo.forEach(function(o){try{var r=o.fn(L);if(Array.isArray(r))L=r}catch(e){console.warn("[할 일]",o.k,e)}});
   if(typeof TD_LB!=="undefined"&&TD_LB)L=L.map(function(t){var n=!t.company&&tdLb(t);return n?Object.assign({},t,{company:"__lb__"+n}):t});return L};
 /* v208: 창 · 모달이 열린 채 다시 그릴 때 뒤 화면 스크롤 위치 지키기 (탭 바꾸기 등) */
-var _renderReg=render;render=function(){var y0=window.scrollY,v0=S.view,op=!!document.querySelector("#modal .ov,aside.pnl,.holov");var r=_renderReg.apply(this,arguments);REG().after.forEach(function(o){try{o.fn()}catch(e){console.warn("[후처리]",o.k,e)}});
-  if(op&&y0>0&&S.view===v0){if(Math.abs(window.scrollY-y0)>2)window.scrollTo(0,y0);if(typeof KEEPY!=="undefined")KEEPY={y:y0,v:v0,until:Date.now()+600}}return r};
+/* v215 뒤처리(상태 색 · 표 정리 · 알림 등)도 빠른 찾기 저장(RC)이 켜진 채로 돌게: 내 할 일 줄마다 할 일 전체를 다시 계산하던 것 */
+var _renderReg=render;render=function(){var own=!RC;if(own)RC={};try{return _renderRegIn.apply(this,arguments)}finally{if(own)RC=null}};
+function _renderRegIn(){var y0=window.scrollY,v0=S.view,op=!!document.querySelector("#modal .ov,aside.pnl,.holov");var r=_renderReg.apply(this,arguments);REG().after.forEach(function(o){try{o.fn()}catch(e){console.warn("[후처리]",o.k,e)}});
+  if(op&&y0>0&&S.view===v0){if(Math.abs(window.scrollY-y0)>2)window.scrollTo(0,y0);if(typeof KEEPY!=="undefined")KEEPY={y:y0,v:v0,until:Date.now()+600}}return r}
 var _pTodoReg=pTodo;pTodo=function(t){return secApply("todo",_pTodoReg.apply(this,arguments),t)};
 regAct("open-panel",function(D0){openPanel(D0.k,D0.id)});
 
@@ -18814,8 +18816,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v214";APP_VER_ON="10/29";APP_NOTE="입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v215";APP_VER_ON="10/29";APP_NOTE="클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -19325,6 +19327,17 @@ regActs({
       logChange("intake_applicants",q.id,q.name,"입구서 파일 재등록","",files.map(function(x){return x.slot+"번"}).join(" · ")+" 교체","브이드림 내부");
       if(LIVE&&READY)schedulePersist();closeIntakePanels();toast("작업기가 1~2분 안에 새 파일을 올리고 예전 파일은 휴지통으로 옮겨요");render()}).catch(function(e){if(el)el.disabled=false;toast("다시 올리기 실패: "+(e.message||e))})}
 });
+
+/* ================================================================
+   v215 클릭 후 창 뜨는 속도
+     ① 뒤처리(상태 색 · 표 정리 · 알림 등)도 빠른 찾기 저장(RC)이 켜진 채로 (core/9000-registry.js)
+     ② 할 일 목록: 화면 한 번 그리는 동안 맨 바깥에서 한 번만 계산 (v200 저장은 안쪽이라 그 뒤에 붙은 처리는 매번 다시 돌았음)
+     ②-1 할 일 클릭: 방금 그린 할 일 목록에서 찾기 (예전: 클릭할 때마다 저장 없이 할 일 전체를 한 번 더 계산 · 데이터가 많으면 수백 ms)
+     ③ 표 고정열 너비는 한 번만 재기 (0247-v206)
+   ================================================================ */
+var _bt215=buildTodos;buildTodos=function(){if(!RC)return _bt215.apply(this,arguments);var k;try{k=JSON.stringify([].slice.call(arguments))+"|"+[S.tdHoldV?1:0,S.scope,S.mgr,S.me,S.role,S.view,typeof TD_LB!=="undefined"&&TD_LB?1:0].join("|")}catch(e){return _bt215.apply(this,arguments)}
+  if(!RC.bt215){RC.bt215={};BT_LAST={}}var c=RC.bt215;if(!c[k]){c[k]=_bt215.apply(this,arguments);c[k].forEach(function(t){if(t&&t.key&&!BT_LAST[t.key])BT_LAST[t.key]=t})}return c[k].slice()};
+var BT_LAST=null;function btLast(k){return BT_LAST&&k?BT_LAST[k]||null:null}
 
 /* ============ 렌더 ============ */
 function renderMain(){
