@@ -1317,6 +1317,38 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .rrsttop{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:8px}.rrsttop .ctlb{font-size:12px;color:var(--ink-3)}.rrsttop .rrdd{font-size:12px;color:var(--ink-2)}
 .inlk{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:#fff;color:var(--ink-2);text-decoration:none;white-space:nowrap;cursor:pointer;display:inline-block;margin:2px 0 0}.inlk.done{border-color:#BFE6D0;background:#EEF9F2;color:#16794a}.inlk:hover{border-color:var(--p);color:var(--p)}
 .rrqhint{margin:0 0 8px;padding:6px 10px;border-radius:8px;background:#F4F2FB;font-size:12.5px;color:var(--ink-2)}
+
+/* v211 조율 요청 */
+.tk2 .tk2b{padding:4px 14px 0}
+.tk2steps{display:flex;align-items:center;flex-wrap:wrap;gap:4px 0;margin:10px 0}
+.tk2st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#9A97AC;font-weight:600}.tk2st small{font-weight:400}
+.tk2st i{width:20px;height:20px;border-radius:50%;border:2px solid #D9D6E6;display:grid;place-items:center;font-style:normal;font-size:11px;background:#fff}
+.tk2st.done{color:#16794a}.tk2st.done i{border-color:#16794a;background:#16794a;color:#fff}.tk2st.now{color:var(--p)}.tk2st.now i{border-color:var(--p);background:var(--p);color:#fff}
+.tk2ln{flex:0 0 36px;height:2px;background:#E4E1EE;margin:0 8px}.tk2ln.done{background:#16794a}
+.tk2now{background:#F1EEFD;border:1px solid #D9D2F7;border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tk2now b{color:var(--p)}
+.tk2now.wait{background:#F6F5FA;border-color:#E4E1EE}.tk2now.wait b{color:var(--ink-2)}.tk2now input[type=date]{width:150px}
+.tk2orig{margin-top:10px;background:#FFF8EC;border-radius:8px;padding:8px 12px;font-size:13px;line-height:1.5;white-space:pre-line}.tk2orig>b{color:#B4690E;margin-right:6px}
+.tk2sec{margin-top:12px}.tk2t input{width:100%;min-width:120px}
+.tk2chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tk2chip{border:1px dashed #C9C2EE;border-radius:999px;padding:3px 10px;font-size:12.5px;background:#fff;color:var(--ink-2);cursor:pointer}.tk2chip.on{border-style:solid;border-color:var(--p);background:#F1EEFD;color:var(--p);font-weight:700}
+.tk2din{display:inline-flex;gap:4px}.tk2din input{width:170px}
+.tk2ck{display:inline-flex;align-items:center;gap:6px;border:1px solid #E4E1EE;border-radius:999px;padding:4px 11px;font-size:13px;background:#fff;cursor:pointer}
+.tk2ck i{width:15px;height:15px;border:2px solid #C9C6D6;border-radius:4px;display:inline-block;position:relative}
+.tk2ck.on{border-color:#BFE6D0;background:#EEF9F2;color:#16794a}.tk2ck.on i{background:#16794a;border-color:#16794a}.tk2ck.on i:after{content:"";position:absolute;left:3px;top:0;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.tk2docr{display:flex;align-items:center;gap:10px;margin:4px 0}.tk2docr>b{min-width:60px}
+.tk2edd{margin-top:6px}.tk2edd summary{font-size:12px;color:var(--p);cursor:pointer}
+.tk2tip{margin:6px 0 0;font-size:12.5px;color:#16794a;font-weight:600}
+.tk2warn{margin-top:10px;border:1px solid #F5C77E;background:#FFFBF2;border-radius:10px;padding:10px 12px}
+.tk2pick{border:1px solid #E4E1EE;border-radius:9px;padding:6px 10px;background:#fff;margin-top:6px;max-height:240px;overflow:auto}.tk2pick.need{border-color:#E5484D;box-shadow:0 0 0 2px #FDE2E2}
+.tk2ph{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-3);border-bottom:1px solid #F0EEF5;padding-bottom:5px;margin-bottom:2px}
+.tk2r{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer}.tk2r.on b{color:var(--p)}
+.tk2form{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;padding:12px 14px}.tk2f{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.tk2f textarea{width:100%}
+.tk2l{display:block;font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:4px}.tk2l .req{color:#E5484D;font-size:11px}
+.tk2need{color:#B45309}.tk2mini{color:var(--ink-2)}.tklast .tk2nowt{color:var(--p);font-weight:600}
+.tk2mr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 12px;background:#FAFAFC;border-top:1px dashed #E4E1EE}
+.tk2more.on{background:#F1EEFD}
+@media (max-width:900px){.tk2form{grid-template-columns:1fr}}
+.tk2f .tk2pick{width:100%}
 </style>
 </head>
 <body>
@@ -17409,7 +17441,7 @@ function tkSlotRows(t,lab){var S0=t.slots||[];return'<div class="tksl"><div clas
   '<select data-tks="k" data-nosbx><option value="at">정각</option><option value="after">이후</option><option value="before">이전</option><option value="range">범위</option></select><input type="time" data-tks="t" step="600"><input type="time" data-tks="t2" step="600" title="범위 끝"><button class="btn xs" data-act="tk-sladd" data-id="'+t.id+'">+ 시간</button></div>'+
   '<div class="tkpaste"><input data-tkp="'+t.id+'" placeholder="메시지 붙여 넣기 (예: 수요일 10시, 금요일 14시 / 10/30 10시 이후)"><button class="btn xs" data-act="tk-paste" data-id="'+t.id+'">시간 읽기</button></div>'}
 function tkConfRows(t){var C=t.conf||{},L=(t.ck||[]).map(function(k){return tkCand(t.rr,k)}).filter(Boolean);if(!L.length)return'<p class="hint">대상 후보를 고르면 확정 칸이 생겨요</p>';
-  return'<div class="tkconf"><div class="tkh">후보별 확정 시간 <span class="small muted">슬롯을 누르면 채워져요 · 이후 · 범위는 정확한 시각을 넣어요</span></div>'+L.map(function(o){var c=C[o.k]||{};return'<div class="tkcr"><b>'+esc(o.name)+'</b>'+(t.slots||[]).map(function(s,i){return'<button class="btn xs" data-act="tk-pick" data-id="'+t.id+'" data-k="'+esc(o.k)+'" data-i="'+i+'">'+"①②③④⑤⑥⑦⑧⑨"[i]+'</button>'}).join("")+'<input type="date" data-tkc="'+t.id+'|'+esc(o.k)+'|d" value="'+esc(c.d||"")+'"><input type="time" step="600" data-tkc="'+t.id+'|'+esc(o.k)+'|t" value="'+esc(c.t||"")+'">'+(c.d&&c.t?'<span class="ok small">✓ '+esc(md(c.d)+" "+c.t)+'</span>':"")+'</div>'}).join("")+'</div>'}
+  return'<div class="tkconf"><div class="tkh">지원자별 확정 시간 <span class="small muted">슬롯을 누르면 채워져요 · 이후 · 범위는 정확한 시각을 넣어요</span></div>'+L.map(function(o){var c=C[o.k]||{};return'<div class="tkcr"><b>'+esc(o.name)+'</b>'+(t.slots||[]).map(function(s,i){return'<button class="btn xs" data-act="tk-pick" data-id="'+t.id+'" data-k="'+esc(o.k)+'" data-i="'+i+'">'+"①②③④⑤⑥⑦⑧⑨"[i]+'</button>'}).join("")+'<input type="date" data-tkc="'+t.id+'|'+esc(o.k)+'|d" value="'+esc(c.d||"")+'"><input type="time" step="600" data-tkc="'+t.id+'|'+esc(o.k)+'|t" value="'+esc(c.t||"")+'">'+(c.d&&c.t?'<span class="ok small">✓ '+esc(md(c.d)+" "+c.t)+'</span>':"")+'</div>'}).join("")+'</div>'}
 function tkAsgRows(t){var A=t.asg||{},L=A.L||[];var r=rcOf(t.rr);
   var h='<div class="tkasg"><div class="tkh">순서 배정 <span class="small muted">시작 시각부터 1인당 시간만큼 자리를 만들어요</span></div><div class="tkadd"><input type="date" data-tka="'+t.id+'|d" value="'+esc(A.d||"")+'"><input type="time" step="600" data-tka="'+t.id+'|t" value="'+esc(A.t||"")+'"><span class="small">부터 · 1인</span><select data-tka="'+t.id+'|per" data-nosbx>'+[20,30,40,60].map(function(x){return'<option'+(+A.per===x?" selected":"")+'>'+x+'</option>'}).join("")+'</select><span class="small">분 · 사이</span><select data-tka="'+t.id+'|gap" data-nosbx>'+[0,10].map(function(x){return'<option value="'+x+'"'+(+A.gap===x?" selected":"")+'>'+(x?x+"분":"없음")+'</option>'}).join("")+'</select><button class="btn xs" data-act="tk-gen" data-id="'+t.id+'">자리 만들기</button></div>';
   if(L.length){var seen={};h+='<table class="t tkat"><thead><tr><th>순서</th><th>시각</th><th>후보</th><th>확인</th><th>메모</th></tr></thead><tbody>'+L.map(function(x,i){var o=tkCand(t.rr,x.k),dup=seen[x.t];seen[x.t]=1;return'<tr><td class="nowrap"><button class="btn xs" data-act="tk-mv" data-id="'+t.id+'" data-i="'+i+'" data-v="-1" aria-label="위로">▲</button><button class="btn xs" data-act="tk-mv" data-id="'+t.id+'" data-i="'+i+'" data-v="1" aria-label="아래로">▼</button></td><td class="nowrap"><input type="time" step="600" data-tkl="'+t.id+'|'+i+'|t" value="'+esc(x.t||"")+'">'+(dup?' <span class="b sm bad">시간 겹침</span>':"")+'</td><td>'+esc(o?o.name:"(후보 없음)")+'</td><td><div class="seg sm">'+[["대기","⏳ 대기"],["확인","✓ 확인"],["변경","↺ 변경 요청"]].map(function(s){return'<button type="button" class="'+((x.s||"대기")===s[0]?"on":"")+'" data-act="tk-ls" data-id="'+t.id+'" data-i="'+i+'" data-v="'+s[0]+'">'+s[1]+'</button>'}).join("")+'</div></td><td><input data-tkl="'+t.id+'|'+i+'|m" value="'+esc(x.m||"")+'" placeholder="예: 11시 이후만 가능" style="width:170px"></td></tr>'}).join("")+'</tbody></table>';
@@ -17437,7 +17469,7 @@ function tkNewForm(rid){var F=S.tkNew,C=tkCands(rid).filter(function(o){return!c
     '<div class="tkrow"><span class="mclab">누가 요청</span><div class="seg sm">'+["고객사","후보자","내부"].map(function(w){return'<button type="button" class="'+(F.org===w?"on":"")+'" data-act="tk-nf" data-k="org" data-v="'+w+'">'+({"고객사":"기업 요청","후보자":"근로자 요청"}[w]||w)+'</button>'}).join("")+'</div><span class="mclab" style="margin-left:12px">회신 기한</span><input type="date" data-tkn="due" value="'+esc(F.due||"")+'"></div>'+
     '<div class="tkrow"><span class="mclab">받은 내용</span><textarea data-tkn="text" rows="2" placeholder="고객사 · 후보자 메시지를 붙여 넣어요 (면접 일정이면 시간을 자동으로 읽어요)">'+esc(F.text||"")+'</textarea></div>'+
     '<div class="tkfoot"><span class="grow"></span><button class="btn sm pri" data-act="tk-create" data-rr="'+esc(rid)+'">요청 등록</button></div></div>'}
-function tkSection(rid){var L=tksOf(rid),r=rcOf(rid);var h='<div class="ps wide tksec"><h3>조율 요청 <span class="small muted" style="font-weight:400">면접 일정 · 처우 · 입사일 등 답을 기다리는 일 · 고객사 연락은 운영파트 · 후보자 연락은 채용파트</span><span class="grow"></span>'+(S.tkNew?"":'<button class="btn sm pri" data-act="tk-new" data-rr="'+esc(rid)+'">+ 조율 요청</button>')+'</h3>';
+function tkSection(rid){var L=tksOf(rid),r=rcOf(rid);var h='<div class="ps wide tksec"><h3>조율 요청 <span class="small muted" style="font-weight:400">면접 일정 · 처우 · 입사일 등 답을 기다리는 일 · 고객사 연락은 운영파트 · 지원자 연락은 채용파트</span><span class="grow"></span>'+(S.tkNew?"":'<button class="btn sm pri" data-act="tk-new" data-rr="'+esc(rid)+'">+ 조율 요청</button>')+'</h3>';
   if(!TK_OK&&LIVE)h+='<p class="hint" style="color:#B42318">조율 요청 표(recruit_talks)가 아직 없어요 · v190 SQL을 실행하면 저장돼요</p>';
   if(S.tkNew&&S.tkNew.rr===rid)h+=tkNewForm(rid);
   h+=L.length?L.map(tkCard).join(""):(S.tkNew?"":'<p class="hint">진행 중인 조율 요청이 없어요.</p>');return h+'</div>'}
@@ -18697,8 +18729,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v210 — 채용 요청 상태 창 맨 위 · 근무 조건 줄 · 합격자 입구서 링크 · 한글 입력 · 이름 검색 */
-APP_VER="v210";APP_VER_ON="10/29";APP_NOTE="채용 요청 상태 맨 위 · 근무 조건 줄 · 입구서 링크 · 한글 입력 · 이름 검색";
+/* v211 — 조율 요청 개편: 단계 표시 · 지금 할 일 · 대상 지원자 선택 · 종류별 칸 · 서류 체크 */
+APP_VER="v211";APP_VER_ON="10/29";APP_NOTE="조율 요청 개편 · 단계 · 지금 할 일 · 대상 지원자 · 서류 체크";
 
 /* ================================================================
    v208
@@ -18815,6 +18847,140 @@ document.addEventListener("click",function(ev){var a=ev.target.closest&&ev.targe
 /* ④ 검색 중 안내 */
 regAfter("v210 검색 안내",function(){if(S.view!=="rreq")return;var q=String(S.qw||"").trim(),bx=document.querySelector('#main .box[data-tk="rreq"]');if(!q||!bx||document.querySelector(".rrqhint"))return;
   var n=bx.querySelectorAll('tbody tr[data-act="rr-open"]').length;bx.insertAdjacentHTML("beforebegin",'<div class="rrqhint">후보자 <b>'+esc(q)+'</b> 검색 결과 · 모든 탭(완료 · 보류 포함) '+n+'건 · 검색어를 지우면 탭별로 돌아가요</div>')});
+
+/* ================================================================
+   v211 조율 요청 개편 (화면만 · DB 칸 · 값은 그대로)
+     · 차례 칩 4개 → 단계 표시줄(요청 받음 → 전달 → 답 받음 → 완료) + '지금 할 일' 문장 + 버튼 하나로 다음 단계
+       (저장 값 t.turn = ops · rec · cw · pw 는 그대로 · 단계는 화면에서 계산)
+     · 모든 종류에서 대상 지원자 선택 (필수) · 예전 '요청 전체' 건은 [지원자 고르기]
+     · 종류별 칸: 서류 보완 → 받을 서류 체크 · 면접 일정 → 시간 조율(예전 그대로) · 그 밖 → 지원자별 희망 · 고객사 제안 · 합의 내용
+     · 기록 종류는 단계에 맞춰 자동 (바꿀 수 있음)
+     · 되돌리기 · 단계 직접 바꾸기 · 대상 바꾸기 · 취소는 ⋯ 안
+   저장 위치 (새 칸 없음): 지원자별 값 → t.conf[지원자키] {s 상태, m 메모, want 희망, offer 제안, res 합의, got 받은 서류}
+                          받을 서류 목록 → t.conf._docs
+   ================================================================ */
+TK_TURN.ops[0]="운영 · 고객사 연락";TK_TURN.rec[0]="채용 · 지원자 연락";TK_TURN.cw[0]="고객사 답 기다림";TK_TURN.pw[0]="지원자 답 기다림";
+TK_TURN.ops[2]="고객사에 연락";TK_TURN.rec[2]="지원자에게 연락";TK_TURN.pw[2]="지원자 답 기다림";
+/* 흐름: 기업 요청 · 내부 = 지원자 먼저 (A) · 근로자 요청 = 고객사 먼저 (B) */
+function tk2Flow(t){return t.org==="후보자"?"B":"A"}
+function tk2Names(t,full){var N=tkNames(t);if(!N.length)return"";if(full||N.length===1)return N.join(", ");return N[0]+" 외 "+(N.length-1)+"명"}
+function tk2Obj(t){var k=t.kind;return k==="서류 보완"?"서류 보완":k==="면접 일정"?"면접 일정":k==="처우 협의"?"처우":k==="입사일"?"입사일":k==="근무 조건 변경"?"근무 조건 변경":"요청 내용"}
+function tk2Step(t){var nm=tk2Names(t)||"대상 지원자",obj=tk2Obj(t),A=tk2Flow(t)==="A",u=t.turn;
+  if(t.st==="완료")return{n:4,done:1,txt:"완료"};
+  if(A){if(u==="rec")return{n:2,part:"채용",txt:nm+"님에게 "+obj+" 내용을 안내하세요",go:["pw","안내했어요 → 답 기다림"]};
+    if(u==="pw")return{n:2,wait:1,part:"채용",txt:nm+"님의 답을 기다리는 중이에요",go:["ops","지원자 답 받음 → 고객사에 전달"]};
+    if(u==="ops")return{n:3,part:"운영",txt:"고객사에 지원자 답을 전달하세요",fin:"고객사에 전달 · 완료",alt:["cw","전달했어요 → 고객사 확인 기다림"]};
+    return{n:3,wait:1,part:"운영",txt:"고객사 확인을 기다리는 중이에요",fin:"고객사 확인 받음 · 완료",alt:["rec","다시 조율 → 지원자에게"]}}
+  if(u==="ops")return{n:2,part:"운영",txt:"고객사에 "+nm+"님의 "+obj+" 요청을 전달하세요",go:["cw","전달했어요 → 고객사 답 기다림"]};
+  if(u==="cw")return{n:2,wait:1,part:"운영",txt:"고객사 답을 기다리는 중이에요",go:["rec","고객사 답 받음 → 지원자에게 전달"]};
+  if(u==="rec")return{n:3,part:"채용",txt:nm+"님에게 고객사 답을 전달하세요",fin:"지원자에게 전달 · 완료",alt:["pw","전달했어요 → 지원자 확인 기다림"]};
+  return{n:3,wait:1,part:"채용",txt:nm+"님 확인을 기다리는 중이에요",fin:"확인 받음 · 완료",alt:["ops","다시 조율 → 고객사에"]}}
+function tk2StepBar(t){var A=tk2Flow(t)==="A",L=["요청 받음",A?"지원자에게 전달":"고객사에 전달","답 받음",t.kind==="면접 일정"?"면접 확정":"완료"],s=tk2Step(t);
+  return'<div class="tk2steps">'+L.map(function(l,i){var n=i+1,c=s.done||n<s.n?"done":n===s.n?"now":"";return(i?'<span class="tk2ln '+(s.done||n<=s.n?"done":"")+'"></span>':"")+'<span class="tk2st '+c+'"><i>'+(c==="done"?"✓":n)+'</i>'+l+(n===s.n&&s.wait?' <small>(기다리는 중)</small>':"")+'</span>'}).join("")+'</div>'}
+function tk2Who(t){var w=tkWho(t),s=st(w);return s&&s.name?s.name+(s.part?" ("+s.part+")":""):"담당 미정"}
+function tk2Docs(t){var D=(t.conf||{})._docs;return Array.isArray(D)?D:[]}
+function tk2C(t,k){return(t.conf||{})[k]||{}}
+function tk2Set(t,k,f,v){t.conf=Object.assign({},t.conf||{});var c=Object.assign({},t.conf[k]||{});if(v===undefined)delete c[f];else c[f]=v;t.conf[k]=c}
+function tk2OrigMsg(t){return(t.msgs||[]).find(function(m){return m.who==="고객사"||m.who==="후보자"})}
+function tk2DefWho(t){return t.turn==="rec"||t.turn==="pw"?"후보자":"고객사"}
+var TK2_WHO=[["후보자","지원자와 주고받은 말"],["고객사","고객사와 주고받은 말"],["내부","내부 메모"]];
+/* 지원자 고르기 (새로 만들기 · 예전 건 · 대상 바꾸기 공통) */
+function tk2Pick(rid,sel,key,all){var C=tkCands(rid),open=C.filter(function(o){return!cdClosed(o.c)||sel.indexOf(o.k)>=0}),L=all?C:open,more=C.length-open.length;
+  return'<div class="tk2pick"><div class="tk2ph"><span>진행 중 지원자 '+open.length+'명'+(sel.length?' · <b>'+sel.length+'명 선택</b>':"")+'</span><span class="grow"></span><button type="button" class="linkbtn small" data-act="tk2-all" data-key="'+esc(key)+'" data-rr="'+esc(rid)+'">모두 선택</button>'+(more?' · <button type="button" class="linkbtn small" data-act="tk2-past" data-key="'+esc(key)+'">'+(all?"진행 중만 보기":"지난 지원자도 보기 ("+more+")")+'</button>':"")+'</div>'+
+    (L.length?L.map(function(o){var c=o.c||{},stg=[o.seq?o.seq+"차":"",c.final||c.iv||c.doc||""].filter(Boolean).join(" · ");return'<label class="tk2r'+(sel.indexOf(o.k)>=0?" on":"")+'"><input type="checkbox" data-tk2ck="'+esc(key)+'" value="'+esc(o.k)+'"'+(sel.indexOf(o.k)>=0?" checked":"")+'> <b>'+esc(o.name||"(이름 없음)")+'</b> <small class="muted">'+esc(stg)+(cdClosed(c)?" · 종료":"")+'</small></label>'}).join(""):'<p class="hint" style="margin:6px 0">지원자가 없어요 · 후보 · 차수 탭에서 먼저 지원자를 넣어 주세요</p>')+'</div>'}
+function tk2DocChips(sel,key){var cats=(typeof wdCats==="function"?wdCats():[]).map(function(c){return typeof c==="string"?c:(c&&(c.name||c.l||c.k))||""}).filter(Boolean),all=cats.concat(sel.filter(function(x){return cats.indexOf(x)<0}));
+  return'<div class="tk2chips">'+all.map(function(d){var on=sel.indexOf(d)>=0;return'<button type="button" class="tk2chip'+(on?" on":"")+'" data-act="tk2-doc" data-key="'+esc(key)+'" data-v="'+esc(d)+'">'+(on?"✓ ":"+ ")+esc(d)+'</button>'}).join("")+'<span class="tk2din"><input data-tk2doc="'+esc(key)+'" placeholder="직접 입력 (Enter)"><button type="button" class="btn xs" data-act="tk2-docadd" data-key="'+esc(key)+'">추가</button></span></div>'}
+/* ---------- 새로 만들기 ---------- */
+tkNewForm=function(rid){var F=S.tkNew;F.ck=F.ck||[];F.docs=F.docs||[];
+  return'<div class="tkcard open tknew tk2"><div class="tkhd"><b>새 조율 요청</b><span class="grow"></span><button class="btn xs" data-act="tk-newx">닫기</button></div><div class="tk2form">'+
+    '<div class="tk2f"><span class="tk2l">누가 요청했나요</span><div class="seg sm">'+[["고객사","기업 요청"],["후보자","근로자 요청"],["내부","내부"]].map(function(w){return'<button type="button" class="'+(F.org===w[0]?"on":"")+'" data-act="tk-nf" data-k="org" data-v="'+w[0]+'">'+w[1]+'</button>'}).join("")+'</div></div>'+
+    '<div class="tk2f"><span class="tk2l">종류</span><div class="seg sm">'+TK_KIND.map(function(k){return'<button type="button" class="'+(F.kind===k?"on":"")+'" data-act="tk-nf" data-k="kind" data-v="'+k+'">'+k+'</button>'}).join("")+'</div>'+
+      (F.kind==="면접 일정"?'<div class="seg sm" style="margin-top:6px">'+TK_MODE.map(function(m){return'<button type="button" class="'+(F.mode===m[0]?"on":"")+'" data-act="tk-nf" data-k="mode" data-v="'+m[0]+'">'+esc(m[1])+'</button>'}).join("")+'</div>':"")+'</div>'+
+    '<div class="tk2f"><span class="tk2l">대상 지원자 <b class="req">필수</b></span>'+tk2Pick(rid,F.ck,"new",!!S.tk2Past)+'</div>'+
+    '<div class="tk2f"><span class="tk2l">요청 내용 (원문)</span><textarea data-tkn="text" rows="4" placeholder="고객사 · 지원자가 한 말을 그대로 붙여 넣어요 (면접 일정이면 시간을 자동으로 읽어요)">'+esc(F.text||"")+'</textarea>'+
+      (F.kind==="서류 보완"?'<span class="tk2l" style="margin-top:10px">받을 서류</span>'+tk2DocChips(F.docs,"new"):"")+
+      '<span class="tk2l" style="margin-top:10px">회신 기한</span><input type="date" data-tkn="due" value="'+esc(F.due||"")+'" style="width:160px"></div>'+
+    '</div><div class="tkfoot"><span class="small muted">처음 할 일은 자동: '+(F.org==="후보자"?"근로자 요청 → 운영파트가 고객사에 전달":"기업 요청 · 내부 → 채용파트가 지원자에게 안내")+'</span><span class="grow"></span><button class="btn sm" data-act="tk-newx">취소</button><button class="btn sm pri" data-act="tk2-create" data-rr="'+esc(rid)+'">조율 요청 등록</button></div></div>'};
+/* ---------- 카드 ---------- */
+tkCard=function(t){var open=S.tkSel===t.id,s=tk2Step(t),N=tk2Names(t),P=tkProg(t),done=t.st==="완료";
+  var head='<div class="tkhd" data-act="tk-open" data-id="'+t.id+'">'+(t.org==="고객사"?'<span class="b sm tkorg co">기업 요청</span>':t.org==="후보자"?'<span class="b sm tkorg pe">근로자 요청</span>':'<span class="b sm">내부</span>')+' <span class="b sm">'+esc(t.kind)+'</span> <b class="tk2nm">'+(N?esc(N):'<span class="tk2need">대상 지원자 없음</span>')+'</b>'+(P&&P.n>1?' <span class="small muted">('+P.d+'/'+P.n+')</span>':"")+
+    '<span class="grow"></span>'+(done?'<span class="b sm ok">완료</span>':'<span class="small tk2mini">'+s.n+'/4 · '+esc(s.wait?"기다리는 중":s.part+" 할 일")+'</span>'+(tkLate(t)?' <span class="b sm bad">기한 지남</span>':"")+(t.due?' <span class="small muted num">기한 '+esc(md(t.due))+'</span>':""))+' <span class="small muted">· '+esc(tk2Who(t))+'</span></div>';
+  if(!open){var last=(t.msgs||[]).slice(-1)[0];return'<div class="tkcard'+(done?" done":"")+(tkMine(t)&&!done&&!s.wait?" mine":"")+'">'+head+'<div class="tklast small">'+(done?esc("결과 · "+(t.result||"")):'<b class="tk2nowt">▶ '+esc(s.txt)+'</b>')+(last&&!done?' <span class="muted">· '+esc((last.who==="후보자"?"지원자":last.who||"")+" "+String(last.text||"").slice(0,50))+'</span>':"")+'</div></div>'}
+  var h='<div class="tkcard open tk2'+(done?" done":"")+'">'+head+'<div class="tk2b">'+tk2StepBar(t);
+  if(!(t.ck||[]).length&&!done)h+='<div class="tk2warn"><b>대상 지원자를 골라 주세요</b> <span class="small">예전에 \'요청 전체\'로 만든 건이에요 · 고르면 지원자별로 기록할 수 있어요</span>'+tk2Pick(t.rr,S.tk2Sel&&S.tk2Sel.id===t.id?S.tk2Sel.ck:[],"t:"+t.id,!!S.tk2Past)+'<div style="margin-top:6px"><button class="btn sm pri" data-act="tk2-setck" data-id="'+t.id+'">이 지원자로 정하기</button></div></div>';
+  if(!done){h+='<div class="tk2now'+(s.wait?" wait":"")+'"><span>▶ <b>지금 할 일</b> · '+esc(s.part+"파트 "+(st(tkWho(t)).name||""))+' : '+esc(s.txt)+'</span><span class="grow"></span>'+
+      (s.go?'<button class="btn sm pri" data-act="tk2-go" data-id="'+t.id+'" data-v="'+s.go[0]+'">'+esc(s.go[1])+'</button>':"")+
+      (s.fin?'<button class="btn sm pri" data-act="tk2-fin" data-id="'+t.id+'">'+esc(t.kind==="면접 일정"?"면접 확정":s.fin)+'</button>':"")+
+      (s.alt?'<button class="btn sm" data-act="tk2-go" data-id="'+t.id+'" data-v="'+s.alt[0]+'">'+esc(s.alt[1])+'</button>':"")+
+      '<button class="btn sm" data-act="tk-copy" data-id="'+t.id+'">📋 전달 문구 복사</button><span class="small muted">회신 기한</span><input type="date" data-tkd="'+t.id+'" value="'+esc(t.due||"")+'"></div>'}
+  var om=tk2OrigMsg(t);if(om)h+='<div class="tk2orig"><b>'+(om.who==="고객사"?"고객사 요청":"지원자 요청")+'</b> '+esc(om.text||"")+' <small class="muted">'+esc((om.by||"")+" · "+String(om.at||"").slice(5,16))+'</small></div>';
+  /* 종류별 */
+  var K=(t.ck||[]).map(function(k){return tkCand(t.rr,k)}).filter(Boolean),multi=K.length>1;
+  if(t.kind==="면접 일정"){if(t.mode==="배정")h+=tkAsgRows(t);else{h+=tkSlotRows(t,t.mode==="후보"?"지원자 가능 시간":"고객사 제시 시간");h+=tkConfRows(t)}}
+  else if(t.kind==="서류 보완"){var D=tk2Docs(t);h+='<div class="tk2sec"><div class="tkh">받을 서류 · 받으면 체크</div>';
+    if(!D.length&&!done)h+='<p class="hint" style="margin:2px 0 6px">받을 서류를 골라 주세요</p>';
+    if(D.length)h+=K.length?K.map(function(o){var g=tk2C(t,o.k).got||{},n=D.filter(function(d){return g[d]}).length;return'<div class="tk2docr">'+(multi?'<b>'+esc(o.name)+'</b> <small class="muted">'+n+'/'+D.length+'</small>':"")+'<div class="tk2chips">'+D.map(function(d){return'<button type="button" class="tk2ck'+(g[d]?" on":"")+'" data-act="tk2-got" data-id="'+t.id+'" data-k="'+esc(o.k)+'" data-v="'+esc(d)+'"'+(done?" disabled":"")+'><i></i>'+esc(d)+'</button>'}).join("")+'</div></div>'}).join(""):'<div class="tk2chips">'+D.map(function(d){return'<span class="tk2ck"><i></i>'+esc(d)+'</span>'}).join("")+'</div>';
+    if(!done)h+='<details class="tk2edd"><summary>서류 목록 고치기</summary>'+tk2DocChips(D,"t:"+t.id)+'</details>';
+    var allGot=D.length&&K.length&&K.every(function(o){var g=tk2C(t,o.k).got||{};return D.every(function(d){return g[d]})});if(allGot&&!done&&s.n<3)h+='<p class="tk2tip">✓ 서류를 모두 받았어요 · [지원자 답 받음]으로 넘겨 주세요</p>';
+    h+='</div>'}
+  else if(K.length){h+='<div class="tk2sec"><div class="tkh">'+(multi?"대상 지원자별":"조율 내용")+'</div><table class="t tk2t"><thead><tr>'+(multi?'<th>지원자</th>':"")+'<th>지원자 희망</th><th>고객사 제안</th><th>합의 내용</th>'+(multi?'<th style="width:150px">진행</th>':"")+'</tr></thead><tbody>'+
+      K.map(function(o,i){var c=tk2C(t,o.k),lw=!multi&&!c.want&&t.want?t.want:"",lo=!multi&&!c.offer&&t.offer?t.offer:"",lr=!multi&&!c.res&&done&&t.result?t.result:"";var inp=function(f,v,ph){return done?'<td>'+esc(v||"—")+'</td>':'<td><input data-tk2v="'+t.id+'|'+esc(o.k)+'|'+f+'" value="'+esc(v||"")+'" placeholder="'+ph+'"></td>'};
+        return'<tr class="'+(c.s==="완료"?"st-done":"")+'">'+(multi?'<td><b>'+esc(o.name)+'</b></td>':"")+inp("want",c.want||lw,"예: 오후 · 11/10 입사")+inp("offer",c.offer||lo,"예: 오전 · 11/03 입사")+inp("res",c.res||lr,"합의되면 적어요")+
+          (multi?'<td>'+(done?esc(c.s||"완료"):'<div class="seg sm">'+["대기","진행","완료"].map(function(v){return'<button type="button" class="'+((c.s||"대기")===v?"on":"")+'" data-act="tkc-s" data-id="'+t.id+'" data-k="'+esc(o.k)+'" data-v="'+v+'">'+v+'</button>'}).join("")+'</div>')+'</td>':"")+'</tr>'}).join("")+'</tbody></table></div>'}
+  /* 기록 */
+  var ms=(t.msgs||[]).filter(function(m){return m!==om});
+  if(ms.length)h+='<div class="tkmsgs">'+ms.map(function(m){return'<div class="tkm '+(m.who==="고객사"?"co":m.who==="후보자"?"pe":m.who==="자동"?"sy":"in")+'"><span class="tkmw">'+esc(m.who==="후보자"?"지원자":m.who||"")+'</span> '+esc(m.text||"")+' <small class="muted">'+esc((m.by?m.by+" · ":"")+String(m.at||"").slice(5,16))+'</small></div>'}).join("")+'</div>';
+  if(!done){var wv=(S.tk2Who||{})[t.id]||tk2DefWho(t);h+='<div class="tkin"><select data-tk2who="'+t.id+'" data-nosbx aria-label="기록 종류">'+TK2_WHO.map(function(w){return'<option value="'+w[0]+'"'+(wv===w[0]?" selected":"")+'>'+w[1]+'</option>'}).join("")+'</select><input data-tkm="'+t.id+'" placeholder="받은 말 · 전한 말 (Enter 기록)"><button class="btn xs" data-act="tk2-msg" data-id="'+t.id+'">기록</button></div>'}
+  /* 아래 */
+  var more=S.tk2More===t.id;
+  h+='<div class="tkfoot">'+(done?'<span class="small">결과: <b>'+esc(t.result||"")+'</b></span><span class="grow"></span><button class="btn xs" data-act="tk-copy" data-id="'+t.id+'">📋 문구 복사</button><button class="btn xs" data-act="tk-reopen" data-id="'+t.id+'">다시 열기</button>':
+    '<span class="small muted">'+(multi&&P?"대상 "+P.n+"명 중 "+P.d+"명 완료 · 모두 끝나면 요청이 완료돼요":t.kind==="서류 보완"?"서류를 모두 받으면 다음 단계로 넘겨요":"")+'</span><span class="grow"></span><button class="btn sm" data-act="tk2-fin" data-id="'+t.id+'">'+(t.kind==="면접 일정"?"면접 확정":"완료 처리")+'</button><button class="btn sm tk2more'+(more?" on":"")+'" data-act="tk2-more" data-id="'+t.id+'" title="되돌리기 · 단계 직접 바꾸기 · 대상 바꾸기 · 취소">⋯</button>')+'</div>';
+  if(more&&!done)h+='<div class="tk2mr"><span class="small muted">단계 직접 바꾸기</span>'+["ops","rec","cw","pw"].map(function(k){return'<button type="button" class="btn xs'+(t.turn===k?" pri":"")+'" data-act="tk-turn" data-id="'+t.id+'" data-v="'+k+'">'+TK_TURN[k][0]+'</button>'}).join("")+'<span class="grow"></span><button class="btn xs" data-act="tk2-reck" data-id="'+t.id+'">대상 지원자 바꾸기</button><button class="btn xs danger" data-act="tk-cancel" data-id="'+t.id+'">요청 취소</button></div>'+
+    (S.tk2Sel&&S.tk2Sel.id===t.id&&S.tk2Sel.re?'<div class="tk2warn">'+tk2Pick(t.rr,S.tk2Sel.ck,"t:"+t.id,!!S.tk2Past)+'<div style="margin-top:6px"><button class="btn sm pri" data-act="tk2-setck" data-id="'+t.id+'">이 지원자로 정하기</button></div></div>':"");
+  return h+'</div></div>'};
+/* 서류 보완 전달 문구에 서류 목록 */
+var _tkCopyTxt211=tkCopyTxt;tkCopyTxt=function(t){var x=_tkCopyTxt211.apply(this,arguments);if(t&&t.kind==="서류 보완"){var D=tk2Docs(t);if(D.length)x+="\n필요 서류: "+D.join(", ")}return x};
+/* ---------- 동작 ---------- */
+function tk2Key(key){if(key==="new")return S.tkNew;var id=String(key).slice(2);S.tk2Sel=S.tk2Sel&&S.tk2Sel.id===id?S.tk2Sel:{id:id,ck:[]};return S.tk2Sel}
+function tk2Fin(t){if(t.kind==="면접 일정"){if(tkFix(t)){tkSave();toast("면접을 확정했어요");render()}return}
+  var K=t.ck||[],D=tk2Docs(t),res;
+  if(t.kind==="서류 보완"){var got=0,tot=D.length*K.length;K.forEach(function(k){var g=tk2C(t,k).got||{};D.forEach(function(d){if(g[d])got++})});res=D.length?(K.length>1?"서류 "+got+"/"+tot+" 받음":"서류 "+D.filter(function(d){return(tk2C(t,K[0]||"").got||{})[d]}).join(", ")+" 받음"):"서류 보완 완료"}
+  else{var R=K.map(function(k){var c=tk2C(t,k),o=tkCand(t.rr,k);return c.res?(K.length>1?(o?o.name+" ":"")+c.res:c.res):""}).filter(Boolean);res=R.join(" / ")||t.result||""}
+  var pend=K.filter(function(k){return tk2C(t,k).s!=="완료"}).length;
+  var go2=function(){var r=rcOf(t.rr),cn=(comp(r&&r.company)||{}).name||"";K.forEach(function(k){tk2Set(t,k,"s","완료")});t.result=res||"완료";t.st="완료";t.turn="done";t.done=stamp();tkMsg(t,"자동","완료 · "+t.result);
+    DB.memos.push({id:nid(),table:"recruit_requests",tid:t.rr,body:"[조율 요청] "+t.kind+(tkNames(t).length?" · "+tkNames(t).join(", "):"")+" 완료 · "+t.result,author:st(S.me).name,at:stamp()});
+    logChange("recruit_requests",t.rr,cn,"조율 요청 "+t.kind,"진행","완료 · "+t.result,"브이드림 내부");tkSave();toast("완료했어요");render()};
+  if(t.kind!=="서류 보완"&&!res){toast("합의 내용을 적어 주세요");var i=document.querySelector('[data-tk2v^="'+t.id+'|"][data-tk2v$="|res"]');if(i)i.focus();return}
+  if(K.length>1&&pend)ovAsk("완료 처리","<p style='margin:0'>대상 "+K.length+"명 중 "+pend+"명이 아직 끝나지 않았어요. 모두 완료로 처리할까요?</p>",[{k:"ok",l:"모두 완료",pri:true},{k:"x",l:"닫기"}],function(a){if(a==="ok")go2()});
+  else if(t.kind==="서류 보완"&&D.length&&K.length&&!K.every(function(k){var g=tk2C(t,k).got||{};return D.every(function(d){return g[d]})}))ovAsk("완료 처리","<p style='margin:0'>아직 체크하지 않은 서류가 있어요. 그래도 완료할까요?</p>",[{k:"ok",l:"완료",pri:true},{k:"x",l:"닫기"}],function(a){if(a==="ok")go2()});
+  else go2()}
+regActs({
+  "tk2-go":function(D0){var t=tkOf(D0.id);if(!t)return;tkTurn(t,D0.v);tkSave();render()},
+  "tk2-fin":function(D0){var t=tkOf(D0.id);if(t)tk2Fin(t)},
+  "tk2-more":function(D0){S.tk2More=S.tk2More===D0.id?null:D0.id;render()},
+  "tk2-reck":function(D0){var t=tkOf(D0.id);if(!t)return;S.tk2Sel={id:t.id,ck:(t.ck||[]).slice(),re:1};render()},
+  "tk2-past":function(){S.tk2Past=!S.tk2Past;render()},
+  "tk2-all":function(D0){var o=tk2Key(D0.key);if(!o)return;var C=tkCands(D0.rr).filter(function(x){return S.tk2Past||!cdClosed(x.c)}).map(function(x){return x.k});o.ck=o.ck.length===C.length?[]:C;render()},
+  "tk2-setck":function(D0){var t=tkOf(D0.id),o=S.tk2Sel;if(!t||!o||o.id!==t.id)return;if(!o.ck.length){toast("지원자를 한 명 이상 골라 주세요");return}var b=tkNames(t).join(", ")||"요청 전체";t.ck=o.ck.slice();tkMsg(t,"자동","대상 지원자 "+b+" → "+tkNames(t).join(", "));S.tk2Sel=null;S.tk2More=null;tkSave();render()},
+  "tk2-doc":function(D0){var key=D0.key,v=D0.v;if(key==="new"){var F=S.tkNew;if(!F)return;F.docs=F.docs||[];F.docs=F.docs.indexOf(v)>=0?F.docs.filter(function(x){return x!==v}):F.docs.concat([v]);render();return}
+    var t=tkOf(String(key).slice(2));if(!t)return;var D=tk2Docs(t);D=D.indexOf(v)>=0?D.filter(function(x){return x!==v}):D.concat([v]);t.conf=Object.assign({},t.conf||{},{_docs:D});tkSave();render()},
+  "tk2-docadd":function(D0){var i=document.querySelector('[data-tk2doc="'+D0.key+'"]'),v=i&&i.value.trim();if(!v)return;var key=D0.key;
+    if(key==="new"){var F=S.tkNew;if(!F)return;F.docs=(F.docs||[]).filter(function(x){return x!==v}).concat([v]);render();return}
+    var t=tkOf(String(key).slice(2));if(!t)return;var D=tk2Docs(t).filter(function(x){return x!==v}).concat([v]);t.conf=Object.assign({},t.conf||{},{_docs:D});tkSave();render()},
+  "tk2-got":function(D0){var t=tkOf(D0.id);if(!t)return;var g=Object.assign({},tk2C(t,D0.k).got||{});if(g[D0.v])delete g[D0.v];else g[D0.v]=TODAY;tk2Set(t,D0.k,"got",g);var o=tkCand(t.rr,D0.k);if(g[D0.v])tkMsg(t,"후보자",(o?o.name+" · ":"")+D0.v+" 받음");
+    var D=tk2Docs(t);if(D.length&&D.every(function(d){return g[d]})&&tk2C(t,D0.k).s!=="완료"&&(t.ck||[]).length>1)tk2Set(t,D0.k,"s","완료");tkSave();render()},
+  "tk2-msg":function(D0){var t=tkOf(D0.id);if(!t)return;var i=document.querySelector('[data-tkm="'+t.id+'"]'),v=i&&i.value.trim();if(!v){toast("내용을 적어 주세요");return}tkMsg(t,(S.tk2Who||{})[t.id]||tk2DefWho(t),v);tkSave();render()},
+  "tk2-create":function(D0){var F=S.tkNew;if(!F)return;if(!(F.ck||[]).length){toast("대상 지원자를 한 명 이상 골라 주세요");var p=document.querySelector(".tk2pick");if(p)p.classList.add("need");return}
+    var docs=(F.docs||[]).slice(),org=F.org,n0=(DB.talks||[]).length,el=document.createElement("button");el.dataset.rr=D0.rr;v139Act("tk-create",el);
+    var x=(DB.talks||[]).length>n0?DB.talks[DB.talks.length-1]:null;if(!x)return;x.turn=org==="후보자"?"ops":"rec";if(x.kind==="서류 보완"&&docs.length)x.conf=Object.assign({},x.conf||{},{_docs:docs});S.tk2Past=false;tkSave();render()}
+});
+/* 엔터 · 입력 */
+document.addEventListener("keydown",function(ev){var t=ev.target;if(ev.key==="Enter"&&t&&t.dataset){if(t.dataset.tk2doc){ev.preventDefault();var b=document.querySelector('[data-act="tk2-docadd"][data-key="'+t.dataset.tk2doc+'"]');if(b)b.click()}
+  else if(t.dataset.tkm&&!ev.shiftKey){var b2=document.querySelector('[data-act="tk2-msg"][data-id="'+t.dataset.tkm+'"]');if(b2){ev.preventDefault();ev.stopImmediatePropagation();b2.click()}}}},true);
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)return;var d=t.dataset;
+  if(d.tk2ck){var o=tk2Key(d.tk2ck);if(!o)return;o.ck=o.ck||[];if(t.checked){if(o.ck.indexOf(t.value)<0)o.ck=o.ck.concat([t.value])}else o.ck=o.ck.filter(function(x){return x!==t.value});render();return}
+  if(d.tk2who){S.tk2Who=Object.assign({},S.tk2Who||{});S.tk2Who[d.tk2who]=t.value;return}
+  if(d.tk2v){var p=d.tk2v.split("|"),x=tkOf(p[0]);if(!x)return;var v=t.value.trim();tk2Set(x,p[1],p[2],v||undefined);if(p[2]==="res"&&v&&(x.ck||[]).length>1&&tk2C(x,p[1]).s!=="완료")tk2Set(x,p[1],"s","진행");tkSave();return}},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
