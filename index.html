@@ -18816,8 +18816,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v215";APP_VER_ON="10/29";APP_NOTE="클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v216";APP_VER_ON="10/30";APP_NOTE="조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -18938,7 +18938,7 @@ regAfter("v210 검색 안내",function(){if(S.view!=="rreq")return;var q=String(
 /* ================================================================
    v212 조율 요청 (v211 화면을 단순하게 다시 만듦 · DB 칸 · 값은 그대로)
      · 누가 요청했는지(기업 요청 · 근로자 요청 · 내부)를 크게
-     · 대상 지원자 필수 · 예전 '요청 전체' 건은 [지원자 고르기]
+     · 대상 지원자 필수 · 예전 '요청 전체' 건은 [지원자 고르기] (v216: 채용 조건 · 기타는 선택)
      · 메모 히스토리로 주고받기: 운영파트가 쓰면 → 채용파트 차례 · 채용파트가 쓰면 → 운영파트 차례 (t.turn: ops · rec)
        → 상대 담당에게 알림 (core/9100-v212-noti.js)
      · 면접 일정: 완료할 때 지원자별 면접 날짜 · 시각 입력 (후보 표 면접일에 들어감)
@@ -18960,10 +18960,18 @@ tkNewForm=function(rid){var F=S.tkNew;F.ck=F.ck||[];
   return'<div class="tkcard open tknew tk2"><div class="tkhd"><b>새 조율 요청</b><span class="grow"></span><button class="btn xs" data-act="tk-newx">닫기</button></div><div class="tk2form">'+
     '<div class="tk2f"><span class="tk2l">누가 요청했나요</span><div class="seg sm tk2org">'+[["고객사","기업 요청"],["후보자","근로자 요청"],["내부","내부"]].map(function(w){return'<button type="button" class="'+(F.org===w[0]?"on":"")+'" data-act="tk-nf" data-k="org" data-v="'+w[0]+'">'+w[1]+'</button>'}).join("")+'</div>'+
       '<span class="tk2l" style="margin-top:10px">종류</span><div class="seg sm">'+TK_KIND.map(function(k){return'<button type="button" class="'+(F.kind===k?"on":"")+'" data-act="tk-nf" data-k="kind" data-v="'+k+'">'+k+'</button>'}).join("")+'</div>'+
-      '<span class="tk2l" style="margin-top:10px">대상 지원자 <b class="req">필수</b></span>'+tk2Pick(rid,F.ck,"new",!!S.tk2Past)+'</div>'+
+      tk2PickNew(rid,F)+'</div>'+
     '<div class="tk2f"><span class="tk2l">요청 내용 (원문)</span><textarea data-tkn="text" rows="6" placeholder="고객사 · 지원자가 한 말을 그대로 붙여 넣어요">'+esc(F.text||"")+'</textarea>'+
       '<span class="tk2l" style="margin-top:10px">회신 기한</span><input type="date" data-tkn="due" value="'+esc(F.due||"")+'" style="width:160px"></div>'+
     '</div><div class="tkfoot"><span class="small muted">등록하면 '+(tk2MyPart()==="운영파트"?"채용파트":tk2MyPart()==="채용파트"?"운영파트":F.org==="후보자"?"운영파트":"채용파트")+' 차례가 되고 그 담당에게 알림이 가요</span><span class="grow"></span><button class="btn sm" data-act="tk-newx">취소</button><button class="btn sm pri" data-act="tk2-create" data-rr="'+esc(rid)+'">조율 요청 등록</button></div></div>'};
+/* v216 채용 조건 · 기타는 대상 지원자 선택 · 나머지는 필수 (진행 중 지원자가 없으면 안내만) */
+var TK_OPT=["채용 조건","기타"];function tkOptK(k){return TK_OPT.indexOf(k)>=0}
+function tkOpenN(rid){return tkCands(rid).filter(function(o){return!cdClosed(o.c)}).length}
+function tk2NeedCk(k,rid){return!tkOptK(k)&&tkOpenN(rid)>0}
+function tk2PickNew(rid,F){var opt=tkOptK(F.kind),n=tkOpenN(rid);
+  var lab='<span class="tk2l" style="margin-top:10px">대상 지원자 '+(opt?'<span class="small muted">선택 · 안 고르면 요청 전체</span>':'<b class="req">필수</b>')+'</span>';
+  if(!opt&&!n&&!S.tk2Past)return lab+'<div class="tk2pick tk2none"><div class="small">진행 중 지원자가 없어요 · 지원자가 생기면 만들 수 있어요</div><div class="small muted" style="margin-top:4px">지원자 없이 할 이야기는 종류를 <b>채용 조건</b> 또는 <b>기타</b>로 골라 등록해요</div></div>';
+  return lab+tk2Pick(rid,F.ck,"new",!!S.tk2Past)}
 function tk2MyPart(){var s=st(S.me)||{};return s.part||""}
 /* ---------- 카드 ---------- */
 function tk2Legacy(t){var L=[],C=t.conf||{};if(t.want)L.push("지원자 희망 "+t.want);if(t.offer)L.push("고객사 제안 "+t.offer);
@@ -18972,11 +18980,11 @@ function tk2Legacy(t){var L=[],C=t.conf||{};if(t.want)L.push("지원자 희망 "
 function tk2Unseen(t){return typeof notiTalkUnseen==="function"?notiTalkUnseen(t):0}
 tkCard=function(t){var open=tk2Open(t),done=t.st==="완료",N=tk2Names(t),side=tk2Side(t),un=tk2Unseen(t);
   var orgB=t.org==="고객사"?'<span class="tk2org co">기업 요청</span>':t.org==="후보자"?'<span class="tk2org pe">근로자 요청</span>':'<span class="tk2org in">내부</span>';
-  var head='<div class="tkhd" data-act="tk2-tog" data-id="'+t.id+'"><span class="tk2car">'+(open?"▾":"▸")+'</span>'+orgB+' <span class="b sm">'+esc(t.kind)+'</span> <b class="tk2nm">'+(N?esc(N):'<span class="tk2need">대상 지원자 없음</span>')+'</b>'+(un?' <span class="b sm tk2new">새 기록 '+un+'</span>':"")+
+  var head='<div class="tkhd" data-act="tk2-tog" data-id="'+t.id+'"><span class="tk2car">'+(open?"▾":"▸")+'</span>'+orgB+' <span class="b sm">'+esc(t.kind)+'</span> <b class="tk2nm">'+(N?esc(N):tkOptK(t.kind)?'<span class="muted">요청 전체</span>':'<span class="tk2need">대상 지원자 없음</span>')+'</b>'+(un?' <span class="b sm tk2new">새 기록 '+un+'</span>':"")+
     '<span class="grow"></span>'+(done?'<span class="b sm ok">완료</span>':'<span class="tk2turn '+side+'">답 차례: '+(side==="ops"?"운영파트":"채용파트")+' · '+esc(tk2Who(t))+'</span>'+(tkLate(t)?' <span class="b sm bad">기한 지남</span>':"")+(t.due?' <span class="small muted num">기한 '+esc(md(t.due))+'</span>':""))+'</div>';
   if(!open){var last=(t.msgs||[]).filter(function(m){return m.who!=="자동"}).slice(-1)[0];return'<div class="tkcard'+(done?" done":"")+(tkMine(t)&&!done?" mine":"")+'">'+head+(last?'<div class="tklast small"><span class="muted">'+esc(tk2WhoLab(last.who))+'</span> '+esc(String(last.text||"").slice(0,90))+' <span class="muted">· '+esc((last.by||"")+" "+String(last.at||"").slice(5,16))+'</span></div>':"")+'</div>'}
   var h='<div class="tkcard open tk2'+(done?" done":"")+(tkMine(t)&&!done?" mine":"")+'">'+head+'<div class="tk2b">';
-  if(!(t.ck||[]).length&&!done)h+='<div class="tk2warn"><b>대상 지원자를 골라 주세요</b> <span class="small">예전에 \'요청 전체\'로 만든 건이에요</span>'+tk2Pick(t.rr,S.tk2Sel&&S.tk2Sel.id===t.id?S.tk2Sel.ck:[],"t:"+t.id,!!S.tk2Past)+'<div style="margin-top:6px"><button class="btn sm pri" data-act="tk2-setck" data-id="'+t.id+'">이 지원자로 정하기</button></div></div>';
+  if(!(t.ck||[]).length&&!done&&tk2NeedCk(t.kind,t.rr))h+='<div class="tk2warn"><b>대상 지원자를 골라 주세요</b> <span class="small">예전에 \'요청 전체\'로 만든 건이에요</span>'+tk2Pick(t.rr,S.tk2Sel&&S.tk2Sel.id===t.id?S.tk2Sel.ck:[],"t:"+t.id,!!S.tk2Past)+'<div style="margin-top:6px"><button class="btn sm pri" data-act="tk2-setck" data-id="'+t.id+'">이 지원자로 정하기</button></div></div>';
   var lg=tk2Legacy(t);if(lg.length)h+='<div class="tk2leg"><b>이전 기록</b> '+lg.map(esc).join(" / ")+'</div>';
   /* 메모 히스토리 */
   var M=(t.msgs||[]).filter(function(m){return m.who!=="자동"||/완료|취소|다시 열기|대상 지원자/.test(m.text||"")}),seen=typeof notiTalkSeenN==="function"?notiTalkSeenN(t):M.length;
@@ -19020,7 +19028,7 @@ regActs({
     if(t.kind==="면접 일정"&&D0.ok==="1"){var P=[];(t.ck||[]).forEach(function(k){var c=(t.conf||{})[k]||{};if(c.d&&c.t)P.push(k)});if(!P.length){toast("면접 날짜와 시각을 넣거나 [시간 없이 완료]를 눌러 주세요");return}t.mode="";if(tkFix(t)){S.tk2Fin=null;tkSave();toast("면접을 확정했어요");render()}return}
     var last=(t.msgs||[]).filter(function(m){return m.who!=="자동"}).slice(-1)[0];tk2Done(t,last?String(last.text).slice(0,80):"완료")},
   "tk2-finx":function(){S.tk2Fin=null;render()},
-  "tk2-create":function(D0){var F=S.tkNew;if(!F)return;if(!(F.ck||[]).length){toast("대상 지원자를 한 명 이상 골라 주세요");var p=document.querySelector(".tk2pick");if(p)p.classList.add("need");return}
+  "tk2-create":function(D0){var F=S.tkNew;if(!F)return;if(!(F.ck||[]).length&&!tkOptK(F.kind)){if(!tkOpenN(D0.rr)){toast("진행 중 지원자가 없어요 · 지원자 없이 할 이야기는 '채용 조건' 또는 '기타'로 등록해요");return}toast("대상 지원자를 한 명 이상 골라 주세요");var p=document.querySelector(".tk2pick");if(p)p.classList.add("need");return}
     var org=F.org,n0=(DB.talks||[]).length,el=document.createElement("button");el.dataset.rr=D0.rr;F.mode="";v139Act("tk-create",el);
     var x=(DB.talks||[]).length>n0?DB.talks[DB.talks.length-1]:null;if(!x)return;x.mode="";x.slots=[];x.asg=null;var p2=tk2MyPart();x.turn=p2==="운영파트"?"rec":p2==="채용파트"?"ops":org==="후보자"?"ops":"rec";
     S.tk2O=S.tk2O||{};S.tk2O[x.id]=true;S.tkSel=null;S.tk2Past=false;if(typeof notiTalkSeen==="function")notiTalkSeen(x,true);tkSave();render()}
@@ -19338,6 +19346,44 @@ regActs({
 var _bt215=buildTodos;buildTodos=function(){if(!RC)return _bt215.apply(this,arguments);var k;try{k=JSON.stringify([].slice.call(arguments))+"|"+[S.tdHoldV?1:0,S.scope,S.mgr,S.me,S.role,S.view,typeof TD_LB!=="undefined"&&TD_LB?1:0].join("|")}catch(e){return _bt215.apply(this,arguments)}
   if(!RC.bt215){RC.bt215={};BT_LAST={}}var c=RC.bt215;if(!c[k]){c[k]=_bt215.apply(this,arguments);c[k].forEach(function(t){if(t&&t.key&&!BT_LAST[t.key])BT_LAST[t.key]=t})}return c[k].slice()};
 var BT_LAST=null;function btLast(k){return BT_LAST&&k?BT_LAST[k]||null:null}
+
+/* ================================================================
+   v216
+     ① 조율 요청 종류 '채용 조건' 추가 · 채용 조건 · 기타는 대상 지원자 선택 (core/9090-v211.js)
+     ② DB 규칙 점검: 앱 선택지와 DB 허용 값(check 규칙)이 어긋나는 칸 찾기 · 관리자 › 설정 › 저장 오류 기록 위
+        (서버 함수 vw_check_rules · v216 SQL) · 예: 제출 방식 '고객사 직접'이 DB에서 거절되던 것
+   ================================================================ */
+if(TK_KIND.indexOf("채용 조건")<0){var _ki=TK_KIND.indexOf("기타");TK_KIND.splice(_ki<0?TK_KIND.length:_ki,0,"채용 조건")}
+/* ② 표.칸 → 앱이 쓰는 값 목록 (실행할 때 계산: 다른 파일이 목록에 값을 더하기도 함) */
+var RULE_MAP={
+  "company_documents.submit_method":function(){return METHODS},"case_documents.submit_method":function(){return METHODS},"exit_documents.submit_method":function(){return METHODS},
+  "recruit_talks.kind":function(){return TK_KIND},
+  "companies.part":function(){return PARTS},"staff.part":function(){return STAFF_PARTS},"staff.role":function(){return ROLES},
+  "employments.hire_type":function(){return HIRE_TYPES},"employments.end_type":function(){return END_TYPES},
+  "client_requests.category":function(){return REQ_CAT},"client_requests.status":function(){return REQ_ST},
+  "staff_absences.absence_type":function(){return ABS_TYPES},"change_logs.source":function(){return SOURCES},
+  "exit_documents.status":function(){return XST},
+  "gas_jobs.kind":function(){return typeof JOB_KIND!=="undefined"?Object.keys(JOB_KIND):[]}
+};
+function ruleParse(def){var m=/\(\s*\(?\s*"?([a-z_]+)"?\s*=\s*ANY\s*\(/i.exec(def)||/\(\s*"?([a-z_]+)"?\s+IN\s*\(/i.exec(def)||/"?([a-z_]+)"?\s*=\s*ANY/i.exec(def);if(!m)return null;
+  var V=[],rx=/'((?:[^']|'')*)'/g,x;while((x=rx.exec(def)))V.push(x[1].replace(/''/g,"'"));return V.length?{col:m[1],vals:V}:null}
+function ruleCheck(rows){var out=[],seen={};(rows||[]).forEach(function(r){var p=ruleParse(r.def||"");if(!p)return;var tb=String(r.tbl||"").replace(/^public\./,""),k=tb+"."+p.col,f=RULE_MAP[k];if(!f)return;seen[k]=1;
+    var app=(f()||[]).map(function(v){return Array.isArray(v)?v[0]:v}).filter(function(v){return v!==""&&v!=null}),miss=app.filter(function(v){return p.vals.indexOf(String(v))<0});
+    out.push({k:k,con:r.con,miss:miss,n:app.length})});
+  Object.keys(RULE_MAP).forEach(function(k){if(!seen[k])out.push({k:k,con:"",miss:[],n:(RULE_MAP[k]()||[]).length,none:true})});
+  return out.sort(function(a,b){return(b.miss.length?1:0)-(a.miss.length?1:0)||a.k.localeCompare(b.k)})}
+var RULECHK={st:null,rows:null,err:""};
+regAct("rule-chk",function(){if(!LIVE){RULECHK.st="done";RULECHK.rows=ruleCheck([{tbl:"company_documents",con:"company_documents_submit_method_check",def:"CHECK ((submit_method = ANY (ARRAY['PDF 모두싸인'::text, '원본'::text, '확인중'::text])))"}]);render();return}
+  RULECHK.st="loading";RULECHK.err="";render();
+  Promise.resolve(sb.rpc("vw_check_rules")).then(function(r){if(r.error){RULECHK.st="err";RULECHK.err=/vw_check_rules|PGRST202|42883|does not exist|Could not find/i.test(String(r.error.message||r.error.code))?"서버 점검 함수가 없어요 · v216 SQL 을 먼저 실행해 주세요":String(r.error.message||r.error);render();return}
+    RULECHK.st="done";RULECHK.rows=ruleCheck(r.data||[]);render()},function(e){RULECHK.st="err";RULECHK.err=String(e&&e.message||e);render()})});
+function ruleChkHtml(){if(S.role!=="admin")return"";var R=RULECHK.rows||[],bad=R.filter(function(x){return x.miss.length});
+  var body=RULECHK.st==="loading"?'<p class="hint">점검 중…</p>':RULECHK.st==="err"?'<p class="hint" style="color:var(--bad,#c0392b)">'+esc(RULECHK.err)+'</p>':RULECHK.st==="done"?
+    (bad.length?'<p class="small" style="margin:6px 0"><b style="color:var(--bad,#c0392b)">어긋난 칸 '+bad.length+'개</b> · 앱에서 고를 수 있는데 DB가 거절하는 값이에요 · 이 값을 고르면 저장이 안 되고 되돌아가요</p>':'<p class="small" style="margin:6px 0"><b style="color:var(--ok,#16794a)">어긋난 칸 없음</b> · 앱 선택지가 모두 DB에서 허용돼요</p>')+
+    '<table class="t mini"><thead><tr><th>표 · 칸</th><th>DB 규칙</th><th>결과</th></tr></thead><tbody>'+R.map(function(x){var p=x.k.split(".");return'<tr><td>'+esc((SAVE_TNAME[p[0]]||p[0])+" · "+p[1])+'</td><td class="small muted">'+esc(x.none?"규칙 없음(모든 값 허용)":x.con)+'</td><td>'+(x.miss.length?'<span class="b sm bad">DB에 없음: '+esc(x.miss.join(", "))+'</span>':'<span class="b sm ok">맞음 · '+x.n+'개</span>')+'</td></tr>'}).join("")+'</tbody></table>':
+    '<p class="hint" style="margin:6px 0 0">앱의 선택지(제출 방식 · 조율 종류 · 파트 등)를 DB 허용 값과 비교해요 · 읽기만 해요</p>';
+  return'<div class="box setbox" style="margin-top:14px" id="rule-chk"><div class="dcard-h" style="display:flex;gap:8px;align-items:center"><b>DB 규칙 점검</b><span class="small muted">저장이 거절되는 선택지 미리 찾기</span><span class="grow"></span><button class="btn sm" data-act="rule-chk">'+(RULECHK.st==="done"?"다시 점검":"점검하기")+'</button></div>'+body+'</div>'}
+var _vSet216=vSet;vSet=function(){var h=_vSet216.apply(this,arguments),k='<div class="box setbox" style="margin-top:14px" id="save-errs">',i=h.indexOf(k);return i>=0?h.slice(0,i)+ruleChkHtml()+h.slice(i):h+ruleChkHtml()};
 
 /* ============ 렌더 ============ */
 function renderMain(){
