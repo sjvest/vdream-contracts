@@ -1465,6 +1465,17 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 /* v219 */
 .whrow{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .tk2whf .tkcr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0}
+
+/* v220 ① 2단 묶음(onbc · pcols · contents · dcol · pfcols) 안 구역도 흰 카드 (v193 규칙은 창 바로 아래 구역만 적용됐음) */
+.pnl .onbc>.ps:not(.foot):not(.pebar),.pnl .pcols>.ps:not(.foot):not(.pebar),.pnl .pcols>.pleft>.ps:not(.foot):not(.pebar),.pnl .contents>.ps:not(.foot):not(.pebar),.pnl .contents>.pcols>.ps:not(.foot):not(.pebar),.pnl .dcol>.ps:not(.foot):not(.pebar),.pnl .pfcols>div>.ps:not(.foot):not(.pebar){background:#fff;border:1px solid var(--line)!important;border-radius:10px;margin:8px 8px 0;box-shadow:0 1px 2px rgba(30,20,60,.04)}
+.pnl .pcols{column-rule-width:0;border-bottom:0}
+.pnl .pcols>.ps,.pnl .pcols>.pleft>.ps{margin-bottom:8px;margin-top:0}.pnl .pcols{padding-top:8px}
+.pnl .onbcols,.pnl .dis2{padding-bottom:0}
+/* v220 ③ 상태 칩 세로 늘어남 · 접힌 차수 줄 넘침 */
+.pnl .tags{align-items:center}
+.rrround.rrfolded>.rrfh{margin:0;width:100%}
+/* v220 ④ 시간 다름 · 협의됨 */
+.wishdf,.wishok{margin-left:4px;vertical-align:middle}.wishok{cursor:pointer;border:0;font:inherit}.wishokbtn{margin-left:2px}
 </style>
 </head>
 <body>
@@ -3229,7 +3240,10 @@ function talentAct(a,el,ev){
   case"tal-rej":(function(){var t=DB.talent.find(function(x){return x.id===S.talSel}),A=S.talAct;if(!String(A.why||"").trim()){toast("반려 사유를 입력해 주세요");return}
     t.status="반려";t.rej=String(A.why).trim();t.dby=st(S.me).name;t.dat=stamp();logChange("workers",t.worker,wk(t.worker).name,"추천인재 반려","대기",t.rej,"브이드림 내부");S.talAct=null;toast("반려로 저장했습니다");render()})();return true;
   case"tal-reset":(function(){if(S.armTal!==id){S.armTal=id;render();return}var t=DB.talent.find(function(x){return x.id===id});if(talWait(t.worker)){toast("같은 근로자의 대기 건이 이미 있습니다");S.armTal=null;render();return}var b=t.status;t.status="대기";t.lcid="";t.ldate="";t.lnote="";t.rej="";t.dby="";t.dat="";S.armTal=null;logChange("workers",t.worker,wk(t.worker).name,"추천인재 상태",b,"대기","브이드림 내부");toast("대기로 되돌렸습니다");render()})();return true;
-  case"tal-intake":(function(){var t=DB.talent.find(function(x){return x.id===id}),w=wk(t.worker);
+  case"tal-intake":(function(){var t=DB.talent.find(function(x){return x.id===id});if(!t)return;
+    /* v220 근로자 연결이 없는 인재(기관 추천 등)는 인재 이름 · 연락처로 · 연계 기업은 꼭 있어야 */
+    if(!t.lcid||!comp(t.lcid)){toast("연계 기업을 먼저 정해 주세요");return}
+    var w=wk(t.worker)||{name:t.name||"",phone:t.phone||"",email:t.email||"",birth:t.birth||""};if(!w.name||!w.phone){toast("인재 이름과 연락처가 있어야 입구서를 보낼 수 있어요");return}
     if(DB.intake.some(function(q){return !q.completed&&q.cid===t.lcid&&normPhone(q.phone)===normPhone(w.phone)})){toast("이미 입구서 발송 목록에 있습니다");return}
     var nid2=nid();DB.intake.push({id:nid2,name:w.name,phone:w.phone,email:w.email||"",birth:w.birth||"",cid:t.lcid,flip:"",cs:"",ce:"",wh:"",pass:"PASS",mail_sent:false,sent_at:"",send_state:"",send_error:"",receive:"pending",rch:"",rat:"",pat:"",trk:"",folder:"",completed:false,done_at:"",emp:"",link_note:"",created:stamp()});
     logChange("intake_applicants",nid2,w.name,"입사자 등록 (추천인재 연계)","",comp(t.lcid).name,"브이드림 내부");
@@ -18848,8 +18862,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v219";APP_VER_ON="11/01";APP_NOTE="파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v220";APP_VER_ON="11/01";APP_NOTE="창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -19812,6 +19826,52 @@ regAfter("v219 입구서 근로시간 바뀜",function(){if(S.view!=="intake"||(
 /* 열 추가 (SQL 실행 뒤에만 저장) */
 var V219={ok:!LIVE,probed:false};
 var _loadAll219=loadAll;loadAll=function(){var a=arguments,self=this;var pr=(!LIVE||V219.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(V219.probed=true,sb.from("employments").select("work_hours").limit(1).then(function(r){V219.ok=!r.error;if(V219.ok)colxAdd("employments",[["wh","work_hours"]])},function(){}));return pr.then(function(){return _loadAll219.apply(self,a)})};
+
+/* ================================================================
+   v220
+     ① 창 안 구역 흰 카드: 2단 묶음(onbcols · pcols · contents · dcol · pfcols) 안 구역도 흰 카드 (styles/app.css · v220 블록)
+        신규입사자 · 계약만료 · 퇴사 서류 · 서류 관리 · 장애 재판정 · 중도퇴사 · 고객사 요청 새 요청 · 충족 관리 · 내 할 일 · 포트폴리오(채용 요청에서 열기) 창
+     ② 기관 추천 인재(근로자 연결 없음) '입구서 발송 대상으로 추가' 오류 (features/expiry/0024-…-04.js)
+     ③ 상태 칩 세로 늘어남 · 접힌 차수 줄 넘침 (CSS)
+     ④ 희망 근무시간이 요청서와 다르면 '시간 다름' 칩 + [협의됨] (후보 표)
+     ⑤ 고객사 요청: '요청별로 묶기' 체크 → 보기 막대 '요청별'
+     ⑥ 예시 데이터: 인재경영파트 담당자 1명 (테스트 빌드만)
+   ================================================================ */
+
+/* ④ 시간 다름 · 협의됨 — 협의한 시간과 지금 희망 시간이 같을 때만 '협의됨' (희망 시간을 바꾸면 다시 '시간 다름') */
+function wishOk220(c){var w=cdWishWh(c);return !!(w&&c.wish_ok&&c.wish_ok.v===whNorm(w))}
+var _wishBtn220=wishBtn;wishBtn=function(xid,i){var h=_wishBtn220.apply(this,arguments),o=cdGet(xid,i);if(!h||!o||!o.c||!cdWishDiff(o.c,o.r))return h;
+  if(wishOk220(o.c))return h+'<button type="button" class="b sm ok wishok" data-act="wish-unok" data-x="'+esc(xid)+'" data-i="'+i+'" title="협의됨 · '+esc((o.c.wish_ok.by||"")+" "+(o.c.wish_ok.at||""))+' · 누르면 되돌려요">협의됨</button>';
+  return h+'<span class="b sm warn wishdf" title="희망 근무시간이 채용 요청서와 달라요">시간 다름</span><button type="button" class="linkbtn small wishokbtn" data-act="wish-ok" data-x="'+esc(xid)+'" data-i="'+i+'">협의됨</button>'};
+regActs({
+  "wish-ok":function(D0){var o=cdGet(D0.x,D0.i);if(!o||!o.c)return;var w=cdWishWh(o.c);if(!w)return;
+    cdPut(D0.x,D0.i,function(c){c.wish_ok={v:whNorm(w),by:st(S.me).name||"",at:stamp()}});
+    if(o.r)logChange("recruit_requests",o.r.id,cdCoName(o.r),"희망 근무시간 협의","",(o.c.name||"")+" · "+w+" · 협의됨","브이드림 내부");toast("협의됨으로 표시했어요");render()},
+  "wish-unok":function(D0){var o=cdGet(D0.x,D0.i);if(!o||!o.c)return;
+    cdPut(D0.x,D0.i,function(c){delete c.wish_ok});
+    if(o.r)logChange("recruit_requests",o.r.id,cdCoName(o.r),"희망 근무시간 협의","협의됨",(o.c.name||"")+" · 되돌림","브이드림 내부");render()}
+});
+
+/* ⑤ 고객사 요청: 보기 막대 '요청별' (예전 '요청별로 묶기' 체크 대신) */
+VG_LAB.rq="요청별";
+VG.req.m=Object.assign({rq:/^$/},VG.req.m);
+var _vgCfg220=vgCfg;vgCfg=function(){var c=_vgCfg220.apply(this,arguments);if(c&&S.view==="req"&&S.reqTab==="done"){var m=Object.assign({},c.m);delete m.rq;return Object.assign({},c,{m:m})}return c};
+var _vgGroup220=vgGroup;vgGroup=function(box,c,mode){if(mode==="rq")return;return _vgGroup220.apply(this,arguments)};
+/* 요청별은 예전 묶음 화면 그대로 → 쪽 나누기도 예전 그대로 */
+var _pageSize220=pageSize;pageSize=function(){if(S.view==="req"&&vgMode()==="rq")return _pageSize218.apply(this,arguments);return _pageSize220.apply(this,arguments)};
+var REQ220={last:false};
+var _vReq220=vReq;vReq=function(){
+  /* 다른 곳에서 S.reqGroup 을 바꾸면 보기도 맞춤 (켜면 '요청별' · 끄면 목록 — 내 할 일 · 업무 보고에서 케이스 바로 열기) */
+  if(S.reqTab!=="done"&&!!S.reqGroup!==REQ220.last){if(S.reqGroup){if(vgMode()!=="rq")vgSet("rq")}else if(vgMode()==="rq")vgSet("")}
+  var g=S.reqTab!=="done"&&vgMode()==="rq";if(S.reqGroup!==g){S.reqGroup=g;if(!g)S.reqGSel=null;else{S.reqSel=null;S.reqChk={}}}REQ220.last=g;
+  var h=_vReq220.apply(this,arguments);if(typeof h!=="string")return h;
+  return h.replace(/<label class="cb"><input type="checkbox" data-ch="req-group"[^>]*>\s*요청별로 묶기<\/label>/,"")};
+
+/* ⑥ 예시 데이터: 인재경영파트 담당자 (테스트 빌드 · 파트별 권한 점검용) */
+if(typeof LIVE!=="undefined"&&!LIVE&&DB&&DB.staff&&!DB.staff.some(function(s){return s.part==="인재경영파트"&&s.role==="담당자"}))
+  DB.staff.push({id:"s9",name:"한지우",email:"jiwoo.han@vdream.co.kr",part:"인재경영파트",role:"담당자",active:true,must:false,last:""});
+/* ⑤-2 요청별일 때 표가 바뀌어도 보기 막대는 그대로 */
+regAfter("v220 요청별 보기 막대",function(){if(S.view!=="req"||vgMode()!=="rq"||document.querySelector("#main .vgbar"))return;var c=vgCfg(),box=document.querySelector('#main .box[data-tk="reqg"]');if(c&&box)box.insertAdjacentHTML("beforebegin",vgBar(c,"rq"))});
 
 /* ============ 렌더 ============ */
 function renderMain(){
