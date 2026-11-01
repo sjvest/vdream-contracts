@@ -1483,6 +1483,12 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .ps.pejump{box-shadow:0 0 0 3px rgba(108,92,231,.35)!important;transition:box-shadow .3s}
 /* v221 ② 신규입사자 근로시간 */
 .whbox{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:#F7F6FB;border-radius:8px;font-size:13px}
+
+/* v222 보기 막대 C안: 따로 보기 | 세로선 | 같은 줄 묶기 */
+.vgbar .vgsep{display:inline-block;width:1px;height:22px;background:var(--line);margin:0 6px;vertical-align:middle}
+.vgbar .vghint{margin-left:6px}
+/* v222 장애 재판정 창: 흰 카드라 가운데 세로선 필요 없음 */
+.pnl-dis .dis2 .dcol+.dcol{border-left:0}
 </style>
 </head>
 <body>
@@ -18746,6 +18752,8 @@ regActs({
      regSection(창, {id, order, transform(h, ctx)})          창 구역 (완성된 HTML 고치기 · 예전 덧씌우기를 옮긴 것)
         창: "todo" (할 일 창) · at: "top"(첫 상자 앞) | "end"(창 끝)
      regAuto(키, 이름, 설명)           자동 처리 스위치 (관리자 › 설정 › 자동 처리)
+     regBefore(키, fn())               화면 그리기 직전 처리 (상태 맞추기 · v222)
+     regTable(표, {id, cols(cols), row(h, x), hide:[칸], hideKey})   표(dtable) 칸 더하기 · 줄 고치기 · 처음 숨길 칸 (v222)
      openPanel(종류, id)               창 열기 하나로 (worker · company · rr · reqw · reqg · todo · exp)
    덧씌우기 순서: 이 파일이 맨 바깥이라, 등록된 것은 기존 덧씌우기보다 먼저(동작) / 나중(후처리)에 돌아요
    ================================================================ */
@@ -18782,10 +18790,23 @@ var _btReg=buildTodos;buildTodos=function(){var L=_btReg.apply(this,arguments);R
 /* v208: 창 · 모달이 열린 채 다시 그릴 때 뒤 화면 스크롤 위치 지키기 (탭 바꾸기 등) */
 /* v215 뒤처리(상태 색 · 표 정리 · 알림 등)도 빠른 찾기 저장(RC)이 켜진 채로 돌게: 내 할 일 줄마다 할 일 전체를 다시 계산하던 것 */
 var _renderReg=render;render=function(){var own=!RC;if(own)RC={};try{return _renderRegIn.apply(this,arguments)}finally{if(own)RC=null}};
-function _renderRegIn(){var y0=window.scrollY,v0=S.view,op=!!document.querySelector("#modal .ov,aside.pnl,.holov");var r=_renderReg.apply(this,arguments);REG().after.forEach(function(o){try{o.fn()}catch(e){console.warn("[후처리]",o.k,e)}});
+function _renderRegIn(){(REG().before||[]).forEach(function(o){try{o.fn()}catch(e){console.warn("[그리기 전]",o.k,e)}});var y0=window.scrollY,v0=S.view,op=!!document.querySelector("#modal .ov,aside.pnl,.holov");var r=_renderReg.apply(this,arguments);REG().after.forEach(function(o){try{o.fn()}catch(e){console.warn("[후처리]",o.k,e)}});
   if(op&&y0>0&&S.view===v0){if(Math.abs(window.scrollY-y0)>2)window.scrollTo(0,y0);if(typeof KEEPY!=="undefined")KEEPY={y:y0,v:v0,until:Date.now()+600}}return r}
 var _pTodoReg=pTodo;pTodo=function(t){return secApply("todo",_pTodoReg.apply(this,arguments),t)};
 regAct("open-panel",function(D0){openPanel(D0.k,D0.id)});
+
+/* ---------- v222 등록 지점 더하기: 그리기 직전 · 표 ---------- */
+function regBefore(k,fn){var R=REG();(R.before||(R.before=[])).push({k:k,fn:fn})}
+function regTable(k,spec){var R=REG(),T=R.tbl||(R.tbl={});(T[k]||(T[k]=[])).push(spec)}
+/* 표: 칸 더하기 · 줄 고치기 (맨 바깥 한 겹) · 처음 숨길 칸은 담당자마다 한 번만 */
+var _dtableReg=dtable;dtable=function(k,cols,rows,rowFn,empty){var L=(REG().tbl||{})[k];if(!L||!L.length||!cols)return _dtableReg.apply(this,arguments);
+  var C=cols,F=rowFn;L.forEach(function(sp){try{
+    if(sp.cols){var c2=sp.cols(C.slice());if(Array.isArray(c2))C=c2}
+    if(sp.hide&&sp.hide.length){var f=sp.hideKey||("vw_colh_"+k+"_"+sp.id);var done=false;try{done=!!localStorage.getItem(f)}catch(_){done=true}
+      if(!done){var H=colHidden(k),add=sp.hide.filter(function(c){return H.indexOf(c)<0});if(add.length)colSetHidden(k,H.concat(add));try{localStorage.setItem(f,"1")}catch(_){}}}
+    if(sp.row&&F){var f0=F;F=function(x,i){var h=f0(x,i);try{var h2=sp.row(h,x,i);return typeof h2==="string"?h2:h}catch(e){console.warn("[표]",k,sp.id,e);return h}}}
+  }catch(e){console.warn("[표]",k,sp.id,e)}});
+  return _dtableReg.call(this,k,C,rows,F,empty)};
 
 /* 창 구역 연결 고리 (v207) — 이 창들은 덧씌우기 대신 regSection(…, {transform}) 목록으로 그려요 */
 var _pWkReg=pWk;pWk=function(){var h=_pWkReg.apply(this,arguments);return secApply("worker",h,arguments[0])};
@@ -18869,8 +18890,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v221";APP_VER_ON="11/01";APP_NOTE="수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v222";APP_VER_ON="11/01";APP_NOTE="보기 막대 요청별 따로 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -19688,20 +19709,28 @@ var VG={
   lea:{tk:"lea",m:{co:/^기업/,day:/^퇴사일/},due:/^퇴사일/},
   wk:{tk:"wk-act",m:{co:/^기업/,day:/^계약만료일/},due:/^계약만료일/}
 };
-function vgCfg(){var c=VG[S.view];if(!c)return null;if(S.view==="intake"&&S.inTab&&S.inTab!=="app")return null;return c}
+function vgCfg(){var c=VG[S.view];if(!c)return null;if(S.view==="intake"&&S.inTab&&S.inTab!=="app")return null;
+  /* v222 only: 조건이 맞을 때만 보이는 보기 (예: 고객사 요청 '요청별'은 진행 중 탭에서만) */
+  if(c.only){var m={};Object.keys(c.m).forEach(function(k){if(!c.only[k]||c.only[k]())m[k]=c.m[k]});c=Object.assign({},c,{m:m})}return c}
+/* v222 self: 메뉴가 직접 그리는 보기 (줄 단위가 달라서 막대가 묶지 않음 · 쪽 나누기도 메뉴 그대로) */
+function vgSelf(m){var c=vgCfg();return !!(m&&c&&c.self&&c.self.indexOf(m)>=0)}
 function vgPrefs(){try{var N=nGet();return N.vg||(N.vg={})}catch(e){return S.vgP||(S.vgP={})}}
 function vgMode(){var c=vgCfg();if(!c)return"";var m=vgPrefs()[S.view]||"";return c.m[m]?m:""}
 function vgSet(m){var P=vgPrefs();if(m)P[S.view]=m;else delete P[S.view];try{nSave()}catch(e){}}
 /* 묶음 보기일 때는 한 쪽에 전부 */
-var _pageSize218=pageSize;pageSize=function(){if(vgMode())return 100000;return _pageSize218.apply(this,arguments)};
+var _pageSize218=pageSize;pageSize=function(){var m=vgMode();if(m&&!vgSelf(m))return 100000;return _pageSize218.apply(this,arguments)};
 /* 날짜 글자 → 비교용 값 */
 function vgDate(t){t=String(t||"");var m=t.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+"-"+m[2]+"-"+m[3];m=t.match(/(\d{1,2})[\/.](\d{1,2})/);if(m){var y=+TODAY.slice(0,4),mm=("0"+m[1]).slice(-2),dd=("0"+m[2]).slice(-2),d=y+"-"+mm+"-"+dd;if(d<addD(TODAY,-200))d=(y+1)+"-"+mm+"-"+dd;else if(d>addD(TODAY,200))d=(y-1)+"-"+mm+"-"+dd;return d}return""}
 function vgCellTxt(td,raw){if(!td)return"";if(raw)return td.textContent.replace(/\s+/g," ").trim();var lk=td.querySelector('[data-act^="go-"],[data-act$="-open"],a[href]:not(.ctrc)');if(lk){var v0=vgClean(lk.textContent);if(v0.length>1)return v0}
   var c=td.cloneNode(true);[].forEach.call(c.querySelectorAll("small,.dt,.b,.fc,button,.ctrc,.ctrcw,.cdwish,input,select,[class*=dm]"),function(x){x.remove()});var v=vgClean(c.textContent);return v||vgClean(td.textContent)}
 function vgClean(t){return String(t||"").replace(/[^\p{L}\p{N}\s()·\-_.,&/]/gu,"").replace(/\s+/g," ").trim()}
-function vgBar(c,mode){var ks=["list"].concat(Object.keys(c.m));
-  return'<div class="vgbar"><span class="small muted">보기</span><div class="seg sm" role="group" aria-label="보기">'+ks.map(function(k){var on=(k==="list"&&!mode)||k===mode;return'<button type="button" class="'+(on?"on":"")+'" data-act="vg-mode" data-v="'+k+'">'+VG_LAB[k]+'</button>'}).join("")+'</div>'+
-    (mode?'<button type="button" class="linkbtn small" data-act="vg-all" data-v="1">모두 펼치기</button><button type="button" class="linkbtn small" data-act="vg-all" data-v="0">모두 접기</button>':"")+'</div>'}
+function vgBar(c,mode){var ks=["list"].concat(Object.keys(c.m)),sf=c.self||[],L=ks.filter(function(k){return sf.indexOf(k)<0}),SL=ks.filter(function(k){return sf.indexOf(k)>=0});
+  var btn=function(k){var on=(k==="list"&&!mode)||k===mode,t=(c.tips&&c.tips[k])||"";return'<button type="button" class="'+(on?"on":"")+'" data-act="vg-mode" data-v="'+k+'"'+(t?' title="'+esc(t)+'"':"")+'>'+VG_LAB[k]+'</button>'};
+  /* v222 C안: 줄 단위가 다른 보기(self)는 왼쪽에 따로 · 세로선 · 오른쪽은 같은 줄을 묶는 보기 */
+  var self=SL.length?'<div class="seg sm vgself" role="group" aria-label="'+esc(c.selfLab||"따로 보기")+'">'+SL.map(btn).join("")+'</div><span class="vgsep" aria-hidden="true"></span>':"";
+  return'<div class="vgbar"><span class="small muted">보기</span>'+self+'<div class="seg sm" role="group" aria-label="보기"'+(c.grpTip?' title="'+esc(c.grpTip)+'"':"")+'>'+L.map(btn).join("")+'</div>'+
+    (mode&&sf.indexOf(mode)>=0&&c.selfHint?'<span class="small muted vghint">'+esc(c.selfHint)+'</span>':"")+
+    (mode&&sf.indexOf(mode)<0?'<button type="button" class="linkbtn small" data-act="vg-all" data-v="1">모두 펼치기</button><button type="button" class="linkbtn small" data-act="vg-all" data-v="0">모두 접기</button>':"")+'</div>'}
 function vgGroup(box,c,mode){var t=box.querySelector("table"),tb=t&&t.querySelector("tbody");if(!tb||tb.querySelector("td[rowspan],tr.sec,tr.grp,tr.gs,tr.vgh"))return;
   var H=[].map.call(t.querySelectorAll("thead th"),function(x){return x.textContent.replace(/[▾↕▲▼]/g,"").replace(/\d+$/,"").trim()}),ci=H.findIndex(function(h){return c.m[mode].test(h)}),di=c.due?H.findIndex(function(h){return c.due.test(h)}):-1;if(ci<0)return;
   var rows=[].filter.call(tb.children,function(tr){return tr.tagName==="TR"&&!tr.classList.contains("nohover")});if(rows.length<1)return;
@@ -19715,8 +19744,10 @@ function vgGroup(box,c,mode){var t=box.querySelector("table"),tb=t&&t.querySelec
     tr.innerHTML='<td colspan="'+n+'"><span class="vgcar">'+(open?"▾":"▸")+'</span> <b>'+esc(dlab)+'</b> <span class="small muted">'+g.rows.length+'건</span>'+(g.late?' <span class="b sm bad">기한 지남 '+g.late+'</span>':"")+(mode!=="day"&&g.due?' <span class="small muted">· 가장 이른 '+esc(H[di]||"기한")+' '+esc(md(g.due))+'</span>':"")+'</td>';
     frag.appendChild(tr);g.rows.forEach(function(r){r.classList.toggle("vgx",!open);frag.appendChild(r)})});
   tb.appendChild(frag)}
-regAfter("v218 보기 막대",function(){var c=vgCfg();if(!c)return;var box=document.querySelector('#main .box[data-tk="'+c.tk+'"]');if(!box)return;var mode=vgMode();
-  if(!document.querySelector("#main .vgbar"))box.insertAdjacentHTML("beforebegin",vgBar(c,mode));if(mode)vgGroup(box,c,mode)});
+regAfter("v218 보기 막대",function(){var c=vgCfg();if(!c)return;var mode=vgMode(),box=document.querySelector('#main .box[data-tk="'+c.tk+'"]');
+  /* v222 self 보기면 메뉴가 그린 표(tk2) 앞에 막대 */
+  if(!box&&vgSelf(mode)&&c.tk2)box=document.querySelector('#main .box[data-tk="'+c.tk2+'"]');if(!box)return;
+  if(!document.querySelector("#main .vgbar"))box.insertAdjacentHTML("beforebegin",vgBar(c,mode));if(mode&&!vgSelf(mode))vgGroup(box,c,mode)});
 regActs({
   "vg-mode":function(D0){var v=D0.v==="list"?"":D0.v;vgSet(v);if(S.view==="req"&&v&&S.reqGroup)S.reqGroup=false;var c=vgCfg();if(c&&typeof tst==="function"){try{tst(c.tk).page=1}catch(e){}}render()},
   "vg-tog":function(D0){var k=S.view+"|"+vgMode();S.vgO=S.vgO||{};var O=S.vgO[k]||(S.vgO[k]={});O[D0.k]=O[D0.k]===false?true:false;render()},
@@ -19847,9 +19878,11 @@ var _loadAll219=loadAll;loadAll=function(){var a=arguments,self=this;var pr=(!LI
 
 /* ④ 시간 다름 · 협의됨 — 협의한 시간과 지금 희망 시간이 같을 때만 '협의됨' (희망 시간을 바꾸면 다시 '시간 다름') */
 function wishOk220(c){var w=cdWishWh(c);return !!(w&&c.wish_ok&&c.wish_ok.v===whNorm(w))}
-var _wishBtn220=wishBtn;wishBtn=function(xid,i){var h=_wishBtn220.apply(this,arguments),o=cdGet(xid,i);if(!h||!o||!o.c||!cdWishDiff(o.c,o.r))return h;
-  if(wishOk220(o.c))return h+'<button type="button" class="b sm ok wishok" data-act="wish-unok" data-x="'+esc(xid)+'" data-i="'+i+'" title="협의됨 · '+esc((o.c.wish_ok.by||"")+" "+(o.c.wish_ok.at||""))+' · 누르면 되돌려요">협의됨</button>';
-  return h+'<span class="b sm warn wishdf" title="희망 근무시간이 채용 요청서와 달라요">시간 다름</span><button type="button" class="linkbtn small wishokbtn" data-act="wish-ok" data-x="'+esc(xid)+'" data-i="'+i+'">협의됨</button>'};
+function wishTag220(xid,i){var o=cdGet(xid,i);if(!o||!o.c||!cdWishWh(o.c)||!cdWishDiff(o.c,o.r))return"";
+  if(wishOk220(o.c))return'<button type="button" class="b sm ok wishok" data-act="wish-unok" data-x="'+esc(xid)+'" data-i="'+i+'" title="협의됨 · '+esc((o.c.wish_ok.by||"")+" "+(o.c.wish_ok.at||""))+' · 누르면 되돌려요">협의됨</button>';
+  return'<span class="b sm warn wishdf" title="희망 근무시간이 채용 요청서와 달라요">시간 다름</span><button type="button" class="linkbtn small wishokbtn" data-act="wish-ok" data-x="'+esc(xid)+'" data-i="'+i+'">협의됨</button>'}
+/* v222: 덧씌우기(wishBtn) 대신 그린 뒤 처리 — 후보 표 희망 시간 버튼 바로 뒤에 */
+regAfter("v220 시간 다름 · 협의됨",function(){if(S.view!=="rreq"||!S.rrSel)return;[].forEach.call(document.querySelectorAll(".pnl .cdwish[data-x]"),function(b){var n=b.nextElementSibling;if(n&&(n.classList.contains("wishdf")||n.classList.contains("wishok")))return;var h=wishTag220(b.dataset.x,+b.dataset.i);if(h)b.insertAdjacentHTML("afterend",h)})});
 regActs({
   "wish-ok":function(D0){var o=cdGet(D0.x,D0.i);if(!o||!o.c)return;var w=cdWishWh(o.c);if(!w)return;
     cdPut(D0.x,D0.i,function(c){c.wish_ok={v:whNorm(w),by:st(S.me).name||"",at:stamp()}});
@@ -19859,26 +19892,23 @@ regActs({
     if(o.r)logChange("recruit_requests",o.r.id,cdCoName(o.r),"희망 근무시간 협의","협의됨",(o.c.name||"")+" · 되돌림","브이드림 내부");render()}
 });
 
-/* ⑤ 고객사 요청: 보기 막대 '요청별' (예전 '요청별로 묶기' 체크 대신) */
+/* ⑤ 고객사 요청: 보기 막대 '요청별' (예전 '요청별로 묶기' 체크 대신)
+   v222 C안: [요청별] ┃ [목록 · 근로자별 · 기업별 · 업무별 · 일자별] — 요청별은 한 줄 = 요청 1건이라 따로 · 덧씌우기 없이 설정 + 등록 */
 VG_LAB.rq="요청별";
-VG.req.m=Object.assign({rq:/^$/},VG.req.m);
-var _vgCfg220=vgCfg;vgCfg=function(){var c=_vgCfg220.apply(this,arguments);if(c&&S.view==="req"&&S.reqTab==="done"){var m=Object.assign({},c.m);delete m.rq;return Object.assign({},c,{m:m})}return c};
-var _vgGroup220=vgGroup;vgGroup=function(box,c,mode){if(mode==="rq")return;return _vgGroup220.apply(this,arguments)};
-/* 요청별은 예전 묶음 화면 그대로 → 쪽 나누기도 예전 그대로 */
-var _pageSize220=pageSize;pageSize=function(){if(S.view==="req"&&vgMode()==="rq")return _pageSize218.apply(this,arguments);return _pageSize220.apply(this,arguments)};
+VG.req=Object.assign({},VG.req,{m:Object.assign({rq:/(?!)/},VG.req.m),self:["rq"],tk2:"reqg",selfLab:"요청 건으로 보기",
+  only:{rq:function(){return S.reqTab!=="done"}},
+  tips:{rq:"한 줄 = 고객사 요청 1건 (진행 n/m명)"},grpTip:"한 줄 = 근로자 케이스 1건",selfHint:"요청별 보기 중 · 근로자 케이스로 보려면 오른쪽에서 고르세요"});
 var REQ220={last:false};
-var _vReq220=vReq;vReq=function(){
-  /* 다른 곳에서 S.reqGroup 을 바꾸면 보기도 맞춤 (켜면 '요청별' · 끄면 목록 — 내 할 일 · 업무 보고에서 케이스 바로 열기) */
+/* 그리기 직전: 보기 ↔ S.reqGroup 맞추기 (다른 곳에서 S.reqGroup 을 바꾸면 보기도 맞춤 — 켜면 '요청별' · 끄면 목록, 내 할 일 · 업무 보고에서 케이스 바로 열기) */
+regBefore("v220 요청별 맞추기",function(){if(S.view!=="req")return;
   if(S.reqTab!=="done"&&!!S.reqGroup!==REQ220.last){if(S.reqGroup){if(vgMode()!=="rq")vgSet("rq")}else if(vgMode()==="rq")vgSet("")}
-  var g=S.reqTab!=="done"&&vgMode()==="rq";if(S.reqGroup!==g){S.reqGroup=g;if(!g)S.reqGSel=null;else{S.reqSel=null;S.reqChk={}}}REQ220.last=g;
-  var h=_vReq220.apply(this,arguments);if(typeof h!=="string")return h;
-  return h.replace(/<label class="cb"><input type="checkbox" data-ch="req-group"[^>]*>\s*요청별로 묶기<\/label>/,"")};
+  var g=S.reqTab!=="done"&&vgMode()==="rq";if(!!S.reqGroup!==g){S.reqGroup=g;if(!g)S.reqGSel=null;else{S.reqSel=null;S.reqChk={}}}REQ220.last=g});
+/* 예전 체크 상자는 화면에서 빼기 */
+regAfter("v220 요청별 체크 없애기",function(){if(S.view!=="req")return;var i=document.querySelector('#main [data-ch="req-group"]');var l=i&&i.closest("label");if(l)l.remove()});
 
 /* ⑥ 예시 데이터: 인재경영파트 담당자 (테스트 빌드 · 파트별 권한 점검용) */
 if(typeof LIVE!=="undefined"&&!LIVE&&DB&&DB.staff&&!DB.staff.some(function(s){return s.part==="인재경영파트"&&s.role==="담당자"}))
   DB.staff.push({id:"s9",name:"한지우",email:"jiwoo.han@vdream.co.kr",part:"인재경영파트",role:"담당자",active:true,must:false,last:""});
-/* ⑤-2 요청별일 때 표가 바뀌어도 보기 막대는 그대로 */
-regAfter("v220 요청별 보기 막대",function(){if(S.view!=="req"||vgMode()!=="rq"||document.querySelector("#main .vgbar"))return;var c=vgCfg(),box=document.querySelector('#main .box[data-tk="reqg"]');if(c&&box)box.insertAdjacentHTML("beforebegin",vgBar(c,"rq"))});
 
 /* ================================================================
    v221
@@ -19917,19 +19947,25 @@ function whCell221(e){var w=empWh(e);return'<div class="whbox" data-e="'+esc(e.i
 regAfter("v221 신규입사자 근로시간",function(){if(!S.onbSel)return;var P=document.querySelector('aside.pnl[aria-label="입사 상세"]');if(!P)return;var e=emp(S.onbSel);if(!e)return;
   var c=[].find.call(P.querySelectorAll(".ps"),function(p){var h=p.querySelector("h3");return h&&/^계약기간/.test(h.textContent)});if(!c||c.querySelector(".whbox"))return;
   var kv=c.querySelector(".kv,.fg");if(kv)kv.insertAdjacentHTML("afterend",whCell221(e));else c.insertAdjacentHTML("beforeend",whCell221(e))});
-var _dtable221=dtable;dtable=function(k,cols,rows,rowFn,empty){
-  if(k==="onb"&&rowFn&&cols&&!cols.some(function(c){return c.k==="wh"})){
-    var E=function(x){return x&&x.k==="em"?x.e:(x&&x.worker!==undefined&&x.company!==undefined?x:null)};
-    var cx=cols.findIndex(function(c){return c.k==="cx"});var col={k:"wh",h:"근로시간",t:"text",f:function(x){var e=E(x);return e?(empWh(e)||"미입력"):""}};
-    cols=cols.slice();if(cx<0)cols.push(col);else cols.splice(cx,0,col);
-    var rf=rowFn;rowFn=function(x,i){var h=rf(x,i),e=E(x);if(typeof h!=="string")return h;var w=e?empWh(e):"",td='<td class="small">'+(e?(w?esc(w):'<span class="muted">미입력</span>'):"")+'</td>';
-      if(cx<0)return h.replace(/<\/tr>\s*$/,td+"</tr>");
-      /* 입사취소 칸(마지막 칸) 앞에 */
-      var j=h.lastIndexOf("<td");return j<0?h:h.slice(0,j)+td+h.slice(j)}}
-  return _dtable221.call(this,k,cols,rows,rowFn,empty)};
-/* 처음엔 숨김 (한 번만) */
-var _colHidden221=colHidden;colHidden=function(k){var L=_colHidden221.apply(this,arguments);if(k!=="onb")return L;var f="vw_colh221_"+k;var done=false;try{done=!!localStorage.getItem(f)}catch(_){done=true}
-  if(!done){if(L.indexOf("wh")<0){L=L.concat(["wh"]);colSetHidden(k,L)}try{localStorage.setItem(f,"1")}catch(_){}}return L};
+/* v222: 덧씌우기(dtable · colHidden) 대신 표 등록 — 입사취소 칸 앞에 '근로시간' · 처음엔 숨김 */
+function e221(x){return x&&x.k==="em"?x.e:(x&&x.worker!==undefined&&x.company!==undefined?x:null)}
+var WH221={cx:true};
+regTable("onb",{id:"v221wh",hide:["wh"],hideKey:"vw_colh221_onb",
+  cols:function(C){if(C.some(function(c){return c.k==="wh"}))return C;var col={k:"wh",h:"근로시간",t:"text",f:function(x){var e=e221(x);return e?(empWh(e)||"미입력"):""}},cx=C.findIndex(function(c){return c.k==="cx"});WH221.cx=cx>=0;if(cx<0)C.push(col);else C.splice(cx,0,col);return C},
+  row:function(h,x){if(typeof h!=="string"||/data-whc/.test(h))return h;var e=e221(x),w=e?empWh(e):"",td='<td class="small" data-whc="1">'+(e?(w?esc(w):'<span class="muted">미입력</span>'):"")+'</td>';
+    var j=WH221.cx?h.lastIndexOf("<td"):-1;return j<0?h.replace(/<\/tr>\s*$/,td+"</tr>"):h.slice(0,j)+td+h.slice(j)}});
+
+/* ================================================================
+   v222
+     ① 고객사 요청 보기 막대 C안: [요청별] ┃ [목록 · 근로자별 · 기업별 · 업무별 · 일자별]
+        · 요청별은 한 줄 = 요청 1건이라 왼쪽에 따로 · 세로선 · 마우스를 올리면 설명 · 요청별 보기 중 안내
+        · core/9160-v218.js 에 메뉴 설정 self · only · tips 추가 (core/9180-v220.js 의 VG.req)
+     ② 덧씌우기 7곳 → 등록 방식 (기능 그대로)
+        · 등록 지점 더함 (core/9000-registry.js): regBefore(그리기 직전) · regTable(표 칸 · 줄 · 처음 숨김)
+        · v220 wishBtn → regAfter · vReq → regBefore + regAfter · vgCfg · vgGroup · pageSize → 보기 막대 설정(self · only)
+        · v221 dtable · colHidden → regTable
+     ③ 장애 재판정 창 가운데 세로선 없앰 (CSS)
+   ================================================================ */
 
 /* ============ 렌더 ============ */
 function renderMain(){
