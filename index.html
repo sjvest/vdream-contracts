@@ -1489,6 +1489,11 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .vgbar .vghint{margin-left:6px}
 /* v222 장애 재판정 창: 흰 카드라 가운데 세로선 필요 없음 */
 .pnl-dis .dis2 .dcol+.dcol{border-left:0}
+
+/* v223 요청별 켜고 끄기 · 같이 못 쓰는 보기 */
+.vgbar .vgtg{border:1px solid #D9D6E6;background:var(--surface);border-radius:6px;padding:3px 10px;font-size:12.5px;min-height:28px;cursor:pointer}
+.vgbar .vgtg.on{background:var(--p);color:#fff;border-color:var(--p)}
+.vgbar .seg button.vgdis{opacity:.35;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -18890,8 +18895,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v222";APP_VER_ON="11/01";APP_NOTE="보기 막대 요청별 따로 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v223 — 고객사 요청 요청별을 다른 보기와 같이 · v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v223";APP_VER_ON="11/01";APP_NOTE="요청별을 다른 보기와 같이 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -19712,25 +19717,28 @@ var VG={
 function vgCfg(){var c=VG[S.view];if(!c)return null;if(S.view==="intake"&&S.inTab&&S.inTab!=="app")return null;
   /* v222 only: 조건이 맞을 때만 보이는 보기 (예: 고객사 요청 '요청별'은 진행 중 탭에서만) */
   if(c.only){var m={};Object.keys(c.m).forEach(function(k){if(!c.only[k]||c.only[k]())m[k]=c.m[k]});c=Object.assign({},c,{m:m})}return c}
-/* v222 self: 메뉴가 직접 그리는 보기 (줄 단위가 달라서 막대가 묶지 않음 · 쪽 나누기도 메뉴 그대로) */
-function vgSelf(m){var c=vgCfg();return !!(m&&c&&c.self&&c.self.indexOf(m)>=0)}
+/* v223 겹쳐 쓰는 보기(toggle): 켜고 끄는 버튼 하나 + 오른쪽 보기와 같이 씀 (예: 고객사 요청 '요청별' + 기업별)
+   c.tg = {k, lab, tip, hint, tk(켰을 때 표), m(켰을 때 묶을 칸), due, off:[같이 못 쓰는 보기], only()} */
+function vgTg(){var c=VG[S.view];if(!c||!c.tg)return null;if(c.tg.only&&!c.tg.only())return null;return c.tg}
+function vgTgOn(){var t=vgTg();return !!(t&&vgPrefs()[S.view+":"+t.k])}
+function vgTgSet(on){var t=vgTg();if(!t)return;var P=vgPrefs();if(on)P[S.view+":"+t.k]=1;else delete P[S.view+":"+t.k];try{nSave()}catch(e){}}
 function vgPrefs(){try{var N=nGet();return N.vg||(N.vg={})}catch(e){return S.vgP||(S.vgP={})}}
-function vgMode(){var c=vgCfg();if(!c)return"";var m=vgPrefs()[S.view]||"";return c.m[m]?m:""}
+function vgMode(){var c=vgCfg();if(!c)return"";var m=vgPrefs()[S.view]||"";if(!c.m[m])return"";var t=vgTgOn()&&vgTg();if(t&&t.off&&t.off.indexOf(m)>=0)return"";return m}
 function vgSet(m){var P=vgPrefs();if(m)P[S.view]=m;else delete P[S.view];try{nSave()}catch(e){}}
 /* 묶음 보기일 때는 한 쪽에 전부 */
-var _pageSize218=pageSize;pageSize=function(){var m=vgMode();if(m&&!vgSelf(m))return 100000;return _pageSize218.apply(this,arguments)};
+var _pageSize218=pageSize;pageSize=function(){if(vgMode())return 100000;return _pageSize218.apply(this,arguments)};
 /* 날짜 글자 → 비교용 값 */
 function vgDate(t){t=String(t||"");var m=t.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+"-"+m[2]+"-"+m[3];m=t.match(/(\d{1,2})[\/.](\d{1,2})/);if(m){var y=+TODAY.slice(0,4),mm=("0"+m[1]).slice(-2),dd=("0"+m[2]).slice(-2),d=y+"-"+mm+"-"+dd;if(d<addD(TODAY,-200))d=(y+1)+"-"+mm+"-"+dd;else if(d>addD(TODAY,200))d=(y-1)+"-"+mm+"-"+dd;return d}return""}
 function vgCellTxt(td,raw){if(!td)return"";if(raw)return td.textContent.replace(/\s+/g," ").trim();var lk=td.querySelector('[data-act^="go-"],[data-act$="-open"],a[href]:not(.ctrc)');if(lk){var v0=vgClean(lk.textContent);if(v0.length>1)return v0}
   var c=td.cloneNode(true);[].forEach.call(c.querySelectorAll("small,.dt,.b,.fc,button,.ctrc,.ctrcw,.cdwish,input,select,[class*=dm]"),function(x){x.remove()});var v=vgClean(c.textContent);return v||vgClean(td.textContent)}
 function vgClean(t){return String(t||"").replace(/[^\p{L}\p{N}\s()·\-_.,&/]/gu,"").replace(/\s+/g," ").trim()}
-function vgBar(c,mode){var ks=["list"].concat(Object.keys(c.m)),sf=c.self||[],L=ks.filter(function(k){return sf.indexOf(k)<0}),SL=ks.filter(function(k){return sf.indexOf(k)>=0});
-  var btn=function(k){var on=(k==="list"&&!mode)||k===mode,t=(c.tips&&c.tips[k])||"";return'<button type="button" class="'+(on?"on":"")+'" data-act="vg-mode" data-v="'+k+'"'+(t?' title="'+esc(t)+'"':"")+'>'+VG_LAB[k]+'</button>'};
-  /* v222 C안: 줄 단위가 다른 보기(self)는 왼쪽에 따로 · 세로선 · 오른쪽은 같은 줄을 묶는 보기 */
-  var self=SL.length?'<div class="seg sm vgself" role="group" aria-label="'+esc(c.selfLab||"따로 보기")+'">'+SL.map(btn).join("")+'</div><span class="vgsep" aria-hidden="true"></span>':"";
-  return'<div class="vgbar"><span class="small muted">보기</span>'+self+'<div class="seg sm" role="group" aria-label="보기"'+(c.grpTip?' title="'+esc(c.grpTip)+'"':"")+'>'+L.map(btn).join("")+'</div>'+
-    (mode&&sf.indexOf(mode)>=0&&c.selfHint?'<span class="small muted vghint">'+esc(c.selfHint)+'</span>':"")+
-    (mode&&sf.indexOf(mode)<0?'<button type="button" class="linkbtn small" data-act="vg-all" data-v="1">모두 펼치기</button><button type="button" class="linkbtn small" data-act="vg-all" data-v="0">모두 접기</button>':"")+'</div>'}
+function vgBar(c,mode){var ks=["list"].concat(Object.keys(c.m)),t=vgTg(),on=vgTgOn();
+  var btn=function(k){var sel=(k==="list"&&!mode)||k===mode,dis=on&&t&&t.off&&t.off.indexOf(k)>=0,tip=dis?(t.lab+"을 켜면 쓸 수 없어요"):((c.tips&&c.tips[k])||"");return'<button type="button" class="'+(sel?"on":"")+(dis?" vgdis":"")+'" data-act="vg-mode" data-v="'+k+'"'+(dis?' disabled aria-disabled="true"':"")+(tip?' title="'+esc(tip)+'"':"")+'>'+VG_LAB[k]+'</button>'};
+  /* v223: 켜고 끄는 보기는 왼쪽에 따로 · 세로선 · 오른쪽 보기와 같이 */
+  var tg=t?'<button type="button" class="vgtg'+(on?" on":"")+'" data-act="vg-tg" aria-pressed="'+on+'" title="'+esc(t.tip||"")+'">'+(on?"✓ ":"")+esc(t.lab)+'</button><span class="vgsep" aria-hidden="true"></span>':"";
+  return'<div class="vgbar"><span class="small muted">보기</span>'+tg+'<div class="seg sm" role="group" aria-label="보기"'+(c.grpTip&&!on?' title="'+esc(c.grpTip)+'"':"")+'>'+ks.map(btn).join("")+'</div>'+
+    (on&&t.hint?'<span class="small muted vghint">'+esc(t.hint)+'</span>':"")+
+    (mode?'<button type="button" class="linkbtn small" data-act="vg-all" data-v="1">모두 펼치기</button><button type="button" class="linkbtn small" data-act="vg-all" data-v="0">모두 접기</button>':"")+'</div>'}
 function vgGroup(box,c,mode){var t=box.querySelector("table"),tb=t&&t.querySelector("tbody");if(!tb||tb.querySelector("td[rowspan],tr.sec,tr.grp,tr.gs,tr.vgh"))return;
   var H=[].map.call(t.querySelectorAll("thead th"),function(x){return x.textContent.replace(/[▾↕▲▼]/g,"").replace(/\d+$/,"").trim()}),ci=H.findIndex(function(h){return c.m[mode].test(h)}),di=c.due?H.findIndex(function(h){return c.due.test(h)}):-1;if(ci<0)return;
   var rows=[].filter.call(tb.children,function(tr){return tr.tagName==="TR"&&!tr.classList.contains("nohover")});if(rows.length<1)return;
@@ -19744,12 +19752,13 @@ function vgGroup(box,c,mode){var t=box.querySelector("table"),tb=t&&t.querySelec
     tr.innerHTML='<td colspan="'+n+'"><span class="vgcar">'+(open?"▾":"▸")+'</span> <b>'+esc(dlab)+'</b> <span class="small muted">'+g.rows.length+'건</span>'+(g.late?' <span class="b sm bad">기한 지남 '+g.late+'</span>':"")+(mode!=="day"&&g.due?' <span class="small muted">· 가장 이른 '+esc(H[di]||"기한")+' '+esc(md(g.due))+'</span>':"")+'</td>';
     frag.appendChild(tr);g.rows.forEach(function(r){r.classList.toggle("vgx",!open);frag.appendChild(r)})});
   tb.appendChild(frag)}
-regAfter("v218 보기 막대",function(){var c=vgCfg();if(!c)return;var mode=vgMode(),box=document.querySelector('#main .box[data-tk="'+c.tk+'"]');
-  /* v222 self 보기면 메뉴가 그린 표(tk2) 앞에 막대 */
-  if(!box&&vgSelf(mode)&&c.tk2)box=document.querySelector('#main .box[data-tk="'+c.tk2+'"]');if(!box)return;
-  if(!document.querySelector("#main .vgbar"))box.insertAdjacentHTML("beforebegin",vgBar(c,mode));if(mode&&!vgSelf(mode))vgGroup(box,c,mode)});
+regAfter("v218 보기 막대",function(){var c=vgCfg();if(!c)return;var mode=vgMode(),t=vgTgOn()&&vgTg(),box=document.querySelector('#main .box[data-tk="'+(t?t.tk:c.tk)+'"]');if(!box)return;
+  if(!document.querySelector("#main .vgbar"))box.insertAdjacentHTML("beforebegin",vgBar(c,mode));
+  /* v223 요청별을 켰으면 요청 표를 그 표의 칸으로 묶음 */
+  if(mode)vgGroup(box,t?{m:t.m,due:t.due}:c,mode)});
 regActs({
-  "vg-mode":function(D0){var v=D0.v==="list"?"":D0.v;vgSet(v);if(S.view==="req"&&v&&S.reqGroup)S.reqGroup=false;var c=vgCfg();if(c&&typeof tst==="function"){try{tst(c.tk).page=1}catch(e){}}render()},
+  "vg-tg":function(){vgTgSet(!vgTgOn());var c=vgCfg();if(c&&typeof tst==="function"){try{tst(c.tk).page=1}catch(e){}}render()},
+  "vg-mode":function(D0){var v=D0.v==="list"?"":D0.v;vgSet(v);var c=vgCfg();if(c&&typeof tst==="function"){try{tst(c.tk).page=1}catch(e){}}render()},
   "vg-tog":function(D0){var k=S.view+"|"+vgMode();S.vgO=S.vgO||{};var O=S.vgO[k]||(S.vgO[k]={});O[D0.k]=O[D0.k]===false?true:false;render()},
   "vg-all":function(D0){var k=S.view+"|"+vgMode();S.vgO=S.vgO||{};var O=S.vgO[k]={};if(D0.v==="0")[].forEach.call(document.querySelectorAll("#main tr.vgh"),function(tr){O[tr.dataset.k]=false});render()}
 });
@@ -19894,15 +19903,16 @@ regActs({
 
 /* ⑤ 고객사 요청: 보기 막대 '요청별' (예전 '요청별로 묶기' 체크 대신)
    v222 C안: [요청별] ┃ [목록 · 근로자별 · 기업별 · 업무별 · 일자별] — 요청별은 한 줄 = 요청 1건이라 따로 · 덧씌우기 없이 설정 + 등록 */
-VG_LAB.rq="요청별";
-VG.req=Object.assign({},VG.req,{m:Object.assign({rq:/(?!)/},VG.req.m),self:["rq"],tk2:"reqg",selfLab:"요청 건으로 보기",
-  only:{rq:function(){return S.reqTab!=="done"}},
-  tips:{rq:"한 줄 = 고객사 요청 1건 (진행 n/m명)"},grpTip:"한 줄 = 근로자 케이스 1건",selfHint:"요청별 보기 중 · 근로자 케이스로 보려면 오른쪽에서 고르세요"});
-var REQ220={last:false};
-/* 그리기 직전: 보기 ↔ S.reqGroup 맞추기 (다른 곳에서 S.reqGroup 을 바꾸면 보기도 맞춤 — 켜면 '요청별' · 끄면 목록, 내 할 일 · 업무 보고에서 케이스 바로 열기) */
+/* v223: 요청별 = 켜고 끄는 버튼 · 오른쪽 보기(목록 · 기업별 · 업무별 · 일자별)와 같이 씀 · 근로자별은 같이 못 씀 (한 요청에 여러 명) */
+VG.req=Object.assign({},VG.req,{grpTip:"한 줄 = 근로자 케이스 1건",
+  tg:{k:"rq",lab:"요청별",tip:"켜면 한 줄 = 고객사 요청 1건 (진행 n/m명) · 오른쪽 보기로 요청을 묶어요",hint:"요청별 켬 · 한 줄 = 요청 1건",tk:"reqg",
+    m:{co:/^기업/,job:/^구분/,day:/^마감일/},due:/^마감일/,off:["wk"],only:function(){return S.reqTab!=="done"}}});
+var REQ220={last:false,mig:false};
+/* 그리기 직전: 요청별 ↔ S.reqGroup 맞추기 (다른 곳에서 S.reqGroup 을 바꾸면 요청별도 맞춤 — 내 할 일 · 업무 보고에서 케이스 바로 열기는 끔) */
 regBefore("v220 요청별 맞추기",function(){if(S.view!=="req")return;
-  if(S.reqTab!=="done"&&!!S.reqGroup!==REQ220.last){if(S.reqGroup){if(vgMode()!=="rq")vgSet("rq")}else if(vgMode()==="rq")vgSet("")}
-  var g=S.reqTab!=="done"&&vgMode()==="rq";if(!!S.reqGroup!==g){S.reqGroup=g;if(!g)S.reqGSel=null;else{S.reqSel=null;S.reqChk={}}}REQ220.last=g});
+  if(!REQ220.mig){REQ220.mig=true;var P=vgPrefs();if(P.req==="rq"){delete P.req;P["req:rq"]=1;try{nSave()}catch(e){}}}
+  if(S.reqTab!=="done"&&!!S.reqGroup!==REQ220.last){vgTgSet(!!S.reqGroup)}
+  var g=S.reqTab!=="done"&&vgTgOn();if(!!S.reqGroup!==g){S.reqGroup=g;if(!g)S.reqGSel=null;else{S.reqSel=null;S.reqChk={}}}REQ220.last=g});
 /* 예전 체크 상자는 화면에서 빼기 */
 regAfter("v220 요청별 체크 없애기",function(){if(S.view!=="req")return;var i=document.querySelector('#main [data-ch="req-group"]');var l=i&&i.closest("label");if(l)l.remove()});
 
@@ -19965,6 +19975,13 @@ regTable("onb",{id:"v221wh",hide:["wh"],hideKey:"vw_colh221_onb",
         · v220 wishBtn → regAfter · vReq → regBefore + regAfter · vgCfg · vgGroup · pageSize → 보기 막대 설정(self · only)
         · v221 dtable · colHidden → regTable
      ③ 장애 재판정 창 가운데 세로선 없앰 (CSS)
+   ================================================================ */
+/* ================================================================
+   v223 고객사 요청 '요청별'을 다른 보기와 같이 (v222 C안을 고침)
+     · [요청별]은 켜고 끄는 버튼 · 켜면 한 줄 = 요청 1건 · 오른쪽 보기는 그 요청들을 묶는 방법
+       목록 = 요청 목록 · 기업별 · 업무별(구분) · 일자별(마감일) · 근로자별은 흐리게 (한 요청에 여러 명)
+     · 보기 막대 공통 설정 tg (core/9160-v218.js) · 고객사 요청 설정 (core/9180-v220.js)
+     · v222 에서 요청별을 골라 둔 사람은 '요청별 켬 + 목록'으로 이어짐
    ================================================================ */
 
 /* ============ 렌더 ============ */
