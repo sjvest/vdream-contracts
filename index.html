@@ -945,10 +945,10 @@ tr.fj-pick td,tr.fj-rej td{background:#FFF6F6}
 .msc{display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .ph h2 .pinreq{font-size:12px;vertical-align:middle;margin-left:8px;font-weight:600}
 /* v178 */
-.pfx .fsec .pesave{display:none!important}
-.pfx.vmode .fsec input:not([data-ch]):not([type=checkbox]):not([type=radio]),.pfx.vmode .fsec select:not([data-ch]),.pfx.vmode .fsec textarea:not([data-ch]){pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--ink);padding-left:0;-webkit-appearance:none;appearance:none;resize:none}
-.pfx.vmode .fsec input[type=checkbox]:not([data-ch]),.pfx.vmode .fsec input[type=radio]:not([data-ch]),.pfx.vmode .fsec button:not([data-act^="go-"]):not(.linkbtn):not([data-act="copy"]){pointer-events:none;opacity:.75}
-.pfx.vmode .fsec input::placeholder,.pfx.vmode .fsec textarea::placeholder{color:var(--ink-3,#9a98a8)}
+.pfx .fsec:not(.live) .pesave{display:none!important}
+.pfx.vmode .fsec:not(.live) input:not([data-ch]):not([type=checkbox]):not([type=radio]),.pfx.vmode .fsec:not(.live) select:not([data-ch]),.pfx.vmode .fsec:not(.live) textarea:not([data-ch]){pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--ink);padding-left:0;-webkit-appearance:none;appearance:none;resize:none}
+.pfx.vmode .fsec:not(.live) input[type=checkbox]:not([data-ch]),.pfx.vmode .fsec:not(.live) input[type=radio]:not([data-ch]),.pfx.vmode .fsec:not(.live) button:not([data-act^="go-"]):not(.linkbtn):not([data-act="copy"]){pointer-events:none;opacity:.75}
+.pfx.vmode .fsec:not(.live) input::placeholder,.pfx.vmode .fsec:not(.live) textarea::placeholder{color:var(--ink-3,#9a98a8)}
 .pfx.emode .fsec{background:#FCFBFF}
 .pfx .fsec .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px 20px}
 .pfx .fsec label.f{display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;column-gap:10px;margin:0}
@@ -966,13 +966,13 @@ tr.fj-pick td,tr.fj-rej td{background:#FFF6F6}
 .pcols .pleft>.ps{border-bottom:1px solid var(--line)}
 textarea.mta{resize:none;min-height:34px;line-height:1.45;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;width:100%;overflow:hidden}
 .memo-in{align-items:flex-start}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input[data-ch]:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=search]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) select[data-ch]{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0;-webkit-appearance:none;appearance:none}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .seg button:not(.on){opacity:.45}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .seg button,.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input[data-ch][type=checkbox]{pointer-events:none}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=search]):not([data-memo-in]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) select{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0;-webkit-appearance:none;appearance:none}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input[type=checkbox]:not([data-memo-in]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) input[type=date]{pointer-events:none}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .sbx,.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .sbx input{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0}
-.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog) .sbx::after{display:none}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) input[data-ch]:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=search]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) select[data-ch]{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0;-webkit-appearance:none;appearance:none}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) .seg button:not(.on){opacity:.45}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) .seg button,.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) input[data-ch][type=checkbox]{pointer-events:none}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=search]):not([data-memo-in]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) select{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0;-webkit-appearance:none;appearance:none}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) input[type=checkbox]:not([data-memo-in]),.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) input[type=date]{pointer-events:none}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) .sbx,.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) .sbx input{pointer-events:none;background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0}
+.pfx.vmode .ps:not(.progbox):not(.memotop):not(.notebox2):not(.rqprog):not(.live) .sbx::after{display:none}
 /* v179 완료 조회 통일 */
 tr[data-jd] td{opacity:.5}
 tr[data-jd]{background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.025) 6px 12px)}
@@ -1040,12 +1040,12 @@ aside.pnl:has(.rr2){align-content:start}
 .num,.nav .cnt,.tabs .c,.stat b,.dt,.steps .rt,.mccard span,.kv b,td{font-variant-numeric:tabular-nums}
 .pw code,code{font-family:ui-monospace,Menlo,Consolas,monospace}
 /* v186 ② 보기 모드 칸 = 카드 */
-.pfx.vmode .fsec .fg{gap:7px}
-.pfx.vmode .fsec label.f,.pfx.vmode .fsec .fg>div.f:not(.mcpick){display:flex;flex-direction:column;align-items:stretch;gap:1px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0}
-.pfx.vmode .fsec label.f>span,.pfx.vmode .fsec .fg>div.f>span{font-size:11px;color:var(--ink-2);line-height:1.3}
-.pfx.vmode .fsec label.f input,.pfx.vmode .fsec label.f select,.pfx.vmode .fsec label.f textarea{font-size:13px;font-weight:600;padding:0!important;min-height:0;height:auto;max-width:none;color:var(--ink)}
-.pfx.vmode .fsec label.f>small,.pfx.vmode .fsec label.f>.hint,.pfx.vmode .edonly{display:none}
-.pfx.vmode .fsec .fg>div.f>b{padding:0!important;font-size:13px}
+.pfx.vmode .fsec:not(.live) .fg{gap:7px}
+.pfx.vmode .fsec:not(.live) label.f,.pfx.vmode .fsec:not(.live) .fg>div.f:not(.mcpick){display:flex;flex-direction:column;align-items:stretch;gap:1px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0}
+.pfx.vmode .fsec:not(.live) label.f>span,.pfx.vmode .fsec:not(.live) .fg>div.f>span{font-size:11px;color:var(--ink-2);line-height:1.3}
+.pfx.vmode .fsec:not(.live) label.f input,.pfx.vmode .fsec:not(.live) label.f select,.pfx.vmode .fsec:not(.live) label.f textarea{font-size:13px;font-weight:600;padding:0!important;min-height:0;height:auto;max-width:none;color:var(--ink)}
+.pfx.vmode .fsec:not(.live) label.f>small,.pfx.vmode .fsec:not(.live) label.f>.hint,.pfx.vmode .edonly{display:none}
+.pfx.vmode .fsec:not(.live) .fg>div.f>b{padding:0!important;font-size:13px}
 .pfx.vmode .mcpick{display:none}
 .kvmiss{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12px}
 .kvmiss .b{background:#fff;color:var(--ink-2);font-weight:500}
@@ -1158,7 +1158,7 @@ td.grp .gname{max-width:170px}
 .dlg>.ps.foot{background:#fff;margin-top:8px}
 .ov>.dlg:not(.dlg-w):not(.dlg-mg):not(.dlg-ce):not(.dlg-del):not(.dlg-mail):not(.dlg-xm):not(.dlg-dr):not(.sibdlg):not(.nrdlg){background:#fff}
 .ov>.dlg:not(.dlg-w):not(.dlg-mg):not(.dlg-ce):not(.dlg-del):not(.dlg-mail):not(.dlg-xm):not(.dlg-dr):not(.sibdlg):not(.nrdlg)>.ps{border:0;margin:0;border-radius:0}
-.pfx.vmode .fsec label.f,.pfx.vmode .fsec .fg>div.f:not(.mcpick){background:#F7F6FB}
+.pfx.vmode .fsec:not(.live) label.f,.pfx.vmode .fsec:not(.live) .fg>div.f:not(.mcpick){background:#F7F6FB}
 /* ⑤ 요건 요약 */
 .rrsumline{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;padding:8px 16px;background:#F3F0FC;border-bottom:1px solid #E4DEF7;font-size:12.5px}
 .rrsumline .sep{color:#B8B0DA}
@@ -1476,6 +1476,13 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .rrround.rrfolded>.rrfh{margin:0;width:100%}
 /* v220 ④ 시간 다름 · 협의됨 */
 .wishdf,.wishok{margin-left:4px;vertical-align:middle}.wishok{cursor:pointer;border:0;font:inherit}.wishokbtn{margin-left:2px}
+
+/* v221 ① 바로 반영 카드(.live) · 전체 수정 칸 표시 · 이동 강조 (위 보기 모드 잠금 줄에 :not(.live) 추가) */
+.edhint{font-size:11px;font-weight:500;color:var(--ink-3,#8A879B);margin-left:8px;letter-spacing:0}
+.pfx.emode .edhint{display:none}
+.ps.pejump{box-shadow:0 0 0 3px rgba(108,92,231,.35)!important;transition:box-shadow .3s}
+/* v221 ② 신규입사자 근로시간 */
+.whbox{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:#F7F6FB;border-radius:8px;font-size:13px}
 </style>
 </head>
 <body>
@@ -16555,7 +16562,7 @@ function vUni(){var q=String(S.qw||"").trim(),all=uniRows().filter(function(r){i
     '<div class="tabs" role="tablist">'+UNI_ST.concat(["all"]).map(function(s){return'<button class="'+(S.uniTab===s?"on":"")+'" data-act="uni-tab" data-v="'+s+'">'+(s==="all"?"전체":s)+'<span class="c">'+cnt[s]+'</span></button>'}).join("")+'</div>'+
     '<div class="fbar"><div class="seg" role="group" aria-label="구분">'+[["all","전체"],["tal","추천"],["pf","📎 포트폴리오 있음"]].map(function(x){return'<button class="'+(S.uniF===x[0]?"on":"")+'" data-act="uni-f" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><input id="f-qw" data-in="qw" type="search" placeholder="이름 · 직무 · 연락처" value="'+esc(S.qw||"")+'"><span class="grow"></span><button class="btn sm" data-act="excel">엑셀 다운로드</button></div>';
   h+=dtable("uni",cols,rows,function(r){var sel=(r.t&&S.talSel===r.t.id)||(r.p&&S.pfSel===r.p.id);
-    return'<tr class="'+(sel?"sel":"")+'" data-act="uni-open" data-t="'+(r.t?r.t.id:"")+'" data-p="'+(r.p?r.p.id:"")+'"><td>'+(r.wid?wlink(r.wid):esc(r.name))+(r.p?' <span class="b sm t tip" tabindex="0" data-tip="포트폴리오 '+((r.p.files||[]).length)+'개">📎</span>':"")+(r.old?' <span class="b sm tip" tabindex="0" data-tip="이전 추천 '+r.old.length+'건">+'+r.old.length+'</span>':"")+'</td><td>'+(r.t?'<span class="b sm p">추천</span> ':"")+(r.p?'<span class="b sm t">포트폴리오</span>':"")+'</td><td class="c num">'+esc(String(r.birth||"").slice(2,4))+'</td><td>'+esc(uniDis(r)||"—")+'</td><td>'+esc(uniJobs(r)||"—")+'</td><td>'+esc(uniHrs(r)||"—")+'</td><td>'+uniRoute(r)+'</td><td class="c"><span class="b sm '+({"대기":"","제안중":"p","면접":"warn","취업완료":"ok","종료":""}[r.st])+'">'+r.st+'</span></td><td class="num">'+esc(md(r.created))+'</td></tr>'},"해당하는 인재가 없어요.");
+    return'<tr class="'+(sel?"sel":"")+'" data-act="uni-open" data-t="'+(r.t?r.t.id:"")+'" data-p="'+(r.p?r.p.id:"")+'"><td>'+(r.wid?wlink(r.wid):esc(r.name))+(r.p?' <span class="b sm t tip" tabindex="0" data-tip="포트폴리오 '+((r.p.files||[]).length)+'개">📎</span>':"")+(r.old?' <span class="b sm tip" tabindex="0" data-tip="이전 추천 '+r.old.length+'건">+'+r.old.length+'</span>':"")+'</td><td>'+(r.t?'<span class="b sm p">추천</span> ':"")+(r.p?'<span class="b sm t">포트폴리오</span>':"")+'</td><td class="c num">'+esc(talAge(r.birth||(r.p&&r.p.birth)||(r.t&&r.t.worker&&(wk(r.t.worker)||{}).birth)||"")||"—")+'</td><td>'+esc(uniDis(r)||"—")+'</td><td>'+esc(uniJobs(r)||"—")+'</td><td>'+esc(uniHrs(r)||"—")+'</td><td>'+uniRoute(r)+'</td><td class="c"><span class="b sm '+({"대기":"","제안중":"p","면접":"warn","취업완료":"ok","종료":""}[r.st])+'">'+r.st+'</span></td><td class="num">'+esc(md(r.created))+'</td></tr>'},"해당하는 인재가 없어요.");
   return h+uniPanel()}
 function uniGrab(h){if(typeof h!=="string")return"";var i=h.search(/<aside class="pnl/);return i<0?"":h.slice(i)}
 function uniPanel(){var P=S.uniPair||{},sw=P.t&&P.p?'<div class="uniside"><button class="'+(S.talSel?"on":"")+'" data-act="uni-side" data-v="t">추천 정보</button><button class="'+(S.pfSel&&S.pfSel!=="new"?"on":"")+'" data-act="uni-side" data-v="p">📎 포트폴리오</button></div>':"";var h="";
@@ -18862,8 +18869,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v220";APP_VER_ON="11/01";APP_NOTE="창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v221";APP_VER_ON="11/01";APP_NOTE="수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -19872,6 +19879,57 @@ if(typeof LIVE!=="undefined"&&!LIVE&&DB&&DB.staff&&!DB.staff.some(function(s){re
   DB.staff.push({id:"s9",name:"한지우",email:"jiwoo.han@vdream.co.kr",part:"인재경영파트",role:"담당자",active:true,must:false,last:""});
 /* ⑤-2 요청별일 때 표가 바뀌어도 보기 막대는 그대로 */
 regAfter("v220 요청별 보기 막대",function(){if(S.view!=="req"||vgMode()!=="rq"||document.querySelector("#main .vgbar"))return;var c=vgCfg(),box=document.querySelector('#main .box[data-tk="reqg"]');if(c&&box)box.insertAdjacentHTML("beforebegin",vgBar(c,"rq"))});
+
+/* ================================================================
+   v221
+     ① 수정 버튼 정리 — '바로 반영'(처리 기록) · '전체 수정에서만'(기본 정보)
+        · 장애 재판정 확인 카드 = 바로 반영: 보기 모드에서도 [수정] → 고치고 [재판정 정보 저장] (신규입사자 · 입구서 입사 등록 · 장애 재판정 창)
+          (예전: [수정]을 누르면 펼쳐지기만 하고 칸이 잠겨 있어 수정되는 척만 했음)
+        · 기관 연락처 [수정] = 바로 반영 (기관 상세 · 펼친 수정 칸이 잠겨 있던 것)
+        · 직무 카드 [수정] = 전체 수정을 켜고 그 칸으로 이동
+        · 전체 수정에서만 고치는 칸 제목 옆 '✏️ 수정에서 고침' (보기 모드일 때만)
+        · CSS: 보기 모드 잠금 규칙에서 .live 카드 제외 (styles/app.css v221 · 기존 줄 :not(.live))
+     ② 신규입사자 근로시간 (v219 근로시간 하나로와 같은 값)
+        · 상세 창 계약기간 카드: 근로시간 + [변경]/[입력] (근로자 DB 와 같은 창 · 적용일 · 사유 → 변경 이력)
+        · 목록 '근로시간' 열 (처음엔 숨김 · [열 ▾]에서 켜기)
+     ③ 인재 풀 목록 '만 나이' 칸이 생년 두 자리(예: 94)로 나오던 것 (features/talent/0201-…-00.js)
+   ================================================================ */
+
+/* ① 카드 구분 */
+regAfter("v221 바로 반영 · 전체 수정 카드",function(){
+  [].forEach.call(document.querySelectorAll("aside.pnl.pfx"),function(P){
+    [].forEach.call(P.querySelectorAll(".ps"),function(c){if(c.querySelector('[data-act="dis-save"],.ocedit'))c.classList.add("live")});
+    if(!P.querySelector('[data-act="pe-toggle"]'))return;
+    [].forEach.call(P.querySelectorAll(".ps.fsec:not(.live)"),function(c){var h=c.querySelector(":scope>h3");if(!h||h.querySelector(".edhint"))return;
+      /* 직무 카드: 접힌 줄 [수정] → 전체 수정 켜고 이동 */
+      var j=c.querySelector('[data-act="onb-unfold"][data-k^="j:"]');if(j){j.dataset.act="pe-jump";j.title="전체 수정을 켜고 이 칸으로 이동해요"}
+      if(c.querySelector("input,select,textarea"))h.insertAdjacentHTML("beforeend",'<span class="edhint" title="위쪽 [✏️ 수정]을 눌러 고쳐요">✏️ 수정에서 고침</span>')})});
+  if(S.peJumpH){var t=S.peJumpH;S.peJumpH=null;var c=[].find.call(document.querySelectorAll("aside.pnl .ps"),function(p){var h=p.querySelector("h3");return h&&h.textContent.indexOf(t)===0});
+    if(c){c.scrollIntoView({block:"center"});c.classList.add("pejump");setTimeout(function(){c.classList.remove("pejump")},1600);var i=c.querySelector("input:not([type=hidden]),select,textarea");if(i)try{i.focus({preventScroll:true})}catch(e){}}}
+});
+regActs({
+  "pe-jump":function(D0,el){var P=el.closest("aside");if(D0.k)S.onbOpen[D0.k]=1;var h=el.closest(".ps")&&el.closest(".ps").querySelector("h3");S.peJumpH=h?h.firstChild&&h.firstChild.nodeType===3?h.firstChild.textContent.trim():h.textContent.trim().split(" ")[0]:"";
+    var tg=P&&P.querySelector('[data-act="pe-toggle"]');if(P&&P.classList.contains("vmode")&&tg){tg.click();if(!document.querySelector("aside.pnl.emode"))render()}else render()}
+});
+
+/* ② 신규입사자 근로시간 */
+function whCell221(e){var w=empWh(e);return'<div class="whbox" data-e="'+esc(e.id)+'"><span class="small muted">근로시간</span> '+(w?'<b>'+esc(w)+'</b>':'<span class="b sm warn">미입력</span>')+' <button type="button" class="btn xs" data-act="wh-open" data-e="'+esc(e.id)+'">'+(w?"변경":"입력")+'</button><span class="small muted"> · 입구서 · 합격자 계약 정보 · 근로자 DB 와 같은 값</span></div>'}
+regAfter("v221 신규입사자 근로시간",function(){if(!S.onbSel)return;var P=document.querySelector('aside.pnl[aria-label="입사 상세"]');if(!P)return;var e=emp(S.onbSel);if(!e)return;
+  var c=[].find.call(P.querySelectorAll(".ps"),function(p){var h=p.querySelector("h3");return h&&/^계약기간/.test(h.textContent)});if(!c||c.querySelector(".whbox"))return;
+  var kv=c.querySelector(".kv,.fg");if(kv)kv.insertAdjacentHTML("afterend",whCell221(e));else c.insertAdjacentHTML("beforeend",whCell221(e))});
+var _dtable221=dtable;dtable=function(k,cols,rows,rowFn,empty){
+  if(k==="onb"&&rowFn&&cols&&!cols.some(function(c){return c.k==="wh"})){
+    var E=function(x){return x&&x.k==="em"?x.e:(x&&x.worker!==undefined&&x.company!==undefined?x:null)};
+    var cx=cols.findIndex(function(c){return c.k==="cx"});var col={k:"wh",h:"근로시간",t:"text",f:function(x){var e=E(x);return e?(empWh(e)||"미입력"):""}};
+    cols=cols.slice();if(cx<0)cols.push(col);else cols.splice(cx,0,col);
+    var rf=rowFn;rowFn=function(x,i){var h=rf(x,i),e=E(x);if(typeof h!=="string")return h;var w=e?empWh(e):"",td='<td class="small">'+(e?(w?esc(w):'<span class="muted">미입력</span>'):"")+'</td>';
+      if(cx<0)return h.replace(/<\/tr>\s*$/,td+"</tr>");
+      /* 입사취소 칸(마지막 칸) 앞에 */
+      var j=h.lastIndexOf("<td");return j<0?h:h.slice(0,j)+td+h.slice(j)}}
+  return _dtable221.call(this,k,cols,rows,rowFn,empty)};
+/* 처음엔 숨김 (한 번만) */
+var _colHidden221=colHidden;colHidden=function(k){var L=_colHidden221.apply(this,arguments);if(k!=="onb")return L;var f="vw_colh221_"+k;var done=false;try{done=!!localStorage.getItem(f)}catch(_){done=true}
+  if(!done){if(L.indexOf("wh")<0){L=L.concat(["wh"]);colSetHidden(k,L)}try{localStorage.setItem(f,"1")}catch(_){}}return L};
 
 /* ============ 렌더 ============ */
 function renderMain(){
