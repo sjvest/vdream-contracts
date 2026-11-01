@@ -18718,7 +18718,7 @@ function cibOpen(xid){var R=rdRead(xid);if(R)R.x.cands=R.C;var x=DB.rrr.find(fun
     return'<tr data-cibr="'+o.i+'"><td class="nowrap"><b>'+esc(o.c.name||"")+'</b>'+(ciOk(o.c.ci)?' <span class="b sm ok">입력됨</span>':"")+'</td>'+f("phone",ci.phone||P.phone,"tel")+f("birth",ci.birth||P.birth,"date")+f("email",ci.email||P.email,"email")+f("wh",ci.wh||cdWishWh(o.c)||rrHours(r))+f("cs",cs,"date")+f("ce",ce,"date")+f("flip",ci.flip||cs,"date")+'</tr>'}).join("");
   var same=function(k){return'<button type="button" class="linkbtn small" data-act="cib-same" data-k="'+k+'">모두 같게</button>'};
   $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="합격자 계약 정보 한 번에" style="width:min(1180px,calc(100vw - 32px))"><div class="ph"><div><div class="k">채용 요청 · '+x.seq+'차 최종 합격자 '+L.length+'명</div><h2>합격자 계약 정보 한 번에 · '+esc((coR(r)||{}).name||"")+'</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'+
-    '<div class="ps" style="overflow:auto"><table class="mini cibt"><thead><tr><th>이름</th><th>연락처 *</th><th>생년월일 *</th><th>이메일 *</th><th>근무시간 '+same("wh")+'</th><th>계약시작일 * '+same("cs")+'</th><th>계약종료일 * '+same("ce")+'</th><th>브이워크 시작일 '+same("flip")+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="ps" style="overflow:auto"><table class="mini cibt"><thead><tr><th>이름</th><th>연락처 <small class="muted">선택</small></th><th>생년월일 <small class="muted">선택</small></th><th>이메일 <small class="muted">선택</small></th><th>근무시간 '+same("wh")+'</th><th>계약시작일 * '+same("cs")+'</th><th>계약종료일 * '+same("ce")+'</th><th>브이워크 시작일 '+same("flip")+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<details style="margin-top:10px"><summary class="small">엑셀에서 붙여넣기 (이름 · 생년월일 · 이메일 · 연락처)</summary><textarea id="cib-paste" rows="4" style="width:100%;margin-top:6px" placeholder="엑셀에서 이름 · 생년월일 · 이메일 · 연락처 칸을 복사해 붙여 주세요 (순서 상관없이 이름으로 맞춰요)"></textarea><button class="btn sm" data-act="cib-paste">붙여넣기 적용</button></details>'+
     '<p class="hint" style="margin-top:8px">계약시작일을 바꾸면 종료일이 계약 기간('+(S.cib.tm?S.cib.tm+"개월":"요청 조건")+')에 맞춰 바뀌어요 · 빈 칸이 있는 사람은 빼고 저장해요</p></div>'+
     '<div class="ps foot"><span class="small muted" id="cib-msg"></span><span class="grow"></span><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="cib-save">저장</button></div></div></div>'}
@@ -18730,9 +18730,9 @@ function cibPaste(){var ta=$("#cib-paste");if(!ta)return;var rows=[].slice.call(
   var m=$("#cib-msg");if(m)m.textContent=n?n+"명 칸을 채웠어요 · 확인 후 저장해 주세요":"이름이 맞는 줄이 없어요";}
 function cibSave(){var F=S.cib;if(!F)return;var x=DB.rrr.find(function(y){return y.id===F.x}),r=x&&rcOf(x.req);if(!x)return;var ok=0,bad=0,C=x.cands.slice();
   [].forEach.call(document.querySelectorAll("[data-cibr]"),function(tr){var i=+tr.dataset.cibr,c=C[i];if(!c)return;var ci=Object.assign({},c.ci||{},{phone:cibVal(i,"phone"),birth:cibVal(i,"birth"),email:cibVal(i,"email"),wh:cibVal(i,"wh"),cs:cibVal(i,"cs"),ce:cibVal(i,"ce"),flip:cibVal(i,"flip")});
-    var v=normPhone(ci.phone).length>=9&&ci.birth&&EMAIL_RE.test(ci.email)&&ci.cs&&ci.ce&&ci.ce>ci.cs;tr.classList.toggle("cibbad",!v);if(!v){bad++;return}
+    /* v224 연락처 · 생년월일 · 이메일은 선택 (입구서 발송 때 채용파트가 입력) · 넣었으면 형식만 확인 */var v=(!ci.phone||normPhone(ci.phone).length>=9)&&(!ci.email||EMAIL_RE.test(ci.email))&&ci.cs&&ci.ce&&ci.ce>ci.cs;tr.classList.toggle("cibbad",!v);if(!v){bad++;return}
     if(JSON.stringify(c.ci||{})!==JSON.stringify(ci)){C[i]=Object.assign({},c,{ci:ci});logChange("recruit_requests",r.id,(coR(r)||{}).name||"","합격자 계약 정보",ciOk(c.ci)?"수정":"",c.name+" · "+ci.cs+"~"+ci.ce+" (한 번에)","브이드림 내부")}ok++});
-  x.cands=C;if(LIVE&&READY)schedulePersist();if(bad){var m=$("#cib-msg");if(m)m.innerHTML='<b style="color:#B42318">'+bad+'명은 빈 칸이 있어 남겨 뒀어요</b> · '+ok+'명 저장';toast(ok+"명 저장 · "+bad+"명 확인 필요");return}
+  x.cands=C;if(LIVE&&READY)schedulePersist();if(bad){var m=$("#cib-msg");if(m)m.innerHTML='<b style="color:#B42318">'+bad+'명은 계약기간이 비었거나 형식이 맞지 않아 남겨 뒀어요</b> · '+ok+'명 저장';toast(ok+"명 저장 · "+bad+"명 확인 필요");return}
   S.cib=null;$("#modal").innerHTML="";toast(ok+"명 계약 정보를 저장했어요");render()}
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.cib)return;var p=t.dataset.cib.split("|");if(p[1]==="ce")t.dataset.touched="1";if(p[1]==="cs"&&S.cib){var ce=document.querySelector('[data-cib="'+p[0]+'|ce"]'),fl=document.querySelector('[data-cib="'+p[0]+'|flip"]');if(ce&&!ce.dataset.touched&&t.value&&S.cib.tm)ce.value=addD(addM(t.value,S.cib.tm),-1);if(fl&&!fl.value)fl.value=t.value}},true);
 /* 차수 카드에 버튼 */
@@ -18895,8 +18895,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v223 — 고객사 요청 요청별을 다른 보기와 같이 · v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v223";APP_VER_ON="11/01";APP_NOTE="요청별을 다른 보기와 같이 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v224 — 계약 정보 창 근로계약서 올리기 · 한 번에 입력 연락처 · 생년월일 · 이메일 선택 · v223 — 고객사 요청 요청별을 다른 보기와 같이 · v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v224";APP_VER_ON="11/01";APP_NOTE="계약 정보 창 근로계약서 · 한 번에 입력 선택 칸 · 요청별을 다른 보기와 같이 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -19983,6 +19983,28 @@ regTable("onb",{id:"v221wh",hide:["wh"],hideKey:"vw_colh221_onb",
      · 보기 막대 공통 설정 tg (core/9160-v218.js) · 고객사 요청 설정 (core/9180-v220.js)
      · v222 에서 요청별을 골라 둔 사람은 '요청별 켬 + 목록'으로 이어짐
    ================================================================ */
+
+/* ================================================================
+   v224
+     ① 개별 '합격자 계약 정보' 창에서도 근로계약서(미서명본) 올리기 · 교체 · 삭제 (후보 표 [근계]와 같은 기능)
+        · 최종 '합격'일 때만 · 기업 설정이 '불필요'여도 칸은 보이고 안내만
+     ② '한 번에' 계약 정보: 연락처 · 생년월일 · 이메일은 선택 (입구서 발송 때 채용파트가 입력) · 넣었으면 형식만 확인
+        (panels/contract-info/0247-…-03.js 칸 제목 · 0247-…-05.js cibSave)
+   ================================================================ */
+function ciCtrHtml224(xid,i){var o=cdGet(xid,i);if(!o||!o.c)return"";var c=o.c,t=ctrOf(c),u=ctrUrl(t),job=t&&!u&&!ctrFail(t);
+  var h='<div class="ps ci-ctr" data-x="'+esc(xid)+'" data-i="'+i+'"><h3>근로계약서 <small class="muted" style="font-weight:400">미서명본 · 드라이브에 저장되고 입구서 메일에 자동 첨부</small></h3>';
+  if(c.final!=="합격")return h+'<p class="small muted" style="margin:0">최종 합격 뒤에 올릴 수 있어요</p></div>';
+  if(!coCtr(o.r))h+='<p class="small muted" style="margin:0 0 6px">이 기업은 보통 계약서를 따로 받지 않아요 (기업 설정 \'합격자별 근로계약서 받기\' · 불필요)</p>';
+  if(!t)return h+'<button type="button" class="btn sm" data-act="ctr-pick" data-x="'+esc(xid)+'" data-i="'+i+'">파일 올리기</button> <span class="small muted">PDF · 한글 · 워드 · 이미지</span></div>';
+  return h+'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(t.name||"근로계약서")+' ↗</a>':'<span>'+esc(t.name||"근로계약서")+'</span> <span class="small muted">'+(ctrFail(t)?"드라이브 저장 실패 · 다시 올려 주세요":job?"드라이브에 저장 중…":"")+'</span>')+
+    (ctrMailed(xid,i)?' <span class="b sm ok">메일 보냄</span>':"")+'<span class="grow"></span><button type="button" class="btn xs" data-act="ctr-menu" data-x="'+esc(xid)+'" data-i="'+i+'">교체 · 삭제 · 메일 ▾</button></div></div>'}
+regAfter("v224 계약 정보 창 근로계약서",function(){var F=S.ciF,md=document.querySelector("#modal .dlg");if(!F||!md||!md.querySelector("#ci-cs"))return;
+  var h=ciCtrHtml224(F.id,+F.i),old=md.querySelector(".ci-ctr");if(old){if(old.outerHTML!==h)old.outerHTML=h;return}if(!h)return;
+  var foot=md.querySelector(".ps.foot");if(foot)foot.insertAdjacentHTML("beforebegin",h);else md.insertAdjacentHTML("beforeend",h)});
+/* 계약 정보 창은 다시 그리지 않고 바로 뜨므로, 창이 바뀔 때도 칸을 넣음 (덧씌우기 대신 지켜보기) */
+(function(){var run=function(){try{REG().after.forEach(function(o){if(o.k==="v224 계약 정보 창 근로계약서")o.fn()})}catch(e){}};
+  var start=function(){var m=document.getElementById("modal");if(!m||typeof MutationObserver==="undefined")return;new MutationObserver(function(){if(S.ciF&&!document.querySelector("#modal .ci-ctr")&&document.querySelector("#modal #ci-cs"))run()}).observe(m,{childList:true})};
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start()})();
 
 /* ============ 렌더 ============ */
 function renderMain(){
