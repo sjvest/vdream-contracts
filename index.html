@@ -7182,7 +7182,7 @@ var _tdAct25=tdActBtn;tdActBtn=function(t){if(t.type==="rreq")return'<button cla
 /* 계약만료 '대체 채용 예' → 대체 요청 자동 생성 (같은 기업 열린 대체 요청이 있으면 그 요청에 대상 추가) */
 function rrFromExp(eid){var e=emp(eid);if(!e)return null;if(DB.rr.some(function(r){return(r.replaced||[]).indexOf(eid)>=0}))return null;
   var open=DB.rr.find(function(r){return r.company===e.company&&r.kind==="대체"&&rrState(r)!=="완료"&&r.auto});var w=wk(e.worker),t=curTerm(eid);
-  if(open){open.replaced=(open.replaced||[]).concat([eid]);var j=(open.jobs||[]).find(function(x){return x.job===(e.job||"")});if(j)j.n=(+j.n||1)+1;else open.jobs=(open.jobs||[]).concat([{job:e.job||"(직무 미입력)",n:1}]);logChange("recruit_requests",open.id,comp(e.company).name,"대체 대상 추가","",w.name,"브이드림 내부");return open}
+  if(open){open.replaced=(open.replaced||[]).concat([eid]);/* v226 인원 +1 하지 않음: 대상마다 '○○ 자리' 줄을 만듦 (rrFromExp 뒤처리 rrSyncRepl) · 예전엔 같은 직무 첫 줄(다른 사람 자리)이 2명이 됐음 */open.jobs=open.jobs||[];logChange("recruit_requests",open.id,comp(e.company).name,"대체 대상 추가","",w.name,"브이드림 내부");return open}
   var F=rrNewF(e.company);F.kind="대체";F.replaced=[eid];F.jobs=[{job:e.job||(F.jobs[0]||{}).job||"(직무 미입력)",n:1}];F.start_date=t&&t.end?addD(t.end,1):"";F.due_date=t&&t.end?addD(t.end,-14):addD(TODAY,7);if(F.due_date<TODAY)F.due_date=addD(TODAY,7);F.extra=w.name+" 계약만료 종료에 따른 대체";
   var r=Object.assign({id:nid(),created:stamp(),auto:true},F);delete r.src;r.headcount=rrHead(r);DB.rr.push(r);logChange("recruit_requests",r.id,comp(e.company).name,"채용 요청 등록 (계약만료 대체)","",w.name+" 대체","브이드림 내부");return r}
 var _saveCorp25=saveCorp;saveCorp=function(eid){var r=_saveCorp25.apply(this,arguments),x=xOf(eid);if(x&&x.corp==="종료"&&x.repl==="예"){var q=rrFromExp(eid);if(q)toast("대체 채용 요청을 만들었어요 · 채용 관리 › 채용 요청")}return r};
@@ -8772,7 +8772,7 @@ function rrCnt(r){var C=rrCands(r.id);return{a:C.length,ok:C.filter(function(c){
 function rrPay(r){if(r.pay_type==="최저시급"||(!r.pay_type&&!r.pay_amount))return r.pay_type==="최저시급"?"최저시급":"-";return(r.pay_type==="시급"?"시급 ":"")+won(r.pay_amount)+"원"}
 function rrHrs(r){var a=[];if(r.wk_days)a.push("주"+r.wk_days);if(r.day_hours)a.push("일"+(+r.day_hours));if(r.time_note&&r.time_note!=="무관")a.push(r.time_note);return a.join(" · ")||"-"}
 function rrDisT(r){var q=r.dis_require||[],x=r.dis_exclude||[];return q.length?esc(q.map(function(v){return v.replace(/장애$/,"")}).join("·")):x.length?'<span class="muted">제외 '+esc(x.map(function(v){return v.replace(/장애$/,"")}).join("·"))+'</span>':"-"}
-function rrJobsH(r){return(r.jobs||[]).map(function(j){return esc(j.job||"")+(j.detail?'<span class="small muted">('+esc(j.detail)+')</span>':"")+(+j.n>1?" "+j.n+"명":"")}).join("<br>")||"-"}
+function rrJobsH(r){return(r.jobs||[]).map(function(j){var e=j.repl&&emp(j.repl),w=e&&wk(e.worker);return esc(j.job||"")+(j.detail?'<span class="small muted">('+esc(j.detail)+')</span>':"")+(j.repl?' <span class="small muted">· '+esc(w?w.name:"대체")+' 자리</span>':(+j.n>1?" "+j.n+"명":""))}).join("<br>")||"-"}
 function yymd(d){return d?String(d).slice(2,10).replace(/-/g,"."):""}
 vRreq=function(){var tab=S.rrTab;if(["요청","이력서 전달","마감 초과","면접","채용 예정","보류","전체","완료"].indexOf(tab)<0)tab=S.rrTab="요청";
   var base=DB.rr.filter(function(r){return qcOK(r.company)&&rrScope(r)&&(!S.rrKind||r.kind===S.rrKind)}),cnt={};base.forEach(function(r){var s=rrStage(r);cnt[s]=(cnt[s]||0)+1});
@@ -18898,8 +18898,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v225 — 계약만료 체크 해제 케이스 정리 · 이른 시작 확인 · 기간 밖 진행 중 칩 · v224 — 계약 정보 창 근로계약서 올리기 · 한 번에 입력 연락처 · 생년월일 · 이메일 선택 · v223 — 고객사 요청 요청별을 다른 보기와 같이 · v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v225";APP_VER_ON="11/01";APP_NOTE="계약만료 체크 해제 정리 · 이른 시작 확인 · 계약 정보 창 근로계약서 · 한 번에 입력 선택 칸 · 요청별을 다른 보기와 같이 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v226 — 대체 채용 요청 인원(자리 줄 1명) · 버전 안내는 그 버전 내용만 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v226";APP_VER_ON="11/02";APP_NOTE="대체 채용 요청 인원이 실제보다 많게 보이던 것 · 대체 자리 줄에 누구 자리인지 표시";
 
 /* ================================================================
    v208
@@ -20021,6 +20021,18 @@ regAfter("v225 기간 밖 진행 중",function(){if(S.view!=="exp"||expPer().mod
   [].forEach.call(document.querySelectorAll('#main .box[data-tk="exp"] tbody tr[data-act]'),function(tr){if(tr.querySelector(".xout"))return;var eid=tr.dataset.e||String(tr.dataset.id||"").replace(/^exp:/,"");if(!eid)return;var e=emp(eid),x=xOf(eid);if(!e||!x||!xStarted(x))return;
     var ts=termsOf(eid),t=x.newSeq&&ts.length>1?ts[ts.length-2]:ts[ts.length-1];if(!t||!t.end||expInPer(t.end)||t.end<TODAY)return;var td=tr.children[1]||tr.children[0];if(!td)return;
     td.insertAdjacentHTML("beforeend",' <span class="b sm xout" title="만료('+esc(t.end)+')가 조회 기간 밖이지만 이미 시작한 케이스라 보여요'+(x.created?" · 시작 "+esc(x.created):"")+'">기간 밖 · 진행 중</span>')})});
+
+/* ================================================================
+   v226 대체 채용 요청 인원
+     ① 계약만료 '대체 채용 예'로 열린 요청에 대상을 더할 때 인원 +1 하지 않고 '○○ 자리' 줄 (features/recruit/0073-…-07.js)
+        (예전: 같은 직무 첫 줄 = 다른 사람 자리가 2명이 돼서 4명인데 채용수 7명으로 보였음)
+     ② 이미 틀어진 요청 정리: 대체 '자리' 줄은 항상 1명 · 채용수 다시 계산 · 변경 이력 (그리기 직전 · 저장되면 DB 도 정리)
+     ③ 보기: 자리 줄은 '뉴스스크랩 · 황인준 자리' (features/recruit/0088-…-00.js rrJobsH)
+     ④ 버전 안내 문구는 이번 버전 내용만 (core/9050-version.js)
+   ================================================================ */
+regBefore("v226 대체 자리 1명",function(){(DB.rr||[]).forEach(function(r){if(!r||!Array.isArray(r.jobs)||!r.jobs.some(function(j){return j&&j.repl&&+j.n!==1}))return;
+  var b=rrHead(r);r.jobs=r.jobs.map(function(j){return j&&j.repl&&+j.n!==1?Object.assign({},j,{n:1}):j});r.headcount=rrHead(r);
+  if(b!==r.headcount)logChange("recruit_requests",r.id,(comp(r.company)||{}).name||r.company_label||"","채용수",String(b),r.headcount+" (대체 자리 정리)","자동")})});
 
 /* ============ 렌더 ============ */
 function renderMain(){
