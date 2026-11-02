@@ -1497,6 +1497,9 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 
 /* v225 기간 밖 · 진행 중 */
 .xout{background:#EEF2FF;color:#3B4BA8;margin-left:4px;white-space:nowrap}
+
+/* v227 입사 가능 · 희망 기간 줄이 가운데로 몰리던 것 (.f 의 세로 배치를 가로로) */
+.f.avbox{flex-direction:row;justify-content:flex-start}
 </style>
 </head>
 <body>
@@ -7501,7 +7504,7 @@ function ovHtml(v){var h="";
   if(S.wreqSel&&v!=="wreq")h+=ovDeco(pWreq(),"wreq");
   if(S.reqSel&&v!=="req"){var s=String(S.reqSel);if(s.indexOf("R:")===0){var r=reqOf(s.slice(2));if(r)h+=ovDeco(creqPanel(r),"req")}else{var c=reqwOf(s);if(c)h+=ovDeco(reqPanel(c),"req")}}
   if(S.rrSel&&v!=="rreq")h+=ovDeco(pRr(),"rreq");
-  if(S.pfSel&&v!=="pf")h+=ovDeco(pPf(),"pf");
+  if(S.pfSel&&v!=="pf"&&v!=="talent")h+=ovDeco(pPf(),"pf");/* v227 인재 풀 메뉴는 자기 창이 있어 위에 띄우는 창을 또 그리지 않음 */
   if(S.tdOv&&v!=="todo"){var td=buildTodos().find(function(x){return x.key===S.tdOv});if(td)h+=pTodo(td);else S.tdOv=null}
   if(!h)S.ovTd=null;return h}
 /* 내 할 일 요약 창에도 같은 근로자 케이스 이동 */
@@ -18898,8 +18901,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v226 — 대체 채용 요청 인원(자리 줄 1명) · 버전 안내는 그 버전 내용만 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v226";APP_VER_ON="11/02";APP_NOTE="대체 채용 요청 인원이 실제보다 많게 보이던 것 · 대체 자리 줄에 누구 자리인지 표시";
+/* v227 — 작성 중 입력 지키기(모든 창) · 인재 풀 창 두 겹 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v227";APP_VER_ON="11/02";APP_NOTE="작성 중이던 입력이 화면이 바뀔 때 사라지던 것 · 인재 풀 등록 창 아래쪽 깨짐";
 
 /* ================================================================
    v208
@@ -20033,6 +20036,32 @@ regAfter("v225 기간 밖 진행 중",function(){if(S.view!=="exp"||expPer().mod
 regBefore("v226 대체 자리 1명",function(){(DB.rr||[]).forEach(function(r){if(!r||!Array.isArray(r.jobs)||!r.jobs.some(function(j){return j&&j.repl&&+j.n!==1}))return;
   var b=rrHead(r);r.jobs=r.jobs.map(function(j){return j&&j.repl&&+j.n!==1?Object.assign({},j,{n:1}):j});r.headcount=rrHead(r);
   if(b!==r.headcount)logChange("recruit_requests",r.id,(comp(r.company)||{}).name||r.company_label||"","채용수",String(b),r.headcount+" (대체 자리 정리)","자동")})});
+
+/* ================================================================
+   v227
+     ① 작성 중 입력 지키기 (모든 창 공통): 화면을 다시 그려도(실시간 반영 · 파일 업로드 끝 · 체크 · 버튼) 저장 안 한 입력이 남음
+        · 창(#main aside.pnl)에서 바꾼 칸을 기억 → 다시 그린 뒤 같은 칸에 다시 채움
+        · 같은 건 · 같은 모드일 때만 (다른 사람 · 다른 건 · 저장 · 닫기 · 수정 끝 → 기억 지움)
+        · 앱이 그 칸 값을 직접 바꾼 경우(근로자 DB 에서 가져오기 등)는 앱 값을 따름
+        · 칸에 data-nodraft 를 붙이면 제외
+     ② 인재 풀 메뉴에서 포트폴리오 창이 두 겹으로 그려지던 것 (panels/todo/0075-…-02.js ovHtml)
+        · 위에 덮인 복사본 때문에 아래쪽 깨짐 · '닫기' 가려짐 · 성별 등 버튼형이 안 보였음
+   ================================================================ */
+var DRAFT={sig:"",v:{}};
+function draftSig(){try{return JSON.stringify([S.view,S.pfSel,S.wm,S.cm,S.om,S.rrSel,S.rrSec||"",S.rrEdit||"",S.reqSel,S.reqGSel,S.wreqSel,S.leaSel,S.leaPop?1:0,S.onbSel,S.sel,S.peEdit||"",S.compSel,S.talSel,S.uniPair?1:0,S.acctSel,S.tdOv])}catch(e){return String(Math.random())}}
+function draftKey(el){var ks=Object.keys(el.dataset||{}).filter(function(k){return!/^(tidy|al0|ph0|touched)$/.test(k)}).sort(),k=ks.map(function(x){return x+"="+el.dataset[x]}).join("&");
+  if(!k)k=el.id?"#"+el.id:el.name?"n="+el.name:"";if(!k)return"";if(el.type==="checkbox"||el.type==="radio")k+="|"+el.value;return k}
+function draftEl(el){return el&&el.closest&&el.closest("#main aside.pnl")&&/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)&&!/^(file|search|button|submit|hidden)$/.test(el.type||"")&&!el.closest("[data-nodraft]")&&!el.hasAttribute("data-nodraft")}
+function draftBase(el){if(el.type==="checkbox"||el.type==="radio")return el.defaultChecked?"1":"0";if(el.tagName==="SELECT"){var o=[].find.call(el.options,function(x){return x.defaultSelected});return o?o.value:(el.options[0]?el.options[0].value:"")}return el.defaultValue}
+function draftNote(ev){var el=ev.target;if(!draftEl(el))return;var k=draftKey(el);if(!k)return;var sg=draftSig();if(DRAFT.sig!==sg){DRAFT.sig=sg;DRAFT.v={}}
+  var o=DRAFT.v[k];DRAFT.v[k]={v:el.value,c:!!el.checked,base:o?o.base:draftBase(el)}}
+document.addEventListener("input",draftNote,true);document.addEventListener("change",draftNote,true);
+regBefore("v227 입력 지키기 (건이 바뀌면 지움)",function(){var sg=draftSig();if(sg!==DRAFT.sig){DRAFT.sig=sg;DRAFT.v={}}});
+regAfter("v227 입력 지키기 (다시 채움)",function(){var K=Object.keys(DRAFT.v);if(!K.length)return;var a=document.activeElement,seen={};
+  [].forEach.call(document.querySelectorAll("#main aside.pnl input,#main aside.pnl textarea,#main aside.pnl select"),function(el){if(!draftEl(el))return;var k=draftKey(el),d=k&&DRAFT.v[k];if(!d||el===a)return;
+    /* 앱이 이 칸 값을 바꿨으면(그린 값이 처음과 다름) 앱 값을 따르고 기억 지움 */
+    if(draftBase(el)!==d.base){delete DRAFT.v[k];return}
+    if(el.type==="checkbox"||el.type==="radio"){if(el.checked!==d.c)el.checked=d.c}else if(el.value!==d.v)el.value=d.v;seen[k]=1})});
 
 /* ============ 렌더 ============ */
 function renderMain(){
