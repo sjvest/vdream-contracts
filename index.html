@@ -1494,6 +1494,9 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .vgbar .vgtg{border:1px solid #D9D6E6;background:var(--surface);border-radius:6px;padding:3px 10px;font-size:12.5px;min-height:28px;cursor:pointer}
 .vgbar .vgtg.on{background:var(--p);color:#fff;border-color:var(--p)}
 .vgbar .seg button.vgdis{opacity:.35;cursor:not-allowed}
+
+/* v225 기간 밖 · 진행 중 */
+.xout{background:#EEF2FF;color:#3B4BA8;margin-left:4px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -18895,8 +18898,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v224 — 계약 정보 창 근로계약서 올리기 · 한 번에 입력 연락처 · 생년월일 · 이메일 선택 · v223 — 고객사 요청 요청별을 다른 보기와 같이 · v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
-APP_VER="v224";APP_VER_ON="11/01";APP_NOTE="계약 정보 창 근로계약서 · 한 번에 입력 선택 칸 · 요청별을 다른 보기와 같이 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
+/* v225 — 계약만료 체크 해제 케이스 정리 · 이른 시작 확인 · 기간 밖 진행 중 칩 · v224 — 계약 정보 창 근로계약서 올리기 · 한 번에 입력 연락처 · 생년월일 · 이메일 선택 · v223 — 고객사 요청 요청별을 다른 보기와 같이 · v222 — 고객사 요청 보기 막대 요청별 따로(C안) · 덧씌우기 7곳 등록 방식으로 · v221 — 수정 버튼 정리(바로 반영 · 전체 수정) · 신규입사자 근로시간 · 인재 풀 만 나이 값 · v220 — 창 안 구역 흰 카드 · 기관 추천 인재 입구서 오류 · 시간 다름 · 협의됨 · 고객사 요청 보기 막대 요청별 · v219 — 파일 바로 올리기(Apps Script 웹 앱) · 임시 파일 정리 · 출처 칸 없앰 · 추천 상자 접기 · 근로시간 하나로 · v218 — 공통 보기 막대(목록 · 근로자별 · 기업별 · 업무별 · 일자별) · v217 — 업무 보고 합치기 · 쪽지 안내 오류 · 희망 근무시간 · 합격자 근로계약서 · 발굴 상자 접기 · 인재 풀 만 나이 · v216 — 조율 요청 채용 조건 · 채용 조건 · 기타는 지원자 선택 · DB 규칙 점검 · v215 — 클릭 후 창 뜨는 속도 (뒤처리 캐시 · 표 고정열 너비 한 번만) · v214 — 입구서 완료 링크 통일 · 기업 입구서 폴더 · 내 할 일 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정 · 상태 */
+APP_VER="v225";APP_VER_ON="11/01";APP_NOTE="계약만료 체크 해제 정리 · 이른 시작 확인 · 계약 정보 창 근로계약서 · 한 번에 입력 선택 칸 · 요청별을 다른 보기와 같이 · 수정 버튼 정리 · 신규입사자 근로시간 · 창 안 구역 흰 카드 · 시간 다름 · 협의됨 · 요청별 보기 · 파일 바로 올리기 · 근로시간 하나로 · 추천 상자 접기 · 공통 보기 막대 · 희망 근무시간 · 합격자 근로계약서 · 업무 보고 합치기 · 발굴 상자 접기 · 만 나이 · 조율 요청 채용 조건 · 지원자 선택 · DB 규칙 점검 · 클릭 후 창 뜨는 속도 개선 · 입구서 링크 · 기업 폴더 · 합격자 입구서 · 파일 다시 올리기 · 알림 업무별 · 인재 풀 수정";
 
 /* ================================================================
    v208
@@ -20006,6 +20009,19 @@ regAfter("v224 계약 정보 창 근로계약서",function(){var F=S.ciF,md=docu
   var start=function(){var m=document.getElementById("modal");if(!m||typeof MutationObserver==="undefined")return;new MutationObserver(function(){if(S.ciF&&!document.querySelector("#modal .ci-ctr")&&document.querySelector("#modal #ci-cs"))run()}).observe(m,{childList:true})};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start()})();
 
+/* ================================================================
+   v225 계약만료: 체크했다 해제한 케이스가 '진행 중'으로 남던 것
+     ① 체크를 다 해제하면 '시작됨'도 지움 (core/0249 xStep)
+     ② 이미 남아 있는 건 정리: 단계 · 고객사 결정 · 근로자 의사 · 최종 결정이 모두 비었으면 시작 안 한 것으로 (그리기 직전 · 저장되면 DB 도 정리)
+     ③ 만료가 60일보다 많이 남았는데 처음 시작하면 한 번 확인 (core/0249 xStep · 일괄 체크는 묻지 않음)
+     ④ 기간 밖인데 진행 중인 줄에 '기간 밖 · 진행 중' 칩 (시작일 · 만료까지 일수)
+   ================================================================ */
+regBefore("v225 시작 안 한 케이스 정리",function(){(DB.expiry||[]).forEach(function(x){if(x&&x.created&&!xStarted(x))x.created=""})});
+regAfter("v225 기간 밖 진행 중",function(){if(S.view!=="exp"||expPer().mode==="mon")return;
+  [].forEach.call(document.querySelectorAll('#main .box[data-tk="exp"] tbody tr[data-act]'),function(tr){if(tr.querySelector(".xout"))return;var eid=tr.dataset.e||String(tr.dataset.id||"").replace(/^exp:/,"");if(!eid)return;var e=emp(eid),x=xOf(eid);if(!e||!x||!xStarted(x))return;
+    var ts=termsOf(eid),t=x.newSeq&&ts.length>1?ts[ts.length-2]:ts[ts.length-1];if(!t||!t.end||expInPer(t.end)||t.end<TODAY)return;var td=tr.children[1]||tr.children[0];if(!td)return;
+    td.insertAdjacentHTML("beforeend",' <span class="b sm xout" title="만료('+esc(t.end)+')가 조회 기간 밖이지만 이미 시작한 케이스라 보여요'+(x.created?" · 시작 "+esc(x.created):"")+'">기간 밖 · 진행 중</span>')})});
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -20039,10 +20055,18 @@ function afterAction(key,msg){
   if(key&&!still&&S.view==="todo"&&S.sel===key){S.sel=null;toast((msg?msg+" · ":"")+"완료 조건을 채워 목록에서 빠졌습니다")}else if(msg)toast(msg);
   render();
 }
+/* v225 시작한 케이스 = 단계가 하나라도 됐거나 고객사 결정 · 근로자 의사 · 최종 결정이 있음 ('시작됨' 날짜만 있는 건 시작 안 한 것) */
+function xStarted(x){return!!(x&&(Object.keys(x.steps||{}).some(function(k){return x.steps[k]})||x.corp||x.wish||x.decision))}
+var XEARLY={},XEARLY_D=60;
 function xStep(eid,k,force){
-  var x=ensureX(eid);if(!x.created)x.created=TODAY;
+  var x=ensureX(eid);
   var on=force!=null?force:!x.steps[k];
+  /* v225 만료가 60일보다 많이 남았는데 처음 시작하면 한 번 확인 */
+  if(on&&!xStarted(x)&&!XEARLY[eid]){var t=curTerm(eid),n=t&&t.end?dd(TODAY,t.end):0;if(n>XEARLY_D){askConfirm("계약만료 케이스 시작","만료까지 "+n+"일 남았어요 ("+t.end+") · 지금 시작할까요? 시작하면 기간 밖이어도 계약만료 목록에 계속 보여요","시작",function(){XEARLY[eid]=1;$("#modal").innerHTML="";xStep(eid,k,true);if(typeof afterAction==="function")afterAction("case:"+eid);render()});return false}}
+  if(!x.created)x.created=TODAY;
   if(on)x.steps[k]=TODAY;else delete x.steps[k];
+  /* v225 체크를 다 해제하면 '시작됨'도 지움 (예전: 남아서 0/6 진행 중으로 목록에 계속 보였음) */
+  if(!on&&!xStarted(x))x.created="";
   autoIng("case:"+eid);
 }
 function saveCorp(eid){
