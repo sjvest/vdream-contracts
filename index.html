@@ -1500,6 +1500,10 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 
 /* v227 입사 가능 · 희망 기간 줄이 가운데로 몰리던 것 (.f 의 세로 배치를 가로로) */
 .f.avbox{flex-direction:row;justify-content:flex-start}
+
+/* v228 알림 카드 케이스 이름 */
+.ncard .nccs{margin-left:6px;font-weight:600;color:var(--ink-2,#4A4560);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.ncard .nccs::before{content:"· ";color:var(--ink-3,#9a98a8);font-weight:400}
 </style>
 </head>
 <body>
@@ -12158,7 +12162,7 @@ var _loadAll130=loadAll;loadAll=function(){var a=arguments,self=this;if(!LIVE)re
 function syncNow(force,quiet){if(!SYNC.ok||!LIVE||typeof sb==="undefined"||!sb)return Promise.resolve(false);if(SYNC.run)return Promise.resolve(false);if(!force&&Date.now()-SYNC.last<60000)return Promise.resolve(false);
   if(Date.now()-(SYNC.full||0)>=SYNC_DAY&&READY&&!persisting&&!pending){SYNC.run=true;return _maybeReloadFull().then(function(){SYNC.run=false;return true},function(){SYNC.run=false;return false})}
   SYNC.run=true;var t0=Date.now(),since=SYNC.since||new Date(t0-10*60e3).toISOString(),big=false,n=0;
-  var L=syncTables().map(function(t){return sb.from(t).select("*").gt("updated_at",since).limit(1000).then(function(r){if(r.error)return{t:t,rows:[]};if((r.data||[]).length>=1000)big=true;return{t:t,rows:r.data||[]}},function(){return{t:t,rows:[]}})});
+  var L=syncTables().map(function(t){if(SYNC_NOUPD[t])return syncFull(t);return sb.from(t).select("*").gt("updated_at",since).limit(1000).then(function(r){if(r.error){SYNC_NOUPD[t]=String(r.error.message||r.error.code||"오류");return syncFull(t)}/* v228 바뀐 줄 받기 실패 → 그 표 전체 */if((r.data||[]).length>=1000)big=true;return{t:t,rows:r.data||[]}},function(){return{t:t,rows:[]}})});
   L.push(sb.from("vw_deletes").select("tbl,row_id,at").gt("at",since).limit(5000).then(function(r){return{del:r.error?[]:r.data||[]}},function(){return{del:[]}}));
   return Promise.all(L).then(function(R){if(big){SYNC.run=false;return _maybeReloadFull().then(function(){return true})}
     var wait=function(){return persisting||pending?new Promise(function(ok){setTimeout(ok,400)}).then(wait):Promise.resolve()};
@@ -12629,9 +12633,10 @@ syncNow=function(force,quiet){if(SYNC.rpc===false)return _syncNow136.apply(this,
   return Promise.resolve(sb.rpc("vw_changed_since",{p_since:since})).then(function(r){
     if(!r||r.error){var m=String(r&&r.error&&(r.error.message||r.error.code)||"");if(/vw_changed_since|PGRST202|does not exist|not find|404/i.test(m))SYNC.rpc=false;return back()}
     SYNC.rpc=true;var d=r.data||{},T=d.tables||[],mine=syncTables().filter(function(t){return T.indexOf(t)>=0}),dels=d.deletes||[];
-    if(!mine.length&&!dels.length){SYNC.since=new Date(t0-2*60e3).toISOString();SYNC.last=Date.now();SYNC.run=false;SYNC.pend=false;return false}
+    if(!mine.length&&!dels.length&&!Object.keys(SYNC_NOUPD).length){SYNC.since=new Date(t0-2*60e3).toISOString();SYNC.last=Date.now();SYNC.run=false;SYNC.pend=false;return false}
     var big=false,n=0;
-    var L=mine.map(function(t){return Promise.resolve(sb.from(t).select("*").gt("updated_at",since).limit(1000)).then(function(x){if(x.error)return{t:t,rows:[]};if((x.data||[]).length>=1000)big=true;return{t:t,rows:x.data||[]}},function(){return{t:t,rows:[]}})});
+    Object.keys(SYNC_NOUPD).forEach(function(t){if(mine.indexOf(t)<0&&syncTables().indexOf(t)>=0)mine.push(t)});/* v228 수정 시각이 없는 표는 매번 전체 */
+    var L=mine.map(function(t){if(SYNC_NOUPD[t])return syncFull(t);return Promise.resolve(sb.from(t).select("*").gt("updated_at",since).limit(1000)).then(function(x){if(x.error){SYNC_NOUPD[t]=String(x.error.message||x.error.code||"오류");return syncFull(t)}if((x.data||[]).length>=1000)big=true;return{t:t,rows:x.data||[]}},function(){return{t:t,rows:[]}})});
     return Promise.all(L).then(function(R){R.push({del:dels});if(big){SYNC.run=false;return _maybeReloadFull().then(function(){return true})}
       var wait=function(){return persisting||pending?new Promise(function(ok){setTimeout(ok,400)}).then(wait):Promise.resolve()};
       return wait().then(function(){R.forEach(function(x){if(x.del){x.del.forEach(function(dd0){var tb=TB.find(function(z){return z.t===dd0.tbl}),pk=dd0.tbl==="todos"?"todo_key":tb?colName(tb.cols[0]):"id",o={};o[pk]=dd0.row_id;try{if(rtApply({table:dd0.tbl,eventType:"DELETE",new:{},old:o}))n++}catch(e){}});return}
@@ -18901,8 +18906,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v227 — 작성 중 입력 지키기(모든 창) · 인재 풀 창 두 겹 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v227";APP_VER_ON="11/02";APP_NOTE="작성 중이던 입력이 화면이 바뀔 때 사라지던 것 · 인재 풀 등록 창 아래쪽 깨짐";
+/* v228 — 알림 카드 기업 · 케이스 이름 · 바뀐 줄 받기 실패 시 전체 · DB 점검 추가 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v228";APP_VER_ON="11/02";APP_NOTE="알림 카드에 기업 · 케이스 이름 · 다른 사람 화면에 새 내용이 안 가던 것 방지 · DB 규칙 점검 보강";
 
 /* ================================================================
    v208
@@ -19237,17 +19242,22 @@ function nGroup(E){var g={},o=[];E.forEach(function(e){var k=e.gk||e.id;if(!g[k]
   return o.map(function(k){var L=g[k],e=L[0],n=L.length,G={gk:k,id:k+"@"+e.t+"#"+n,type:e.type,t:e.t,n:n,items:L,co:e.co||"",go:e.go,shared:!!e.shared,wk:nUq(L.map(function(x){return x.wk})).join(", ")},by=nUq(L.map(function(x){return x.by})).join(", ");
     switch(e.type){
       case"talk":G.main="조율 요청 · "+e.kind+(n>1?" · 새 기록 "+n+"건":"");G.sub=(e.pt?e.pt.replace("파트","")+" ":"")+e.by+" · “"+String(e.body||"").slice(0,60)+"” · 답 차례: 나";break;
-      case"orec":G.main="발굴 추천 도착 · "+(nWho(L,"wk")||n+"명");G.sub=(by?"추천 "+by:"")+(e.body&&/·/.test(e.body)?" · "+String(e.body).split(" · ").slice(1).join(" · "):"");break;
-      case"assign":G.main=e.f+" 배정 · "+e.lab;G.sub=e.body;break;
-      case"mycase":G.main=n>1?"변경 · 기록 "+n+"건":(e.lab+" · "+e.f);G.sub=nUq(L.map(function(x){return x.f})).slice(0,3).join(", ")+(by?" · "+by:"");break;
+      case"orec":G.main="발굴 추천 도착 · "+n+"명";G.sub=(by?"추천 "+by:"")+(e.body&&/·/.test(e.body)?" · "+String(e.body).split(" · ").slice(1).join(" · "):"");break;
+      case"assign":G.main=e.f+" 배정";G.sub=e.body;break;
+      case"mycase":G.main=n>1?"변경 · 기록 "+n+"건":e.f;G.sub=nUq(L.map(function(x){return x.f})).slice(0,3).join(", ")+(by?" · "+by:"");break;
       case"rrnew":G.main="새 채용 요청";G.sub=e.body;break;
       case"ho":G.main="이력서 전달 받음"+(e.seq?" · "+e.seq+"차":"")+(e.n?" "+e.n+"명":"");G.sub=e.by?"전달 "+e.by:"";break;
       case"hired":G.main="입사 절차 완료 · 채용 완료 확인 필요";G.sub="합격자 "+e.n+"명 신규입사자 등록";break;
-      case"intake":G.main="입구서 "+e.sub2+" · "+nWho(L,"wk");G.sub=nUq(L.map(function(x){return x.ch})).join(", ")||"운영 담당";break;
-      case"reqshare":G.main="고객사 공유 기록 · "+(e.wk||"")+(n>1?" · "+n+"건":"");G.sub=String(e.body||"").slice(0,80);break;
+      case"intake":G.main="입구서 "+e.sub2+(n>1?" "+n+"명":"");G.sub=nUq(L.map(function(x){return x.ch})).join(", ")||"운영 담당";break;
+      case"reqshare":G.main="고객사 공유 기록"+(n>1?" · "+n+"건":"");G.sub=String(e.body||"").slice(0,80);break;
       case"leads":G.main="영업 사전 공유";G.sub=e.body;break;
       default:G.main=e.title;G.sub=e.body}
-    return G})}
+    G.cs=nCase228(G,L,e);return G})}
+/* v228 알림 카드 1줄: 기업 · 케이스 이름 (사람 이름 두 명까지 · 없으면 채용 요청 이름 · 조율 '요청 전체') */
+function nCase228(G,L,e){var W=[];L.forEach(function(x){String(x.wk||"").split(/\s*,\s*/).forEach(function(n){n=n.trim();if(n&&W.indexOf(n)<0)W.push(n)})});
+  if(e.type==="leads")return"";if(W.length)return W.slice(0,2).join(", ")+(W.length>2?" 외 "+(W.length-2)+"명":"");
+  var rid=G.go&&(G.go.k==="rr"?G.go.id:G.go.k==="talk"?G.go.rr:"");if(rid){var r=rcOf(rid);if(r){var lab=[r.kind||"",typeof rrJobsTxt==="function"?rrJobsTxt(r):""].filter(function(x){return x&&x!=="—"}).join(" · ");return lab+(e.type==="talk"?" · 요청 전체":"")}}
+  return(e.type==="mycase"||e.type==="assign")&&e.lab&&e.lab!==G.co?e.lab:""}
 function nAck(G){if(!G.shared)return null;return(DB.nacks||[]).find(function(a){return a.id===G.id})||null}
 function nIsRead(G){var N=nGet();return!!N.read[G.id]||!!nAck(G)}
 /* ---------- 팝업 · 카드 (B안) ---------- */
@@ -19259,7 +19269,7 @@ function nCard(G,pop){var N=nGet(),c=NCOL[G.type]||NCOL.mycase,rd=!pop&&nIsRead(
     (ak?'<span class="ncak">✓ '+esc(ak.by||"")+' 파트 전체 읽음 · '+esc(nts(ak.at).slice(5).replace("-","/"))+'</span>':
      lk("noti-go","열기"," pri")+lk("noti-snzm",sz>Date.now()?"⏰ "+esc(nSnzLab(sz)):"다시 알림 ▾")+(N.arch[G.id]?lk("noti-unarch","보관 풀기"):lk("noti-arch","보관"))+(rd?"":lk("noti-read","읽음"))+(G.shared&&!rd?lk("noti-pall","파트 전체 읽음"):""));
   return'<div class="ncard'+(rd?" rd":"")+(pop?" pop":"")+'" style="--c:'+c[0]+';--bg:'+c[1]+'" data-act="noti-go" data-id="'+esc(G.id)+'">'+
-    '<div class="nc1">'+nTagH(G)+'<b class="ncco">'+esc(G.co||"")+'</b>'+(G.n>1?'<button type="button" class="nccnt" data-act="noti-exp" data-id="'+esc(G.gk)+'">'+G.n+'건 '+(op?"▴":"▾")+'</button>':"")+(G.shared?'<span class="ncsh">파트 공동</span>':"")+(G.again?'<span class="ncsh">다시 알림</span>':"")+'<span class="grow"></span><span class="nctm">'+esc(nAgo(G.t))+'</span></div>'+
+    '<div class="nc1">'+nTagH(G)+'<b class="ncco">'+esc(G.co||"")+'</b>'+(G.cs?'<span class="nccs">'+esc(G.cs)+'</span>':"")+(G.n>1?'<button type="button" class="nccnt" data-act="noti-exp" data-id="'+esc(G.gk)+'">'+G.n+'건 '+(op?"▴":"▾")+'</button>':"")+(G.shared?'<span class="ncsh">파트 공동</span>':"")+(G.again?'<span class="ncsh">다시 알림</span>':"")+'<span class="grow"></span><span class="nctm">'+esc(nAgo(G.t))+'</span></div>'+
     '<div class="nc2">'+esc(G.main||"")+'</div>'+
     '<div class="nc3"><span class="ncsub">'+esc(G.sub||"")+'</span><span class="ncacts" data-act="noop">'+acts+'</span></div>'+
     (op?'<div class="ncitems" data-act="noop">'+G.items.slice(0,20).map(function(e){return'<div><span class="nctm">'+esc(nts(e.t).slice(5).replace("-","/"))+'</span> '+esc([e.wk,e.by,String(e.body||e.title||"").slice(0,60)].filter(Boolean).join(" · "))+'</div>'}).join("")+'</div>':"")+
@@ -20062,6 +20072,27 @@ regAfter("v227 입력 지키기 (다시 채움)",function(){var K=Object.keys(DR
     /* 앱이 이 칸 값을 바꿨으면(그린 값이 처음과 다름) 앱 값을 따르고 기억 지움 */
     if(draftBase(el)!==d.base){delete DRAFT.v[k];return}
     if(el.type==="checkbox"||el.type==="radio"){if(el.checked!==d.c)el.checked=d.c}else if(el.value!==d.v)el.value=d.v;seen[k]=1})});
+
+/* ================================================================
+   v228
+     ① 알림 카드 1줄 = 기업 · 케이스 이름 (모든 알림 같은 규칙 · core/9100-v212-noti.js nCase228)
+        사람 이름 두 명까지(외 n명) · 사람이 없으면 채용 요청 이름(대체 · 음악) · 조율 '요청 전체'
+     ② 바뀐 줄 받기(updated_at)가 실패한 표는 그 표 전체를 다시 받기 · 다음부터 그 표는 매번 전체
+        (core/0146 · core/0157 · 예전: 조용히 빈 결과 → 브라우저 사본이 있는 사람은 새 줄을 못 받았음 · 11/02 조율 요청)
+        · 접속 뒤 한 번 표마다 수정 시각 칸 확인 (가벼운 1줄 조회)
+     ③ DB 규칙 점검: 조율 요청 출처 · 차례 · 상태 칸 + '수정 시각 칸이 없는 표' 목록
+   ================================================================ */
+var SYNC_NOUPD={},SYNC_PROBE={done:false,run:false};
+function syncFull(t){return fetchAll(t).then(function(rows){return{t:t,rows:rows||[]}},function(){return{t:t,rows:[]}})}
+function syncProbe228(){if(SYNC_PROBE.done||SYNC_PROBE.run||!LIVE||typeof sb==="undefined"||!sb||typeof READY==="undefined"||!READY)return Promise.resolve();SYNC_PROBE.run=true;
+  return Promise.all(syncTables().map(function(t){return Promise.resolve(sb.from(t).select("updated_at").limit(1)).then(function(r){if(r&&r.error)SYNC_NOUPD[t]=String(r.error.message||r.error.code||"오류")},function(){})})).then(function(){SYNC_PROBE.done=true;SYNC_PROBE.run=false})}
+regAfter("v228 수정 시각 칸 확인 (한 번)",function(){if(!SYNC_PROBE.done&&!SYNC_PROBE.run)setTimeout(syncProbe228,5000)});
+/* ③ 점검 칸 더하기 */
+RULE_MAP["recruit_talks.origin"]=function(){return["고객사","후보자","내부"]};
+RULE_MAP["recruit_talks.turn"]=function(){return Object.keys(TK_TURN)};
+RULE_MAP["recruit_talks.status"]=function(){return["진행","완료","취소"]};
+regAfter("v228 DB 점검 · 수정 시각 없는 표",function(){var box=document.getElementById("rule-chk");if(!box||box.querySelector(".nupd"))return;var K=Object.keys(SYNC_NOUPD);
+  box.insertAdjacentHTML("beforeend",'<div class="nupd small" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-2)"><b>다른 사람 화면에 늦게 가는 표</b> '+(!LIVE?'<span class="muted">예시 화면에서는 확인하지 않아요</span>':!SYNC_PROBE.done?'<span class="muted">확인 중…</span>':K.length?'<span class="b sm bad">'+K.length+'개</span> <span class="muted">수정 시각(updated_at) 칸이 없어 매번 전체를 받아요 · SQL 로 칸과 자동 규칙을 붙이면 빨라져요:</span> '+esc(K.map(function(t){return(SAVE_TNAME[t]||t)+"("+t+")"}).join(", ")):'<span class="b sm ok">없음</span> <span class="muted">모든 표가 바뀐 줄만 받을 수 있어요</span>')+'</div>')});
 
 /* ============ 렌더 ============ */
 function renderMain(){
