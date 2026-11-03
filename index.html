@@ -1532,6 +1532,10 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .iorp{padding:2px 0 0 64px}
 .ioempty{margin:6px 0}
 @media (max-width:900px){.iosum,.iocols{grid-template-columns:1fr}}
+
+/* v231 업무별 주 기준 */
+.wkbiz231[disabled]{opacity:.45;cursor:not-allowed}
+.wknote231{margin:6px 0 2px;padding:6px 10px;border-radius:8px;background:var(--bg2,#F2F0F7);color:var(--ink-2,#4A4560)}
 </style>
 </head>
 <body>
@@ -4382,8 +4386,8 @@ function vDash(){
   /* 담당자 화면은 항상 내 담당 기업 기준(전체 · 담당자별 비교는 관리자만) */
   var sOK=function(cid){if(admin)return scopeOK(cid);var s0=S.scope,m0=S.mgr;S.scope="mine";S.mgr="";var r=scopeOK(cid);S.scope=s0;S.mgr=m0;return r},mineV=!admin||S.scope==="mine";
   var Es=DB.employments.filter(function(e){return sOK(e.company)});
-  var ins=Es.filter(function(e){var t=termsOf(e.id)[0];return!e.cancelled&&t&&inR(t.start,a,b)});
-  var outs=Es.filter(function(e){return(e.cancelled||e.end_type==="계약만료"||e.end_type==="중도퇴사")&&inR(e.end_date,a,b)});
+  var RI=bizRange231("in",a,b),RO=bizRange231("out",a,b)/* v231 업무별 주 기준 */,ins=Es.filter(function(e){var t=termsOf(e.id)[0];return!e.cancelled&&t&&inR(t.start,RI[0],RI[1])});
+  var outs=Es.filter(function(e){return(e.cancelled||e.end_type==="계약만료"||e.end_type==="중도퇴사")&&inR(e.end_date,RO[0],RO[1])});
   var outType=function(e){return e.cancelled?"입사취소":e.end_type};
   /* v208 결정 전: 재직 중 · 지금 계약 만료일이 기간 안 · 계약만료 결정이 비어 있음 (퇴사 합계에는 안 넣음) */
   var undEnd=function(e){var t=curTerm(e.id);return t&&t.end},und=Es.filter(function(e){if(e.cancelled||e.end_type)return false;var x=xOf(e.id);return inR(undEnd(e),a,b)&&!(x&&x.decision)}),undLate=und.filter(function(e){return undEnd(e)<TODAY}).length;
@@ -18934,8 +18938,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v230 — 재직자 대시보드 입퇴사 현황 탭 · 신규입사자 조회 기준 · 근로자 DB 엑셀 기업 세 칸 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v230";APP_VER_ON="11/03";APP_NOTE="재직자 대시보드에 '입퇴사 현황' 탭 (계약만료 예정 · 퇴사 · 입사 한 달 한 화면) · 신규입사자 조회 기준(등록일 · 브이워크 시작일 · 계약시작일) · 근로자 DB 엑셀 그룹 · 기업명 · 브이워크 기업명";
+/* v231 — 재직자 대시보드 업무별 주 기준(입사 월~일 · 퇴사 일~토) · 한 주씩 넘기기 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v231";APP_VER_ON="11/03";APP_NOTE="재직자 대시보드 [업무별 주 기준]: 한 주를 볼 때 입사 월~일 · 퇴사 일~토로 (관리자 › 설정에서 바꿈) · 기간이 한 주면 ◀ ▶ 한 주씩";
 
 /* ================================================================
    v208
@@ -20191,19 +20195,19 @@ function ioPerLab230(){var R=ioRange230();return ioIsMonth230()?R[0].slice(0,4)+
 function ioSOK230(cid){var admin=S.role==="admin";if(admin)return scopeOK(cid);var s0=S.scope,m0=S.mgr;S.scope="mine";S.mgr="";var r=scopeOK(cid);S.scope=s0;S.mgr=m0;return r}
 var IO_DEC230={"연장":"ok","종료":"bad","계약만료":"bad","무기계약 전환":"t","미정":""};
 function ioData230(){var R=ioRange230(),a=R[0],b=R[1],Es=DB.employments.filter(function(e){return ioSOK230(e.company)});
-  var X=[],O=[],I=[];
+  var X=[],O=[],I=[],RO=bizRange231("out",a,b),RI=bizRange231("in",a,b);
   Es.forEach(function(e){var T=termsOf(e.id);
     /* 만료 예정: 계약 기간 끝이 그달 · 뒤에 계약이 또 있으면 연장된 것 */
     if(!e.cancelled)T.forEach(function(t,j){if(!inR(t.end,a,b))return;var nx=T[j+1],x=xOf(e.id),dec;
       if(nx)dec="연장";else if(e.end_type==="계약만료")dec="종료";else if(e.end_type==="중도퇴사")return;else dec=(x&&x.decision)||"미정";
       var st=!nx&&x&&x.steps?XS.filter(function(s){return x.steps[s[0]]}).length:null;X.push({e:e,t:t,d:t.end,dec:dec,st:st,x:!nx?x:null})});
     /* 퇴사: 대시보드 '퇴사'와 같은 기준 */
-    if((e.cancelled||e.end_type==="계약만료"||e.end_type==="중도퇴사")&&inR(e.end_date,a,b)){
+    if((e.cancelled||e.end_type==="계약만료"||e.end_type==="중도퇴사")&&inR(e.end_date,RO[0],RO[1])/* v231 업무별 주 기준 */){
       var rp=DB.employments.filter(function(r){return r.replaced===e.id&&!r.cancelled}),req=null;
       if(!rp.length)(DB.rr||[]).some(function(r){if(r.status==="완료"||r.status==="취소")return false;return(r.jobs||[]).some(function(j){if(j.repl===e.id){req=r;return true}})});
       O.push({e:e,d:e.end_date,ty:e.cancelled?"입사취소":e.end_type,rp:rp,req:req})}
     /* 입사: 계약시작일 기준 (대시보드 '입사'와 같음) */
-    var t1=T[0];if(!e.cancelled&&t1&&inR(t1.start,a,b))I.push({e:e,d:t1.start,t:t1})});
+    var t1=T[0];if(!e.cancelled&&t1&&inR(t1.start,RI[0],RI[1])/* v231 */)I.push({e:e,d:t1.start,t:t1})});
   var by=function(p,q){return String(p.d).localeCompare(String(q.d))};X.sort(by);O.sort(by);I.sort(by);return{a:a,b:b,X:X,O:O,I:I}}
 function ioCnt230(L,f){var c={};L.forEach(function(o){var k=f(o)||"기타";c[k]=(c[k]||0)+1});return c}
 function ioCntTxt230(c,order){return order.filter(function(k){return c[k]}).map(function(k){return k+" "+c[k]}).concat(Object.keys(c).filter(function(k){return order.indexOf(k)<0}).map(function(k){return k+" "+c[k]})).join(" · ")}
@@ -20213,18 +20217,19 @@ function ioHtml230(){var D=ioData230(),admin=S.role==="admin",mineV=!admin||S.sc
   var h='<div class="fbar">'+(admin?'<div class="seg" role="group" aria-label="보기 범위"><button data-act="scope" data-v="mine" class="'+(S.scope==="mine"?"on":"")+'">내 담당</button><button data-act="scope" data-v="all" class="'+(S.scope==="all"?"on":"")+'">전체</button></div><select data-ch="mgr" aria-label="담당자">'+staffOpts(S.mgr,"담당자 전체")+'</select>':"")+
     '<input type="date" data-ch="dash-from" value="'+D.a+'" aria-label="시작일"><span>~</span><input type="date" data-ch="dash-to" value="'+D.b+'" aria-label="종료일">'+
     '<div class="seg" role="group" aria-label="빠른 기간">'+[["today","오늘"],["yday","어제"],["tweek","이번 주"],["lweek","저번 주"],["tmonth","이번 달"],["lmonth","저번 달"]].map(function(x){return'<button data-act="dash-q" data-v="'+x[0]+'" class="'+((S.dash||{}).q===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'+
-    '<div class="seg iomon" role="group" aria-label="한 달씩"><button data-act="io-mon" data-v="-1" aria-label="이전 달" title="이전 달 전체">◀</button><button data-act="io-mon" data-v="0" class="'+(ioIsMonth230()?"on":"")+'" title="1일 ~ 말일 한 달 전체 · 누르면 이번 달">'+esc(ioIsMonth230()?ioPerLab230():"한 달씩")+'</button><button data-act="io-mon" data-v="1" aria-label="다음 달" title="다음 달 전체">▶</button></div>'+
+    (function(){var wk=isWeek231(D.a,D.b),u=wk?"주":"달";/* v231 한 주면 한 주씩 */return'<div class="seg iomon" role="group" aria-label="한 '+u+'씩"><button data-act="io-mon" data-v="-1" aria-label="이전 '+u+'" title="이전 '+u+' 전체">◀</button><button data-act="io-mon" data-v="0" class="'+(ioIsMonth230()||wk?"on":"")+'" title="'+(wk?"월~일 한 주 · 누르면 이번 주":"1일 ~ 말일 한 달 전체 · 누르면 이번 달")+'">'+esc(wk?md(D.a)+"~"+md(addD(D.a,6)):ioIsMonth230()?ioPerLab230():"한 달씩")+'</button><button data-act="io-mon" data-v="1" aria-label="다음 '+u+'" title="다음 '+u+' 전체">▶</button></div>'})()+bizBtn231(D.a,D.b)+
     '<span class="grow"></span><span class="small muted">'+(admin&&S.mgr?esc(st(S.mgr).name)+" 담당 기업":mineV?"내 담당 기업":"전체 기업")+'</span><button class="btn sm" data-act="io-xls">엑셀 내보내기</button></div>';
+  h+=bizNote231(D.a,D.b);/* v231 */
   h+='<div class="iosum"><div><b>계약만료 예정 '+D.X.length+'</b><span>'+esc(ioCntTxt230(cX,["연장","무기계약 전환","종료","미정"]))+'</span></div><div><b>퇴사 '+D.O.length+'</b><span>'+esc(ioCntTxt230(cO,["계약만료","중도퇴사","입사취소"]))+'</span></div><div><b>입사 '+D.I.length+'</b><span>'+esc(ioCntTxt230(cI,["신규","대체"]))+'</span></div></div>';
   var col=function(tit,sub,L,row,empty){return'<section class="iocol"><h3>'+tit+' <span class="c">'+L.length+'</span><small class="muted">'+sub+'</small></h3>'+(L.length?'<ol class="iolist">'+L.map(row).join("")+'</ol>':'<p class="small muted ioempty">'+empty+'</p>')+'</section>'};
   h+='<div class="iocols">'+
     col("계약만료 예정","계약 기간 끝 · 날짜순",D.X,function(o){var cls=IO_DEC230[o.dec]!=null?IO_DEC230[o.dec]:"";
       return'<li><button type="button" class="iorow" data-act="io-open" data-v="exp" data-e="'+o.e.id+'"><span class="iod num">'+esc(md(o.d))+'</span>'+ioWho230(o.e)+'<span class="grow"></span>'+
         (o.st!=null?'<span class="b sm iost tip" tabindex="0" data-tip="'+esc(XS.map(function(s){return(o.x&&o.x.steps&&o.x.steps[s[0]]?"✓ ":"· ")+s[1]}).join(" / "))+'">진행 '+o.st+'/'+XS.length+'</span>':"")+'<span class="b sm iodec '+cls+'">'+esc(o.dec)+'</span></button></li>'},"그달 끝나는 계약이 없어요")+
-    col("퇴사","퇴사일 · 대체자",D.O,function(o){var rp=o.rp.map(function(r){var w=wk(r.worker),s=(termsOf(r.id)[0]||{}).start||r.vwork_start||"";return esc(w?w.name:"")+(s?" "+md(s):"")}).join(", ");
+    col("퇴사",(bizOn231(D.a,D.b)?bizLab231("out",D.a,D.b)+" · ":"")+"퇴사일 · 대체자",D.O,function(o){var rp=o.rp.map(function(r){var w=wk(r.worker),s=(termsOf(r.id)[0]||{}).start||r.vwork_start||"";return esc(w?w.name:"")+(s?" "+md(s):"")}).join(", ");
       return'<li><button type="button" class="iorow" data-act="io-open" data-v="'+(o.ty==="중도퇴사"?"lea":o.ty==="입사취소"?"onb":"exp")+'" data-e="'+o.e.id+'"><span class="iod num">'+esc(md(o.d))+'</span>'+ioWho230(o.e)+'<span class="grow"></span><span class="b sm '+(o.ty==="입사취소"?"":"bad")+'">'+esc(o.ty)+'</span></button>'+
         '<div class="iorp small">'+(rp?'<span class="b sm p">대체</span> '+rp:o.req?'<span class="muted">대체 요청 중</span>':'<span class="muted">대체 없음</span>')+'</div></li>'},"그달 퇴사자가 없어요")+
-    col("입사","계약시작일 기준",D.I,function(o){var e=o.e,ty=e.hire_type||"신규",ro=ty==="대체"&&e.replaced&&emp(e.replaced),rw=ro&&wk(ro.worker);
+    col("입사",(bizOn231(D.a,D.b)?bizLab231("in",D.a,D.b)+" · ":"")+"계약시작일 기준",D.I,function(o){var e=o.e,ty=e.hire_type||"신규",ro=ty==="대체"&&e.replaced&&emp(e.replaced),rw=ro&&wk(ro.worker);
       return'<li><button type="button" class="iorow" data-act="io-open" data-v="onb" data-e="'+e.id+'"><span class="iod num">'+esc(md(o.d))+'</span>'+ioWho230(e)+'<span class="grow"></span>'+(e.vwork_start?'<span class="small muted tip" tabindex="0" data-tip="브이워크 시작일">브 '+esc(md(e.vwork_start))+'</span>':"")+'<span class="b sm iohire '+(ty==="대체"?"p":"t")+'">'+esc(ty)+'</span></button>'+
         (rw?'<div class="iorp small muted">'+esc(rw.name)+' 자리</div>':"")+'</li>'},"그달 입사자가 없어요")+'</div>';
   return h}
@@ -20235,7 +20240,7 @@ regAfter("v230 재직자 대시보드 탭",function(){if(S.view!=="dash")return;
   var p=hd.querySelector("p");if(p)p.textContent="계약만료 예정 · 퇴사 · 입사를 한 달씩 한 화면에 · 입력은 각 메뉴에서 해요";tb.insertAdjacentHTML("afterend",ioHtml230())});
 regActs({
   "dash-tab":function(D0){S.dashTab=D0.v==="io"?"io":"now";if(S.dashTab==="io"&&(!S.dash||S.dash.q==="today")){var M=ioMonth230(TODAY.slice(0,7));S.dash={q:"",from:M[0],to:M[1]}}/* 오늘만이면 비어 보여서 이번 달 전체로 */try{localStorage.setItem("vw_dashtab230",S.dashTab)}catch(e){}render()},
-  "io-mon":function(D0){var v=+D0.v,m=v?addM(ioRange230()[0].slice(0,7)+"-01",v).slice(0,7):TODAY.slice(0,7),M=ioMonth230(m);S.dash={q:"",from:M[0],to:M[1]};render()},
+  "io-mon":function(D0){var v=+D0.v,R0=ioRange230();if(isWeek231(R0[0],R0[1])){var ws=v?addD(R0[0],7*v):wkStart(TODAY);S.dash={q:"",from:ws,to:addD(ws,6)};render();return}/* v231 한 주씩 */var m=v?addM(ioRange230()[0].slice(0,7)+"-01",v).slice(0,7):TODAY.slice(0,7),M=ioMonth230(m);S.dash={q:"",from:M[0],to:M[1]};render()},
   "io-open":function(D0){var e=emp(D0.e);if(!e)return;var v=D0.v;go(v);if(v==="exp"){S.sel="exp:"+e.id;S.xcorp="";S.fix=null}else if(v==="lea")S.leaSel=e.id;else{S.onbSel=e.id;S.disF=null;S.onbTab="emp";S.onbFrom="";S.onbTo="";S.onbMiss230=false}render()},
   "io-xls":function(){ioXls230()}
 });
@@ -20249,6 +20254,38 @@ function ioXls230(){var D=ioData230(),q=function(v){return'"'+String(v==null?"":
   for(var i=0;i<Math.max(rX.length,rO.length,rI.length);i++){var f=function(R,n){return R[i]||Array(n).fill("")};L.push(f(rX,HX.length).concat([""],f(rO,HO.length),[""],f(rI,HI.length)).map(q).join(","))}
   var name="VWork_입퇴사현황_"+(ioIsMonth230()?D.a.slice(0,7):D.a+"_"+D.b)+".csv";try{DLX={at:Date.now(),menu:"재직자 대시보드 · 입퇴사 현황",rows:rX.length+rO.length+rI.length,filter:D.a+"~"+D.b+(S.role==="admin"?" · "+(S.mgr?st(S.mgr).name:S.scope==="mine"?"내 담당":"전체"):" · 내 담당"),pii:true,done:false}}catch(e){}
   dlBlob(new Blob(["﻿"+L.join("\n")],{type:"text/csv;charset=utf-8"}),name);toast(pl+" 입퇴사 현황을 내려받았어요 (계약만료 "+rX.length+" · 퇴사 "+rO.length+" · 입사 "+rI.length+")")}
+
+/* ================================================================
+   v231
+     ① [업무별 주 기준] 켜고 끄기 — 재직자 대시보드(현황 · 입퇴사 현황) 기간이 '한 주'(월요일 시작 · 7일 이내)일 때만
+        켜면 입사 = 입사 주 시작 요일(기본 월 → 월~일) · 퇴사 = 퇴사 주 시작 요일(기본 일 → 일~토 · 같은 주라 하루 앞당김)
+        계약만료 예정 · 결정 전 · 처리 현황은 고른 날짜 그대로 · 칸 제목 · 안내 줄에 실제 기간
+        현황 탭 입사 · 퇴사 숫자도 같은 기준 (그래프 가로축은 날짜 그대로)
+        사람마다 켬/끔 기억 · 시작 요일은 관리자 › 설정 (app_settings wk_start_in · wk_start_out)
+     ② ◀ ▶ : 기간이 한 주면 한 주씩, 아니면 한 달씩
+   ================================================================ */
+var WD231=["일","월","화","수","목","금","토"];
+S.wkBiz=(function(){try{return localStorage.getItem("vw_wkbiz231")==="1"}catch(e){return false}})();
+function wkDow231(kind){var v=+appSet(kind==="in"?"wk_start_in":"wk_start_out",kind==="in"?1:0);return isNaN(v)||v<0||v>6?(kind==="in"?1:0):v}
+function isWeek231(a,b){if(!a||!b)return false;var n=dd(a,b);return pd(a).getDay()===1&&n>=0&&n<=6}
+function wkOff231(kind){var o=(wkDow231(kind)-1+7)%7;return o>3?o-7:o}
+function bizOn231(a,b){return!!S.wkBiz&&isWeek231(a,b)}
+function bizRange231(kind,a,b){if(!bizOn231(a,b))return[a,b];var o=wkOff231(kind);return[addD(a,o),addD(b,o)]}
+function bizLab231(kind,a,b){var R=bizRange231(kind,a,b);return md(R[0])+"~"+md(R[1])}
+function bizBtn231(a,b){var w=isWeek231(a,b),on=bizOn231(a,b),tip="입사 "+WD231[wkDow231("in")]+"요일 시작 · 퇴사 "+WD231[wkDow231("out")]+"요일 시작 (같은 주) · 계약만료는 고른 날짜 그대로"+(w?"":" · 기간이 한 주(월요일 시작)일 때만 써요");
+  return'<button type="button" class="btn sm wkbiz231'+(on?" pri":"")+'" data-act="wk-biz" aria-pressed="'+(on?"true":"false")+'"'+(w?"":" disabled")+' title="'+esc(tip)+'">업무별 주 기준'+(on?" 켬":"")+'</button>'}
+function bizNote231(a,b){if(!bizOn231(a,b))return"";return'<div class="small wknote231">업무별 주 기준 · 입사 <b>'+bizLab231("in",a,b)+'</b> · 퇴사 <b>'+bizLab231("out",a,b)+'</b> · 계약만료 <b>'+md(a)+"~"+md(b)+'</b></div>'}
+regActs({"wk-biz":function(){S.wkBiz=!S.wkBiz;try{localStorage.setItem("vw_wkbiz231",S.wkBiz?"1":"0")}catch(e){}render()}});
+/* 현황 탭: 빠른 기간 옆에 버튼 + 안내 줄 */
+regAfter("v231 업무별 주 기준 (현황)",function(){if(S.view!=="dash"||S.dashTab==="io")return;var m=document.getElementById("main"),seg=m&&m.querySelector('.fbar [data-act="dash-q"]');if(!seg||m.querySelector(".wkbiz231"))return;var D=S.dash||{};
+  seg.parentNode.insertAdjacentHTML("afterend",bizBtn231(D.from,D.to));var fb=seg.closest(".fbar");if(fb)fb.insertAdjacentHTML("afterend",bizNote231(D.from,D.to))});
+/* 설정: 업무별 주 시작 요일 */
+regAfter("v231 설정 · 주 시작 요일",function(){if(S.view!=="set"||S.role!=="admin")return;var m=document.getElementById("main");if(!m||m.querySelector(".wkset231"))return;
+  var sel=function(k,v){return'<select data-ch="wk-dow" data-k="'+k+'">'+WD231.map(function(d,i){return'<option value="'+i+'"'+(i===v?" selected":"")+'>'+d+'요일</option>'}).join("")+'</select>'};
+  m.insertAdjacentHTML("beforeend",'<div class="dcard wkset231" style="max-width:760px;margin-top:14px"><div class="dcard-h"><b>업무별 주 기준 (재직자 대시보드)</b><span class="small muted">[업무별 주 기준]을 켜고 한 주를 볼 때 · 같은 주 안에서 시작 요일만 바뀌어요</span></div><div class="fg" style="margin-top:8px">'+
+    '<label class="f"><span>입사 주 시작</span>'+sel("wk_start_in",wkDow231("in"))+'</label><label class="f"><span>퇴사 주 시작</span>'+sel("wk_start_out",wkDow231("out"))+'</label></div></div>')});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.ch!=="wk-dow")return;ev.stopPropagation();var k=t.dataset.k,o=String(wkDow231(k==="wk_start_in"?"in":"out")),v=String(+t.value);if(o===v)return;
+  appSetPut(k,+v);logChange("app_settings",k,"업무별 주 기준",k==="wk_start_in"?"입사 주 시작":"퇴사 주 시작",WD231[+o]+"요일",WD231[+v]+"요일","브이드림 내부");toast("저장했어요");render()},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
