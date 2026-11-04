@@ -1553,6 +1553,16 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .iolate{background:#F5A524;color:#3A2A00}
 .rr2tin{width:72px;font-variant-numeric:tabular-nums}
 .rr2tin.bad232{border-color:#E5484D;box-shadow:0 0 0 2px rgba(229,72,77,.15)}
+
+/* v233 채용 대시보드 진행 중 채용 요청 · 보고 제외 */
+.rpcards.rp3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rpdates233 .rpj{cursor:default}
+.rpj.late233{border-color:#E5484D;color:#C4262B}
+.late233t{color:#C4262B;font-weight:700}
+.b.ex233{background:#EDECF2;color:#55526A;border:1px solid #CFCDD9}
+.rrex233{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rrex233 input{flex:1;min-width:160px;max-width:320px;height:28px;font-size:12.5px}
+@media (max-width:900px){.rpcards.rp3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -11578,7 +11588,7 @@ rpHtml=function(){var R=rpRows(),pool=rd2Pool(),G={},ord=[];R.forEach(function(o
 /* ---------- 4. 대시보드 이름 ---------- */
 var RD_TIP2="이런 요청만 보여요\n· 마감 초과: 마감일이 지났는데 아직 끝나지 않음\n· 마감 3일 안: 이력서를 아직 전달하지 않았는데 마감이 3일 안\n· 후보 0명: 요청 후 3일 넘게 이력서 전달 0명\n· 운영 대기 7일+: 운영파트 차례인데 7일 넘게 움직임 없음";
 var _vRdash114=vRdash;vRdash=function(){var h=_vRdash114();
-  return h.replace("지금 할 일 → 막힌 곳 → 대체 예정 → 성과","지금 할 일 → 급한 채용 요청 → 대체 가능성 → 채용 성과")
+  return h.replace("지금 할 일 → 막힌 곳 → 대체 예정 → 성과","지금 할 일 → 진행 중 채용 요청 → 대체 가능성 → 채용 성과")/* v233 */
     .replace('<span class="rd2n">2</span>막힌 곳 ','<span class="rd2n">2</span>급한 채용 요청 <span class="tip" tabindex="0" data-tip="'+esc(RD_TIP2)+'">ⓘ</span> ')
     .replace(/(<span class="rd2n">3<\/span>)성과/,"$1채용 성과")};
 /* ---------- 5. 관리자 기본 설정 탭 ---------- */
@@ -12559,7 +12569,7 @@ function rdUrgHtml(){var U=rdUrg(),D=U.D,all=U.L,f=S.rdU||"",fj=S.rdUJ||"";
   h+=(GL.length?'<table class="mini rd2tb"><thead><tr><th>기업</th><th>급한 이유</th><th>요청</th><th>다음 할 일</th><th>채용 담당</th></tr></thead><tbody>'+GL.slice(0,lim).map(function(g){var r=g.L[0];
       return'<tr data-act="rr-go" data-id="'+r.id+'"><td>'+(g.co&&comp(g.co)?esc(coShort(comp(g.co).name)):esc(rrSheetName(r)||"—"))+'</td><td>'+g.R.map(function(x){return'<span class="b sm '+x[1]+'">'+esc(x[2])+'</span>'}).join(" ")+'</td><td class="small">'+g.L.map(function(q){return esc(q.kind)+" · "+rrJobsS229(q)/* v229 간단 표시 */}).join("<br>")+'</td><td class="small">'+rrNext(r)+'</td><td class="small">'+esc((st(rrRecruiter(r))||{}).name||"미배정")+'</td></tr>'}).join("")+'</tbody></table>'+(GL.length>lim?'<p class="hint">외 '+(GL.length-lim)+'곳 · [모두 열기]로 전부 보기</p>':""):'<p class="hint">'+(f||fj?"조건에 맞는 요청이 없어요.":"급한 채용 요청이 없어요.")+'</p>')+'</div>';
   return h}
-var _vRdash135=vRdash;vRdash=function(){var h=_vRdash135();try{var a=h.indexOf('<div class="rd2s"><h2><span class="rd2n">2</span>'),b=h.indexOf('<div class="rd2s"><h2><span class="rd2n">↻</span>');if(a>=0&&b>a)h=h.slice(0,a)+rdUrgHtml()+h.slice(b);
+var _vRdash135=vRdash;vRdash=function(){var h=_vRdash135();try{var a=h.indexOf('<div class="rd2s"><h2><span class="rd2n">2</span>'),b=h.indexOf('<div class="rd2s"><h2><span class="rd2n">↻</span>');if(a>=0&&b>a)h=h.slice(0,a)+rdProgHtml233()/* v233 진행 중 채용 요청 (rdUrg 는 주의 칩으로) */+h.slice(b);
     var U=rdUrg(),soon=U.L.filter(function(o){return o.R.some(function(x){return x[0]==="soon"})&&rrTabOf(o.r)!=="채용 예정"}).length,dl=md(U.D).replace(/\(.\)/,"");
     h=h.replace(/(<span class="k">마감[^<]*(?:<span class="tip"[^>]*>[^<]*<\/span>)?<\/span><b>)(\d+)(<\/b><small>초과 <b style="color:var\(--bad\)">)(\d+)(<\/b>) · 3일 안 <b>\d+<\/b>/,function(m,p1,tot,p2,late,p3){return p1+(+late+soon)+p2+late+p3+" · ~"+dl+" <b>"+soon+"</b>"})}catch(e){console.warn(e)}return h};
 /* ================= 2. 담당자 드롭박스: 파트별 ================= */
@@ -17429,7 +17439,9 @@ var _dtable187=dtable;dtable=function(k,cols,rows,rowFn,empty){if(k!=="rreq"||!A
       '<td class="nowrap rrtl"><div>'+tdIn(T[I.pg])+'</div><div class="rsub num">'+(n.a?"지원 "+n.a+" · 합격 "+n.ok+" · 불합격 "+n.no:"지원 없음")+'</div></td>',
       '<td class="rrtl"><div>'+(nx||'<span class="muted">—</span>')+'</div><div class="rsub'+(late&&!done?" late":"")+'">'+(la&&la!=="-"?esc(la)+" 활동":"")+'</div></td>',
       T[I.m]];
+    cols.forEach(function(c,i){if(c&&c._keep)out.push(T[i])})/* v233 등록 칸(_keep) 은 그대로 붙임 */;
     return m[1]+out.filter(function(x){return x!==null}).join("")+m[3]};
+  C=C.concat(cols.filter(function(c){return c&&c._keep}))/* v233 */;
   return _dtable187.call(this,k,C,rows,fn,empty)};
 
 /* ================= ③ 입사 가능일 · 희망 근무 기간 ================= */
@@ -18955,8 +18967,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v232 — 입퇴사 현황 한 줄 · 퇴사 칩 구분 · 충족입사 · 늦은 등록 · 채용 요청 휴게 직접 · 근무 시간 분 단위 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v232";APP_VER_ON="11/04";APP_NOTE="입퇴사 현황: 한 줄 + 말풍선 · 퇴사 칩 구분 · 충족입사 · 늦은 등록 표시 / 채용 요청: 휴게 직접 입력 · 근무 시간 분 단위 입력";
+/* v233 — 채용 대시보드 진행 중 채용 요청(서칭 중 · 회신 대기 · 입사 확정 대기) · 장기대기 · 대체 불가 직무 표시 (SQL v233) (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v233";APP_VER_ON="11/04";APP_NOTE="채용 대시보드 ② 진행 중 채용 요청: 서칭 중 · 이력서 검토(회신 대기) TO · 입사 확정 대기(입사 예정일별) · 구분 · 직무별 / 채용 요청에 장기대기 · 대체 불가 직무 표시(관리자)";
 
 /* ================================================================
    v208
@@ -20338,6 +20350,103 @@ window.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)
 /* 휴게 직접: 숫자만 */
 document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.brk232)return;var v=t.value.replace(/\D/g,"").slice(0,3);if(+v>240)v="240";if(v!==t.value)t.value=v},true);
 regActs({"rr2-brkc":function(){var F=S.rrF;if(!F)return;try{rrFormRead(F)}catch(e){}F._brkc=true;F.break_set=true;render();setTimeout(function(){var i=document.querySelector('input[data-brk232]');if(i){i.focus();i.select()}},0)}});
+
+/* ================================================================
+   v233 채용 대시보드 ② '급한 채용 요청' → '진행 중 채용 요청'
+     칸: 서칭 중(이력서 전달 전 · 남은 TO) · 이력서 검토 · 기업 회신 대기(전달 후 · 남은 TO) · 입사 확정 대기(최종 합격 · 입사 등록 전 · 명)
+         칸마다 구분별(신규 · 추가 · 대체) · 아래 직무별 · 입사 확정 대기는 입사 예정일별 명수
+     표: 기업 · 단계 · 요청 · 남은 TO · 입사 예정일 · 주의(마감 초과 · 임박 · 후보 0 · 운영 대기 7일+) · 다음 할 일 · 담당 · 칸 누르면 그 단계만
+     장기대기 · 대체 불가 직무: 관리자가 채용 요청 창에서 켬 → 숫자에서 빠짐 · '제외 n건'에서 따로 보고 풀기 · 채용 요청 목록 '보고 제외' 칸(헤더 필터)
+     DB: recruit_requests.hold_long · no_repl · ex_note (SQL v233) — 칸이 없으면 표시는 숨기고 관리자에게 안내
+   ================================================================ */
+var RR233={probed:false,ok:!LIVE};
+if(!LIVE)colxAdd("rr",[["hold_long",null,"bool"],["no_repl",null,"bool"],["ex_note",null,"text"]]);
+/* 실제 DB: 처음 그린 뒤 한 번 칸이 있는지 보고 · 있으면 칸 추가 + 값 받기 + 비교 기준(SNAP)에 새 칸만 붙임 (전체 저장 안 일어나게) */
+function rrProbe233(){if(RR233.probed||!LIVE||typeof sb==="undefined"||!sb||typeof READY==="undefined"||!READY)return;RR233.probed=true;
+  sb.from("recruit_requests").select("id,hold_long,no_repl,ex_note").then(function(r){if(r.error){RR233.ok=false;return}
+    colxAdd("rr",[["hold_long",null,"bool"],["no_repl",null,"bool"],["ex_note",null,"text"]]);var M={};(r.data||[]).forEach(function(x){M[x.id]=x});
+    DB.rr.forEach(function(o){var x=M[o.id];o.hold_long=!!(x&&x.hold_long);o.no_repl=!!(x&&x.no_repl);o.ex_note=x&&x.ex_note||"";
+      try{var s=SNAP.rr&&SNAP.rr[o.id];if(s){var j=JSON.parse(s);j.hold_long=o.hold_long;j.no_repl=o.no_repl;j.ex_note=o.ex_note||null;SNAP.rr[o.id]=JSON.stringify(j)}}catch(e){}});
+    RR233.ok=true;try{render()}catch(e){}},function(){})}
+function rrEx233(r){return!!(r&&(r.hold_long||r.no_repl))}
+function rrExLab233(r){return[r.hold_long?"장기대기":"",r.no_repl?"대체 불가":""].filter(Boolean).join(" · ")}
+
+/* ---------- 계산 ---------- */
+function rdRemJobs233(r){var C=rrCands(r.id).filter(function(c){return c.final==="합격"}),J=(r.jobs||[]).filter(function(j){return j.job}),o={};
+  if(J.length<=1){var n=Math.max(0,rrHead(r)-C.length);if(n)o[(J[0]&&J[0].job)||"직무 미입력"]=n;return o}
+  J.forEach(function(j){var h=C.filter(function(c){return c.job===j.job}).length,n=Math.max(0,(+j.n||0)-h);if(n)o[j.job]=(o[j.job]||0)+n});return o}
+function rdProg233(){var all=rd2Recs(),U={};try{rdUrg().L.forEach(function(o){U[o.r.id]=o})}catch(e){}
+  var S1=[],S2=[],EX=[],IDS={};
+  all.forEach(function(r){var t=rrTabOf(r);if(t==="완료"||t==="보류")return;IDS[r.id]=1;if(rrEx233(r)){EX.push(r);return}
+    var rem=Math.max(0,rrHead(r)-rrHired(r));if(!rem)return;var sent=rrCands(r.id).some(function(c){return c.sent});
+    var o={r:r,rem:rem,J:rdRemJobs233(r),u:U[r.id]||null,st:sent?"wait":"search"};(sent?S2:S1).push(o)});
+  /* 입사 확정 대기: 최종 합격 · 입사 등록 전 (신규입사자 '입사 예정' 탭과 같은 기준 · 등록된 사람 제외) */
+  var H=[],seen={},whole=!S.rdMine&&!S.rdRec&&!S.rdKind,inR2=function(r){return r?(!!IDS[r.id]||rd2Recs().indexOf(r)>=0)&&!rrEx233(r):whole};
+  (DB.intake||[]).forEach(function(a){if(a.emp||a.pass==="FAIL")return;var c=rcCand(a),r=rcReq(a);if(a.rrr)seen[a.rrr+"|"+a.rri]=1;if(!inR2(r)||(r&&!qcOK(r.company))||(!r&&!qcOK(a.cid)))return;
+    H.push({name:a.name||"",cid:a.cid||(r&&r.company),r:r,kind:r?r.kind||"기타":"기타",job:(c&&c.job)||(r&&((r.jobs||[])[0]||{}).job)||"직무 미입력",date:a.cs||(r&&r.start_date)||""})});
+  DB.rrr.forEach(function(x){var r=rcOf(x.req);if(!r)return;(x.cands||[]).forEach(function(c,i){if(c.final!=="합격"||c.hired||seen[x.id+"|"+i])return;if(!inR2(r)||!qcOK(r.company))return;
+    H.push({name:c.name||"",cid:r.company,r:r,kind:r.kind||"기타",job:c.job||((r.jobs||[])[0]||{}).job||"직무 미입력",date:(c.ci&&c.ci.cs)||r.start_date||""})})});
+  return{S1:S1,S2:S2,H:H,EX:EX}}
+function rdSum233(L,f){var o={};L.forEach(function(x){var k=f(x);o[k]=(o[k]||0)+1});return o}
+function rdKindTxt233(o){return["신규","추가","대체"].filter(function(k){return o[k]}).map(function(k){return k+" "+o[k]}).concat(Object.keys(o).filter(function(k){return["신규","추가","대체"].indexOf(k)<0}).map(function(k){return k+" "+o[k]})).join(" · ")||"—"}
+
+/* ---------- 화면 ---------- */
+function rdProgHtml233(){var P=rdProg233(),f=S.rdP233||"",fj=S.rdPJ233||"",admin=S.role==="admin";
+  var to=function(L){return L.reduce(function(s,o){return s+o.rem},0)},kTO=function(L){var o={};L.forEach(function(x){var k=x.r.kind||"기타";o[k]=(o[k]||0)+x.rem});return o};
+  var card=function(cls,v,unit,k,sub,fv){return'<button type="button" class="rpc '+cls+(f===fv?" on":"")+'" data-act="rdp-t" data-v="'+fv+'"><span class="k">'+k+'</span><span class="v">'+v+'<small>'+unit+'</small></span><span class="s">'+sub+'</span></button>'};
+  var h='<div class="rd2s rdp233"><h2><span class="rd2n">2</span>진행 중 채용 요청 <span class="rd2t">남은 TO · 장기대기 · 대체 불가 직무 제외</span><span class="grow"></span>'+
+    (P.EX.length||S.rdEx233?'<button type="button" class="btn xs'+(S.rdEx233?" pri":"")+'" data-act="rdp-ex" title="장기대기 · 대체 불가 직무로 표시된 요청">'+(S.rdEx233?"← 진행 중으로":"제외 "+P.EX.length+"건")+'</button>':"")+'</h2>';
+  if(S.rdEx233)return h+rdExHtml233(P.EX,admin)+'</div>';
+  h+='<div class="rpcards rp3">'+
+    card("",to(P.S1),"명","서칭 중 TO",P.S1.length+"건 · "+rdKindTxt233(kTO(P.S1)),"search")+
+    card("warn",to(P.S2),"명","이력서 검토 · 기업 회신 대기 TO",P.S2.length+"건 · "+rdKindTxt233(kTO(P.S2)),"wait")+
+    card("p",P.H.length,"명","입사 확정 대기",rdKindTxt233(rdSum233(P.H,function(x){return x.kind})),"hire")+'</div>';
+  /* 직무별 (고른 칸 기준 · 없으면 전체) */
+  var J={},addJ=function(k,n){J[k]=(J[k]||0)+n};
+  if(!f||f==="search")P.S1.forEach(function(o){Object.keys(o.J).forEach(function(k){addJ(k,o.J[k])})});
+  if(!f||f==="wait")P.S2.forEach(function(o){Object.keys(o.J).forEach(function(k){addJ(k,o.J[k])})});
+  if(!f||f==="hire")P.H.forEach(function(x){addJ(x.job,1)});
+  var JL=Object.keys(J).sort(function(a,b){return J[b]-J[a]||a.localeCompare(b,"ko")});
+  h+='<div class="rpneed"><b class="h">직무별</b><span class="muted small">'+({search:"서칭 중",wait:"회신 대기",hire:"입사 확정 대기"}[f]||"세 칸 합계")+' · 명</span>'+(JL.length?JL.map(function(j){return'<button type="button" class="rpj'+(fj===j?" on":"")+'" data-act="rdp-j" data-v="'+esc(j)+'">'+esc(j)+' <em>'+J[j]+'</em></button>'}).join(""):'<span class="muted small">없음</span>')+((f||fj)?'<span class="grow"></span><button type="button" class="rpj" data-act="rdp-t" data-v="">전체 보기</button>':"")+'</div>';
+  /* 입사 예정일별 */
+  var HD=P.H.filter(function(x){return!fj||x.job===fj}),D=rdSum233(HD,function(x){return x.date||""}),DL=Object.keys(D).sort(function(a,b){return(a||"9").localeCompare(b||"9")});
+  h+='<div class="rpneed rpdates233"><b class="h">입사 예정일별</b><span class="muted small">입사 확정 대기'+(fj?" · "+esc(fj):"")+'</span>'+(DL.length?DL.map(function(d){var past=d&&d<TODAY;return'<span class="rpj'+(past?" late233":"")+'"'+(past?' title="입사 예정일이 지났는데 아직 등록 전"':"")+'>'+(d?esc(md(d)):"날짜 미정")+' <em>'+D[d]+'명</em></span>'}).join(""):'<span class="muted small">입사 확정 대기자가 없어요</span>')+'</div>';
+  /* 표 */
+  if(f==="hire"){var HL=HD.slice().sort(function(a,b){return(a.date||"9").localeCompare(b.date||"9")});
+    h+=HL.length?'<table class="mini rd2tb"><thead><tr><th>입사 예정일</th><th>기업</th><th>이름</th><th>구분</th><th>직무</th><th>채용 요청</th></tr></thead><tbody>'+HL.map(function(x){var c=comp(x.cid);
+      return'<tr'+(x.r?' data-act="rr-go" data-id="'+x.r.id+'"':"")+'><td class="num'+(x.date&&x.date<TODAY?" late233t":"")+'">'+(x.date?esc(md(x.date)):'<span class="muted">미정</span>')+'</td><td>'+esc(c?coShort(c.name):"—")+'</td><td><b>'+esc(x.name)+'</b></td><td><span class="b sm">'+esc(x.kind)+'</span></td><td class="small">'+esc(x.job)+'</td><td class="small">'+(x.r?esc((x.r.kind||"")+" · "+rrJobsShort(x.r)):'<span class="muted">입구서 직접</span>')+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint">입사 확정 대기자가 없어요.</p>';
+    return h+'</div>'}
+  var R=(f==="search"?P.S1:f==="wait"?P.S2:P.S1.concat(P.S2)).filter(function(o){return!fj||o.J[fj]});
+  R.sort(function(a,b){return((b.u&&b.u.sc)||0)-((a.u&&a.u.sc)||0)||String(a.r.due_date||"9").localeCompare(String(b.r.due_date||"9"))});
+  var lim=S.rdUAll?R.length:15;
+  h+=R.length?'<table class="mini rd2tb"><thead><tr><th>기업</th><th>단계</th><th>요청</th><th class="c">남은 TO</th><th>입사 예정일</th><th>주의</th><th>다음 할 일</th><th>채용 담당</th></tr></thead><tbody>'+R.slice(0,lim).map(function(o){var r=o.r,c=comp(r.company);
+      return'<tr data-act="rr-go" data-id="'+r.id+'"><td>'+(c?esc(coShort(c.name)):esc(rrSheetName(r)||"—"))+'</td><td><span class="b sm '+(o.st==="wait"?"warn":"")+'">'+(o.st==="wait"?"회신 대기":"서칭 중")+'</span></td><td class="small">'+esc(r.kind||"")+" · "+rrJobsS229(r)+'</td><td class="c num"><b>'+o.rem+'</b><span class="muted small">/'+rrHead(r)+'</span></td><td class="small num">'+(r.start_date?esc(md(r.start_date)):'<span class="muted">—</span>')+'</td><td>'+(o.u?o.u.R.map(function(x){return'<span class="b sm '+x[1]+'">'+esc(x[2])+'</span>'}).join(" "):"")+'</td><td class="small">'+rrNext(r)+'</td><td class="small">'+esc((st(rrRecruiter(r))||{}).name||"미배정")+'</td></tr>'}).join("")+'</tbody></table>'+
+    (R.length>15?'<p class="hint">'+(R.length>lim?"외 "+(R.length-lim)+"건 · ":"")+'<button class="linkbtn small" data-act="rdu-all">'+(S.rdUAll?"접기":"모두 보기")+'</button></p>':""):'<p class="hint">'+(f||fj?"조건에 맞는 요청이 없어요.":"진행 중인 채용 요청이 없어요.")+'</p>';
+  return h+'</div>'}
+function rdExHtml233(EX,admin){if(!EX.length)return'<p class="hint">장기대기 · 대체 불가 직무로 표시된 요청이 없어요.</p>';
+  return'<p class="small muted" style="margin:4px 0 8px">아래 요청은 진행 중 숫자에서 빠져 있어요 · '+(admin?"[풀기]로 다시 넣을 수 있어요":"관리자가 표시를 풀 수 있어요")+'</p><table class="mini rd2tb"><thead><tr><th>기업</th><th>표시</th><th>이유</th><th>요청</th><th class="c">남은 TO</th><th>채용 담당</th>'+(admin?"<th></th>":"")+'</tr></thead><tbody>'+EX.map(function(r){var c=comp(r.company);
+    return'<tr data-act="rr-go" data-id="'+r.id+'"><td>'+(c?esc(coShort(c.name)):esc(rrSheetName(r)||"—"))+'</td><td><span class="b sm ex233">'+esc(rrExLab233(r))+'</span></td><td class="small">'+esc(r.ex_note||"")+'</td><td class="small">'+esc(r.kind||"")+" · "+rrJobsS229(r)+'</td><td class="c num">'+Math.max(0,rrHead(r)-rrHired(r))+'</td><td class="small">'+esc((st(rrRecruiter(r))||{}).name||"미배정")+'</td>'+(admin?'<td><button type="button" class="btn xs" data-act="rr-ex-off" data-id="'+r.id+'">풀기</button></td>':"")+'</tr>'}).join("")+'</tbody></table>'}
+
+/* ---------- 채용 요청 창: 관리자 표시 ---------- */
+regAfter("v233 채용 요청 창 보고 제외",function(){rrProbe233();if(S.view!=="rreq"||!S.rrSel||S.rrSel==="new")return;var r=rcOf(S.rrSel),ph=document.querySelector("aside.pnl > .ph");if(!r||!ph||ph.querySelector(".rrex233"))return;var admin=S.role==="admin";
+  if(!admin&&!rrEx233(r))return;
+  if(admin&&!RR233.ok){ph.insertAdjacentHTML("beforeend",'<div class="rrex233 small muted">보고 제외(장기대기 · 대체 불가) 표시를 쓰려면 DB에 SQL v233을 먼저 실행해 주세요</div>');return}
+  var tg=function(k,lab,tip){var on=!!r[k];return admin?'<button type="button" class="chip'+(on?" on":"")+'" data-act="rr-ex" data-k="'+k+'" data-id="'+r.id+'" aria-pressed="'+on+'" title="'+tip+'">'+lab+'</button>':(on?'<span class="b sm ex233">'+lab+'</span>':"")};
+  ph.insertAdjacentHTML("beforeend",'<div class="rrex233"><span class="small muted">보고 제외</span>'+tg("hold_long","장기대기","켜면 채용 대시보드 진행 중 숫자에서 빠져요")+tg("no_repl","대체 불가 직무","켜면 채용 대시보드 진행 중 숫자에서 빠져요")+
+    (admin&&rrEx233(r)?'<input type="text" data-ch="rr-exnote" data-id="'+r.id+'" value="'+esc(r.ex_note||"")+'" placeholder="이유 (예: 고객사 일정 미정)" maxlength="80">':(r.ex_note?'<span class="small muted">'+esc(r.ex_note)+'</span>':""))+'</div>')});
+regActs({
+  "rr-ex":function(D0){if(S.role!=="admin")return;var r=rcOf(D0.id),k=D0.k;if(!r||(k!=="hold_long"&&k!=="no_repl"))return;var lab=k==="hold_long"?"장기대기":"대체 불가 직무",o=!!r[k];r[k]=!o;if(!rrEx233(r))r.ex_note="";
+    logChange("recruit_requests",r.id,cdCoName?cdCoName(r):"",lab,o?"켬":"끔",r[k]?"켬":"끔","브이드림 내부");toast(lab+(r[k]?" 표시 · 대시보드 숫자에서 빠져요":" 표시를 풀었어요"));render()},
+  "rr-ex-off":function(D0){if(S.role!=="admin")return;var r=rcOf(D0.id);if(!r)return;var was=rrExLab233(r);r.hold_long=false;r.no_repl=false;r.ex_note="";logChange("recruit_requests",r.id,cdCoName?cdCoName(r):"","보고 제외",was,"풀기","브이드림 내부");toast("다시 진행 중 숫자에 들어가요");render()},
+  "rdp-t":function(D0){S.rdP233=S.rdP233===D0.v?"":D0.v;S.rdPJ233="";render()},
+  "rdp-j":function(D0){S.rdPJ233=S.rdPJ233===D0.v?"":D0.v;render()},
+  "rdp-ex":function(){S.rdEx233=!S.rdEx233;render()}
+});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.ch!=="rr-exnote")return;ev.stopPropagation();var r=rcOf(t.dataset.id);if(!r||S.role!=="admin")return;var v=String(t.value||"").trim().slice(0,80);if(v===(r.ex_note||""))return;var o=r.ex_note||"";r.ex_note=v;logChange("recruit_requests",r.id,cdCoName?cdCoName(r):"","보고 제외 이유",o,v,"브이드림 내부");toast("저장했어요")},true);
+
+/* ---------- 채용 요청 목록: '보고 제외' 칸 (헤더 필터로 골라 보기) ---------- */
+regTable("rreq",{id:"v233ex",cols:function(C){if(C.some(function(c){return c.k==="ex233"}))return C;C.push({k:"ex233",_keep:true,h:"보고 제외",t:"text",f:function(r){return r&&r.id?rrExLab233(r)||"없음":""}});return C},
+  row:function(h,r){if(typeof h!=="string"||/data-ex233/.test(h)||!r||!r.id)return h;var l=rrExLab233(r);return h.replace(/<\/tr>\s*$/,'<td class="small" data-ex233="1">'+(l?'<span class="b sm ex233">'+esc(l)+'</span>':"")+'</td></tr>')}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
