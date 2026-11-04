@@ -1570,6 +1570,11 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .rpj.chk234b.on{outline:2px solid #E0A100;outline-offset:-1px}
 .chk234 td{vertical-align:middle}
 .rrex233 select{height:28px;font-size:12.5px}
+
+/* v235 입사 기준 토글 */
+.seg.sm.iobase235{display:inline-flex;margin-left:6px;vertical-align:middle}
+.seg.sm.iobase235 button{padding:1px 8px;font-size:11.5px;font-weight:500}
+.dtile .iobase235{margin-left:4px}
 </style>
 </head>
 <body>
@@ -4420,7 +4425,7 @@ function vDash(){
   /* 담당자 화면은 항상 내 담당 기업 기준(전체 · 담당자별 비교는 관리자만) */
   var sOK=function(cid){if(admin)return scopeOK(cid);var s0=S.scope,m0=S.mgr;S.scope="mine";S.mgr="";var r=scopeOK(cid);S.scope=s0;S.mgr=m0;return r},mineV=!admin||S.scope==="mine";
   var Es=DB.employments.filter(function(e){return sOK(e.company)});
-  var RI=bizRange231("in",a,b),RO=bizRange231("out",a,b)/* v231 업무별 주 기준 */,ins=Es.filter(function(e){var t=termsOf(e.id)[0];return!e.cancelled&&t&&inR(t.start,RI[0],RI[1])});
+  var RI=bizRange231("in",a,b),RO=bizRange231("out",a,b)/* v231 업무별 주 기준 */,ins=Es.filter(function(e){var t=termsOf(e.id)[0];return!e.cancelled&&t&&inR(ioInDate235(e),RI[0],RI[1])/* v235 입사 기준(계약시작일 · 브이워크 시작일) */});
   var outs=Es.filter(function(e){return(e.cancelled||e.end_type==="계약만료"||e.end_type==="중도퇴사")&&inR(e.end_date,RO[0],RO[1])});
   var outType=function(e){return e.cancelled?"입사취소":e.end_type};
   /* v208 결정 전: 재직 중 · 지금 계약 만료일이 기간 안 · 계약만료 결정이 비어 있음 (퇴사 합계에는 안 넣음) */
@@ -4438,7 +4443,7 @@ function vDash(){
     '<div class="dtile"><span>퇴사</span><b>'+outs.filter(function(e){return!e.cancelled}).length+'</b><small>계약만료 '+cnt(outs,outType,"계약만료")+' · 중도퇴사 '+cnt(outs,outType,"중도퇴사")+(und.length?' · <button class="linkbtn dund" data-act="dash-und" title="계약만료일이 기간 안인데 연장 · 종료 결정이 아직 없는 사람 · 누르면 계약만료(최종 미확정만)로 가요">결정 전 '+und.length+'</button>'+(undLate?' <span class="dundl" title="계약만료일이 지났는데 결정이 없어요">기한 경과 '+undLate+'</span>':""):"")+'</small></div>'+
     '<div class="dtile"><span>입사취소</span><b>'+cnt(outs,outType,"입사취소")+'</b><small>취소일 기준</small></div>'+
     '<div class="dtile"><span>재직 (기간 끝)</span><b>'+headEnd+'</b><small>기간 시작 전날 '+headStart+' · 순증감 '+(headEnd-headStart>=0?"+":"")+(headEnd-headStart)+'</small></div></div>';
-  h+='<div class="dgrid">'+dashChart("입사 추세 ("+{day:"일별",week:"주별",month:"월별"}[B.unit]+" · 1차 계약시작일)",DASH_IN,B.L,function(bk,s){return ins.filter(function(e){return e.hire_type===s&&inR(termsOf(e.id)[0].start,bk.from,bk.to)}).length})+
+  h+='<div class="dgrid">'+dashChart("입사 추세 ("+{day:"일별",week:"주별",month:"월별"}[B.unit]+" · 1차 계약시작일)",DASH_IN,B.L,function(bk,s){return ins.filter(function(e){return e.hire_type===s&&inR(ioInDate235(e),bk.from,bk.to)/* v235 */}).length})+
     dashChart("퇴사 추세 ("+{day:"일별",week:"주별",month:"월별"}[B.unit]+" · 퇴사일 · 취소일"+(und.length?" · 결정 전은 계약만료일":"")+")",und.length?DASH_OUT.concat([["결정 전","#C9C6D6","x"]]):DASH_OUT,B.L,function(bk,s){if(s==="결정 전")return und.filter(function(e){return inR(undEnd(e),bk.from,bk.to)}).length;return outs.filter(function(e){return outType(e)===s&&inR(e.end_date,bk.from,bk.to)}).length})+'</div>';
   /* 업무별 */
   var T=buildTodos().filter(function(t){return sOK(t.company)}),done=dashDone(a,b),cats=TODO_CATS;
@@ -5421,10 +5426,11 @@ function delPlan(kind,ids){
     reqw:DB.reqw.filter(function(r){return inA(E,r.emp)||inA(W,r.worker)}),
     wreq:(DB.wreq||[]).filter(function(r){return inA(W,r.worker)}),
     talent:DB.talent.filter(function(r){return inA(W,r.worker)}),
-    intake:DB.intake.filter(function(r){return inA(C,r.cid)}),
+    intake:DB.intake.filter(function(r){return inA(C,r.cid)||inA(E,r.emp)})/* v235 지운 고용 건의 입구서 대상도 (연결만 끊으면 '등록 전'으로 다시 보임) */,
+    att:(DB.att||[]).filter(function(r){return inA(W,r.worker)||inA(E,r.emp)})/* v235 근태 기록 */,
     requests:DB.requests.filter(function(r){return inA(C,r.company)}),
     cdocs:DB.cdocs.filter(function(r){return inA(C,r.company)})};
-  P.counts=[["고용 건",E.length],["계약 차수",P.terms.length],["계약만료 진행",P.expiry.length],["입사서류",P.casedocs.length],["퇴사 서류",P.xdocs.length],["장애 재판정 기록",P.dis.length],["고객사 요청 대상",P.reqw.length],["근로자 요청사항",P.wreq.length],["추천인재",P.talent.length],["입구서 발송 건",P.intake.length],["고객사 요청",P.requests.length],["서류 양식",P.cdocs.length],["병합으로 숨겨진 중복",P.extra]].filter(function(c){return c[1]});
+  P.counts=[["고용 건",E.length],["계약 차수",P.terms.length],["계약만료 진행",P.expiry.length],["입사서류",P.casedocs.length],["퇴사 서류",P.xdocs.length],["장애 재판정 기록",P.dis.length],["고객사 요청 대상",P.reqw.length],["근로자 요청사항",P.wreq.length],["추천인재",P.talent.length],["입구서 발송 건",P.intake.length],["근태 기록",P.att.length],["고객사 요청",P.requests.length],["서류 양식",P.cdocs.length],["병합으로 숨겨진 중복",P.extra]].filter(function(c){return c[1]});
   return P;
 }
 function delObj(kind,id){return kind==="worker"?wk(id):comp(id)}
@@ -5455,7 +5461,7 @@ function delLocal(P){
   rm("wreq",function(r){return inA(W,r.worker)});(DB.wreq||[]).forEach(function(r){if(inA(E,r.emp))r.emp="";if(inA(C,r.company))r.company=""});
   (DB.ctodo||[]).forEach(function(r){if(inA(W,r.worker))r.worker="";if(inA(C,r.company))r.company=""});
   rm("talent",function(r){return inA(W,r.worker)});DB.talent.forEach(function(r){if(inA(E,r.emp))r.emp="";if(inA(E,r.hire_emp))r.hire_emp="";if(inA(C,r.lcid))r.lcid=""});
-  var apps=DB.intake.filter(function(r){return inA(C,r.cid)}).map(function(r){return r.id});rm("intake",function(r){return inA(apps,r.id)});rm("rereq",function(r){return inA(apps,r.app)});
+  var apps=DB.intake.filter(function(r){return inA(C,r.cid)||inA(E,r.emp)}).map(function(r){return r.id});rm("att",function(r){return inA(W,r.worker)||inA(E,r.emp)})/* v235 */;rm("intake",function(r){return inA(apps,r.id)});rm("rereq",function(r){return inA(apps,r.app)});
   DB.intake.forEach(function(r){if(inA(E,r.emp))r.emp=""});
   var reqs=DB.requests.filter(function(r){return inA(C,r.company)}).map(function(r){return r.id});rm("requests",function(r){return inA(reqs,r.id)});rm("reqw",function(r){return inA(reqs,r.req)});
   rm("cdocs",function(r){return inA(C,r.company)});rm("secrets",function(r){return inA(C,r.company)});
@@ -5478,7 +5484,7 @@ function delRun(){
     return ch.reduce(function(p,c){return p.then(function(){return sb.from(d.t).delete().in(pk,c).select(pk).then(function(r){if(r&&r.error)throw r.error;if(c.length&&(!r.data||r.data.length<c.length))throw new Error("DB 권한 때문에 "+(({employments:"고용 건",workers:"근로자",companies:"기업",intake_applicants:"입구서 대상"})[d.t]||d.t)+" "+(c.length-(r.data||[]).length)+"건이 지워지지 않았어요 · 계정이 DB에서 관리자로 등록돼 있는지 확인해 주세요")})})},Promise.resolve())};
   var apps=P.intake.map(function(r){return r.id});
   S.del=null;$("#modal").innerHTML="";setSaving("삭제 중…");toast("삭제하는 중…");
-  sbDel("employments",P.E).then(function(){return sbDel("intake",apps)}).then(function(){return isW?sbDel("workers",P.W):sbDel("companies",P.C)})
+  sbDel("att",(P.att||[]).map(function(r){return r.id}))/* v235 근태 기록 먼저 */.then(function(){return sbDel("employments",P.E)}).then(function(){return sbDel("intake",apps)}).then(function(){return isW?sbDel("workers",P.W):sbDel("companies",P.C)})
   .then(function(){var d=T("logs");return sb.from(d.t).insert(L.map(function(o){return toRow(d,mkLog(o))})).then(function(r){if(r&&r.error)console.warn(r.error)})})
   .then(function(){return loadAll()}).then(function(){autoLinkMine();delAfter(P);setSaving("저장됨");toast((isW?"근로자":"기업")+" "+L.length+"건을 삭제했습니다");render()})
   .catch(function(e){console.error(e);setSaving("삭제 실패");toast("삭제하지 못했습니다: "+(e&&e.message||e)+" · 서버 데이터를 다시 불러옵니다");return loadAll().then(render)});
@@ -8415,7 +8421,7 @@ function fillRows(){var T={};buildTodos().forEach(function(t){if(t.type==="fill"
 function fillOpenN(){return fillRows().filter(function(r){return r.st==="open"&&scopeOK(r.company)}).length}
 function vFillm(){S.fmTab=S.fmTab||"open";var all=fillRows().filter(function(r){return scopeOK(r.company)&&qcOK(r.company)&&qwOK(r.worker)});
   var base=all.filter(function(r){return r.st!=="done"||r.id===S.fmSel||inDR("fillm",r.doneOn)}),cnt={open:0,done:0,stale:0,all:base.length};base.forEach(function(r){cnt[r.st]++});
-  var rows=base.filter(function(r){return S.fmTab==="all"||r.st===S.fmTab}).sort(function(a,b){return S.fmTab==="done"?b.doneOn.localeCompare(a.doneOn):String(a.due).localeCompare(String(b.due))});
+  var rows=base.filter(function(r){return S.fmLate235?(r.st==="open"&&r.due<TODAY):(S.fmTab==="all"||r.st===S.fmTab)})/* v235 기한 지남만 보기 (메뉴 숫자와 같은 기준) */.sort(function(a,b){return S.fmTab==="done"?b.doneOn.localeCompare(a.doneOn):String(a.due).localeCompare(String(b.due))});
   var cols=[{k:"w",h:"근로자",t:"text",f:function(r){return(wk(r.worker)||{}).name||""}},{k:"c",h:"기업",t:"text",f:function(r){return(coR(r)||{}).name||""}},{k:"cs",h:"계약시작일",t:"date",v:function(r){return r.R[0]}},{k:"vs",h:"브이워크 시작일",t:"date",v:function(r){return r.e.vwork_start}},
     {k:"rg",h:"대상 기간",t:"none"},{k:"jb",h:"직무",t:"text",f:function(r){return r.e.job||"—"}},{k:"st",h:"진행",t:"text",f:function(r){return r.step}},{k:"du",h:"작성기한",t:"date",v:function(r){return r.due}},{k:"dn",h:"완료일",t:"date",v:function(r){return r.doneOn}},{k:"m",h:"담당자",t:"text",f:function(r){return st(assignee(r.company).who).name}}];
   var h='<div class="hd"><div><h1>충족입사 관리</h1><p>계약시작일보다 브이워크 시작일이 늦은 입사자 · 빈 기간 업무일지 증빙'+IH("① 근태 생성 → ② 쪽지 안내 → ③ 업무일지 작성 확인 후 종결. 진행 중인 건은 내 할 일에도 ‘충족입사’로 보여요. 미진행은 브이워크 시작일이 오래돼 내 할 일에서 빠졌지만 아직 시작하지 않은 건이에요.")+'</p></div></div>'+
@@ -18974,8 +18980,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v234 — 입사 확정 대기 정리(테스트 · 지운 요청 · 중복 · 이미 등록 · 오래 지남 → 확인 필요) · 전달됨 기준 · 보고 제외 구분 3개 (SQL v234) (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v234";APP_VER_ON="11/04";APP_NOTE="채용 대시보드 · 입사 예정: 테스트 · 지운 요청 · 중복 · 이미 등록된 사람 정리(확인 필요로 따로) · 이력서 전달 기준 맞춤 · 보고 제외 구분(장기대기 · 대체 불가 직무 · 헤드헌팅)";
+/* v235 — 입퇴사 현황 입사 기준 토글 · 담당자 전체 보기 · 충족입사 기한 지남 보기 · 근로자 삭제 때 입구서 · 근태도 · 남은 데이터 정리 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v235";APP_VER_ON="11/04";APP_NOTE="입퇴사 현황: 입사 기준(계약시작일 · 브이워크 시작일) 토글 · 담당자도 전체 보기 / 충족입사 메뉴 숫자 누르면 기한 지난 건만 / 근로자 삭제 때 입구서 대상 · 근태 기록도 함께 · 설정 › 남은 데이터 정리";
 
 /* ================================================================
    v208
@@ -20228,7 +20234,7 @@ function ioRange230(){var D=S.dash||(S.dash={q:"today",from:TODAY,to:TODAY});ret
 function ioMonth230(m){var a=m+"-01";return[a,addD(addM(a,1),-1)]}
 function ioIsMonth230(){var R=ioRange230();return R[0].slice(8)==="01"&&R[1]===ioMonth230(R[0].slice(0,7))[1]}
 function ioPerLab230(){var R=ioRange230();return ioIsMonth230()?R[0].slice(0,4)+"년 "+(+R[0].slice(5,7))+"월":R[0]===R[1]?md(R[0]):md(R[0])+" ~ "+md(R[1])}
-function ioSOK230(cid){var admin=S.role==="admin";if(admin)return scopeOK(cid);var s0=S.scope,m0=S.mgr;S.scope="mine";S.mgr="";var r=scopeOK(cid);S.scope=s0;S.mgr=m0;return r}
+function ioSOK230(cid){var admin=S.role==="admin";if(admin)return scopeOK(cid);if(S.dashTab==="io"&&S.ioScope235==="all")return true/* v235 담당자도 전체 보기 (입퇴사 현황) */;var s0=S.scope,m0=S.mgr;S.scope="mine";S.mgr="";var r=scopeOK(cid);S.scope=s0;S.mgr=m0;return r}
 /* v232 한 줄 + 말풍선 · 칩 · 충족입사 · 늦은 등록 */
 var IO_TY232={"중도퇴사":"iomid","계약만료":"ioexp","입사취소":"iocx"};
 function ioLate232(e,t1){var from=String(appSet("late_reg_from","2026-10-19")||"2026-10-19");if(!t1||!t1.start||t1.start<from)return false;var rg=String(empReg(e)||"").slice(0,10);return!!rg&&rg>t1.start}
@@ -20248,22 +20254,23 @@ function ioData230(){var R=ioRange230(),a=R[0],b=R[1],Es=DB.employments.filter(f
       if(!rp.length)(DB.rr||[]).some(function(r){if(r.status==="완료"||r.status==="취소")return false;return(r.jobs||[]).some(function(j){if(j.repl===e.id){req=r;return true}})});
       O.push({e:e,d:e.end_date,ty:e.cancelled?"입사취소":e.end_type,rp:rp,req:req})}
     /* 입사: 계약시작일 기준 (대시보드 '입사'와 같음) */
-    var t1=T[0];if(!e.cancelled&&t1&&inR(t1.start,RI[0],RI[1])/* v231 */)I.push({e:e,d:t1.start,t:t1,late:ioLate232(e,t1)});
+    var t1=T[0];if(ioBase235()==="vw"){/* v235 브이워크 시작일 기준: 한 줄 · 충족입사는 칩만 */var dv=ioInDate235(e);if(!e.cancelled&&t1&&inR(dv,RI[0],RI[1]))I.push({e:e,d:dv,t:t1,fillc:fillNeed(e),late:ioLate232(e,t1)})}else{
+    if(!e.cancelled&&t1&&inR(t1.start,RI[0],RI[1])/* v231 */)I.push({e:e,d:t1.start,t:t1,late:ioLate232(e,t1)});
     /* v232 충족입사: 브이워크 시작일이 계약시작일보다 뒤 → 브이워크 시작일에도 한 줄 (따로 셈) */
-    if(!e.cancelled&&t1&&fillNeed(e)&&inR(e.vwork_start,RI[0],RI[1]))I.push({e:e,d:e.vwork_start,t:t1,fill:true,late:ioLate232(e,t1)})});
+    if(!e.cancelled&&t1&&fillNeed(e)&&inR(e.vwork_start,RI[0],RI[1]))I.push({e:e,d:e.vwork_start,t:t1,fill:true,late:ioLate232(e,t1)})}});
   var by=function(p,q){return String(p.d).localeCompare(String(q.d))};X.sort(by);O.sort(by);I.sort(by);return{a:a,b:b,X:X,O:O,I:I}}
 function ioCnt230(L,f){var c={};L.forEach(function(o){var k=f(o)||"기타";c[k]=(c[k]||0)+1});return c}
 function ioCntTxt230(c,order){return order.filter(function(k){return c[k]}).map(function(k){return k+" "+c[k]}).concat(Object.keys(c).filter(function(k){return order.indexOf(k)<0}).map(function(k){return k+" "+c[k]})).join(" · ")}
 function ioWho230(e){var w=wk(e.worker),c=comp(e.company);return'<span class="iocos">'+esc(c?c.name:"")+'</span> <b>'+esc(w?w.name:"")+'</b>'}
 function ioHtml230(){var D=ioData230(),admin=S.role==="admin",mineV=!admin||S.scope==="mine";
   var cX=ioCnt230(D.X,function(o){return o.dec==="종료"?"종료":o.dec}),cO=ioCnt230(D.O,function(o){return o.ty}),IN=D.I.filter(function(o){return!o.fill}),FL=D.I.filter(function(o){return o.fill}),LT=D.I.filter(function(o){return o.late&&!o.fill}),cI=ioCnt230(IN,function(o){return o.e.hire_type||"신규"});
-  var h='<div class="fbar">'+(admin?'<div class="seg" role="group" aria-label="보기 범위"><button data-act="scope" data-v="mine" class="'+(S.scope==="mine"?"on":"")+'">내 담당</button><button data-act="scope" data-v="all" class="'+(S.scope==="all"?"on":"")+'">전체</button></div><select data-ch="mgr" aria-label="담당자">'+staffOpts(S.mgr,"담당자 전체")+'</select>':"")+
+  var h='<div class="fbar">'+(!admin?'<div class="seg" role="group" aria-label="보기 범위"><button data-act="io-scope" data-v="mine" class="'+(S.ioScope235!=="all"?"on":"")+'">내 담당</button><button data-act="io-scope" data-v="all" class="'+(S.ioScope235==="all"?"on":"")+'">전체</button></div>':"")/* v235 담당자도 */+(admin?'<div class="seg" role="group" aria-label="보기 범위"><button data-act="scope" data-v="mine" class="'+(S.scope==="mine"?"on":"")+'">내 담당</button><button data-act="scope" data-v="all" class="'+(S.scope==="all"?"on":"")+'">전체</button></div><select data-ch="mgr" aria-label="담당자">'+staffOpts(S.mgr,"담당자 전체")+'</select>':"")+
     '<input type="date" data-ch="dash-from" value="'+D.a+'" aria-label="시작일"><span>~</span><input type="date" data-ch="dash-to" value="'+D.b+'" aria-label="종료일">'+
     '<div class="seg" role="group" aria-label="빠른 기간">'+[["today","오늘"],["yday","어제"],["tweek","이번 주"],["lweek","저번 주"],["tmonth","이번 달"],["lmonth","저번 달"]].map(function(x){return'<button data-act="dash-q" data-v="'+x[0]+'" class="'+((S.dash||{}).q===x[0]?"on":"")+'">'+x[1]+'</button>'}).join("")+'</div>'+
     (function(){var wk=isWeek231(D.a,D.b),u=wk?"주":"달";/* v231 한 주면 한 주씩 */return'<div class="seg iomon" role="group" aria-label="한 '+u+'씩"><button data-act="io-mon" data-v="-1" aria-label="이전 '+u+'" title="이전 '+u+' 전체">◀</button><button data-act="io-mon" data-v="0" class="'+(ioIsMonth230()||wk?"on":"")+'" title="'+(wk?"월~일 한 주 · 누르면 이번 주":"1일 ~ 말일 한 달 전체 · 누르면 이번 달")+'">'+esc(wk?md(D.a)+"~"+md(addD(D.a,6)):ioIsMonth230()?ioPerLab230():"한 달씩")+'</button><button data-act="io-mon" data-v="1" aria-label="다음 '+u+'" title="다음 '+u+' 전체">▶</button></div>'})()+bizBtn231(D.a,D.b)+
-    '<span class="grow"></span><span class="small muted">'+(admin&&S.mgr?esc(st(S.mgr).name)+" 담당 기업":mineV?"내 담당 기업":"전체 기업")+'</span><button class="btn sm" data-act="io-xls">엑셀 내보내기</button></div>';
+    '<span class="grow"></span><span class="small muted">'+(admin&&S.mgr?esc(st(S.mgr).name)+" 담당 기업":(admin?mineV:S.ioScope235!=="all")?"내 담당 기업":"전체 기업")+'</span><button class="btn sm" data-act="io-xls">엑셀 내보내기</button></div>';
   h+=bizNote231(D.a,D.b);/* v231 */
-  h+='<div class="iosum"><div><b>계약만료 예정 '+D.X.length+'</b><span>'+esc(ioCntTxt230(cX,["연장","무기계약 전환","종료","미정"]))+'</span></div><div><b>퇴사 '+D.O.length+'</b><span>'+esc(ioCntTxt230(cO,["계약만료","중도퇴사","입사취소"]))+'</span></div><div><b>입사 '+IN.length+'</b><span>'+esc([ioCntTxt230(cI,["신규","대체"]),FL.length?"충족입사 "+FL.length:"",LT.length?"늦은 등록 "+LT.length:""].filter(Boolean).join(" · "))/* v232 충족입사 · 늦은 등록 따로 */+'</span></div></div>';
+  h+='<div class="iosum"><div><b>계약만료 예정 '+D.X.length+'</b><span>'+esc(ioCntTxt230(cX,["연장","무기계약 전환","종료","미정"]))+'</span></div><div><b>퇴사 '+D.O.length+'</b><span>'+esc(ioCntTxt230(cO,["계약만료","중도퇴사","입사취소"]))+'</span></div><div><b>입사 '+IN.length+'</b><span>'+esc([ioCntTxt230(cI,["신규","대체"]),FL.length?"충족입사 "+FL.length:D.I.filter(function(o){return o.fillc}).length?"충족입사 "+D.I.filter(function(o){return o.fillc}).length:"",LT.length?"늦은 등록 "+LT.length:""].filter(Boolean).join(" · "))/* v232 충족입사 · 늦은 등록 따로 */+'</span></div></div>';
   var col=function(tit,sub,L,row,empty,cnt){return'<section class="iocol"><h3>'+tit+' <span class="c">'+(cnt!=null?cnt:L.length)+'</span><small class="muted">'+sub+'</small></h3>'+(L.length?'<ol class="iolist">'+L.map(row).join("")+'</ol>':'<p class="small muted ioempty">'+empty+'</p>')+'</section>'};
   h+='<div class="iocols">'+
     col("계약만료 예정","계약 기간 끝 · 날짜순",D.X,function(o){var cls=IO_DEC230[o.dec]!=null?IO_DEC230[o.dec]:"",stp=o.st!=null?XS.map(function(s){return(o.x&&o.x.steps&&o.x.steps[s[0]]?"✓ ":"· ")+s[1]}).join("  "):"";
@@ -20273,9 +20280,9 @@ function ioHtml230(){var D=ioData230(),admin=S.role==="admin",mineV=!admin||S.sc
       var rpc=R.length?'<span class="b sm p iorpc">대체 '+esc(R[0].n)+(R[0].s?" "+md(R[0].s):"")+(R.length>1?" 외 "+(R.length-1):"")+'</span>':o.req?'<span class="small muted iorpc">대체 요청 중</span>':"";
       return ioRow232({v:o.ty==="중도퇴사"?"lea":o.ty==="입사취소"?"onb":"exp",e:o.e,d:o.d,chips:rpc+'<span class="b sm ioty '+(IO_TY232[o.ty]||"")+'">'+esc(o.ty)+'</span>',
         tip:[ioTipWho232(o.e),o.ty+" "+o.d,R.length?"대체: "+R.map(function(x){return x.n+(x.s?" ("+x.s+" 시작)":"")}).join(", "):o.req?"대체 요청 중 (채용 요청 진행 중)":"대체 없음"]})},"그달 퇴사자가 없어요")+
-    col("입사",(bizOn231(D.a,D.b)?bizLab231("in",D.a,D.b)+" · ":"")+"계약시작일 기준"+(FL.length?" · 충족입사 "+FL.length:""),D.I,function(o){var e=o.e,ty=e.hire_type||"신규",ro=ty==="대체"&&e.replaced&&emp(e.replaced),rw=ro&&wk(ro.worker),rg=String(empReg(e)).slice(0,10);
-      return ioRow232({v:"onb",e:e,d:o.d,hl:o.fill||o.late,chips:(o.fill?'<span class="b sm iofill">충족입사</span>':"")+(o.late?'<span class="b sm iolate">늦은 등록</span>':"")+'<span class="b sm iohire '+(ty==="대체"?"p":"t")+'">'+esc(ty)+'</span>',
-        tip:[ioTipWho232(e),"계약시작 "+(o.t.start||"?")+(e.vwork_start?" · 브이워크 시작 "+e.vwork_start:""),o.fill?"충족입사: 브이워크 시작일이 계약시작일보다 "+dd(o.t.start,e.vwork_start)+"일 뒤":"",o.late?"늦은 등록: "+rg+" 등록 (계약시작 "+dd(o.t.start,rg)+"일 뒤)":"",rw?rw.name+" 자리 (대체)":""]})},"그달 입사자가 없어요",IN.length)+'</div>';
+    col("입사"+ioBaseTg235(),(bizOn231(D.a,D.b)?bizLab231("in",D.a,D.b)+" · ":"")+(ioBase235()==="vw"?"브이워크 시작일 기준"+(D.I.filter(function(o){return o.fillc}).length?" · 충족입사 "+D.I.filter(function(o){return o.fillc}).length:""):"계약시작일 기준"+(FL.length?" · 충족입사 "+FL.length:"")),D.I,function(o){var e=o.e,ty=e.hire_type||"신규",ro=ty==="대체"&&e.replaced&&emp(e.replaced),rw=ro&&wk(ro.worker),rg=String(empReg(e)).slice(0,10);
+      return ioRow232({v:"onb",e:e,d:o.d,hl:o.fill||o.fillc||o.late,chips:(o.fill||o.fillc?'<span class="b sm iofill">충족입사</span>':"")+(o.late?'<span class="b sm iolate">늦은 등록</span>':"")+'<span class="b sm iohire '+(ty==="대체"?"p":"t")+'">'+esc(ty)+'</span>',
+        tip:[ioTipWho232(e),"계약시작 "+(o.t.start||"?")+(e.vwork_start?" · 브이워크 시작 "+e.vwork_start:""),o.fill||o.fillc?"충족입사: 브이워크 시작일이 계약시작일보다 "+dd(o.t.start,e.vwork_start)+"일 뒤":"",o.late?"늦은 등록: "+rg+" 등록 (계약시작 "+dd(o.t.start,rg)+"일 뒤)":"",rw?rw.name+" 자리 (대체)":""]})},"그달 입사자가 없어요",IN.length)+'</div>';
   return h}
 regAfter("v230 재직자 대시보드 탭",function(){if(S.view!=="dash")return;var m=document.getElementById("main"),hd=m&&m.querySelector(".hd");if(!hd)return;
   if(!m.querySelector(".dtabs230"))hd.insertAdjacentHTML("afterend",'<div class="tabs dtabs230" role="tablist"><button class="'+(S.dashTab!=="io"?"on":"")+'" data-act="dash-tab" data-v="now">현황</button><button class="'+(S.dashTab==="io"?"on":"")+'" data-act="dash-tab" data-v="io">입퇴사 현황</button></div>');
@@ -20293,7 +20300,7 @@ function ioXls230(){var D=ioData230(),q=function(v){return'"'+String(v==null?"":
   var HX=["번호","업체명","이름","계약시작","계약만료","결정","진행"],HO=["번호","기업","이름","퇴사일","구분","대체자","대체자 시작일"],HI=["번호","구분","기업","이름","브이워크 시작일","계약시작일","계약만료일","비고"];
   var rX=D.X.map(function(o,i){return[i+1,co(o.e),nm(o.e),o.t.start||"",o.t.end||"",o.dec,o.st!=null?o.st+"/"+XS.length:""]});
   var rO=D.O.map(function(o,i){var r=o.rp[0],w=r&&wk(r.worker);return[i+1,co(o.e),nm(o.e),o.d,o.ty,o.rp.map(function(r){return(wk(r.worker)||{}).name||""}).join(", ")||(o.req?"대체 요청 중":""),r?((termsOf(r.id)[0]||{}).start||""):""]});
-  var rI=D.I.map(function(o,i){var e=o.e;return[i+1,o.fill?"충족입사":e.hire_type||"신규",co(e),nm(e),e.vwork_start||"",o.t.start||"",o.t.end||"",o.late?"늦은 등록 ("+String(empReg(e)).slice(0,10)+" 등록)":""]});
+  var rI=D.I.map(function(o,i){var e=o.e;return[i+1,o.fill?"충족입사":(e.hire_type||"신규")+(o.fillc?" · 충족입사":""),co(e),nm(e),e.vwork_start||"",o.t.start||"",o.t.end||"",o.late?"늦은 등록 ("+String(empReg(e)).slice(0,10)+" 등록)":""]});
   var pl=ioPerLab230(),L=[[pl+" 계약만료예정"].concat(Array(HX.length-1).fill(""),[""],[pl+" 퇴사자"],Array(HO.length-1).fill(""),[""],[pl+" 입사자"]).map(q).join(","),HX.concat([""],HO,[""],HI).map(q).join(",")];
   for(var i=0;i<Math.max(rX.length,rO.length,rI.length);i++){var f=function(R,n){return R[i]||Array(n).fill("")};L.push(f(rX,HX.length).concat([""],f(rO,HO.length),[""],f(rI,HI.length)).map(q).join(","))}
   var name="VWork_입퇴사현황_"+(ioIsMonth230()?D.a.slice(0,7):D.a+"_"+D.b)+".csv";try{DLX={at:Date.now(),menu:"재직자 대시보드 · 입퇴사 현황",rows:rX.length+rO.length+rI.length,filter:D.a+"~"+D.b+(S.role==="admin"?" · "+(S.mgr?st(S.mgr).name:S.scope==="mine"?"내 담당":"전체"):" · 내 담당"),pii:true,done:false}}catch(e){}
@@ -20489,6 +20496,51 @@ function hcChkTbl234(C,rowOf){return'<table class="mini rd2tb chk234"><thead><tr
   return'<tr><td class="num">'+(x.date?esc(md(x.date)):"—")+'</td><td>'+esc(c?coShort(c.name):"—")+'</td><td><b>'+esc(x.name)+'</b></td><td class="small">'+esc(o.why)+'</td><td>'+R+'</td></tr>'}).join("")+'</tbody></table>'}
 function hcAct234(x){if(x.a)return'<button class="btn xs" data-act="in-open" data-id="'+x.a.id+'">입구서 열기</button>';if(x.r)return'<button class="btn xs" data-act="rr-go" data-id="'+x.r.id+'">채용 요청</button>';return""}
 regActs({"chk234":function(){S.rdChk234=!S.rdChk234;render()}});
+
+/* ================================================================
+   v235
+     ① 입퇴사 현황: 입사 기준 토글 [계약시작일 | 브이워크 시작일] (사람마다 기억) · 현황 탭 '입사' 숫자 · 그래프도 같은 기준
+        브이워크 시작일 기준이면 한 줄만 · 충족입사는 칩 (계약시작일 기준이면 v232처럼 충족입사 줄이 따로)
+        담당자도 [내 담당 | 전체] (관리자는 예전처럼 범위 · 담당자 고르기)
+     ② 충족입사 관리: 메뉴 숫자(기한 지난 진행 중) 누르면 그 건만 · 화면 위 '기한 지남 n건 · 보기'
+     ③ 근로자 삭제: 지운 고용 건의 입구서 대상도 삭제(예전엔 연결만 끊겨 '등록 전'으로 다시 보임) · 근태 기록도 삭제
+        (features/expiry/0042-…-02.js delPlan · delLocal · delRun)
+     ④ 관리자 › 설정 '남은 데이터 정리': 지운 채용 요청 · 지운 고용 건에 걸린 입구서 대상, 고용 건이 없는 근태 기록
+   ================================================================ */
+S.ioBase=(function(){try{return localStorage.getItem("vw_iobase235")==="vw"?"vw":"cs"}catch(e){return"cs"}})();
+S.ioScope235=S.ioScope235||"mine";
+function ioBase235(){return S.ioBase==="vw"?"vw":"cs"}
+/* 입사 날짜: 계약시작일 기준이면 1차 계약시작일 · 브이워크 기준이면 브이워크 시작일(없으면 계약시작일) */
+function ioInDate235(e){var t=termsOf(e.id)[0],cs=t&&t.start||"";return ioBase235()==="vw"?(e.vwork_start||cs):cs}
+function ioBaseTg235(){var b=ioBase235();return' <span class="seg sm iobase235" role="group" aria-label="입사 기준"><button type="button" data-act="io-base" data-v="cs" class="'+(b==="cs"?"on":"")+'" title="1차 계약시작일 날짜에 입사로 세요">계약시작일</button><button type="button" data-act="io-base" data-v="vw" class="'+(b==="vw"?"on":"")+'" title="브이워크 시작일 날짜에 입사로 세요 (없으면 계약시작일)">브이워크 시작일</button></span>'}
+regActs({
+  "io-base":function(D0){S.ioBase=D0.v==="vw"?"vw":"cs";try{localStorage.setItem("vw_iobase235",S.ioBase)}catch(e){}render()},
+  "io-scope":function(D0){S.ioScope235=D0.v==="all"?"all":"mine";render()},
+  "fm-late":function(){S.fmLate235=!S.fmLate235;render()}
+});
+/* 현황 탭: 입사 기준 안내 + 같은 토글 */
+regAfter("v235 현황 입사 기준",function(){if(S.view!=="dash"||S.dashTab==="io")return;var m=document.getElementById("main"),t=m&&[].find.call(m.querySelectorAll(".dtile"),function(d){return/^입사/.test(d.textContent.trim())});if(!t||t.querySelector(".iobase235"))return;
+  var s=t.querySelector("span");if(s)s.insertAdjacentHTML("beforeend",ioBaseTg235())});
+/* 메뉴 숫자 눌러 들어오면 기한 지난 것만 · 메뉴 이름을 누르면 보통 목록 */
+document.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="view"][data-v="fillm"]');if(!b)return;S.fmLate235=!!(ev.target.closest(".cnt"));if(S.fmLate235)S.fmTab="open"},true);
+regAfter("v235 충족입사 기한 지남",function(){if(S.view!=="fillm")return;var m=document.getElementById("main");if(!m||m.querySelector(".fmlate235"))return;var n=typeof fillLateN==="function"?fillLateN():0;if(!n&&!S.fmLate235)return;
+  var anchor=m.querySelector(".tabs")||m.querySelector(".fbar");if(!anchor)return;
+  anchor.insertAdjacentHTML("beforebegin",'<div class="chk234bar fmlate235"><span>'+(S.fmLate235?'<b>작성기한 지난 진행 중</b>만 보는 중 · 메뉴 숫자와 같은 기준':'작성기한 지난 진행 중 <b>'+n+'건</b> · 메뉴 옆 숫자')+'</span><span class="grow"></span><button type="button" class="btn xs" data-act="fm-late">'+(S.fmLate235?"전체 목록으로":"보기")+'</button></div>')});
+
+/* ---------- 관리자 › 설정: 남은 데이터 정리 ---------- */
+function orphans235(){var EM={},RQ={};DB.employments.forEach(function(e){EM[e.id]=1});(DB.rrr||[]).forEach(function(x){if(rcOf(x.req))RQ[x.id]=1});
+  var inT=(DB.intake||[]).filter(function(a){return(a.rrr&&!RQ[a.rrr])||(a.emp&&!EM[a.emp])});
+  var at=(DB.att||[]).filter(function(r){return r.emp&&!EM[r.emp]});return{intake:inT,att:at}}
+regAfter("v235 설정 남은 데이터",function(){if(S.view!=="set"||S.role!=="admin")return;var m=document.getElementById("main");if(!m||m.querySelector(".orph235"))return;var O=orphans235(),n=O.intake.length+O.att.length;
+  m.insertAdjacentHTML("beforeend",'<div class="dcard orph235" style="max-width:760px;margin-top:14px"><div class="dcard-h"><b>남은 데이터 정리</b><span class="small muted">지운 채용 요청 · 근로자 · 고용 건에 걸려 있던 데이터 (화면 숫자에 잘못 섞일 수 있어요)</span></div>'+
+    '<div class="small" style="margin:8px 0">입구서 대상 <b>'+O.intake.length+'건</b> (지운 채용 요청 또는 지운 고용 건과 연결) · 근태 기록 <b>'+O.att.length+'건</b> (고용 건 없음)</div>'+
+    (O.intake.length?'<details><summary class="small">입구서 대상 목록</summary><ul class="small">'+O.intake.slice(0,50).map(function(a){var c=comp(a.cid);return'<li>'+esc(a.name||"")+' · '+esc(c?c.name:"기업 없음")+' · '+esc(a.cs||"")+'</li>'}).join("")+'</ul></details>':"")+
+    '<div style="margin-top:8px">'+(n?'<button type="button" class="btn sm danger" data-act="orph-del">'+n+'건 지우기</button>':'<span class="small muted">정리할 데이터가 없어요</span>')+'</div></div>')});
+regActs({"orph-del":function(){if(S.role!=="admin")return;var O=orphans235(),n=O.intake.length+O.att.length;if(!n)return;
+  askConfirm("남은 데이터 정리","입구서 대상 "+O.intake.length+"건 · 근태 기록 "+O.att.length+"건을 지울까요? 되돌릴 수 없어요 (변경 이력에는 남아요)","지우기",function(){
+    var ia=O.intake.map(function(a){return a.id}),aa=O.att.map(function(r){return r.id});
+    DB.intake=DB.intake.filter(function(a){return ia.indexOf(a.id)<0});if(DB.att)DB.att=DB.att.filter(function(r){return aa.indexOf(r.id)<0});
+    logChange("app_settings","orphans","남은 데이터 정리","남은 데이터 정리","","입구서 대상 "+ia.length+"건 · 근태 기록 "+aa.length+"건 삭제","브이드림 내부");toast(n+"건을 지웠어요");render()})}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
