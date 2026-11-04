@@ -11180,7 +11180,7 @@ function ibHtml(){var L=ibItems(),me=A.me()||{};
   if(!L.length)return h+'<p class="vwmuted" style="margin:8px 0 0">지금 처리할 일이 없어요 · 운영페이지에서 기관 경유 전달 · 수급 요청 · 추천 보류가 생기면 여기에 떠요</p>';
   return h+'<div style="margin-top:6px">'+L.map(function(x){return'<div class="vwr"><span class="vwchip '+x.chip[1]+'">'+x.chip[0]+'</span><span class="vwt">'+x.tx+'</span><span class="vwmuted">'+(x.who?E(A.stName(x.who)||""):"")+'</span>'+dLab(x.due)+ibBtns(x)+'</div>'}).join("")+'</div>'}
 var IBBOX=["p-dashboard","p-actions"];
-function ibPaint(force){IBBOX.forEach(function(pid){var pg=document.getElementById(pid);if(!pg)return;var b=document.getElementById("vwib-"+pid);if(!b){b=document.createElement("div");b.id="vwib-"+pid;b.className="vwb vwib";var first=pg.querySelector(".page-header,.ph,h1,h2");pg.insertBefore(b,first&&first.parentNode===pg?first.nextSibling:pg.firstChild)}
+function ibPaint(force){IBBOX.forEach(function(pid){var pg=document.getElementById(pid);if(!pg)return;var b=document.getElementById("vwib-"+pid);if(!b){b=document.createElement("div");b.id="vwib-"+pid;b.className="vwb vwib";var first=pg.querySelector(".page-header,.ph,h1,h2");if(pid==="p-actions")pg.appendChild(b);else pg.insertBefore(b,first&&first.parentNode===pg?first.nextSibling:pg.firstChild)}
     if(!IB.d)b.innerHTML='<h4>🔗 운영페이지에서 온 일</h4><p class="vwmuted" style="margin:6px 0 0">불러오는 중…</p>'});
   return ibLoad(force).then(function(){var h=ibHtml();IBBOX.forEach(function(pid){var b=document.getElementById("vwib-"+pid);if(b)b.innerHTML=h})})}
 window.vwInboxPaint=ibPaint;
