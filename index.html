@@ -1581,6 +1581,14 @@ tr.st-ing>td.stick,tr.st-wait>td.stick{background:#fff}
 .rrsttop .rrexseg236 button{white-space:nowrap}
 .rrsttop .rrexnote236{height:28px;width:180px;font-size:12.5px;padding:2px 8px;border:1px solid var(--line,#D9D6E6);border-radius:6px}
 .indone236{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 12px;border-radius:8px;background:#EAF7F0;border:1px solid #BFE3CF;font-size:12.5px;color:#1F6B47}
+
+/* v237 입구서 전원 완료 줄 · 폴더 버튼 */
+.indone236{gap:12px}
+.indone236 .indone-acts{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto}
+.indone236 .inlk,.infold237 .inlk{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #CFC6F5;border-radius:7px;background:#fff;font-size:12.5px;color:var(--p);text-decoration:none;white-space:nowrap;cursor:pointer}
+.indone236 .inlk:hover,.infold237 .inlk:hover{background:#F4F2FB}
+.infold237{display:inline-flex;margin-left:2px}
+.infold237 .inlk{height:22px;font-size:12px}
 </style>
 </head>
 <body>
@@ -18989,8 +18997,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v236 — 보고 제외 상태 줄 · 시간 입력 고침 · 진행 중 입사 예정일 순 · 입구서 전원 완료 → 운영파트 · 입구서 알림 정리 · 근로자 DB 엑셀 화면 그대로 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v236";APP_VER_ON="11/04";APP_NOTE="채용 요청: 보고 제외를 상태 줄로 · 시간 입력이 사라지던 것 고침 / 입구서 전원 완료 → 운영파트 기업 전달 · 채용 완료 할 일 / 입구서 알림은 채용 담당에게 · 업로드 끝난 뒤 / 근로자 DB 엑셀 = 화면 목록 그대로";
+/* v237 — 사람별 입구서 알림 없앰(전원 완료 한 번 · 실패만) · 기업 입구서 폴더 버튼 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v237";APP_VER_ON="11/05";APP_NOTE="사람별 입구서 완료 알림 없앰 · 운영파트는 전원 완료 때 한 번 · 업로드 실패는 완료 처리한 사람에게 / 입구서 전원 완료 줄 · 알림에 기업 입구서 폴더 버튼";
 
 /* ================================================================
    v208
@@ -19259,6 +19267,8 @@ function nDuty(d,r){if(typeof dutyCfg!=="function")return nMe().part==="채용�
 /* v236 입구서 사람별 알림: 연결된 채용 요청의 채용 담당 · 요청 없으면 채용파트 · (예전: 기업 담당 운영파트 → 할 일 없이 알림만 가던 것) */
 function nIn236(a){var r=typeof rcReq==="function"?rcReq(a):null;if(r){var rc=rrRecruiter(r);if(rc)return rc===S.me}return((st(S.me)||{}).part||"")==="채용파트"}
 function nInJob236(a){var L=(DB.jobs||[]).filter(function(j){return j.kind==="upload_complete"&&j.ref===a.id});if(!L.length)return"";if(L.some(function(j){return j.status==="queued"||j.status==="running"}))return"wait";var last=L.slice().sort(function(x,y){return String(y.created||"").localeCompare(String(x.created||""))})[0];return last.status==="failed"?"failed":""}
+function nInFail237(a){var L=(DB.jobs||[]).filter(function(j){return j.kind==="upload_complete"&&j.ref===a.id});if(!L.length)return null;var last=L.slice().sort(function(x,y){return String(y.created||"").localeCompare(String(x.created||""))})[0];return last.status==="failed"?last:null}
+function nFold237(G){if(!G||G.type!=="hired"||!G.go||typeof inCoFolderBtn!=="function")return"";var r=rcOf(G.go.id);if(!r||!r.company)return"";var u=inCoFolder(r.company);return u?'<a class="nclk" href="'+esc(u)+'" target="_blank" rel="noopener" title="'+esc(inCoName(r.company))+' 입구서 완료 폴더 · 새 탭">폴더 ↗</a>':""}
 function nOps(cid){return cid&&assignee(cid).who===S.me}
 function nCoName(cid){var c=cid&&comp(cid);return c?c.name:""}
 function nRrCo(r){return r?((coR(r)||{}).name||r.company_label||nCoName(r.company)):""}
@@ -19285,11 +19295,10 @@ function nScan(quiet){if(!S.me||!READY)return;if(!NOTI.bootUntil)NOTI.bootUntil=
     add({id:id,gk:"ho:"+x.id,seq:x.seq,n:x.ho_n,by:x.ho_by||"",type:"ho",t:first(id,x.ho_on+" 00:00"),co:nRrCo(r),wk:"",title:"이력서 전달 받음 · "+nRrCo(r),body:(x.seq?x.seq+"차 · ":"")+(x.ho_n?x.ho_n+"명 · ":"")+(x.ho_by||""),go:{k:"rr",id:r.id,pt:"cand"}})});
   if(typeof rrHireDone==="function")(DB.rr||[]).forEach(function(r){if(!nOps(r.company))return;var o=rrHireDone(r);if(!o)return;var id="hd:"+r.id;add({id:id,gk:id,n:o.n,type:"hired",t:first(id),co:nRrCo(r),wk:"",title:"입구서 전원 완료 · "+nRrCo(r),body:"합격자 "+o.n+"명 입구서 완료 · 기업 전달 뒤 채용 완료 처리"/* v236 */,go:{k:"rr",id:r.id}})});
   /* 입구서 */
-  (DB.intake||[]).forEach(function(a){if(!nIn236(a))return;/* v236 받는 사람: 채용 요청 담당(채용파트) · 완료 파일 업로드가 끝난 뒤 */var jb=nInJob236(a);
-    if(a.completed&&jb==="failed"){add({id:"in:"+a.id+":f",gk:"in:"+a.id+":f",sub2:"실패",type:"intake",t:nts(a.done_at||stamp()),co:nCoName(a.cid),wk:a.name||"",title:"입구서 완료 파일 업로드 실패 · "+(a.name||""),body:nCoName(a.cid)+" · 입구서 창에서 다시 올려 주세요",go:{k:"intake",id:a.id}});return}
-    if(a.completed&&jb==="wait")return;
-    if(a.completed&&a.done_at)add({id:"in:"+a.id+":d",gk:"in:"+a.cid+":d:"+nts(a.done_at).slice(0,10),sub2:"완료",type:"intake",t:nts(a.done_at),co:nCoName(a.cid),wk:a.name||"",title:"입구서 완료 · "+(a.name||""),body:nCoName(a.cid),go:{k:"intake",id:a.id}});
-    else if(a.rat)add({id:"in:"+a.id+":r",gk:"in:"+a.cid+":r:"+nts(a.rat).slice(0,10),sub2:"수취",ch:a.rch||"",type:"intake",t:nts(a.rat),co:nCoName(a.cid),wk:a.name||"",title:"입구서 수취 · "+(a.name||""),body:nCoName(a.cid)+(a.rch?" · "+a.rch:""),go:{k:"intake",id:a.id}})});
+  /* v237 사람별 '입구서 완료 · 수취' 알림은 없앰 (운영파트는 '입구서 전원 완료' 한 번 · 채용파트는 내 할 일로)
+     완료 파일 업로드 실패만: [완료 처리]를 누른 사람에게 */
+  (DB.intake||[]).forEach(function(a){if(!a.completed)return;var j=nInFail237(a);if(!j||j.by!==S.me)return;
+    add({id:"in:"+a.id+":f",gk:"in:"+a.id+":f",sub2:"실패",type:"intake",t:nts(j.finished||j.created||a.done_at||stamp()),co:nCoName(a.cid),wk:a.name||"",title:"입구서 완료 파일 업로드 실패 · "+(a.name||""),body:nCoName(a.cid)+" · 입구서 창에서 다시 올려 주세요",go:{k:"intake",id:a.id}})});
   /* 고객사 요청 공유 기록 */
   (DB.memos||[]).forEach(function(m){if(m.table!=="client_request_workers"||!m.shared||m.author===me)return;var k=typeof reqwOf==="function"?reqwOf(m.tid):null,q=k&&typeof reqOf==="function"?reqOf(k.req):null,cid=q&&q.company;if(!nOps(cid))return;
     add({id:"mm:"+m.id,gk:"rs:"+m.tid,by:m.author||"",type:"reqshare",t:nts(m.at),co:nCoName(cid),wk:k&&wk(k.worker)?wk(k.worker).name:"",title:"고객사 공유 기록 · "+(k&&wk(k.worker)?wk(k.worker).name:""),body:String(m.body||"").slice(0,100)+" · "+(m.author||""),go:{k:"reqw",id:m.tid}})});
@@ -19360,7 +19369,7 @@ function nCard(G,pop){var N=nGet(),c=NCOL[G.type]||NCOL.mycase,rd=!pop&&nIsRead(
   return'<div class="ncard'+(rd?" rd":"")+(pop?" pop":"")+'" style="--c:'+c[0]+';--bg:'+c[1]+'" data-act="noti-go" data-id="'+esc(G.id)+'">'+
     '<div class="nc1">'+nTagH(G)+'<b class="ncco">'+esc(G.co||"")+'</b>'+(G.cs&&String(G.sub||"").indexOf(G.cs)<0/* v229 아래 줄에 같은 내용이면 생략 */?'<span class="nccs">'+esc(G.cs)+'</span>':"")+(G.n>1?'<button type="button" class="nccnt" data-act="noti-exp" data-id="'+esc(G.gk)+'">'+G.n+'건 '+(op?"▴":"▾")+'</button>':"")+(G.shared?'<span class="ncsh">파트 공동</span>':"")+(G.again?'<span class="ncsh">다시 알림</span>':"")+'<span class="grow"></span><span class="nctm">'+esc(nAgo(G.t))+'</span></div>'+
     '<div class="nc2">'+esc(G.main||"")+'</div>'+
-    '<div class="nc3"><span class="ncsub">'+esc(G.sub||"")+'</span><span class="ncacts" data-act="noop">'+acts+'</span></div>'+
+    '<div class="nc3"><span class="ncsub">'+esc(G.sub||"")+'</span><span class="ncacts" data-act="noop">'+nFold237(G)/* v237 입구서 전원 완료 · 기업 입구서 폴더 */+acts+'</span></div>'+
     (op?'<div class="ncitems" data-act="noop">'+G.items.slice(0,20).map(function(e){return'<div><span class="nctm">'+esc(nts(e.t).slice(5).replace("-","/"))+'</span> '+esc([e.wk,e.by,String(e.body||e.title||"").slice(0,60)].filter(Boolean).join(" · "))+'</div>'}).join("")+'</div>':"")+
     (m?'<div data-act="noop">'+nSnzMenu(G.id)+'</div>':"")+'</div>'}
 function nPopHtml(){var Q=NOTI.popQ,V=Q.slice(0,3),more=Q.length-V.length;return(more>0?'<div class="ntmore" data-act="noti-drw">+ 알림 '+more+'건 더 · 🔔 알림함에서 보기</div>':"")+V.slice().reverse().map(function(G){return nCard(G,true)}).join("")}
@@ -20593,8 +20602,8 @@ regActs({"orph-del":function(){if(S.role!=="admin")return;var O=orphans235(),n=O
 /* ---------- ④ 채용 요청 창: 입구서 진행 ---------- */
 regAfter("v236 입구서 진행",function(){if(!S.rrSel||S.rrSel==="new")return;var r=rcOf(S.rrSel),ph=document.querySelector("aside.pnl > .ph");if(!r||!ph||ph.querySelector(".inprog236"))return;var P=rrPass236(r);if(!P.length)return;
   var d=P.filter(function(o){return o.done}).length,all=d===P.length,tags=ph.querySelector(".tags");
-  if(tags)tags.insertAdjacentHTML("beforeend",'<span class="b '+(all?"ok":"")+' inprog236" title="'+esc(P.map(function(o){return(o.done?"✓ ":"· ")+(o.c.name||"")}).join("\n"))+'">입구서 '+d+'/'+P.length+'</span>');
-  if(all&&r.status!=="완료"&&r.status!=="취소"&&rrHireDone(r)){var row=ph.querySelector(".rrsttop");if(row)row.insertAdjacentHTML("afterend",'<div class="indone236"><span>최종 합격자 <b>'+P.length+'명</b> 입구서 완료 · 기업에 전달한 뒤 채용 요청을 완료해 주세요</span><span class="grow"></span><button type="button" class="btn xs pri" data-act="rr-stq" data-id="'+r.id+'" data-v="완료">채용 완료</button></div>')}});
+  if(tags)tags.insertAdjacentHTML("beforeend",'<span class="b '+(all?"ok":"")+' inprog236" title="'+esc(P.map(function(o){return(o.done?"✓ ":"· ")+(o.c.name||"")}).join("\n"))+'">입구서 '+d+'/'+P.length+'</span>'+(d&&!all&&typeof inCoFolderBtn==="function"?'<span class="infold237">'+inCoFolderBtn(r.company,"입구서 폴더")+'</span>':"")/* v237 중간 확인 · 전원 완료면 안내 줄에 */);
+  if(all&&r.status!=="완료"&&r.status!=="취소"&&rrHireDone(r)){var row=ph.querySelector(".rrsttop");if(row)row.insertAdjacentHTML("afterend",'<div class="indone236"><span>최종 합격자 <b>'+P.length+'명</b> 입구서 완료 · 기업에 전달한 뒤 채용 요청을 완료해 주세요</span><span class="grow"></span><span class="indone-acts">'+(typeof inCoFolderBtn==="function"?inCoFolderBtn(r.company):"")/* v237 기업 입구서 폴더 */+'<button type="button" class="btn xs pri" data-act="rr-stq" data-id="'+r.id+'" data-v="완료">채용 완료</button></span></div>')}});
 
 /* ---------- ⑤ 근로자 DB 엑셀 = 화면 목록 그대로 ---------- */
 function xlVis236(){var cols=(LAST&&LAST.cols||[]).filter(function(c){return c&&c.h&&(c.f||c.v)&&c.k!=="sel"&&c.k!=="chk"&&c.k!=="_chn"/* 화면에 없는 칸 */}),hid=[];try{hid=colHidden(LAST.k)||[]}catch(e){}cols=cols.filter(function(c){return hid.indexOf(c.k)<0});
@@ -20606,6 +20615,15 @@ function xlVis236(){var cols=(LAST&&LAST.cols||[]).filter(function(c){return c&&
 regAfter("v236 근로자 DB 업로드 양식 버튼",function(){if(S.view!=="wk")return;var m=document.getElementById("main"),b=m&&m.querySelector('[data-act="excel"]');if(!b||m.querySelector(".xlmig236"))return;
   b.title="지금 화면 목록 그대로 (탭 · 검색 · 필터 · 정렬 · 보이는 칸)";b.insertAdjacentHTML("afterend",' <button type="button" class="btn sm xlmig236" data-act="wk-xlmig" title="고용 건마다 한 줄 · 재직자/퇴사자 시트 · 1~8차 계약일 (관리자 데이터 업로드에 다시 올리는 양식)">업로드 양식</button>')});
 regActs({"wk-xlmig":function(){S.wkXlMig236=true;try{exportCsv()}finally{S.wkXlMig236=false}}});
+
+/* ================================================================
+   v237
+     ① 사람별 '입구서 완료 · 수취' 알림 없앰 (v236에서 받는 사람을 채용파트로 바꾼 실수 · 원래 운영파트였음)
+        운영파트 = '입구서 전원 완료' 한 번 · 채용파트 = 내 할 일(수취 · 전산 등록)
+        완료 파일 업로드 실패 알림만 [완료 처리]를 누른 사람에게 (core/9100-v212-noti.js)
+     ② 기업 입구서 폴더 버튼: 채용 요청 창 '입구서 전원 완료' 줄 [채용 완료] 왼쪽 · 진행 중이면 '입구서 m/n' 옆 · 알림 카드 '폴더 ↗'
+        (core/9330-v236.js · v214 inCoFolderBtn 그대로 · 주소 모르면 [폴더 찾기])
+   ================================================================ */
 
 /* ============ 렌더 ============ */
 function renderMain(){
