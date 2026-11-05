@@ -1636,6 +1636,14 @@ h2.rrtt238{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:1
 .bkt238 tr.bkx238 td,.bkt238 tr.bkoff238 td{color:#9A97AE}
 .vidb238{margin:0 4px;text-decoration:none}
 .xmlist .skipb238{align-self:flex-start;width:auto;display:inline-block;margin-top:2px}
+/* v239 */
+.pre238{white-space:pre-wrap}
+.need239{display:flex;gap:4px;flex-wrap:wrap}
+.need239f input,.need239f select,.need239f textarea{background:#FFF8E1!important;border-color:#F0C24B!important}
+.need239f>span{color:#9A6700}
+.disneed239{margin:0 0 8px;padding:6px 10px;border-radius:8px;background:#F4F1FF;color:#4B3FAE}
+.need239f{background:#FFF8E1!important;border-color:#F0C24B!important;box-shadow:inset 0 0 0 1px #F0C24B}
+.need239f>span:first-child,.need239f>small:first-child{color:#9A6700}
 </style>
 </head>
 <body>
@@ -8940,7 +8948,7 @@ function rrViewHtml(F){var r=F,reps=(r.replaced||[]).map(function(id){var e=emp(
     rrLine("일정","입사 "+esc(rrStart(r)||"-")+" · 마감 요청 "+esc(r.due_date?md(r.due_date):"-")+" · 요청일 "+esc(r.requested?md(r.requested):"-")+(cg&&/불가|⚠/.test(cg)?'<div style="margin-top:4px">'+cg+'</div>':""))+
     rrLine("근무 조건",(wsum?esc(wsum)+(r.wk_days&&r.day_hours?' → <b>'+rrWkLab(r)+'</b>':""):"-")+'<br>주휴 '+esc(r.weekly_off==="모름"||!r.weekly_off?"확인중":r.weekly_off)+" · 급여 "+esc(rrPay(r))+" · "+esc(r.work_type||"근무형태 미정")+(r.work_note?"("+esc(r.work_note)+")":"")+" · 계약 "+esc(r.term_months?r.term_months+"개월":"-")+(+r.probation_months?" · 수습 "+esc(r.probation_months)+"개월":""))+
     rrLine("장애 조건",esc(r.dis_level||"-")+" · 제외: "+esc((r.dis_exclude||[]).join(", ")||"없음")+" · 필수: "+esc((r.dis_require||[]).join(", ")||"없음"))+
-    rrLine("기타 · 담당",(r.extra?esc(r.extra)+" · ":"")+"채용 담당 "+esc(st(rrRecruiter(r)).name||"-")+" · 소통 담당 "+esc(r.company?st(rrComm(r)).name:"-"))+'</div>'}
+    rrLine("기타 · 담당",(r.extra?(typeof extraShort239==="function"?extraShort239(r.extra):esc(r.extra))/* v239 첫 줄 · 나머지 말풍선 */+" · ":"")+"채용 담당 "+esc(st(rrRecruiter(r)).name||"-")+" · 소통 담당 "+esc(r.company?st(rrComm(r)).name:"-"))+'</div>'}
 var _rrForm35=rrForm;rrForm=function(F,isNew){if(!isNew&&S.rrEdit!==S.rrSel)return rrViewHtml(F);return _rrForm35(F,isNew)};
 var RR_SAVE_BAR='<div class="ps wide"><div class="foot"><button class="btn pri" data-act="rr-save">요청 정보 저장</button></div></div>';
 regSection("rr",{id:"pRr35",order:3,transform:function(h){if(!S.rrSel||S.rrSel==="new")return h;var r=rcOf(S.rrSel);if(!r)return h;
@@ -17149,7 +17157,7 @@ function rr2DisTxt(r){var a=[r.dis_level||"장애정도 미정"];var x=r.dis_exc
 rrDefRecruiter=function(){return""};
 var _rrTodos182=rrTodos;rrTodos=function(){var L=_rrTodos182(),who=rr2Mgr();
   DB.rr.forEach(function(r){if(r.recruiter||rrState(r)==="완료"||r.status==="보류")return;var c=comp(r.company),lab=(c?c.name:(r.company_label||rrSheetName(r)||""))+" "+rrJobsShort(r)/* v229 간단 표시 */;
-    tdPush(L,{key:"rrasg:"+r.id,type:"rreq",cat:"채용",task:"[배정] "+lab+" · 채용 담당 정하기",worker:"",emp:"",company:r.company,base:r.requested||TODAY,auto:false,fixedDue:addD(r.requested||TODAY,1),rr:r.id,duty:"배정"},who);var o=L[L.length-1];o.assignee=who;o.proxy=false;o.orig=""});
+    tdPush(L,{key:"rrasg:"+r.id,type:"rreq",cat:"채용",task:"[배정] "+lab+" · 채용 담당 정하기",worker:"",emp:"",company:r.company,base:r.requested||TODAY,auto:false,fixedDue:addD(r.requested||TODAY,1),rr:r.id,duty:"배정"},who);var o=L[L.length-1];o.assignee=who;o.proxy=false;o.orig="";if(typeof dutyAsg238==="function")dutyAsg238(o)/* v239 업무 분장 */});
   return L};
 function rr2SetRec(id,v){var r=rcOf(id);if(!r||!rr2CanAsg())return;var b=r.recruiter||"";if(b===v)return;r.recruiter=v;logChange("recruit_requests",r.id,(coR(r)||{}).name||r.company_label||"","채용 담당",b?st(b).name:"미배정",v?st(v).name:"미배정","브이드림 내부");if(typeof RC!=="undefined"&&RC)RC.bt25=null;toast(v?"채용 담당을 "+st(v).name+"(으)로 정했어요":"채용 담당을 비웠어요");render()}
 function rr2RecHtml(r){var nm=r.recruiter?st(r.recruiter).name:"";if(!rr2CanAsg())return'<span class="b '+(nm?"":"warn")+'">채용 담당 '+esc(nm||"미배정")+'</span>';
@@ -17247,7 +17255,7 @@ function rr2View(F){var r=F,reps=(r.replaced||[]).map(function(id){var e=emp(id)
     row("급여 · 형태",esc(rr2PayTxt(r))+" · "+esc(r.work_type||"근무형태 미정")+(r.work_note?" ("+esc(r.work_note)+")":"")+" · 주휴 "+esc(r.weekly_off&&r.weekly_off!=="모름"?r.weekly_off:"확인중"),"")+
     row("계약",esc(rr2TermTxt(r)),"")+
     row("자격",'<b>'+esc(r.dis_level||"미정")+'</b>'+((r.dis_exclude||[]).length?" · "+esc(r.dis_exclude.join(", "))+" 제외":"")+((r.dis_require||[]).length?" · "+esc(r.dis_require.join(", "))+"만":""),"qual")+
-    row("추가 · 원문",(r.extra?esc(r.extra):'<span class="muted">없음</span>')+(rr2Raw(r).length?' · <button type="button" class="linkbtn small" data-act="rr2-raw">고객사 원문 보기</button>':""),"etc")+'</table></div>';
+    row("추가 · 원문",(r.extra?'<span class="pre238">'+esc(r.extra)+'</span>'/* v239 줄바꿈 */:'<span class="muted">없음</span>')+(rr2Raw(r).length?' · <button type="button" class="linkbtn small" data-act="rr2-raw">고객사 원문 보기</button>':""),"etc")+'</table></div>';
   return h}
 /* 묶음별 수정: 누른 묶음만 펼쳐서 */
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="rr-edit"]');if(b)S.rrSec=b.dataset.sec||"";var c=ev.target.closest&&ev.target.closest('[data-act="rr-ecancel"],[data-act="rr-close"]');if(c)S.rrSec=""},true);
@@ -18402,7 +18410,7 @@ function lkEnd(xid,i,why){lkSetC(xid,i,function(cc){cc.lk={st:"end",why:why,by:s
 /* 할 일 */
 var _buildTodos196=buildTodos;buildTodos=function(){var L=_buildTodos196.apply(this,arguments);try{lkPending().forEach(function(o){var r=o.r,c=o.c,M=lkMatches(c,o.x),base=String(c.final_on||c.iv_on||c.doc_on||TODAY).slice(0,10);
   tdPush(L,{key:"lkrev:"+o.x.id+":"+o.i,type:"lkrev",cat:"채용",task:"[연계 검토] "+c.name+" · "+lkCo(r)+" "+o.x.seq+"차 "+lkWhere(c)+" 불합격"+(c.why?"("+c.why+")":"")+" · 조건 맞는 요청 "+M.length+"건",worker:c.worker||"",emp:"",company:r.company,base:base,auto:false,fixedDue:addD(base<TODAY?TODAY:base,2),rr:r.id,lkx:o.x.id,lki:o.i});
-  var t=L[L.length-1];t.assignee=rrRecruiter(r)||rr2Mgr();t.proxy=false;t.orig=""})}catch(e){console.warn(e)}return L};
+  var t=L[L.length-1];t.assignee=rrRecruiter(r)||rr2Mgr();t.proxy=false;t.orig="";t.duty="불합격자 연계 검토";if(typeof dutyAsg238==="function")dutyAsg238(t)/* v239 업무 분장 */})}catch(e){console.warn(e)}return L};
 function lkBox(xid,i){var x=DB.rrr.find(function(y){return y.id===xid}),c=x&&(x.cands||[])[+i];if(!x||!c)return'<p class="hint">후보를 찾지 못했어요</p>';var r=rcOf(x.req),M=lkMatches(c,x).slice(0,8),S0=cdSrc(c,x),noRec=!c.tal&&!c.pf;
   var h='<div class="lkhd"><b>'+esc(c.name)+'</b> '+(c.phone?'<span class="num small">'+esc(c.phone)+'</span> ':"")+(S0?'<span class="b sm cdsrc '+S0.cls+'">'+esc(S0.l)+'</span> ':"")+'<span class="small muted">'+esc(lkCo(r))+' '+x.seq+'차 · '+lkWhere(c)+' 불합격'+(c.why?" · 사유 "+esc(c.why):"")+'</span></div>';
   h+='<div class="lksub">① 다른 요청에 연계 <span class="small muted">직무 · 장애 정도 · 불합격 사유 기준으로 맞는 순서 · 같은 기업은 아래로</span></div>';
@@ -19044,8 +19052,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v238 — 빈 1차 중복 막기 · 직무 합치기 · 채용 요청 제목 · 매월 기타 수당 · 원본 주고받기 기록 · 단계 건너뛰기 · 일괄 처리 · 면접 영상 · 조율 요청 업무 분장 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v238";APP_VER_ON="11/05";APP_NOTE="빈 1차가 여러 개 생기던 문제 고침 · 정리 버튼 / 같은 직무 합쳐 보기 · 채용 요청 제목 한 줄 / 급여에 매월 기타 수당(식대 · 재료비 · 기타) / 원본 서류 주고받기 기록(입사 · 퇴사, 단계 운송장과 하나로) / 입사서류 · 퇴사 서류 · 계약만료 단계 건너뛰기 / 계약만료 · 서류 일괄 처리(입력 한 번 · 미리보기) / 조율 탭 면접 영상(지원자별) / 조율 요청 채용파트 차례 = 업무 분장 / 추천에서 [테스트] · 이름 없는 인재 빼기";
+/* v239 — 업무 분장 3줄(채용 담당 배정 · 불합격자 연계 검토 · 신규입사자 정보 입력) · 추가 사항 줄바꿈 · 신규입사자 정보 입력 업무 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
+APP_VER="v239";APP_VER_ON="11/05";APP_NOTE="업무 분장에 채용 담당 배정 · 불합격자 연계 검토 · 신규입사자 정보 입력 / 채용 요청 추가 사항 줄바꿈 / 신규입사자 입력 필요 정보(주소 · 생년월일 · 연락처 · 장애 정보 · 재판정) 빠지면 채용파트 할 일 · 근로자 창 노란 칸 · 장애 재판정에서 미입력 뺌";
 
 /* ================================================================
    v208
@@ -20974,6 +20982,74 @@ function tkDuty238(t){return t.kind==="면접 일정"?"면접 조율":"조율 �
 function tkRecWho238(t,r){r=r||rcOf(t.rr);var o={duty:tkDuty238(t),rr:r?r.id:""};try{dutyAssign(o)}catch(e){o.assignee=r&&rrRecruiter(r)||PART_RR}var w=o.assignee||PART_RR;
   if(String(w).indexOf("part:")===0||String(w).indexOf("pool:")===0){var c=typeof claimWho==="function"?claimWho("t:talk:"+t.id):"";if(c)return c}return w}
 tk2Who=function(t){var w=String(tkWho(t)||"");if(w.indexOf("part:")===0)return"공동 (누구나 맡기)";if(w.indexOf("pool:")===0)return dutyStaff(w.slice(5)).map(function(id){return(st(id)||{}).name||""}).filter(Boolean).join(", ")||"공동";var s=st(w);return s&&s.name?s.name:"담당 미정"};
+
+/* ================================================================
+   v239
+     ① 업무 분장 줄 추가: 채용 담당 배정(기본 채용파트 관리자) · 불합격자 연계 검토(기본 케이스 담당) · 신규입사자 정보 입력(기본 공동)
+     ② 채용 요청 추가 사항 줄바꿈 (요청 정보 탭 전체 · 위쪽 요약은 첫 줄 + 말풍선)
+     ③ 신규입사자 정보 입력 업무
+        · 입력 필요 정보(관리자 설정 · 기본: 주소 · 생년월일 · 연락처 · 장애유형/정도 · 장애 재판정) 빠지면 채용파트 할 일
+        · 기한 = 계약시작일 · 다 채우면 자동으로 빠짐 · 예전 등록자(기준일 전)는 할 일 하나로 묶음
+        · 신규입사자 표 '입력 필요 n' · 근로자 창 빠진 칸 노란색 · 장애 재판정 목록에서 '미입력' 뺌
+   ================================================================ */
+/* ---------- ① 업무 분장 ---------- */
+(function(){if(typeof DUTIES==="undefined")return;var add=function(after,row){if(DUTIES.some(function(d){return d[0]===row[0]}))return;var i=DUTIES.findIndex(function(d){return d[0]===after});DUTIES.splice(i>=0?i+1:DUTIES.length,0,row)};
+  add("조율 요청 회신",["불합격자 연계 검토","불합격 지원자를 조건이 맞는 다른 채용 요청에 연계할지 검토"]);
+  add("입구서 수취 · 전산 등록",["신규입사자 정보 입력","주소 · 생년월일 · 연락처 · 장애 정보 · 재판정일 등 입력 필요 정보 채우기"]);
+  DUTIES.unshift(["채용 담당 배정","새 채용 요청의 채용 담당 정하기"]);
+  DUTY_DEF["채용 담당 배정"]="mgr";DUTY_DEF["불합격자 연계 검토"]="case"})();
+var _dutyAssign239=dutyAssign;dutyAssign=function(t){var c=dutyCfg(t.duty);if(c.mode==="mgr"){var m=rr2Mgr();t.assignee=m&&!absentNow(m)?m:PART_RR;t.proxy=false;t.orig="";return}return _dutyAssign239.apply(this,arguments)};
+function dutyAsg238(t){if(!t||!t.duty)return t;dutyAssign(t);if(isShared(t.assignee)){var k=claimWho("t:"+t.key);if(k){t.assignee=k;t.claimed=true}}return t}
+/* 설정 화면: '채용 담당 배정'에 '채용파트 관리자' 고르기 */
+regAfter("v239 업무 분장 관리자 고르기",function(){[].forEach.call(document.querySelectorAll('select[data-duty][data-k="mode"]'),function(s){if(s.dataset.duty!=="채용 담당 배정"||s.querySelector('option[value="mgr"]'))return;var o=document.createElement("option");o.value="mgr";o.textContent="채용파트 관리자";s.insertBefore(o,s.firstChild);if(dutyCfg("채용 담당 배정").mode==="mgr")s.value="mgr"})});
+
+/* ---------- ② 추가 사항 요약: 첫 줄 + 나머지는 말풍선 ---------- */
+function extraShort239(v){var L=String(v||"").split(/\r?\n/).map(function(x){return x.trim()}).filter(Boolean);if(L.length<=1)return esc(L[0]||"");return'<span class="tip" tabindex="0" data-tip="'+esc(L.join("\n"))+'">'+esc(L[0])+' …</span>'}
+
+/* ---------- ③ 신규입사자 정보 입력 ---------- */
+var NEED_K239=[["addr","주소"],["birth","생년월일"],["contact","연락처 (본인 · 보호자 중 하나)"],["dis","장애유형 · 장애정도 (비장애인 판정이면 판정일)"],["recheck","장애 재판정 (영구 또는 재판정일)"],["email","이메일"],["guardian_rel","보호자 관계"],["flip","브이워크 아이디"]];
+var NEED_DEF239=["addr","birth","contact","dis","recheck"];
+function needCfg239(){var v=appSet("wk_need",null);return{keys:v&&Array.isArray(v.keys)?v.keys:NEED_DEF239,since:v&&v.since||"2026-11-05"}}
+function needLab239(k){var x=NEED_K239.find(function(y){return y[0]===k});return x?x[1].replace(/ \(.*\)$/,""):k}
+function needMiss239(e){var w=e&&wk(e.worker);if(!w)return[];var z=disOf(e.id),K=needCfg239().keys,M=[],nd=!!w.non_dis,s=function(v){return!!String(v==null?"":v).trim()};
+  K.forEach(function(k){var ok=k==="addr"?s(w.addr):k==="birth"?s(w.birth):k==="contact"?(s(w.phone)||s(w.gphone)):k==="dis"?(nd?s(w.non_dis_on):(s(w.dis_type)&&s(w.dis_level))):k==="recheck"?(nd||!!(z&&(z.permanent||z.recheck))):k==="email"?s(w.email):k==="guardian_rel"?s(w.guardian_rel):k==="flip"?s(w.flip):true;if(!ok)M.push(k)});return M}
+function needEmps239(){return DB.employments.filter(function(e){if(!activeEmp(e)||e.cancelled)return false;var w=wk(e.worker);if(!w||(typeof isTestName==="function"&&isTestName(w.name)))return false;return!!termsOf(e.id)[0]})}
+function needOld239(e){return String(empReg(e)||"").slice(0,10)<needCfg239().since}
+regTodo("v239 신규입사자 정보 입력",function(L){var C=needCfg239(),old=[];if(!C.keys.length)return;
+  needEmps239().forEach(function(e){var M=needMiss239(e);if(!M.length)return;if(needOld239(e)){old.push(e);return}var w=wk(e.worker),c=comp(e.company),t1=termsOf(e.id)[0];
+    tdPush(L,{key:"wkneed:"+e.id,type:"wkneed",cat:"채용",task:"[신규입사자 정보 입력] "+w.name+" · "+(c?c.name:"")+" · 빠진 것: "+M.map(needLab239).join(", "),worker:e.worker,emp:e.id,company:e.company,base:t1.start,auto:false,fixedDue:t1.start,duty:"신규입사자 정보 입력"});dutyAsg238(L[L.length-1])});
+  if(old.length){tdPush(L,{key:"wkneed:old",type:"wkneed",cat:"채용",task:"[신규입사자 정보 입력] 예전 등록자 정보 미입력 "+old.length+"명 정리",worker:"",emp:"",company:"",base:TODAY,auto:false,fixedDue:addD(TODAY,14),duty:"신규입사자 정보 입력",old:old.map(function(e){return e.id})});dutyAsg238(L[L.length-1])}});
+function needRowHtml239(e){var w=wk(e.worker),c=comp(e.company),M=needMiss239(e),t1=termsOf(e.id)[0]||{};return'<tr><td><button class="linkbtn" data-act="need-open" data-w="'+e.worker+'">'+esc(w.name)+'</button></td><td>'+esc(c?c.name:"")+'</td><td class="num">'+esc(t1.start||"")+'</td><td>'+M.map(function(k){return'<span class="b sm warn">'+esc(needLab239(k))+'</span>'}).join(" ")+'</td></tr>'}
+regSection("todo",{id:"v239-need",order:5,at:"top",when:function(t){return!!t&&t.type==="wkneed"},html:function(t){
+  if(t.key==="wkneed:old"){var E=needEmps239().filter(function(e){return needOld239(e)&&needMiss239(e).length});
+    return'<div class="ps wide"><h3>예전 등록자 정보 미입력 '+E.length+'명</h3><p class="hint" style="margin:0 0 6px">'+esc(needCfg239().since)+' 전에 등록된 사람이에요 · 이름을 누르면 근로자 창이 열리고 빠진 칸이 노란색으로 보여요</p><table class="mini"><thead><tr><th>근로자</th><th>기업</th><th>계약시작</th><th>빠진 것</th></tr></thead><tbody>'+E.map(needRowHtml239).join("")+'</tbody></table></div>'}
+  var e=emp(t.emp);if(!e)return"";var M=needMiss239(e);
+  return'<div class="ps wide"><h3>입력 필요 정보 '+(M.length?'<span class="b sm warn">'+M.length+'개 빠짐</span>':'<span class="b sm ok">모두 입력됨</span>')+'</h3><div class="need239">'+NEED_K239.filter(function(k){return needCfg239().keys.indexOf(k[0])>=0}).map(function(k){var miss=M.indexOf(k[0])>=0;return'<span class="b sm '+(miss?"warn":"ok")+'">'+(miss?"□ ":"✓ ")+esc(needLab239(k[0]))+'</span>'}).join(" ")+'</div>'+
+    '<div style="margin-top:8px"><button class="btn sm pri" data-act="need-open" data-w="'+e.worker+'">근로자 창에서 입력 ▶</button> <span class="small muted">빠진 칸이 노란색으로 보여요 · 다 채우면 이 할 일은 자동으로 빠져요</span></div></div>'}});
+regActs({"need-open":function(D0){S.need239=D0.w;S._wmLast=D0.w;S.wkPT="person";openPanel("worker",D0.w)}});
+/* 근로자 창: 빠진 칸 노란색 */
+var NEED_LBL239={addr:["주소"],birth:["생년월일"],contact:["본인 연락처","보호자 연락처"],dis:["장애유형","장애정도"],recheck:["장애 재판정","재판정일"],email:["이메일"],guardian_rel:["보호자 관계"],flip:["브이워크 아이디"]};
+function wkPanel239(){var A=[].slice.call(document.querySelectorAll("aside.pnl"));return A.reverse().find(function(a){var k=a.querySelector(".ph .k, .ph .small, .ph div div");return/근로자 정보/.test((a.querySelector(".ph")||{}).textContent||"")})||null}
+regAfter("v239 근로자 창 빠진 칸",function(){if(!S.wm)return;var p=wkPanel239();if(!p)return;var es=empsOfW(S.wm).filter(function(e){return activeEmp(e)}),M={};es.forEach(function(e){needMiss239(e).forEach(function(k){M[k]=1})});
+  [].forEach.call(p.querySelectorAll(".need239f"),function(x){x.classList.remove("need239f")});
+  var lbs={};Object.keys(M).forEach(function(k){(NEED_LBL239[k]||[]).forEach(function(lb){lbs[lb]=1})});
+  [].forEach.call(p.querySelectorAll("span, small, label, b, div"),function(el){if(el.children.length)return;var tx=String(el.textContent||"").trim().replace(/\s*\*$/,"");if(!lbs[tx])return;var f=el.closest(".f")||el.parentElement;if(f&&f!==p)f.classList.add("need239f")});
+  var tg=p.querySelector(".ph .tags");if(tg&&Object.keys(M).length&&!tg.querySelector(".needb239"))tg.insertAdjacentHTML("beforeend",'<span class="b warn needb239 tip" tabindex="0" data-tip="'+esc(Object.keys(M).map(needLab239).join(" · ")+" · 인적정보 탭 › 수정")+'">입력 필요 '+Object.keys(M).length+'</span>')});
+/* 장애 재판정: '미입력'은 운영파트 목록에서 뺌 (채용파트 할 일) */
+var _disRows239=disRows;disRows=function(){return _disRows239.apply(this,arguments).filter(function(r){return r.sub!=="none"&&r.g!=="none"})};
+regAfter("v239 장애 재판정 미입력 안내",function(){if(S.view!=="dis")return;var m=document.querySelector("#main .tabs");if(!m||document.querySelector("#main .disneed239"))return;var n=needEmps239().filter(function(e){var w=wk(e.worker);return!(w&&w.non_dis)&&!disOf(e.id)}).length;if(!n)return;
+  m.insertAdjacentHTML("beforebegin",'<div class="disneed239 small">장애 정보 미입력 <b>'+n+'명</b> · 채용파트 할 일 (신규입사자 정보 입력)에서 처리해요</div>')});
+/* 신규입사자 표: '주소' 칸 → '입력 필요' */
+var _onbAddrTd239=onbAddrTd;onbAddrTd=function(r0){var e=onbEmpOf(r0);if(!e)return _onbAddrTd239.apply(this,arguments);var M=needMiss239(e);
+  if(!M.length)return'<td class="c"><span class="ok-t">✓</span></td>';return'<td class="c"><span class="b sm warn tip" tabindex="0" data-tip="'+esc(M.map(needLab239).join(" · ")+" · 이름을 눌러 근로자 창에서 입력")+'">입력 필요 '+M.length+'</span></td>'};
+var _onbAddrTxt239=onbAddrTxt;onbAddrTxt=function(r0){var e=onbEmpOf(r0);if(!e)return _onbAddrTxt239.apply(this,arguments);return needMiss239(e).length?"입력 필요":"입력 완료"};
+var _dtable239=dtable;dtable=function(k){var h=_dtable239.apply(this,arguments);if((k==="onb"||k==="onbp")&&typeof h==="string"){var i=h.indexOf("<thead"),j=h.indexOf("</thead>");if(i>=0&&j>i)h=h.slice(0,i)+h.slice(i,j).replace(/(<th\b[^>]*>(?:<[^>]+>)*)주소/,"$1입력 필요")+h.slice(j)}return h};
+/* 설정: 입력 필요 정보 */
+regAfter("v239 설정 입력 필요 정보",function(){if(S.view!=="set"||S.role!=="admin")return;var d=document.querySelector("#main .dutycard");if(!d||document.querySelector("#main .needset239"))return;var C=needCfg239(),ed=dutyEditable();
+  d.insertAdjacentHTML("afterend",'<div class="card dutycard needset239"><b>신규입사자 입력 필요 정보</b> <span class="small muted">빠지면 채용파트 할 일 \'신규입사자 정보 입력\' · 신규입사자 표 \'입력 필요\' · 근로자 창 노란 칸</span><div class="ochips" style="margin-top:8px">'+NEED_K239.map(function(k){var on=C.keys.indexOf(k[0])>=0;return'<label class="ochip'+(on?" on":"")+'"><input type="checkbox" data-need="'+k[0]+'"'+(on?" checked":"")+(ed?"":" disabled")+'> '+esc(k[1])+'</label>'}).join("")+'</div><div class="small" style="margin-top:8px">기준일 <input type="date" data-need-since value="'+esc(C.since)+'"'+(ed?"":" disabled")+'> <span class="muted">이 날짜 전에 등록된 사람은 할 일 하나로 묶어요</span></div></div>')});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||(t.dataset.need==null&&t.dataset.needSince==null))return;if(!dutyEditable()){toast("채용파트 관리자 · 최고관리자만 고칠 수 있어요");render();return}var C=needCfg239(),b=JSON.stringify(C);
+  if(t.dataset.need!=null){var k=t.dataset.need;C.keys=C.keys.filter(function(x){return x!==k});if(t.checked)C.keys.push(k);C.keys=NEED_K239.map(function(x){return x[0]}).filter(function(x){return C.keys.indexOf(x)>=0})}else C.since=t.value||C.since;
+  appSetPut("wk_need",{keys:C.keys,since:C.since});logChange("app_settings","wk_need","신규입사자 입력 필요 정보","설정",b,JSON.stringify(C),"브이드림 내부");if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();render()},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
