@@ -19052,8 +19052,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v240 — 장애 정보 미입력: 11/4까지 등록된 인원은 장애 재판정(운영파트)에서 그대로 관리 · 11/5부터 등록은 채용파트 할 일 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
-APP_VER="v240";APP_VER_ON="11/05";APP_NOTE="장애 재판정 '미입력'에 11/4까지 등록된 인원 다시 보임 (운영파트 관리) · 11/5부터 등록된 신규입사자만 채용파트 '신규입사자 정보 입력' 할 일";
+/* v241 — 면접 확정: 미리 채워진 날짜 · 시각도 확정 값으로 · 빈 사람 확인 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
+APP_VER="v241";APP_VER_ON="11/05";APP_NOTE="조율 요청 면접 확정: 미리 채워진 날짜 · 시각 그대로 눌러도 확정 · 날짜 · 시각 빈 지원자가 있으면 확인 한 번";
 
 /* ================================================================
    v208
@@ -19261,7 +19261,11 @@ regActs({
     var n=document.querySelector('[data-tkm="'+t.id+'"]');if(n)n.focus()},
   "tk2-fin":function(D0){var t=tkOf(D0.id);if(!t)return;
     if(t.kind==="면접 일정"&&!D0.ok){S.tk2Fin=t.id;render();return}
-    if(t.kind==="면접 일정"&&D0.ok==="1"){var P=[];(t.ck||[]).forEach(function(k){var c=(t.conf||{})[k]||{};if(c.d&&c.t)P.push(k)});if(!P.length){toast("면접 날짜와 시각을 넣거나 [시간 없이 완료]를 눌러 주세요");return}t.mode="";if(tkFix(t)){S.tk2Fin=null;tkSave();toast("면접을 확정했어요");render()}return}
+    if(t.kind==="면접 일정"&&D0.ok==="1"){[].forEach.call(document.querySelectorAll('[data-tkc^="'+t.id+'|"]'),function(i){var q=i.dataset.tkc.split("|");t.conf=Object.assign({},t.conf||{});var c=Object.assign({},t.conf[q[1]]||{});if(i.value)c[q[2]]=i.value;t.conf[q[1]]=c})/* v241 미리 채워진 날짜 · 시각도 확정 값으로 */;
+      var P=[],N=[];(t.ck||[]).forEach(function(k){var c=(t.conf||{})[k]||{};if(c.d&&c.t)P.push(k);else{var o=tkCand(t.rr,k);if(o)N.push(o.name)}});if(!P.length){toast("면접 날짜와 시각을 넣거나 [시간 없이 완료]를 눌러 주세요");return}
+      var go=function(){t.mode="";if(tkFix(t)){S.tk2Fin=null;tkSave();toast("면접을 확정했어요");render()}};
+      if(N.length&&!D0.force){askConfirm("면접 확정","날짜 · 시각이 빈 "+N.join(", ")+"님은 후보 표에 넣지 않고 확정해요. 이대로 확정할까요?","확정",go);return}/* v241 빈 사람 알림 */
+      go();return}
     var last=(t.msgs||[]).filter(function(m){return m.who!=="자동"}).slice(-1)[0];tk2Done(t,last?String(last.text).slice(0,80):"완료")},
   "tk2-finx":function(){S.tk2Fin=null;render()},
   "tk2-create":function(D0){var F=S.tkNew;if(!F)return;if(!(F.ck||[]).length&&!tkOptK(F.kind)){if(!tkOpenN(D0.rr)){toast("진행 중 지원자가 없어요 · 지원자 없이 할 이야기는 '채용 조건' 또는 '기타'로 등록해요");return}toast("대상 지원자를 한 명 이상 골라 주세요");var p=document.querySelector(".tk2pick");if(p)p.classList.add("need");return}
