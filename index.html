@@ -1620,6 +1620,22 @@ h2.rrtt238{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:1
 /* v238 면접 영상 */
 .tkvid238{margin:8px 0;padding:8px 10px;border:1px dashed #D6D4DF;border-radius:8px;background:#FAFAFC}
 .tkvr238{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px}
+/* v238 계약만료 번호 버튼 */
+.xmlist button.no{cursor:pointer;font:inherit;padding:0;border:1px solid #D6D4DF;background:#fff}
+.xmlist button.no:hover{border-color:#8B7CF6;color:#5B4BD6;background:#F4F1FF}
+.xmlist li.skip238 .no{background:#EDECF2!important;color:#8A87A0!important;border-color:#D6D4DF!important}
+.xmlist li.skip238 .lb{color:#8A87A0}
+/* v238 일괄 처리 */
+.dlg.bk238{width:min(980px,96vw)}
+.bkto238{flex-wrap:wrap}
+.bkf238{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0}
+.bkf238>b{min-width:150px}
+.bkwarn238{margin:6px 0 0;color:#B42318;font-size:13px}
+.bkt238{width:100%;border-collapse:collapse;font-size:13px}
+.bkt238 th,.bkt238 td{padding:5px 6px;border-bottom:1px solid #EEEDF3;text-align:left}
+.bkt238 tr.bkx238 td,.bkt238 tr.bkoff238 td{color:#9A97AE}
+.vidb238{margin:0 4px;text-decoration:none}
+.xmlist .skipb238{align-self:flex-start;width:auto;display:inline-block;margin-top:2px}
 </style>
 </head>
 <body>
@@ -17687,7 +17703,7 @@ function tksOf(rid){return(DB.talks||[]).filter(function(t){return t.rr===rid&&t
 function tkCands(rid){var L=[];rrRounds(rid).forEach(function(x){(x.cands||[]).forEach(function(c,i){L.push({k:x.id+":"+i,name:c.name||"",seq:x.seq,c:c,x:x,i:i})})});return L}
 function tkCand(rid,k){return tkCands(rid).find(function(o){return o.k===k})}
 function tkNames(t){return(t.ck||[]).map(function(k){var o=tkCand(t.rr,k);return o?o.name:""}).filter(Boolean)}
-function tkWho(t){var r=rcOf(t.rr);if(!r)return"";if(t.turn==="ops"||t.turn==="cw")return assignee(r.company).who||"";return rrRecruiter(r)||rr2Mgr()}
+function tkWho(t){var r=rcOf(t.rr);if(!r)return"";if(t.turn==="ops"||t.turn==="cw")return assignee(r.company).who||"";return typeof tkRecWho238==="function"?tkRecWho238(t,r):rrRecruiter(r)||rr2Mgr()/* v238 업무 분장 */}
 function tkMine(t){var w=tkWho(t);return w===S.me||(typeof sharedFor==="function"&&sharedFor(w,S.me))}
 function tkLate(t){return t.due&&t.due<TODAY&&(t.turn==="cw"||t.turn==="pw")}
 function tkTurnBadge(t){var T=TK_TURN[t.turn]||TK_TURN.ops;return'<span class="b sm tkt '+T[1]+'">'+T[0]+'</span>'+(tkLate(t)?' <span class="b sm bad">기한 지남</span>':"")}
@@ -17766,7 +17782,7 @@ var _buildTodos190=buildTodos;buildTodos=function(){var L=_buildTodos190.apply(t
   var cn=(coR(r)||{}).name||r.company_label||"",N=tkNames(t),act=t.turn==="ops"?"고객사에 연락":t.turn==="rec"?"후보자에게 확인":t.turn==="cw"?"고객사 회신 독촉":"후보자 회신 독촉";
   if(t.kind==="면접 일정"&&t.mode==="배정"&&t.turn==="rec"){var A=(t.asg||{}).L||[];act="후보자 시간 확인 ("+A.filter(function(x){return x.s==="확인"}).length+"/"+A.length+")"}
   tdPush(L,{key:"talk:"+t.id,type:"talk",cat:"채용",task:"[조율 요청] "+cn+" · "+t.kind+(N.length?" · "+N.join(", "):"")+" · "+act,worker:"",emp:"",company:r.company,base:String(t.at||TODAY).slice(0,10),auto:false,fixedDue:t.due&&!late?t.due:addD(String(((t.msgs||[]).slice(-1)[0]||{}).at||t.at||TODAY).slice(0,10),1),rr:r.id,tk:t.id});
-  var o=L[L.length-1];o.assignee=(t.turn==="ops"||t.turn==="cw")?(assignee(r.company).who||""):(rrRecruiter(r)||rr2Mgr());o.proxy=false;o.orig=""})}catch(e){console.warn(e)}return L};
+  var o=L[L.length-1];o.assignee=(t.turn==="ops"||t.turn==="cw")?(assignee(r.company).who||""):tkRecWho238(t,r)/* v238 업무 분장 */;o.proxy=false;o.orig=""})}catch(e){console.warn(e)}return L};
 var _pTodo190=pTodo;pTodo=function(t){var h=_pTodo190.apply(this,arguments);if(!h||!t||t.type!=="talk")return h;var k=tkOf(t.tk);var b='<div class="ps wide"><h3>조율 요청 '+(k?tkTurnBadge(k):"")+'</h3><div class="obt"><button class="btn pri" data-act="tk-go" data-rr="'+esc(t.rr)+'" data-id="'+esc(t.tk)+'">조율 요청 열기</button></div></div>';
   return/<\/div><\/aside>$/.test(h)?h.replace(/<\/div><\/aside>$/,b+'</div></aside>'):h.replace(/<\/aside>$/,b+'</aside>')};
 /* ---------- 동작 ---------- */
@@ -19028,8 +19044,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v238 — 빈 1차 중복 막기 · 직무 합치기 · 채용 요청 제목 · 매월 기타 수당 · 원본 주고받기 기록 · 단계 건너뛰기 · 면접 영상 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
-APP_VER="v238";APP_VER_ON="11/05";APP_NOTE="빈 1차가 여러 개 생기던 문제 고침 · 정리 버튼 / 같은 직무 합쳐 보기 · 채용 요청 제목 한 줄 / 급여에 매월 기타 수당(식대 · 재료비 · 기타) / 원본 서류 주고받기 기록 / 입사서류 · 퇴사 서류 · 계약만료 단계 건너뛰기 / 조율 요청에서 면접 영상 올리기 / 추천에서 [테스트] · 이름 없는 인재 빼기";
+/* v238 — 빈 1차 중복 막기 · 직무 합치기 · 채용 요청 제목 · 매월 기타 수당 · 원본 주고받기 기록 · 단계 건너뛰기 · 일괄 처리 · 면접 영상 · 조율 요청 업무 분장 (이전 버전 기록은 src git log · 각 core/91xx~92xx 모듈 머리말) */
+APP_VER="v238";APP_VER_ON="11/05";APP_NOTE="빈 1차가 여러 개 생기던 문제 고침 · 정리 버튼 / 같은 직무 합쳐 보기 · 채용 요청 제목 한 줄 / 급여에 매월 기타 수당(식대 · 재료비 · 기타) / 원본 서류 주고받기 기록(입사 · 퇴사, 단계 운송장과 하나로) / 입사서류 · 퇴사 서류 · 계약만료 단계 건너뛰기 / 계약만료 · 서류 일괄 처리(입력 한 번 · 미리보기) / 조율 탭 면접 영상(지원자별) / 조율 요청 채용파트 차례 = 업무 분장 / 추천에서 [테스트] · 이름 없는 인재 빼기";
 
 /* ================================================================
    v208
@@ -19309,7 +19325,7 @@ function nScan(quiet){if(!S.me||!READY)return;if(!NOTI.bootUntil)NOTI.bootUntil=
   var first=function(id,fb){if(!N.fs[id]){N.fs[id]=N._fresh?"0000-00-00 00:00":fb&&fb.slice(0,10)<TODAY?fb:NOTI.boot?(fb||nNow()):nNow();fsNew=true}return N.fs[id]};
   try{
   /* 조율 요청 */
-  (DB.talks||[]).forEach(function(t){if(t.st==="취소")return;var r=rcOf(t.rr);if(!r)return;var opsW=assignee(r.company).who,recW=rrRecruiter(r)||rr2Mgr();
+  (DB.talks||[]).forEach(function(t){if(t.st==="취소")return;var r=rcOf(t.rr);if(!r)return;var opsW=assignee(r.company).who,recW=tkRecWho238(t,r)/* v238 업무 분장 */;
     nTalkMsgs(t).forEach(function(m,mi){if(!m.by||m.by===me)return;var pt=typeof tk2Part==="function"?tk2Part(m.by):"",to=pt==="운영파트"?[recW]:pt==="채용파트"?[opsW]:[recW,opsW];if(!to.some(nIsMe))return;
       add({id:"tk:"+t.id+":"+mi+":"+nts(m.at),gk:"tk:"+t.id,kind:t.kind,by:m.by,pt:pt,type:"talk",t:nts(m.at),co:nRrCo(r),wk:(typeof tkNames==="function"?tkNames(t):[]).join(", "),title:(pt||"")+" "+m.by+"님이 기록 · "+t.kind,body:String(m.text||"").slice(0,120),go:{k:"talk",rr:t.rr,id:t.id}})})});
   /* 변경 이력: 배정 · 내 담당 */
@@ -20735,68 +20751,99 @@ function colProbe238(k,t,cols){var key=k+":"+cols.map(function(c){return c[0]}).
     (DB[k]||[]).forEach(function(o){var x=M[o.id];cols.forEach(function(c){o[c[0]]=x&&Array.isArray(x[c[1]||c[0]])?x[c[1]||c[0]]:[]});
       try{var sn=SNAP[k]&&SNAP[k][o.id];if(sn){var j=JSON.parse(sn);cols.forEach(function(c){j[c[1]||c[0]]=o[c[0]]});SNAP[k][o.id]=JSON.stringify(j)}}catch(e){}});st.ok=true;try{render()}catch(e){}},function(){});return st}
 function skipCol238(k){var t={casedocs:"case_documents",xdocs:"exit_documents",expiry:"expiry_checks"}[k];return colProbe238(k,t,[["skips",null,"json"]])}
-regAfter("v238 새 칸 확인",function(){["casedocs","xdocs","expiry"].forEach(skipCol238);colProbe238("casedocs","case_documents",[["trail",null,"json"]])});
+regAfter("v238 새 칸 확인",function(){["casedocs","xdocs","expiry"].forEach(skipCol238);trCol238("cd");trCol238("xd")});
 
 /* ---------- D 단계 건너뛰기 ---------- */
 function skAdd238(o,v){o.skips=Array.isArray(o.skips)?o.skips.slice():[];if(o.skips.indexOf(v)<0)o.skips.push(v)}
 function skRm238(o,v){if(Array.isArray(o.skips))o.skips=o.skips.filter(function(x){return x!==v})}
 function ask238(t,b,ok,fn){askConfirm(t,b,ok,fn);var c=document.querySelector("#modal .foot .btn:not(#cf-ok)");if(c)c.textContent="아니요"}
 function skHas238(o,v){return Array.isArray(o.skips)&&o.skips.indexOf(v)>=0}
-/* 입사서류 · 퇴사 서류: 뒤 단계 번호를 누르면 확인 → 사이 단계 건너뜀 */
+/* 입사서류 · 퇴사 서류: 뒤 단계 번호를 누르면 확인 → 사이 단계 건너뜀
+   · 누른 단계가 입력이 필요한 단계(원본 택배 · 운송장 / PDF 링크 / 마지막 단계 확인)면 그 단계에서 멈추고 입력을 받음
+   · 아니면 사이 단계를 건너뛴 뒤 누른 단계 버튼을 원래대로 눌러 줌 (확인 · 묶음 · 이력은 원래 흐름 그대로) */
+function docNeedIn238(m,i,n){return i===n-1||(m==="원본"&&(i===2||i===4))||(m==="PDF 모두싸인"&&i===2)}
 window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="d-step"],[data-act="xd-step"]');if(!b)return;
-  var cd=b.dataset.act==="d-step",o=(cd?DB.casedocs:DB.xdocs).find(function(x){return x.id===b.dataset.id}),i=+b.dataset.i;if(!o)return;var st=o.step||0;
+  var act=b.dataset.act,cd=act==="d-step",o=(cd?DB.casedocs:DB.xdocs).find(function(x){return x.id===b.dataset.id}),i=+b.dataset.i;if(!o)return;var st=o.step||0;
   if(i===st-1&&skHas238(o,i)){skRm238(o,i);return}/* 되돌리기: 건너뜀 표시도 풀기 */
   if(i===st&&skHas238(o,i))skRm238(o,i);if(i<=st)return;ev.stopImmediatePropagation();ev.stopPropagation();ev.preventDefault();
-  var S0=docSteps(cd?o.method:xMeth(o)),mid=[];for(var j=st;j<i;j++)mid.push((j+1)+" "+S0[j]);
-  ask238("이전 단계 건너뛰기","이전 단계 "+mid.length+"개("+mid.join(" · ")+")를 건너뛰고 '"+(i+1)+" "+S0[i]+"'을(를) 체크할까요?","예",function(){
-    o.dates=(o.dates||[]).slice();for(var j=st;j<i;j++){o.dates[j]=TODAY;skAdd238(o,j)}o.dates[i]=TODAY;o.step=i+1;
-    if(!cd){var ns=o.step>=S0.length?"완료":o.step>0?"진행 중":"요청됨";if(ns!==o.status){o.status=ns;o.done=ns==="완료"?TODAY:""}if(!o.method)o.method=xMeth(o)}
-    var e=emp(o.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,(cd?"서류 · ":"퇴사 서류 · ")+o.name,"","단계 건너뜀: "+mid.join(" · "),"브이드림 내부");
-    try{autoIng((cd?"odoc:":"xdoc:")+o.id)}catch(e2){}afterAction((cd?"odoc:":"xdoc:")+o.id,"이전 단계 "+mid.length+"개를 건너뛰었어요")})},true);
-/* 계약만료: 아직 안 한 앞 단계가 있는데 뒤 단계를 체크하면 확인 */
-window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="x-step"]');if(!b)return;var eid=b.dataset.e,k=b.dataset.k,x=xOf(eid);if(!x)return;x.steps=x.steps||{};
-  if(x.steps[k]){if(skHas238(x,k))skRm238(x,k);return}/* 체크 풀기: 건너뜀도 풀기 */
-  var L=[],seen=false;CASE_STEPS.forEach(function(s){if(s[0]===k)seen=true;if(seen)return;if(s[0]==="corp"&&x.corp==="종료")return;if(!x.steps[s[0]]&&stepAllowed(x,s[0]))L.push(s)});if(!L.length)return;
-  ev.stopImmediatePropagation();ev.stopPropagation();ev.preventDefault();var nm=CASE_STEPS.find(function(s){return s[0]===k});
-  ask238("이전 단계 건너뛰기","이전 단계 "+L.length+"개("+L.map(function(s){return s[1]}).join(" · ")+")를 건너뛰고 '"+(nm?nm[1]:k)+"'을(를) 체크할까요?","예",function(){
-    L.forEach(function(s){x.steps[s[0]]=TODAY;skAdd238(x,s[0])});var e=emp(eid),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,"계약만료 진행","","단계 건너뜀: "+L.map(function(s){return s[1]}).join(" · "),"브이드림 내부");
-    xStep(eid,k);afterAction("case:"+eid,"이전 단계 "+L.length+"개를 건너뛰었어요")})},true);
-/* 표시: 건너뛴 단계는 회색 '건너뜀' */
-regAfter("v238 건너뜀 표시",function(){[].forEach.call(document.querySelectorAll('.steps button.no[data-act]'),function(b){var ak=b.dataset.act,li=b.closest("li");if(!li||li.classList.contains("skip238"))return;var hit=false;
-  if(ak==="d-step"||ak==="xd-step"){var o=(ak==="d-step"?DB.casedocs:DB.xdocs).find(function(x){return x.id===b.dataset.id}),i=+b.dataset.i;hit=!!o&&i<(o.step||0)&&skHas238(o,i)}
-  else if(ak==="x-step"){var x=xOf(b.dataset.e);hit=!!x&&!!(x.steps||{})[b.dataset.k]&&skHas238(x,b.dataset.k)}
-  if(!hit)return;li.classList.add("skip238");b.textContent="–";var lb=li.querySelector(".lb");if(lb&&!lb.querySelector(".skipb238"))lb.insertAdjacentHTML("beforeend",' <span class="b sm skipb238">건너뜀</span>');var rt=li.querySelector(".rt");if(rt){var u=rt.querySelector("button");rt.innerHTML="";if(u)rt.appendChild(u)}})});
+  var m=cd?o.method:xMeth(o),S0=docSteps(m),mid=[],stop=docNeedIn238(m,i,S0.length);for(var j=st;j<i;j++)mid.push((j+1)+" "+S0[j]);
+  var root=b.closest(".ps")||document,ba=root.querySelector(".bundle-all"),T=[o];if(cd&&o.bundle&&(!ba||ba.checked))T=DB.casedocs.filter(function(x){return x.bundle===o.bundle&&(x.step||0)===st});
+  ask238("이전 단계 건너뛰기","이전 단계 "+mid.length+"개("+mid.join(" · ")+")를 건너뛰고 '"+(i+1)+" "+S0[i]+"' "+(stop?"단계로 갈까요? (이 단계는 입력 · 확인이 필요해서 체크하지 않고 열어 둬요)":"을(를) 체크할까요?")+(T.length>1?" · 묶음 원본 "+T.length+"건 함께":""),"예",function(){
+    T.forEach(function(d){d.dates=(d.dates||[]).slice(0,st);for(var j=st;j<i;j++){d.dates[j]=TODAY;skAdd238(d,j)}d.step=i;
+      if(!cd){var ns=d.step>0?"진행 중":"요청됨";if(ns!==d.status){d.status=ns;d.done=""}if(!d.method)d.method=m}
+      var e=emp(d.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,(cd?"서류 · ":"퇴사 서류 · ")+d.name,"","단계 건너뜀: "+mid.join(" · "),"브이드림 내부");try{autoIng((cd?"odoc:":"xdoc:")+d.id)}catch(e2){}});
+    afterAction((cd?"odoc:":"xdoc:")+o.id,"이전 단계 "+mid.length+"개를 건너뛰었어요");
+    if(!stop)setTimeout(function(){var nb=document.querySelector('button.no[data-act="'+act+'"][data-id="'+o.id+'"][data-i="'+i+'"]');if(nb&&(o.step||0)===i)nb.click()},0)})},true);
+/* 계약만료 (6단계 화면): 번호를 누르면 건너뛰기
+   · 건너뛸 수 있는 단계: ① 안내 메일 · ⑤ 결과 전달 · ⑥ 전산반영 · ③ 근로자 안내(고객사 종료일 때만)
+   · ② 고객사 결정 · ④ 최종 확정 · ③(연장 · 근로자 응답)은 값을 정하는 단계라 건너뛰지 않고 그 단계 창을 엶 */
+var XS_SKK238={0:["mail","mail"],2:["worker","worker"],4:["res","corp"],5:["erp","erp"]};/* 화면 번호 → [건너뜀 키, steps 칸] */
+function xmCanSkip238(x,k){return k===0||k===4||k===5||(k===2&&x.corp==="종료")}
+var _expBody238=expBody;expBody=function(eid){var h=_expBody238.apply(this,arguments);return typeof h==="string"?h.replace('<ol class="xmlist">','<ol class="xmlist" data-e="'+eid+'">'):h};
+regAfter("v238 계약만료 번호 버튼 · 건너뜀",function(){[].forEach.call(document.querySelectorAll("ol.xmlist[data-e]"),function(ol){var eid=ol.dataset.e,x=xOf(eid)||{steps:{}},cur=xmCur(x);
+  [].forEach.call(ol.children,function(li,j){var no=li.querySelector(".no");if(!no)return;var sk=XS_SKK238[j];
+    if(sk&&skHas238(x,sk[0])&&(x.steps||{})[sk[1]]){if(!li.classList.contains("skip238")){li.classList.add("skip238");no.textContent="–";var lb=li.querySelector(".lb");if(lb)lb.insertAdjacentHTML("beforeend",' <span class="b sm skipb238">건너뜀</span>')}return}
+    if(j>cur&&j<6&&!xmNA(x,j)&&no.tagName!=="BUTTON"){var bt=document.createElement("button");bt.type="button";bt.className="no";bt.dataset.act="xm-skip";bt.dataset.e=eid;bt.dataset.i=j;bt.title="여기까지 건너뛰기";bt.textContent=no.textContent;no.replaceWith(bt)}})})});
+regActs({"xm-skip":function(D0){var eid=D0.e,j=+D0.i,x=xOf(eid);if(!x){toast("계약만료 건을 먼저 시작해 주세요");return}x.steps=x.steps||{};var cur=xmCur(x);if(j<=cur){xmOpen(eid);return}
+  var L=[],stopAt=j;for(var k=cur;k<j;k++){if(xmNA(x,k))continue;if(xmCanSkip238(x,k))L.push(k);else{stopAt=k;break}}
+  if(!L.length){toast("'"+XS[stopAt][1]+"' 단계는 건너뛸 수 없어요 · 먼저 처리해 주세요");xmOpen(eid);return}
+  var nm=L.map(function(k){return(k+1)+" "+XS[k][1]}).join(" · ");
+  ask238("이전 단계 건너뛰기","이전 단계 "+L.length+"개("+nm+")를 건너뛰고 '"+(stopAt+1)+" "+XS[stopAt][1]+"' 단계를 열까요?"+(stopAt<j?" ('"+XS[stopAt][1]+"'은(는) 값을 정하는 단계라 건너뛸 수 없어요)":""),"예",function(){
+    L.forEach(function(k){var sk=XS_SKK238[k];x.steps[sk[1]]=TODAY;skAdd238(x,sk[0])});
+    var e=emp(eid),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,"계약만료 진행","","단계 건너뜀: "+nm,"브이드림 내부");
+    try{autoIng("case:"+eid)}catch(e2){}afterAction("exp:"+eid,"이전 단계 "+L.length+"개를 건너뛰었어요");if(xmCur(x)<6)xmOpen(eid)})}});
+/* 계약만료 되돌리기: 건너뛴 단계면 건너뜀 표시도 풀기 */
+window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="xm-undo"]');if(!b)return;var x=xOf(b.dataset.e),sk=XS_SKK238[+b.dataset.i];if(x&&sk&&skHas238(x,sk[0]))skRm238(x,sk[0])},true);
+/* 표시: 입사서류 · 퇴사 서류 건너뛴 단계는 회색 '건너뜀' */
+regAfter("v238 건너뜀 표시",function(){[].forEach.call(document.querySelectorAll('.steps button.no[data-act="d-step"],.steps button.no[data-act="xd-step"]'),function(b){var ak=b.dataset.act,li=b.closest("li");if(!li||li.classList.contains("skip238"))return;
+  var o=(ak==="d-step"?DB.casedocs:DB.xdocs).find(function(x){return x.id===b.dataset.id}),i=+b.dataset.i;if(!(o&&i<(o.step||0)&&skHas238(o,i)))return;
+  li.classList.add("skip238");b.textContent="–";var lb=li.querySelector(".lb");if(lb&&!lb.querySelector(".skipb238"))lb.insertAdjacentHTML("beforeend",' <span class="b sm skipb238">건너뜀</span>');var rt=li.querySelector(".rt");if(rt){var u=rt.querySelector("button");rt.innerHTML="";if(u)rt.appendChild(u)}})});
 
-/* ---------- C 원본 주고받기 기록 (입사서류 · 원본만) ---------- */
+/* ---------- C 원본 주고받기 기록 (입사서류 · 퇴사 서류 · 원본만) ----------
+   · 단계 ③ 서류 발송 확인 · ⑤ 고객사 발송 완료를 체크하면 그 칸의 택배사 · 운송장이 기록에 자동으로 한 줄 (예전 칸과 이중 입력 없음)
+   · 예전에 단계 칸에만 적은 택배사 · 운송장은 '예전 운송장'으로 보여 줌 */
 var TR_WHO238=["근로자","브이드림","고객사"],TR_HOW238=["택배","등기","퀵","직접 전달","기타"];
 var TR_QUICK238=[["근로자","브이드림","근로자 → 브이드림 (수취)"],["브이드림","고객사","브이드림 → 고객사 (발송)"],["고객사","브이드림","고객사 → 브이드림 (반송 · 보완)"],["브이드림","근로자","브이드림 → 근로자 (재요청)"]];
-function trCol238(){return colProbe238("casedocs","case_documents",[["trail",null,"json"]])}
-function trDocs238(c){return c.bundle?DB.casedocs.filter(function(x){return x.bundle===c.bundle&&x.method==="원본"}):[c]}
-function trList238(c){var M={},L=[];trDocs238(c).forEach(function(d){(Array.isArray(d.trail)?d.trail:[]).forEach(function(t){var k=t.id||JSON.stringify(t);if(!M[k]){M[k]=1;L.push(t)}})});return L.sort(function(a,b){return String(a.at||"")<String(b.at||"")?-1:1})}
-function trHtml238(c){var st=trCol238(),L=trList238(c),op=S.trail238===c.id,q=S.trailQ238||[];
-  var h='<div class="trail238" data-tr="'+c.id+'"><div class="trh238"><b>주고받기 기록</b> <span class="small muted">'+(L.length?L.length+"건":"아직 없음")+(c.bundle&&trDocs238(c).length>1?" · 원본 묶음 "+trDocs238(c).length+"건 함께":"")+'</span>'+(st.ok&&!op?' <button class="btn xs" data-act="tr-open" data-id="'+c.id+'">+ 기록</button>':"")+'</div>';
+function trTB238(kind){return kind==="xd"?["xdocs","exit_documents"]:["casedocs","case_documents"]}
+function trCol238(kind){var t=trTB238(kind);return colProbe238(t[0],t[1],[["trail",null,"json"]])}
+function trObj238(kind,id){return(DB[trTB238(kind)[0]]||[]).find(function(x){return x.id===id})}
+function trMeth238(kind,o){return kind==="xd"?xMeth(o):o.method}
+function trDocs238(kind,c){return kind==="cd"&&c.bundle?DB.casedocs.filter(function(x){return x.bundle===c.bundle&&x.method==="원본"}):[c]}
+function trList238(kind,c){var M={},L=[];trDocs238(kind,c).forEach(function(d){(Array.isArray(d.trail)?d.trail:[]).forEach(function(t){var k=t.id||JSON.stringify(t);if(!M[k]){M[k]=1;L.push(t)}})});return L.sort(function(a,b){return String(a.d||"")+String(a.at||"")<String(b.d||"")+String(b.at||"")?-1:1})}
+function trAdd238(kind,c,t,log){t.id=t.id||nid();t.at=t.at||stamp();t.by=t.by||S.me||"";t.byn=t.byn||(DB.staff.find(function(s){return s.id===S.me})||{}).name||"";
+  trDocs238(kind,c).forEach(function(d){d.trail=(Array.isArray(d.trail)?d.trail:[]).concat([t])});
+  if(log){var e=emp(c.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,"원본 주고받기 · "+c.name,"",t.from+" → "+t.to+(t.how?" ("+t.how+(t.trk?" "+t.trk:"")+")":""),"브이드림 내부")}}
+function trHtml238(kind,c){var st=trCol238(kind),L=trList238(kind,c),op=S.trail238===kind+":"+c.id,q=S.trailQ238||[],ds=trDocs238(kind,c),inf=c.info||{},old=!L.some(function(t){return t.auto})&&(inf.courier||inf.tracking);
+  var h='<div class="trail238" data-tr="'+kind+":"+c.id+'"><div class="trh238"><b>주고받기 기록</b> <span class="small muted">'+(L.length?L.length+"건":"아직 없음")+(ds.length>1?" · 원본 묶음 "+ds.length+"건 함께":"")+'</span>'+(st.ok&&!op?' <button class="btn xs" data-act="tr-open" data-k="'+kind+'" data-id="'+c.id+'">+ 기록</button>':"")+'</div>';
   if(!st.ok)h+='<p class="hint small">주고받기 기록을 쓰려면 SQL v238 을 실행해 주세요.</p>';
-  if(L.length)h+='<ol class="trl238">'+L.map(function(t){return'<li><span class="trd238">'+esc(md(t.d||""))+'</span><b>'+esc(t.from||"")+' → '+esc(t.to||"")+'</b>'+(t.how?' <span class="b sm">'+esc(t.how)+'</span>':"")+(t.trk?' <span class="small">운송장 '+esc(t.trk)+'</span>':"")+(t.memo?' <span class="small muted">· '+esc(t.memo)+'</span>':"")+'<span class="small muted trby238">'+esc(t.byn||"")+'</span>'+(st.ok?'<button class="linkbtn small" data-act="tr-rm" data-id="'+c.id+'" data-t="'+esc(t.id||"")+'" title="이 기록 지우기">×</button>':"")+'</li>'}).join("")+'</ol>';
+  if(old)h+='<div class="small muted" style="margin-top:4px">예전 운송장: '+esc([inf.courier,inf.tracking].filter(Boolean).join(" · "))+'</div>';
+  if(L.length)h+='<ol class="trl238">'+L.map(function(t){return'<li><span class="trd238">'+esc(md(t.d||""))+'</span><b>'+esc(t.from||"")+' → '+esc(t.to||"")+'</b>'+(t.how?' <span class="b sm">'+esc(t.how)+'</span>':"")+(t.trk?' <span class="small">운송장 '+esc(t.trk)+'</span>':"")+(t.memo?' <span class="small muted">· '+esc(t.memo)+'</span>':"")+(t.auto?' <span class="small muted">· 단계 체크</span>':"")+'<span class="small muted trby238">'+esc(t.byn||"")+'</span>'+(st.ok?'<button class="linkbtn small" data-act="tr-rm" data-k="'+kind+'" data-id="'+c.id+'" data-t="'+esc(t.id||"")+'" title="이 기록 지우기">×</button>':"")+'</li>'}).join("")+'</ol>';
   if(op){var sel=function(k,A,v){return'<select data-tr-f="'+k+'">'+A.map(function(x){return'<option'+(x===v?" selected":"")+'>'+esc(x)+'</option>'}).join("")+'</select>'};
-    h+='<div class="trf238"><div class="trq238">'+TR_QUICK238.map(function(x,i){return'<button class="btn xs'+(q[0]===x[0]&&q[1]===x[1]?" on":"")+'" data-act="tr-quick" data-id="'+c.id+'" data-i="'+i+'">'+esc(x[2])+'</button>'}).join("")+'</div>'+
+    h+='<div class="trf238"><div class="trq238">'+TR_QUICK238.map(function(x,i){return'<button class="btn xs'+(q[0]===x[0]&&q[1]===x[1]?" on":"")+'" data-act="tr-quick" data-i="'+i+'">'+esc(x[2])+'</button>'}).join("")+'</div>'+
     '<div class="trr238"><input type="date" data-tr-f="d" value="'+TODAY+'"> '+sel("from",TR_WHO238,q[0]||"근로자")+' → '+sel("to",TR_WHO238,q[1]||"브이드림")+' '+sel("how",TR_HOW238,"택배")+' <input data-tr-f="trk" placeholder="운송장번호(선택)"> <input data-tr-f="memo" placeholder="메모(선택)"></div>'+
-    '<div class="trr238"><button class="btn xs pri" data-act="tr-save" data-id="'+c.id+'">저장</button> <button class="btn xs" data-act="tr-cancel">취소</button></div></div>'}
+    '<div class="trr238"><button class="btn xs pri" data-act="tr-save" data-k="'+kind+'" data-id="'+c.id+'">저장</button> <button class="btn xs" data-act="tr-cancel">취소</button></div></div>'}
   return h+'</div>'}
-regAfter("v238 원본 주고받기 기록",function(){[].forEach.call(document.querySelectorAll("ul.steps"),function(ul){var b=ul.querySelector('button[data-act="d-step"]');if(!b)return;var c=DB.casedocs.find(function(x){return x.id===b.dataset.id});if(!c||c.method!=="원본")return;
-  var nx=ul.nextElementSibling;if(nx&&nx.classList.contains("trail238")){if(nx.dataset.tr===c.id)return;nx.remove()}ul.insertAdjacentHTML("afterend",trHtml238(c))})});
+regAfter("v238 원본 주고받기 기록",function(){[].forEach.call(document.querySelectorAll("ul.steps"),function(ul){var b=ul.querySelector('button[data-act="d-step"],button[data-act="xd-step"]');if(!b)return;var kind=b.dataset.act==="d-step"?"cd":"xd",c=trObj238(kind,b.dataset.id);
+  var nx=ul.nextElementSibling,has=nx&&nx.classList.contains("trail238");if(!c||trMeth238(kind,c)!=="원본"){if(has)nx.remove();return}
+  if(has){if(nx.dataset.tr===kind+":"+c.id)return;nx.remove()}ul.insertAdjacentHTML("afterend",trHtml238(kind,c))})});
+/* 단계 ③ · ⑤ 체크 → 기록 자동 한 줄 (그 칸의 택배사 · 운송장) · 실제로 단계가 넘어간 뒤에만 */
+var TR_PEND238=null;
+window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="d-step"],[data-act="xd-step"]');if(!b)return;var kind=b.dataset.act==="d-step"?"cd":"xd",c=trObj238(kind,b.dataset.id),i=+b.dataset.i;
+  if(!c||trMeth238(kind,c)!=="원본"||(i!==2&&i!==4)||(c.step||0)!==i)return;var root=b.closest(".pnl,.ps")||document,g=function(k){var x=root.querySelector('[data-dinfo="'+k+'"]')||document.querySelector('[data-dinfo="'+k+'"]');return x?String(x.value||"").trim():""};
+  TR_PEND238={kind:kind,id:c.id,i:i,courier:g("courier"),trk:g("tracking"),at:Date.now()}},true);
+regBefore("v238 원본 단계 → 주고받기 기록",function(){var P=TR_PEND238;if(!P)return;var c=trObj238(P.kind,P.id);if(!c||Date.now()-P.at>120000){TR_PEND238=null;return}if((c.step||0)<=P.i)return;TR_PEND238=null;
+  if(!trCol238(P.kind).ok)return;var a=P.i===2?["근로자","브이드림"]:["브이드림","고객사"];trAdd238(P.kind,c,{d:(c.dates||[])[P.i]||TODAY,from:a[0],to:a[1],how:P.courier||"",trk:P.trk||"",memo:"",auto:true},false)});
 regActs({
-  "tr-open":function(D0,el){S.trail238=el.dataset.id;S.trailQ238=null;render()},
+  "tr-open":function(D0){S.trail238=D0.k+":"+D0.id;S.trailQ238=null;render()},
   "tr-cancel":function(){S.trail238=null;render()},
   "tr-quick":function(D0,el){var x=TR_QUICK238[+el.dataset.i],f=el.closest(".trail238");S.trailQ238=[x[0],x[1]];if(f){var a=f.querySelector('[data-tr-f="from"]'),b=f.querySelector('[data-tr-f="to"]');if(a)a.value=x[0];if(b)b.value=x[1];[].forEach.call(f.querySelectorAll('[data-act="tr-quick"]'),function(y){y.classList.toggle("on",y===el)})}},
-  "tr-save":function(D0,el){var c=DB.casedocs.find(function(x){return x.id===el.dataset.id}),f=el.closest(".trail238");if(!c||!f)return;var v=function(k){var i=f.querySelector('[data-tr-f="'+k+'"]');return i?String(i.value||"").trim():""};
+  "tr-save":function(D0,el){var kind=D0.k||"cd",c=trObj238(kind,D0.id),f=el.closest(".trail238");if(!c||!f)return;var v=function(k){var i=f.querySelector('[data-tr-f="'+k+'"]');return i?String(i.value||"").trim():""};
     if(v("from")===v("to")){toast("보내는 쪽과 받는 쪽이 같아요");return}
-    var me=(DB.staff.find(function(s){return s.id===S.me})||{}).name||"",t={id:nid(),d:v("d")||TODAY,from:v("from"),to:v("to"),how:v("how"),trk:v("trk"),memo:v("memo"),by:S.me||"",byn:me,at:stamp()};
-    trDocs238(c).forEach(function(d){d.trail=(Array.isArray(d.trail)?d.trail:[]).concat([t])});
-    var e=emp(c.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,"원본 주고받기 · "+c.name,"",t.from+" → "+t.to+(t.how?" ("+t.how+(t.trk?" "+t.trk:"")+")":""),"브이드림 내부");
-    S.trail238=null;afterAction("odoc:"+c.id,"주고받기 기록을 남겼어요")},
-  "tr-rm":function(D0,el){var c=DB.casedocs.find(function(x){return x.id===el.dataset.id});if(!c)return;var tid=el.dataset.t;
-    askConfirm("기록 지우기","이 주고받기 기록을 지울까요?","지우기",function(){trDocs238(c).forEach(function(d){if(Array.isArray(d.trail))d.trail=d.trail.filter(function(t){return t.id!==tid})});
-      var e=emp(c.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,"원본 주고받기 · "+c.name,"기록 1건","지움","브이드림 내부");afterAction("odoc:"+c.id,"")})}
+    trAdd238(kind,c,{d:v("d")||TODAY,from:v("from"),to:v("to"),how:v("how"),trk:v("trk"),memo:v("memo")},true);
+    S.trail238=null;afterAction((kind==="cd"?"odoc:":"xdoc:")+c.id,"주고받기 기록을 남겼어요")},
+  "tr-rm":function(D0){var kind=D0.k||"cd",c=trObj238(kind,D0.id);if(!c)return;var tid=D0.t;
+    askConfirm("기록 지우기","이 주고받기 기록을 지울까요?","지우기",function(){trDocs238(kind,c).forEach(function(d){if(Array.isArray(d.trail))d.trail=d.trail.filter(function(t){return t.id!==tid})});
+      var e=emp(c.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,"원본 주고받기 · "+c.name,"기록 1건","지움","브이드림 내부");afterAction((kind==="cd"?"odoc:":"xdoc:")+c.id,"")})}
 });
 
 /* ---------- F 면접 영상 (조율 요청 · 면접 일정) · 웹 앱으로 바로 드라이브에 · DB 저장소 안 씀 ---------- */
@@ -20805,31 +20852,128 @@ regActs({
 GAS_DEF.video_folder="";
 var VID_MAX238=30*1024*1024;S.vidUp238=S.vidUp238||{};
 function vidOn238(){return directOn()}
-function vidList238(t){return(t.msgs||[]).filter(function(m){return m&&m.vid&&m.vid.url})}
-function vidName238(t,who,f){var r=rcOf(t.rr),cn=r&&comp(r.company)?comp(r.company).name:"기업",ext=(String(f.name||"").match(/\.([A-Za-z0-9]{2,5})$/)||[0,"mp4"])[1].toLowerCase();
-  return(cn+"_"+(who||"지원자")+"_면접영상_"+TODAY.replace(/-/g,"")+"."+ext).replace(/[\\\/:*?"<>|]/g,"_")}
-function vidHtml238(t){var L=vidList238(t),N=tkNames(t),up=S.vidUp238[t.id],cfg=String((gasCfg()||{}).video_folder||"").trim();
-  var h='<div class="tkvid238" data-vt="'+t.id+'"><div class="trh238"><b>면접 영상</b> <span class="small muted">'+(L.length?L.length+"개":"아직 없음")+' · 5분 · 30MB 까지 · 드라이브에 바로 저장</span></div>';
-  h+=L.map(function(m){var v=m.vid;return'<div class="tkvr238"><span>🎬 '+esc(v.name||"")+'</span> <span class="small muted">'+esc((v.who?v.who+" · ":"")+(m.by||"")+" · "+String(m.at||"").slice(5,16))+'</span><span class="grow"></span><a class="btn xs" href="'+esc(v.url)+'" target="_blank" rel="noopener">열기 ↗</a>'+(v.dl?' <a class="btn xs" href="'+esc(v.dl)+'" target="_blank" rel="noopener">내려받기 ↓</a>':"")+'</div>'}).join("");
+/* 면접 영상은 지원자에 붙음 (차수 후보 c.vids) · 조율 탭 맨 위 고정 칸 · 예전에 조율 카드에 올린 것도 같이 보여 줌 */
+function vidAll238(rid){var L=[];tkCands(rid).forEach(function(o){(Array.isArray(o.c.vids)?o.c.vids:[]).forEach(function(v){L.push({v:v,who:o.name,k:o.k,at:v.at||"",by:v.by||""})})});
+  (DB.talks||[]).forEach(function(t){if(t.rr!==rid)return;(t.msgs||[]).forEach(function(m){if(m&&m.vid&&m.vid.url&&!L.some(function(x){return x.v.id&&x.v.id===m.vid.id}))L.push({v:m.vid,who:m.vid.who||"",at:m.at||"",by:m.by||""})})});
+  return L.sort(function(a,b){return String(b.at).localeCompare(String(a.at))})}
+function vidCandVids238(c){return Array.isArray(c&&c.vids)?c.vids:[]}
+function vidSec238(rid){var L=vidAll238(rid),C=tkCands(rid).filter(function(o){return o.name}),up=S.vidUp238[rid],cfg=String((gasCfg()||{}).video_folder||"").trim(),sel=S.vidK238&&S.vidK238[rid];
+  var h='<div class="ps wide vidsec238"><h3>면접 영상 <span class="small muted" style="font-weight:400">'+(L.length?L.length+"개 · ":"")+'지원자별 · 30MB 까지 · 드라이브에 바로 저장 (공유 설정은 그대로)</span></h3>';
+  h+=L.map(function(o){var v=o.v;return'<div class="tkvr238"><span>🎬 <b>'+esc(o.who||"")+'</b> '+esc(v.name||"")+'</span> <span class="small muted">'+esc((o.by?o.by+" · ":"")+String(o.at||"").slice(5,16))+'</span><span class="grow"></span><a class="btn xs" href="'+esc(v.url)+'" target="_blank" rel="noopener">열기 ↗</a>'+(v.dl?' <a class="btn xs" href="'+esc(v.dl)+'" target="_blank" rel="noopener">내려받기 ↓</a>':"")+'</div>'}).join("");
   if(up)h+='<div class="small" style="margin-top:6px">⏳ 드라이브에 올리는 중… 창을 닫지 말아 주세요</div>';
   else if(!vidOn238())h+='<p class="hint small">면접 영상을 올리려면 관리자 설정 › 메일 작업기 › <b>파일 바로 올리기 · 웹 앱 주소</b>가 필요해요.</p>';
   else if(!cfg)h+='<p class="hint small">관리자 설정 › 메일 작업기 › <b>면접 영상 폴더</b>를 먼저 넣어 주세요.</p>';
-  else h+='<div class="trr238" style="margin-top:6px">'+(N.length>1?'<select data-vw="'+t.id+'">'+N.map(function(n){return'<option>'+esc(n)+'</option>'}).join("")+'</select>':"")+'<label class="btn xs pri">영상 올리기<input type="file" accept="video/*" data-vf="'+t.id+'" hidden></label></div>';
+  else if(!C.length)h+='<p class="hint small">후보 · 차수 탭에 지원자를 먼저 넣어 주세요.</p>';
+  else h+='<div class="trr238" style="margin-top:6px"><select data-vk="'+esc(rid)+'" aria-label="지원자">'+C.map(function(o){return'<option value="'+esc(o.k)+'"'+(sel===o.k?" selected":"")+'>'+esc(o.name)+' ('+o.seq+'차)</option>'}).join("")+'</select><label class="btn xs pri">영상 올리기<input type="file" accept="video/*" data-vf="'+esc(rid)+'" hidden></label></div>';
   return h+'</div>'}
-regAfter("v238 면접 영상",function(){[].forEach.call(document.querySelectorAll(".tkcard.open"),function(c){var hd=c.querySelector(".tkhd[data-id]"),t=hd&&tkOf(hd.dataset.id);if(!t||t.kind!=="면접 일정")return;
-  var o=c.querySelector(".tkvid238");if(o)o.remove();var at=c.querySelector(".tk2in")||c.querySelector(".tkin")||c.querySelector(".tkfoot");var d=document.createElement("div");d.innerHTML=vidHtml238(t);var el=d.firstChild;if(at)at.parentNode.insertBefore(el,at);else c.appendChild(el)})});
-function vidUpload238(t,who,f){if(!f)return;if(!/^video\//.test(f.type||"")&&!/\.(mp4|mov|m4v|webm|avi|mkv)$/i.test(f.name||"")){toast("영상 파일만 올릴 수 있어요");return}
+regAfter("v238 면접 영상",function(){var sec=document.querySelector("aside.pnl .tksec");if(!sec||!S.rrSel)return;var o=sec.previousElementSibling;if(o&&o.classList.contains("vidsec238"))o.remove();sec.insertAdjacentHTML("beforebegin",vidSec238(S.rrSel))});
+/* 후보 표: 영상 있는 지원자 이름 옆 🎬 */
+regAfter("v238 후보 표 영상 표시",function(){[].forEach.call(document.querySelectorAll('aside.pnl input[data-cd$="|name"]'),function(inp){var q=String(inp.dataset.cd).split("|"),x=(DB.rrr||[]).find(function(y){return y.id===q[0]}),c=x&&(x.cands||[])[+q[1]],v=vidCandVids238(c);
+  var nx=inp.nextElementSibling;if(nx&&nx.classList.contains("vidb238")){if(!v.length)nx.remove();return}if(!v.length)return;var l=v[v.length-1];inp.insertAdjacentHTML("afterend",'<a class="vidb238" href="'+esc(l.url)+'" target="_blank" rel="noopener" title="면접 영상 열기'+(v.length>1?" (최근 · 전체 "+v.length+"개는 조율 탭)":"")+'">🎬</a>')})});
+function vidUpload238(rid,ck,f){if(!f)return;if(!/^video\//.test(f.type||"")&&!/\.(mp4|mov|m4v|webm|avi|mkv)$/i.test(f.name||"")){toast("영상 파일만 올릴 수 있어요");return}
   if(f.size>VID_MAX238){toast("파일 하나는 30MB 까지예요");return}if(!vidOn238()){toast("웹 앱 주소가 없어 올릴 수 없어요 (관리자 설정)");return}
-  var r=rcOf(t.rr),cn=r&&comp(r.company)?comp(r.company).name:"",nm=vidName238(t,who,f),k="direct:video/"+Date.now()+"_"+Math.random().toString(36).slice(2,8);DIRECT_F[k]={f:f,prefix:"video"};
-  var j={id:nid(),kind:"upload_video",ref:t.id,payload:{company:cn,worker:who||"",file_name:nm,file:{path:k,name:f.name,size:f.size}},by:S.me||null,by_name:(DB.staff.find(function(s){return s.id===S.me})||{}).name||"",created:stampS()};
-  S.vidUp238[t.id]=true;render();
-  Promise.resolve(directSend(j)).then(function(res){if(!res||!res.ok)throw new Error(res&&res.error||"응답이 없어요");var R=res.result||{};
-      t.msgs=(t.msgs||[]).concat([{at:stamp(),by:j.by_name,who:"내부",text:"면접 영상 올림 · "+(R.file_name||nm),vid:{name:R.file_name||nm,url:R.url||"",dl:R.download_url||"",id:R.file_id||"",who:who||""}}]);
-      logChange("recruit_requests",t.rr,cn,"면접 영상","",(who||"")+" · "+(R.file_name||nm),"브이드림 내부");tkSave();toast("면접 영상을 드라이브에 올렸어요")},
+  var o=tkCand(rid,ck);if(!o){toast("지원자를 골라 주세요");return}var r=rcOf(rid),cn=r&&comp(r.company)?comp(r.company).name:"",who=o.name,ext=(String(f.name||"").match(/\.([A-Za-z0-9]{2,5})$/)||[0,"mp4"])[1].toLowerCase();
+  var nm=((cn||"기업")+"_"+who+"_면접영상_"+TODAY.replace(/-/g,"")+"."+ext).replace(/[\\\/:*?"<>|]/g,"_"),k="direct:video/"+Date.now()+"_"+Math.random().toString(36).slice(2,8);DIRECT_F[k]={f:f,prefix:"video"};
+  var j={id:nid(),kind:"upload_video",ref:rid,payload:{company:cn,worker:who,file_name:nm,file:{path:k,name:f.name,size:f.size}},by:S.me||null,by_name:(DB.staff.find(function(s){return s.id===S.me})||{}).name||"",created:stampS()};
+  S.vidUp238[rid]=true;render();
+  Promise.resolve(directSend(j)).then(function(res){if(!res||!res.ok)throw new Error(res&&res.error||"응답이 없어요");var R=res.result||{},c=tkCand(rid,ck);if(!c)throw new Error("지원자를 찾지 못했어요");
+      c.c.vids=vidCandVids238(c.c).concat([{name:R.file_name||nm,url:R.url||"",dl:R.download_url||"",id:R.file_id||"",at:stamp(),by:j.by_name}]);
+      logChange("recruit_requests",rid,cn,"면접 영상","",who+" · "+(R.file_name||nm),"브이드림 내부");if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();toast("면접 영상을 드라이브에 올렸어요")},
     function(e){toast("면접 영상 올리기 실패: "+String(e&&e.message||e))})
-  .then(function(){delete DIRECT_F[k];delete S.vidUp238[t.id];render()})}
-window.addEventListener("change",function(ev){var i=ev.target;if(!i||!i.dataset||!i.dataset.vf)return;var t=tkOf(i.dataset.vf);if(!t)return;var s=document.querySelector('select[data-vw="'+t.id+'"]'),N=tkNames(t);
-  vidUpload238(t,s?s.value:N[0]||"",i.files&&i.files[0]);i.value=""},true);
+  .then(function(){delete DIRECT_F[k];delete S.vidUp238[rid];render()})}
+window.addEventListener("change",function(ev){var i=ev.target;if(!i||!i.dataset)return;if(i.dataset.vk){S.vidK238=S.vidK238||{};S.vidK238[i.dataset.vk]=i.value;return}if(!i.dataset.vf)return;var rid=i.dataset.vf,s=document.querySelector('select[data-vk="'+rid+'"]');
+  vidUpload238(rid,s?s.value:"",i.files&&i.files[0]);i.value=""},true);
+
+/* ---------- H 일괄 처리 (계약만료 · 입사서류 · 퇴사 서류) ----------
+   · 계약만료 화면 선택 막대 · 내 할 일 선택 막대 → [선택한 n건 처리] → 같은 창
+   · '어디까지' 고르면: 체크만 하는 단계는 오늘 날짜로 체크 · 입력이 필요한 단계는 입력 칸 한 번 → 고른 건 전부에 같은 값
+   · 확정 전 건별 미리보기 (체크를 풀면 그 건만 빠짐) · 이미 지난 건 · 따로 처리할 건은 이유와 함께 제외 */
+S.bk238=null;
+function bkKind238(k){var m=/^(case|exp|odoc|xdoc):(.+)$/.exec(k);if(!m)return null;return{kind:m[1]==="case"||m[1]==="exp"?"exp":m[1]==="odoc"?"cd":"xd",id:m[2]}}
+function bkOpen238(keys){var G={};keys.forEach(function(k){var o=bkKind238(k);if(o)(G[o.kind]=G[o.kind]||[]).push(o.id)});var ks=Object.keys(G);if(!ks.length){toast("일괄 처리할 수 있는 건이 없어요 (계약만료 · 입사서류 · 퇴사 서류)");return}
+  S.bk238={G:G,kind:ks.length===1?ks[0]:"",to:-1,v:{corp:"",per:12,repl:"미정",wish:"수락",method:"",c2:"",t2:"",c4:"",t4:""},off:{}};bkPaint238()}
+function bkClose238(){S.bk238=null;$("#modal").innerHTML=""}
+var BK_KN238={exp:"계약만료",cd:"입사서류",xd:"퇴사 서류"};
+/* 계약만료: 건별 계획 */
+function bkExpPlan238(eid,to,V){var e=emp(eid),x=xOf(eid)||{steps:{},corp:"",wish:"",decision:""},t=xmTerm(eid,x),cur=xmCur(x),P={eid:eid,e:e,t:t,cur:cur,steps:[],why:"",res:""};
+  if(!e||e.cancelled){P.why="고용 정보 없음";return P}if(cur>=6){P.why="이미 끝난 건";return P}if(cur>to){P.why="이미 '"+XS[to][1]+"' 지남";return P}
+  var corp=x.corp||V.corp,wish=wishOf(x)||(corp&&corp!=="종료"?V.wish:"");
+  for(var k=cur;k<=to;k++){if(k===4&&corp==="종료")continue;P.steps.push(k)}
+  if(P.steps.indexOf(1)>=0){if(!V.corp){P.why="고객사 결정 값을 골라 주세요";return P}
+    if(V.corp==="연장"&&t&&t.end){var s0=addD(t.end,1),e0=extEnd(t.end,+V.per||12),t1=termsOf(eid)[0];P.ext=[s0,e0];if(t1&&!e.fte_ex&&e0>addD(addM(t1.start,24),-1)){P.why="계속근로 2년 초과 · 따로 처리";return P}}}
+  if(P.steps.indexOf(3)>=0){var fin=corp==="종료"||wish==="거절"?"종료":wish==="수락"?corp:"";if(!fin){P.why="근로자 응답이 없어 최종 확정 불가";return P}P.fin=fin;
+    if(fin!=="종료"&&!ctrMethod(e.company)&&!V.method){P.why="연장 근로계약서 진행 방식을 골라 주세요";return P}
+    P.res=fin==="종료"?"종료 확정 · 퇴사 서류 생성":fin+" 확정 · "+((t&&t.seq||0)+1)+"차"+(P.ext?" "+P.ext[0]+"~"+P.ext[1]:x.ext_start?" "+x.ext_start+"~"+(x.ext_end||""):"")}
+  else if(P.steps.indexOf(1)>=0)P.res="고객사 "+V.corp+(P.ext?" "+P.ext[0]+"~"+P.ext[1]:"");
+  return P}
+function bkExpRun238(P,V){var eid=P.eid,x=ensureX(eid);if(!x.created)x.created=TODAY;XEARLY[eid]=1;var keep=xfOpen;xfOpen=function(){};
+  try{for(var n=0;n<P.steps.length;n++){var k=P.steps[n],before=xmCur(xOf(eid));
+      if(k===0)xStep(eid,"mail",true);
+      else if(k===1){S.xcorp=V.corp;S.xmRepl=V.repl;if(P.ext){S.xext=S.xext||{};S.xext[eid]={s:P.ext[0],e:P.ext[1]}}saveCorp(eid,true);S.xcorp="";S.xmRepl=""}
+      else if(k===2){xStep(eid,"worker",true);x=xOf(eid);if(x.corp!=="종료"&&!wishOf(x)){var w=wk(emp(eid).worker);x.wish=V.wish;logChange("workers",w.id,w.name,"근로자 수락 여부","",x.wish,"근로자 요청 · 일괄")}}
+      else if(k===3){x=xOf(eid);var fin=finalOf(x);if(fin==="종료")saveDecision(eid);else{var e=emp(eid),cm=ctrMethod(e.company),m=cm||V.method;if(!cm)saveCtrMethod(e.company,m);saveDecision(eid);var nx=xOf(eid);if(nx&&nx.decision&&nx.newSeq)mkExtDoc(eid,termsOf(eid).find(function(t){return t.seq===nx.newSeq}),m)}}
+      else if(k===4)xStep(eid,"corp",true);else if(k===5)xStep(eid,"erp",true);
+      if(xmCur(xOf(eid))<=before&&!(k===2&&xOf(eid).steps.worker))return"'"+XS[k][1]+"'에서 멈춤";}}
+  catch(err){return"오류: "+String(err&&err.message||err)}finally{xfOpen=keep;S.xcorp=""}return""}
+/* 서류: 건별 계획 */
+function bkDocPlan238(kind,id,to){var o=trObj238(kind,id),P={kind:kind,id:id,o:o,steps:[],why:""};if(!o){P.why="서류 없음";return P}var m=trMeth238(kind,o),S0=docSteps(m),st=o.step||0;P.m=m;P.S0=S0;P.cur=st;
+  if(!dmOk(m)){P.why="제출 방식 확인 필요";return P}if(st>=S0.length){P.why="이미 완료";return P}if(st>to){P.why="이미 '"+S0[to]+"' 지남";return P}if(to>=S0.length){P.why="단계 수가 달라요";return P}
+  for(var j=st;j<=to;j++)P.steps.push(j);if(m==="PDF 모두싸인"&&to>=2){P.why="파일 저장은 건별로 (파일 · 링크 필요)";return P}return P}
+function bkDocRun238(P,V){var o=P.o,kind=P.kind,S0=P.S0;o.dates=(o.dates||[]).slice(0,P.cur);
+  P.steps.forEach(function(j){o.dates[j]=TODAY;if(P.m==="원본"&&(j===2||j===4)){var c=j===2?V.c2:V.c4,t=j===2?V.t2:V.t4;if(kind==="cd"&&(c||t))o.info=Object.assign({},o.info,{courier:c,tracking:t});if(trCol238(kind).ok){var a=j===2?["근로자","브이드림"]:["브이드림","고객사"];o.trail=(Array.isArray(o.trail)?o.trail:[]).concat([{id:nid(),d:TODAY,from:a[0],to:a[1],how:c||"",trk:t||"",memo:"일괄",auto:true,by:S.me||"",byn:(DB.staff.find(function(s){return s.id===S.me})||{}).name||"",at:stamp()}])}}});
+  o.step=P.steps[P.steps.length-1]+1;if(kind==="xd"){var ns=o.step>=S0.length?"완료":"진행 중";if(ns!==o.status){o.status=ns;o.done=ns==="완료"?TODAY:""}if(!o.method)o.method=P.m}
+  var e=emp(o.emp),w=e&&wk(e.worker);if(w)logChange("workers",w.id,w.name,(kind==="cd"?"서류 · ":"퇴사 서류 · ")+o.name,S0[P.cur]||"",S0[o.step-1]+" (일괄)","브이드림 내부");try{autoIng((kind==="cd"?"odoc:":"xdoc:")+o.id)}catch(e2){}return""}
+function bkPlans238(){var B=S.bk238,ids=B.G[B.kind]||[];if(B.to<0)return[];return ids.map(function(id){return B.kind==="exp"?bkExpPlan238(id,B.to,B.v):bkDocPlan238(B.kind,id,B.to)})}
+function bkPaint238(){var B=S.bk238;if(!B)return;var h='<div class="ov"><div class="dlg bk238" role="dialog" aria-modal="true"><div class="ph"><div><h2>'+(B.kind?esc(BK_KN238[B.kind])+" "+(B.G[B.kind]||[]).length+"건 일괄 처리":"일괄 처리")+'</h2></div><button class="close" data-act="bk-close" aria-label="닫기">×</button></div>';
+  if(!B.kind){h+='<div class="ps"><p style="margin:0 0 8px">종류가 섞여 있어요. 같은 종류끼리 처리해요.</p><div class="seg">'+Object.keys(B.G).map(function(k){return'<button data-act="bk-kind" data-v="'+k+'">'+BK_KN238[k]+' '+B.G[k].length+'건</button>'}).join("")+'</div></div></div></div>';$("#modal").innerHTML=h;return}
+  var V=B.v,ids=B.G[B.kind],steps,meth="";
+  if(B.kind==="exp")steps=XS.map(function(s){return s[1]});else{var M={};ids.forEach(function(id){var o=trObj238(B.kind,id);if(o)M[trMeth238(B.kind,o)||"?"]=1});var mk=Object.keys(M);
+    if(mk.length>1){h+='<div class="ps"><p style="margin:0">제출 방식이 섞여 있어요 ('+mk.map(esc).join(" · ")+') · 단계가 달라서 같은 방식끼리만 일괄로 처리할 수 있어요.</p><div class="seg" style="margin-top:8px">'+mk.map(function(m){return'<button data-act="bk-meth" data-v="'+esc(m)+'">'+esc(m)+' '+ids.filter(function(id){var o=trObj238(B.kind,id);return o&&trMeth238(B.kind,o)===m}).length+'건만</button>'}).join("")+'</div></div></div></div>';$("#modal").innerHTML=h;return}
+    meth=mk[0];steps=docSteps(meth)}
+  h+='<div class="ps"><div class="small muted" style="margin-bottom:6px">어디까지 처리할까요? (그 단계까지 모두 체크)</div><div class="seg bkto238">'+steps.map(function(s,i){return'<button data-act="bk-to" data-v="'+i+'" class="'+(B.to===i?"on":"")+'">'+(i+1)+" "+esc(s)+'</button>'}).join("")+'</div></div>';
+  var P=bkPlans238(),need=function(k){return P.some(function(p){return!B.off[p.eid||p.id]&&p.steps.indexOf(k)>=0})};
+  if(B.to>=0){var inp="";
+    if(B.kind==="exp"){var cos={};P.forEach(function(p){if(p.e&&!p.why&&!B.off[p.eid]&&(p.steps.indexOf(1)>=0||p.steps.indexOf(3)>=0))cos[p.e.company]=1});
+      if(P.some(function(p){return p.steps.indexOf(1)>=0||(p.why==="고객사 결정 값을 골라 주세요")})){inp+='<div class="bkf238"><b>② 고객사 결정</b><div class="seg">'+["연장","종료","무기계약 전환"].map(function(v){return'<button data-act="bk-v" data-k="corp" data-v="'+v+'" class="'+(V.corp===v?"on":"")+'">'+v+'</button>'}).join("")+'</div>'+
+        (V.corp==="연장"?'<span class="small muted">기간 (건마다 자기 만료일 다음 날부터)</span><div class="seg">'+[3,6,9,12].map(function(n){return'<button data-act="bk-v" data-k="per" data-v="'+n+'" class="'+(+V.per===n?"on":"")+'">'+(n===12?"1년":n+"개월")+'</button>'}).join("")+'</div>':V.corp==="종료"?'<span class="small muted">대체 채용</span><div class="seg">'+["예","아니요","미정"].map(function(v){return'<button data-act="bk-v" data-k="repl" data-v="'+v+'" class="'+(V.repl===v?"on":"")+'">'+v+'</button>'}).join("")+'</div>':"")+'</div>'}
+      if(need(2)&&V.corp!=="종료"&&P.some(function(p){var x=xOf(p.eid)||{};return p.steps.indexOf(2)>=0&&(x.corp||V.corp)!=="종료"&&!wishOf(x)}))inp+='<div class="bkf238"><b>③ 근로자 응답</b><div class="seg">'+["수락","거절"].map(function(v){return'<button data-act="bk-v" data-k="wish" data-v="'+v+'" class="'+(V.wish===v?"on":"")+'">'+v+'</button>'}).join("")+'</div></div>';
+      if(P.some(function(p){return p.fin&&p.fin!=="종료"&&!ctrMethod(p.e.company)})||P.some(function(p){return/진행 방식/.test(p.why)}))inp+='<div class="bkf238"><b>④ 연장 근로계약서 진행 방식</b> <span class="small muted">기업 DB에 없는 기업만 · 고르면 기업에 저장</span><div class="seg">'+METHODS.map(function(v){return'<button data-act="bk-v" data-k="method" data-v="'+v+'" class="'+(V.method===v?"on":"")+'">'+v+'</button>'}).join("")+'</div></div>';
+      if(Object.keys(cos).length>1)inp+='<p class="bkwarn238">고객사 결정 · 최종 확정은 <b>같은 기업 건끼리만</b> 일괄로 할 수 있어요 · 아래 표에서 한 기업만 남겨 주세요</p>';B.coBad=Object.keys(cos).length>1}
+    else if(meth==="원본"){if(need(2))inp+='<div class="bkf238"><b>③ 서류 발송 확인</b> <span class="small muted">근로자 → 브이드림 · 사람마다 운송장이 다르면 비워 두세요</span><div class="trr238"><input data-bk="c2" value="'+esc(V.c2)+'" placeholder="택배사(선택)"><input data-bk="t2" value="'+esc(V.t2)+'" placeholder="운송장번호(선택)"></div></div>';
+      if(need(4))inp+='<div class="bkf238"><b>⑤ 고객사 발송 완료</b> <span class="small muted">브이드림 → 고객사 · 한 번에 보냈으면 같은 운송장</span><div class="trr238"><input data-bk="c4" value="'+esc(V.c4)+'" placeholder="택배사"><input data-bk="t4" value="'+esc(V.t4)+'" placeholder="운송장번호"></div></div>'}
+    if(inp)h+='<div class="ps">'+inp+'</div>';
+    var ok=P.filter(function(p){return!p.why&&!B.off[p.eid||p.id]});
+    h+='<div class="ps"><table class="bkt238"><thead><tr><th></th><th>근로자</th><th>기업</th><th>'+(B.kind==="exp"?"만료일":"서류")+'</th><th>지금</th><th>처리</th><th>결과 · 제외 이유</th></tr></thead><tbody>'+P.map(function(p){var key=p.eid||p.id,e=B.kind==="exp"?p.e:p.o&&emp(p.o.emp),w=e&&wk(e.worker),c=e&&comp(e.company),SN=B.kind==="exp"?XS.map(function(s){return s[1]}):p.S0||[];
+      return'<tr class="'+(p.why?"bkx238":B.off[key]?"bkoff238":"")+'"><td><input type="checkbox" data-bkon="'+key+'"'+(p.why?" disabled":B.off[key]?"":" checked")+'></td><td>'+esc(w?w.name:"")+'</td><td>'+esc(c?c.name:"")+'</td><td class="num">'+esc(B.kind==="exp"?(p.t&&p.t.end||""):(p.o&&p.o.name||""))+'</td><td>'+esc(p.cur>=SN.length?"완료":SN[p.cur]||"")+'</td><td class="small">'+esc(p.why?"—":p.steps.map(function(k){return(k+1)+" "+SN[k]}).join(" → "))+'</td><td class="small">'+(p.why?'<span class="b sm bad">'+esc(p.why)+'</span>':esc(p.res||"체크"))+'</td></tr>'}).join("")+'</tbody></table></div>';
+    h+='<div class="ps foot"><span class="small muted">처리 '+ok.length+'건 · 제외 '+(P.length-ok.length)+'건</span><span class="grow"></span><button class="btn" data-act="bk-close">취소</button><button class="btn pri" data-act="bk-run"'+(ok.length&&!B.coBad?"":" disabled")+'>'+ok.length+'건 처리</button></div>'}
+  else h+='<div class="ps foot"><span class="grow"></span><button class="btn" data-act="bk-close">취소</button></div>';
+  $("#modal").innerHTML=h+'</div></div>'}
+regActs({
+  "bk-open-exp":function(){bkOpen238(Object.keys(S.bulk||{}).filter(function(k){return S.bulk[k]}).map(function(id){return"case:"+id}))},
+  "bk-open-td":function(){bkOpen238(tdPicks())},
+  "bk-close":function(){bkClose238()},
+  "bk-kind":function(D0){S.bk238.kind=D0.v;S.bk238.to=-1;bkPaint238()},
+  "bk-meth":function(D0){var B=S.bk238;B.G[B.kind]=B.G[B.kind].filter(function(id){var o=trObj238(B.kind,id);return o&&trMeth238(B.kind,o)===D0.v});bkPaint238()},
+  "bk-to":function(D0){S.bk238.to=+D0.v;bkPaint238()},
+  "bk-v":function(D0){S.bk238.v[D0.k]=D0.v;bkPaint238()},
+  "bk-run":function(){var B=S.bk238;if(!B)return;var P=bkPlans238().filter(function(p){return!p.why&&!B.off[p.eid||p.id]});if(!P.length||B.coBad)return;var V=Object.assign({},B.v),fail=[];
+    bkClose238();P.forEach(function(p){var r=B.kind==="exp"?bkExpRun238(p,V):bkDocRun238(p,V);if(r){var e=B.kind==="exp"?p.e:emp(p.o.emp);fail.push((e?wk(e.worker).name:"")+" "+r)}});
+    if(B.kind!=="exp"&&LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();
+    S.bulk={};S.tdPick={};$("#modal").innerHTML="";S.xm=null;render();toast((P.length-fail.length)+"건 일괄 처리했어요"+(fail.length?" · "+fail.length+"건은 멈춤: "+fail.slice(0,3).join(" / "):""))}
+});
+window.addEventListener("change",function(ev){var t=ev.target,B=S.bk238;if(!B||!t||!t.dataset)return;if(t.dataset.bkon){if(t.checked)delete B.off[t.dataset.bkon];else B.off[t.dataset.bkon]=1;bkPaint238();return}if(t.dataset.bk){B.v[t.dataset.bk]=String(t.value||"").trim()}},true);
+/* 진입: 계약만료 화면 선택 막대 · 내 할 일 선택 막대 */
+regAfter("v238 일괄 처리 버튼",function(){var b=document.querySelector('#main .bulk[data-spec="6"]');if(b&&!b.querySelector('[data-act="bk-open-exp"]')){var n=Object.keys(S.bulk||{}).filter(function(k){return S.bulk[k]}).length;b.className="bulk";b.innerHTML='<b>'+n+'건 선택</b><span class="small muted">입력이 필요한 단계는 한 번 입력해 고른 건 모두에 적용</span><span class="grow"></span><button class="btn sm pri" data-act="bk-open-exp">선택한 '+n+'건 처리</button><button class="x" data-act="bulk-clear">선택 해제</button>'}
+  var h=document.querySelector("#main .holdbar.on");if(h&&!h.querySelector('[data-act="bk-open-td"]')){var P=tdPicks().filter(function(k){return!!bkKind238(k)});if(P.length){var hb=h.querySelector('[data-act="td-hmany"]');var x=document.createElement("button");x.className="btn xs pri";x.dataset.act="bk-open-td";x.textContent="선택한 "+P.length+"건 처리";if(hb){hb.classList.remove("pri");hb.parentNode.insertBefore(x,hb)}else h.appendChild(x)}}});
+
+/* ---------- I 조율 요청 채용파트 차례 담당 = 업무 분장 ----------
+   · 면접 일정 → '면접 조율' 설정 · 그 밖(처우 · 입사일 · 서류 보완 · 기타) → 새 업무 '조율 요청 회신'
+   · 공동이면 채용파트 공동(누구나 [내가 맡기]) · 케이스 담당이면 그 요청 채용 담당 · 직원 지정이면 그 사람 / 여러 명이면 그 사람들 */
+(function(){if(typeof DUTIES==="undefined"||DUTIES.some(function(d){return d[0]==="조율 요청 회신"}))return;var i=DUTIES.findIndex(function(d){return d[0]==="면접 진행"});DUTIES.splice(i>=0?i+1:DUTIES.length,0,["조율 요청 회신","조율 요청(처우 · 입사일 · 서류 보완 등)에서 지원자 쪽 답 · 연락"])})();
+function tkDuty238(t){return t.kind==="면접 일정"?"면접 조율":"조율 요청 회신"}
+function tkRecWho238(t,r){r=r||rcOf(t.rr);var o={duty:tkDuty238(t),rr:r?r.id:""};try{dutyAssign(o)}catch(e){o.assignee=r&&rrRecruiter(r)||PART_RR}var w=o.assignee||PART_RR;
+  if(String(w).indexOf("part:")===0||String(w).indexOf("pool:")===0){var c=typeof claimWho==="function"?claimWho("t:talk:"+t.id):"";if(c)return c}return w}
+tk2Who=function(t){var w=String(tkWho(t)||"");if(w.indexOf("part:")===0)return"공동 (누구나 맡기)";if(w.indexOf("pool:")===0)return dutyStaff(w.slice(5)).map(function(id){return(st(id)||{}).name||""}).filter(Boolean).join(", ")||"공동";var s=st(w);return s&&s.name?s.name:"담당 미정"};
 
 /* ============ 렌더 ============ */
 function renderMain(){
