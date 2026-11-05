@@ -19052,8 +19052,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v239 — 업무 분장 3줄(채용 담당 배정 · 불합격자 연계 검토 · 신규입사자 정보 입력) · 추가 사항 줄바꿈 · 신규입사자 정보 입력 업무 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
-APP_VER="v239";APP_VER_ON="11/05";APP_NOTE="업무 분장에 채용 담당 배정 · 불합격자 연계 검토 · 신규입사자 정보 입력 / 채용 요청 추가 사항 줄바꿈 / 신규입사자 입력 필요 정보(주소 · 생년월일 · 연락처 · 장애 정보 · 재판정) 빠지면 채용파트 할 일 · 근로자 창 노란 칸 · 장애 재판정에서 미입력 뺌";
+/* v240 — 장애 정보 미입력: 11/4까지 등록된 인원은 장애 재판정(운영파트)에서 그대로 관리 · 11/5부터 등록은 채용파트 할 일 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
+APP_VER="v240";APP_VER_ON="11/05";APP_NOTE="장애 재판정 '미입력'에 11/4까지 등록된 인원 다시 보임 (운영파트 관리) · 11/5부터 등록된 신규입사자만 채용파트 '신규입사자 정보 입력' 할 일";
 
 /* ================================================================
    v208
@@ -20989,7 +20989,8 @@ tk2Who=function(t){var w=String(tkWho(t)||"");if(w.indexOf("part:")===0)return"�
      ② 채용 요청 추가 사항 줄바꿈 (요청 정보 탭 전체 · 위쪽 요약은 첫 줄 + 말풍선)
      ③ 신규입사자 정보 입력 업무
         · 입력 필요 정보(관리자 설정 · 기본: 주소 · 생년월일 · 연락처 · 장애유형/정도 · 장애 재판정) 빠지면 채용파트 할 일
-        · 기한 = 계약시작일 · 다 채우면 자동으로 빠짐 · 예전 등록자(기준일 전)는 할 일 하나로 묶음
+        · 기한 = 계약시작일 · 다 채우면 자동으로 빠짐
+        · v240 기준일(11/5) 전 등록자는 할 일 없음 · 미입력이면 장애 재판정에서 운영파트가 그대로 관리
         · 신규입사자 표 '입력 필요 n' · 근로자 창 빠진 칸 노란색 · 장애 재판정 목록에서 '미입력' 뺌
    ================================================================ */
 /* ---------- ① 업무 분장 ---------- */
@@ -21009,16 +21010,16 @@ function extraShort239(v){var L=String(v||"").split(/\r?\n/).map(function(x){ret
 /* ---------- ③ 신규입사자 정보 입력 ---------- */
 var NEED_K239=[["addr","주소"],["birth","생년월일"],["contact","연락처 (본인 · 보호자 중 하나)"],["dis","장애유형 · 장애정도 (비장애인 판정이면 판정일)"],["recheck","장애 재판정 (영구 또는 재판정일)"],["email","이메일"],["guardian_rel","보호자 관계"],["flip","브이워크 아이디"]];
 var NEED_DEF239=["addr","birth","contact","dis","recheck"];
-function needCfg239(){var v=appSet("wk_need",null);return{keys:v&&Array.isArray(v.keys)?v.keys:NEED_DEF239,since:v&&v.since||"2026-11-05"}}
+function needCfg239(){var v=appSet("wk_need",null);return{keys:v&&Array.isArray(v.keys)?v.keys:NEED_DEF239,since:v&&v.since||"2026-11-05"}/* 11/4까지 등록 = 예전 인원 */}
 function needLab239(k){var x=NEED_K239.find(function(y){return y[0]===k});return x?x[1].replace(/ \(.*\)$/,""):k}
 function needMiss239(e){var w=e&&wk(e.worker);if(!w)return[];var z=disOf(e.id),K=needCfg239().keys,M=[],nd=!!w.non_dis,s=function(v){return!!String(v==null?"":v).trim()};
   K.forEach(function(k){var ok=k==="addr"?s(w.addr):k==="birth"?s(w.birth):k==="contact"?(s(w.phone)||s(w.gphone)):k==="dis"?(nd?s(w.non_dis_on):(s(w.dis_type)&&s(w.dis_level))):k==="recheck"?(nd||!!(z&&(z.permanent||z.recheck))):k==="email"?s(w.email):k==="guardian_rel"?s(w.guardian_rel):k==="flip"?s(w.flip):true;if(!ok)M.push(k)});return M}
 function needEmps239(){return DB.employments.filter(function(e){if(!activeEmp(e)||e.cancelled)return false;var w=wk(e.worker);if(!w||(typeof isTestName==="function"&&isTestName(w.name)))return false;return!!termsOf(e.id)[0]})}
 function needOld239(e){return String(empReg(e)||"").slice(0,10)<needCfg239().since}
-regTodo("v239 신규입사자 정보 입력",function(L){var C=needCfg239(),old=[];if(!C.keys.length)return;
-  needEmps239().forEach(function(e){var M=needMiss239(e);if(!M.length)return;if(needOld239(e)){old.push(e);return}var w=wk(e.worker),c=comp(e.company),t1=termsOf(e.id)[0];
+regTodo("v239 신규입사자 정보 입력",function(L){var C=needCfg239();if(!C.keys.length)return;
+  needEmps239().forEach(function(e){if(needOld239(e))return;/* 기준일 전 등록자는 운영파트(장애 재판정)에서 관리 */var M=needMiss239(e);if(!M.length)return;var w=wk(e.worker),c=comp(e.company),t1=termsOf(e.id)[0];
     tdPush(L,{key:"wkneed:"+e.id,type:"wkneed",cat:"채용",task:"[신규입사자 정보 입력] "+w.name+" · "+(c?c.name:"")+" · 빠진 것: "+M.map(needLab239).join(", "),worker:e.worker,emp:e.id,company:e.company,base:t1.start,auto:false,fixedDue:t1.start,duty:"신규입사자 정보 입력"});dutyAsg238(L[L.length-1])});
-  if(old.length){tdPush(L,{key:"wkneed:old",type:"wkneed",cat:"채용",task:"[신규입사자 정보 입력] 예전 등록자 정보 미입력 "+old.length+"명 정리",worker:"",emp:"",company:"",base:TODAY,auto:false,fixedDue:addD(TODAY,14),duty:"신규입사자 정보 입력",old:old.map(function(e){return e.id})});dutyAsg238(L[L.length-1])}});
+  });
 function needRowHtml239(e){var w=wk(e.worker),c=comp(e.company),M=needMiss239(e),t1=termsOf(e.id)[0]||{};return'<tr><td><button class="linkbtn" data-act="need-open" data-w="'+e.worker+'">'+esc(w.name)+'</button></td><td>'+esc(c?c.name:"")+'</td><td class="num">'+esc(t1.start||"")+'</td><td>'+M.map(function(k){return'<span class="b sm warn">'+esc(needLab239(k))+'</span>'}).join(" ")+'</td></tr>'}
 regSection("todo",{id:"v239-need",order:5,at:"top",when:function(t){return!!t&&t.type==="wkneed"},html:function(t){
   if(t.key==="wkneed:old"){var E=needEmps239().filter(function(e){return needOld239(e)&&needMiss239(e).length});
@@ -21036,8 +21037,8 @@ regAfter("v239 근로자 창 빠진 칸",function(){if(!S.wm)return;var p=wkPane
   [].forEach.call(p.querySelectorAll("span, small, label, b, div"),function(el){if(el.children.length)return;var tx=String(el.textContent||"").trim().replace(/\s*\*$/,"");if(!lbs[tx])return;var f=el.closest(".f")||el.parentElement;if(f&&f!==p)f.classList.add("need239f")});
   var tg=p.querySelector(".ph .tags");if(tg&&Object.keys(M).length&&!tg.querySelector(".needb239"))tg.insertAdjacentHTML("beforeend",'<span class="b warn needb239 tip" tabindex="0" data-tip="'+esc(Object.keys(M).map(needLab239).join(" · ")+" · 인적정보 탭 › 수정")+'">입력 필요 '+Object.keys(M).length+'</span>')});
 /* 장애 재판정: '미입력'은 운영파트 목록에서 뺌 (채용파트 할 일) */
-var _disRows239=disRows;disRows=function(){return _disRows239.apply(this,arguments).filter(function(r){return r.sub!=="none"&&r.g!=="none"})};
-regAfter("v239 장애 재판정 미입력 안내",function(){if(S.view!=="dis")return;var m=document.querySelector("#main .tabs");if(!m||document.querySelector("#main .disneed239"))return;var n=needEmps239().filter(function(e){var w=wk(e.worker);return!(w&&w.non_dis)&&!disOf(e.id)}).length;if(!n)return;
+var _disRows239=disRows;disRows=function(){return _disRows239.apply(this,arguments).filter(function(r){return!(r.sub==="none"||r.g==="none")||needOld239(r.e)/* 기준일 전 등록 미입력은 운영파트가 그대로 */})};
+regAfter("v239 장애 재판정 미입력 안내",function(){if(S.view!=="dis")return;var m=document.querySelector("#main .tabs");if(!m||document.querySelector("#main .disneed239"))return;var n=needEmps239().filter(function(e){var w=wk(e.worker);return!needOld239(e)&&!(w&&w.non_dis)&&!disOf(e.id)}).length;if(!n)return;
   m.insertAdjacentHTML("beforebegin",'<div class="disneed239 small">장애 정보 미입력 <b>'+n+'명</b> · 채용파트 할 일 (신규입사자 정보 입력)에서 처리해요</div>')});
 /* 신규입사자 표: '주소' 칸 → '입력 필요' */
 var _onbAddrTd239=onbAddrTd;onbAddrTd=function(r0){var e=onbEmpOf(r0);if(!e)return _onbAddrTd239.apply(this,arguments);var M=needMiss239(e);
@@ -21046,7 +21047,7 @@ var _onbAddrTxt239=onbAddrTxt;onbAddrTxt=function(r0){var e=onbEmpOf(r0);if(!e)r
 var _dtable239=dtable;dtable=function(k){var h=_dtable239.apply(this,arguments);if((k==="onb"||k==="onbp")&&typeof h==="string"){var i=h.indexOf("<thead"),j=h.indexOf("</thead>");if(i>=0&&j>i)h=h.slice(0,i)+h.slice(i,j).replace(/(<th\b[^>]*>(?:<[^>]+>)*)주소/,"$1입력 필요")+h.slice(j)}return h};
 /* 설정: 입력 필요 정보 */
 regAfter("v239 설정 입력 필요 정보",function(){if(S.view!=="set"||S.role!=="admin")return;var d=document.querySelector("#main .dutycard");if(!d||document.querySelector("#main .needset239"))return;var C=needCfg239(),ed=dutyEditable();
-  d.insertAdjacentHTML("afterend",'<div class="card dutycard needset239"><b>신규입사자 입력 필요 정보</b> <span class="small muted">빠지면 채용파트 할 일 \'신규입사자 정보 입력\' · 신규입사자 표 \'입력 필요\' · 근로자 창 노란 칸</span><div class="ochips" style="margin-top:8px">'+NEED_K239.map(function(k){var on=C.keys.indexOf(k[0])>=0;return'<label class="ochip'+(on?" on":"")+'"><input type="checkbox" data-need="'+k[0]+'"'+(on?" checked":"")+(ed?"":" disabled")+'> '+esc(k[1])+'</label>'}).join("")+'</div><div class="small" style="margin-top:8px">기준일 <input type="date" data-need-since value="'+esc(C.since)+'"'+(ed?"":" disabled")+'> <span class="muted">이 날짜 전에 등록된 사람은 할 일 하나로 묶어요</span></div></div>')});
+  d.insertAdjacentHTML("afterend",'<div class="card dutycard needset239"><b>신규입사자 입력 필요 정보</b> <span class="small muted">빠지면 채용파트 할 일 \'신규입사자 정보 입력\' · 신규입사자 표 \'입력 필요\' · 근로자 창 노란 칸</span><div class="ochips" style="margin-top:8px">'+NEED_K239.map(function(k){var on=C.keys.indexOf(k[0])>=0;return'<label class="ochip'+(on?" on":"")+'"><input type="checkbox" data-need="'+k[0]+'"'+(on?" checked":"")+(ed?"":" disabled")+'> '+esc(k[1])+'</label>'}).join("")+'</div><div class="small" style="margin-top:8px">기준일 <input type="date" data-need-since value="'+esc(C.since)+'"'+(ed?"":" disabled")+'> <span class="muted">이 날짜 전에 등록된 사람은 운영파트(장애 재판정)에서 관리 · 채용파트 할 일 없음</span></div></div>')});
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||(t.dataset.need==null&&t.dataset.needSince==null))return;if(!dutyEditable()){toast("채용파트 관리자 · 최고관리자만 고칠 수 있어요");render();return}var C=needCfg239(),b=JSON.stringify(C);
   if(t.dataset.need!=null){var k=t.dataset.need;C.keys=C.keys.filter(function(x){return x!==k});if(t.checked)C.keys.push(k);C.keys=NEED_K239.map(function(x){return x[0]}).filter(function(x){return C.keys.indexOf(x)>=0})}else C.since=t.value||C.since;
   appSetPut("wk_need",{keys:C.keys,since:C.since});logChange("app_settings","wk_need","신규입사자 입력 필요 정보","설정",b,JSON.stringify(C),"브이드림 내부");if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();render()},true);
