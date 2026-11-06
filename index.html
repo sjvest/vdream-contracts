@@ -1672,10 +1672,15 @@ h2.rrtt238+.wkc242{margin:2px 0 0}
 .rded243{font-size:13px}
 .cdbulk.rdbulk243{display:none}
 .cdbulk.rdbulk243.rdbulk-on243{display:flex}
-.rdcm243{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.rdcm243 .memo{margin:0}
-.rdcm243 .memo-in{flex-basis:100%}
+
+
+
 .rdempty243{margin-right:6px}
+/* v244 차수 옮기기 */
+select.mv244{font-size:13px;padding:3px 6px;border-radius:8px}
+tr.mvd244 td{opacity:.55;background:#F3F3F6}
+.mvb244{background:#E4E4EA;color:#5B5870}
+.mvf244{background:#EEE9FF;color:#4B3FAE;margin-left:4px}
 </style>
 </head>
 <body>
@@ -19083,8 +19088,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v243 — 계약 차수 삭제 누구나(이력) · 업무별 주 기준 7일 · 차수 [저장] · 회신 기한 [저장] 고침 · 차수 화면 정리 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
-APP_VER="v243";APP_VER_ON="11/06";APP_NOTE="계약 차수 삭제 관리자 제한 풀기(변경 이력) / 업무별 주 기준 = 그 업무의 한 주 전체 / 차수 지원안내 · 채널 [저장] 안 되던 문제 · 채용 회신 기한 [저장] 안 되던 문제 고침 / 차수: 진행 중 연보라 · 완료는 회색으로 접힘 · 머리줄 ✏️ · 기업 소통 한 줄 · 일괄 막대는 체크할 때만";
+/* v244 — 기업 소통 칸 원래대로 · 후보를 다른 차수로 옮기기 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
+APP_VER="v244";APP_VER_ON="11/06";APP_NOTE="차수 기업 소통 칸 원래대로 / 후보 체크 → [다른 차수로 옮기기] (원래 차수엔 회색 줄 · 옮긴 차수에선 새로 시작 · 입구서 · 조율 요청 같이 · 되돌리기)";
 
 /* ================================================================
    v208
@@ -21206,12 +21211,7 @@ regAfter("v243 차수 화면 정리",function(){if(!S.rrSel)return;[].forEach.ca
     [sel,nt,sv].concat(oth).forEach(function(e){if(e)e.classList.add("rdhide243")});
     var anchor=del||null,html='<span class="rdtx243">'+parts.join(" · ")+'</span><button class="x rded243" data-act="rd-ed243" data-id="'+x.id+'" title="지원안내 · 채널 · 확인서류 고치기">✏️</button>';if(anchor)anchor.insertAdjacentHTML("beforebegin",html);else hd.insertAdjacentHTML("beforeend",html)}
   else if(hd)hd.classList.add("rded-on243");
-  /* 기업 소통 한 줄 */
-  var cm=R.querySelector(".rrcomm");if(cm){var M=[].slice.call(cm.querySelectorAll(".memo")),inb=cm.querySelector(".memo-in"),lab=cm.querySelector("span.small.muted");
-    if(lab)lab.innerHTML='기업 소통 <b>'+M.length+'</b>건';
-    if(!S.rcAll243[x.id]&&M.length>1){M.slice(0,-1).forEach(function(m){m.classList.add("rdhide243")});M[M.length-1].insertAdjacentHTML("afterend",'<button class="linkbtn small" data-act="rc-all243" data-id="'+x.id+'">이전 '+(M.length-1)+'건 보기</button>')}
-    if(inb&&!S.rcOpen243[x.id]){inb.classList.add("rdhide243");cm.insertAdjacentHTML("beforeend",'<button class="btn xs" data-act="rc-open243" data-id="'+x.id+'">+ 기록</button>')}
-    cm.classList.add("rdcm243")}
+  /* 기업 소통: v244 원래대로 (입력칸 · 기록 모두 보임) */
   /* 일괄 막대: 후보 체크할 때만 */
   var bk=R.querySelector(".cdbulk");if(bk){bk.classList.add("rdbulk243");rdBulkSync243(R)}
   /* 빈 차수 */
@@ -21226,6 +21226,44 @@ regActs({
   "rc-all243":function(D0){S.rcAll243[D0.id]=true;render()}});
 /* [저장] 누르면 읽기 모드로 */
 window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('.rrrh [data-act="rd-save"]');if(b&&b.dataset.id)delete S.rdEd243[b.dataset.id]},true);
+
+/* ================================================================
+   v244
+     ① 기업 소통 칸 원래대로 (v243 한 줄 줄이기 되돌림) — core/9380-v243.js
+     ② 후보를 다른 차수로 옮기기
+        · 후보 체크 → 일괄 막대 [다른 차수로 옮기기 ▾] (같은 요청의 다른 차수 · 새 차수 만들고 옮기기)
+        · 원래 차수에서는 지움 (뒤 후보들 입구서 · 조율 연결 번호 당김) · 변경 이력 '차수 변경'
+        · 옮긴 차수엔 새로 시작 (이력서 전달일 · 서류 · 면접 · 최종 · 사유 · 안내 비움) · '1차에서 옮김' 표시
+        · 연결된 입구서 · 조율 요청 후보 · 면접 영상 같이 옮김 · 변경 이력 · [되돌리기]
+   ================================================================ */
+var MV_CLR244=["sent","doc","iv","iv_on","iv_at","final","why","told","told_on","hired","ci","ctr","wish_ok"];
+/* 연결 옮기기: (x,i) → (y,j) */
+function mvLink244(fx,fi,tx,ti){var A=[];(DB.intake||[]).forEach(function(a){if(a.rrr===fx&&+a.rri===fi){a.rrr=tx;a.rri=ti;if(A.indexOf("입구서")<0)A.push("입구서")}});
+  var o=fx+":"+fi,n=tx+":"+ti;(DB.talks||[]).forEach(function(t){var hit=false;if(Array.isArray(t.ck)&&t.ck.indexOf(o)>=0){t.ck=t.ck.map(function(k){return k===o?n:k});hit=true}if(t.conf&&t.conf[o]){t.conf=Object.assign({},t.conf);t.conf[n]=t.conf[o];delete t.conf[o];hit=true}if(hit&&A.indexOf("조율 요청")<0)A.push("조율 요청")});return A}
+/* 차수에서 i번째 후보를 빼고 뒤 후보들 연결 번호를 하나씩 당김 */
+function mvPull244(x,i){var C=(x.cands||[]).slice();C.splice(i,1);x.cands=C;for(var j=i+1;j<=C.length;j++)mvLink244(x.id,j,x.id,j-1)}
+function mvDo244(fromX,idx,toX){var r=rcOf(fromX.req),moved=[];idx.slice().sort(function(a,b){return b-a}).forEach(function(i){var c=fromX.cands[i];if(!c||!String(c.name||"").trim())return;
+    var n=JSON.parse(JSON.stringify(c));MV_CLR244.forEach(function(k){delete n[k]});n.from={x:fromX.id,seq:fromX.seq,at:stamp(),by:S.me||"",prev:JSON.parse(JSON.stringify(c))};
+    toX.cands=(toX.cands||[]).concat([n]);var ti=toX.cands.length-1;var L=mvLink244(fromX.id,i,toX.id,ti);mvPull244(fromX,i);
+    logChange("recruit_requests",r.id,(coR(r)||{}).name||"","차수 변경",fromX.seq+"차 · "+c.name,toX.seq+"차"+(L.length?" (같이 옮김: "+L.join(" · ")+")":""),"브이드림 내부");moved.unshift(c.name)});
+  return moved}
+function mvUndo244(toX,ti){var n=toX.cands[ti];if(!n||!n.from)return"";var fromX=DB.rrr.find(function(y){return y.id===n.from.x});if(!fromX)return"원래 차수를 찾지 못했어요";
+  var back=JSON.parse(JSON.stringify(n.from.prev||n));delete back.from;fromX.cands=(fromX.cands||[]).concat([back]);var fi=fromX.cands.length-1;mvLink244(toX.id,ti,fromX.id,fi);mvPull244(toX,ti);
+  var r=rcOf(toX.req);logChange("recruit_requests",r.id,(coR(r)||{}).name||"","차수 변경 (되돌림)",toX.seq+"차 · "+n.name,fromX.seq+"차","브이드림 내부");return""}
+/* 일괄 막대에 [다른 차수로 옮기기] */
+regAfter("v244 차수 옮기기 버튼",function(){if(!S.rrSel)return;var R0=rrRounds(S.rrSel);[].forEach.call(document.querySelectorAll("aside.pnl .rrround .cdbulk"),function(bk){if(bk.querySelector(".mv244"))return;var R=bk.closest(".rrround"),k=R&&R.querySelector("input.cdk[data-r]");var xid=k&&k.dataset.r;if(!xid)return;var x=DB.rrr.find(function(y){return y.id===xid});if(!x)return;
+  var O=R0.filter(function(y){return y.id!==x.id}).sort(function(a,b){return a.seq-b.seq});
+  bk.insertAdjacentHTML("beforeend",'<select class="mv244" data-mv="'+x.id+'" aria-label="다른 차수로 옮기기"><option value="">다른 차수로 옮기기</option>'+O.map(function(y){return'<option value="'+y.id+'">'+y.seq+'차로 옮기기</option>'}).join("")+'<option value="new">새 차수 만들고 옮기기</option></select>')})});
+document.addEventListener("change",function(ev){var s=ev.target;if(!s||!s.dataset||!s.dataset.mv)return;var v=s.value;s.value="";if(!v)return;var x=DB.rrr.find(function(y){return y.id===s.dataset.mv});if(!x)return;var R=s.closest(".rrround");
+  var idx=[].map.call(R.querySelectorAll("input.cdk:checked"),function(k){return+k.dataset.i}).filter(function(i){return!!x.cands[i]});if(!idx.length){toast("옮길 후보를 체크해 주세요");return}
+  var D=cdDom(x.id),dirty=idx.some(function(i){var c=x.cands[i]||{},d=D[i]||{};return["name","doc","iv","final"].some(function(k){return d[k]!=null&&String(d[k]||"")!==String(c[k]||"")})});if(dirty){toast("바뀐 내용이 있어요 · [후보자 저장]을 먼저 눌러 주세요");return}
+  var to=v==="new"?null:DB.rrr.find(function(y){return y.id===v}),nextSeq=Math.max.apply(null,rrRounds(x.req).map(function(y){return+y.seq||0}))+1,nm=idx.map(function(i){return x.cands[i].name}).join(", ");
+  askConfirm("다른 차수로 옮기기",nm+"님을 "+(to?to.seq+"차":"새 "+nextSeq+"차")+"로 옮길까요? "+x.seq+"차엔 회색 줄로 남고, 옮긴 차수에선 이력서 전달 · 결과를 새로 시작해요. 연결된 입구서 · 조율 요청도 같이 옮겨요.","옮기기",function(){
+    if(!to){to={id:nid(),req:x.req,seq:nextSeq,cands:[],channel:x.channel||"",notice:"",created:TODAY};DB.rrr.push(to)}var M=mvDo244(x,idx,to);delete S.rrFold[to.id];afterAction("rr:"+x.req,M.length+"명을 "+to.seq+"차로 옮겼어요")})},true);
+/* 줄 표시: 원래 차수 회색 줄 · 옮긴 차수 표시 · 되돌리기 */
+regAfter("v244 옮긴 후보 줄",function(){if(!S.rrSel)return;[].forEach.call(document.querySelectorAll('aside.pnl .rrround tr input[data-cd$="|name"]'),function(inp){var tr=inp.closest("tr");if(!tr||tr.dataset.mv244)return;var q=inp.dataset.cd.split("|"),x=DB.rrr.find(function(y){return y.id===q[0]}),i=+q[1],c=x&&(x.cands||[])[i];if(!c||!c.from)return;
+  tr.dataset.mv244=1;inp.insertAdjacentHTML("afterend",'<span class="b sm mvf244 tip" tabindex="0" data-tip="'+esc(c.from.seq+"차에서 옮김 · "+String(c.from.at||"").slice(5,16))+'">'+esc(c.from.seq)+'차에서</span><button class="linkbtn small" data-act="mv-undo244" data-x="'+x.id+'" data-i="'+i+'" title="원래 차수로 되돌리기">↩</button>')})});
+regActs({"mv-undo244":function(D0){var x=DB.rrr.find(function(y){return y.id===D0.x});if(!x)return;var n=x.cands[+D0.i];askConfirm("되돌리기",(n&&n.name||"")+"님을 원래 "+(n&&n.from?n.from.seq:"")+"차로 되돌릴까요? 이 차수에서 입력한 내용은 지워져요.","되돌리기",function(){var e=mvUndo244(x,+D0.i);if(e){toast(e);return}afterAction("rr:"+x.req,"원래 차수로 되돌렸어요")})}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
