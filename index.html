@@ -1658,6 +1658,24 @@ button.wkc242 b{font-weight:700;margin-left:2px}
 .se242{margin-left:6px}
 .xmnt242{margin:6px 0 10px}
 h2.rrtt238+.wkc242{margin:2px 0 0}
+/* v243 차수 화면 정리 */
+.rrround.rd243-ing{background:#F8F6FF;border:1px solid #E4DEFF;border-radius:12px}
+.rrround.rd243-ing>.rrrh{background:#EFEAFF;border-radius:12px 12px 0 0;position:sticky;top:0;z-index:3}
+.rrround.rd243-done{background:#F3F3F6;border:1px solid #E4E4EA;border-radius:12px}
+.rrround.rd243-done .rrfh{color:#6B6880}
+.rrround.rd243-done>.rrrh{background:#EBEBEF;position:sticky;top:0;z-index:3}
+.rddn243{background:#E4E4EA;color:#5B5870}
+.rrround+.rrround{margin-top:12px}
+.rdhide243{display:none!important}
+.rdtx243{flex:1;min-width:0;display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap}
+.rdnt243{overflow:hidden;text-overflow:ellipsis}
+.rded243{font-size:13px}
+.cdbulk.rdbulk243{display:none}
+.cdbulk.rdbulk243.rdbulk-on243{display:flex}
+.rdcm243{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rdcm243 .memo{margin:0}
+.rdcm243 .memo-in{flex-basis:100%}
+.rdempty243{margin-right:6px}
 </style>
 </head>
 <body>
@@ -5280,12 +5298,11 @@ function ceModal(){
   var h='<div class="ov"><div class="dlg dlg-ce" role="dialog" aria-modal="true" aria-label="계약 정보 수정"><div class="ph"><div><div class="k">계약 정보 수정</div><h2>'+esc(w.name)+' · '+esc(comp(e.company).name)+'</h2><p class="hint" style="margin-top:4px">차수별 계약시작일 · 계약만료일을 고칩니다. 바꾸면 계약만료 목록과 케이스가 새 날짜로 다시 계산되고, 변경 이력에 남습니다.</p></div><button class="close" data-act="ce-close" aria-label="닫기">×</button></div><div class="ps">';
   h+='<table class="t cetab"><thead><tr><th>차수</th><th>구분</th><th>계약시작일</th><th>계약만료일</th><th></th></tr></thead><tbody>'+C.rows.map(function(r,i){var last=i===C.rows.length-1;
     return'<tr data-act="noop"><td>'+seqBadge(r.seq)+(r.id?"":' <span class="b t">새로</span>')+'</td><td>'+esc(r.perm&&last?"무기계약":r.type==="무기계약"?"연장":r.type)+'</td><td><input type="date" data-ce="start" data-i="'+i+'" value="'+esc(r.start)+'"></td><td>'+(r.perm&&last?'<span class="muted">(무기 · 만료일 없음)</span>':'<input type="date" data-ce="end" data-i="'+i+'" value="'+esc(r.end)+'">')+
-      (last?'<label class="cb small" style="margin-left:6px"><input type="checkbox" data-ch="ce-perm"'+(r.perm?" checked":"")+'> 무기계약</label>':"")+'</td><td>'+(last&&C.rows.length>1&&(admin||!r.id)?'<button class="btn xs danger" data-act="ce-del" data-i="'+i+'">'+(r.id?"차수 삭제":"빼기")+'</button>':"")+'</td></tr>'}).join("")+'</tbody></table>';
+      (last?'<label class="cb small" style="margin-left:6px"><input type="checkbox" data-ch="ce-perm"'+(r.perm?" checked":"")+'> 무기계약</label>':"")+'</td><td>'+(last&&C.rows.length>1/* v243 누구나 · 이력 남김 */?'<button class="btn xs danger" data-act="ce-del" data-i="'+i+'">'+(r.id?(C.delArm===i?"정말 삭제? 한 번 더":"차수 삭제"):"빼기")+'</button>'+(r.id&&C.delArm===i?'<div class="small muted" style="margin-top:2px">저장하면 지워지고 변경 이력에 남아요</div>':""):"")+'</td></tr>'}).join("")+'</tbody></table>';
   var lr=C.rows[C.rows.length-1];
   if(lr&&!lr.perm&&lr.end)h+='<div class="extq" style="margin-top:10px"><span class="small muted">다음 차수 추가 ('+esc(lr.end)+' 다음 날부터)</span>'+[3,6,9,12].map(function(n){return'<button class="btn xs" data-act="ce-add" data-v="'+n+'">'+(n===12?"1년":n+"개월")+'</button>'}).join("")+'</div>';
   var delNew=C.del.filter(function(d){return x&&x.newSeq===d.seq&&x.decision});
   if(delNew.length)h+='<div class="miss" style="margin-top:10px"><div class="row"><label class="cb"><input type="checkbox" data-ch="ce-revert"'+(C.revert?" checked":"")+'> 지우는 '+delNew[0].seq+'차는 계약만료 ‘최종 확정('+esc(x.decision)+')’으로 생긴 차수입니다. 확정도 되돌려 계약만료 건을 결정 전으로 돌립니다</label></div></div>';
-  if(!admin)h+='<p class="hint" style="margin-top:6px">이미 저장된 차수 삭제는 관리자만 할 수 있습니다.</p>';
   h+='</div><div class="ps"><h3>변경 근거</h3>'+sourceBox()+'</div><div class="ps foot"><button class="btn" data-act="ce-close">취소</button><span class="grow"></span><button class="btn pri" data-act="ce-save">'+(C.gapWarn?"공백이 있어도 저장":"저장")+'</button></div></div></div>';
   $("#modal").innerHTML=h;
 }
@@ -5332,7 +5349,7 @@ function v12Act(a,el){
   case"ce-open":ceOpen(el.dataset.e);return true;
   case"ce-close":S.ce=null;$("#modal").innerHTML="";return true;
   case"ce-add":(function(){var C=S.ce,lr=C.rows[C.rows.length-1],n=+el.dataset.v;C.rows.push({id:"",seq:lr.seq+1,start:addD(lr.end,1),end:extEnd(lr.end,n),type:"연장",perm:false});C.gapWarn=false;ceModal()})();return true;
-  case"ce-del":(function(){var C=S.ce,i=+el.dataset.i,r=C.rows[i];if(r.id&&S.role!=="admin"){toast("저장된 차수 삭제는 관리자만 할 수 있습니다");return}C.rows.splice(i,1);if(r.id)C.del.push(r);C.gapWarn=false;ceModal()})();return true;
+  case"ce-del":(function(){var C=S.ce,i=+el.dataset.i,r=C.rows[i];if(r.id&&C.delArm!==i){C.delArm=i;ceModal();return}C.delArm=null;/* v243 저장된 차수: 한 번 더 눌러 확인 · 누구나 · 저장하면 변경 이력 */C.rows.splice(i,1);if(r.id)C.del.push(r);C.gapWarn=false;ceModal()})();return true;
   case"ce-save":ceSave(el.closest(".dlg"));return true;
   }
   return false;
@@ -9175,7 +9192,7 @@ compCreqs=function(c){var Q=DB.requests.filter(function(r){return cxHas(c,r.comp
       var K=reqKids(r.id),dn=K.filter(function(k){return k.status==="완료"}).length;return'<tr class="clk" data-act="creq-go" data-id="'+r.id+'"><td class="num">'+esc(md(r.created))+'</td><td>'+esc(r.category)+cxDt(c,r.company)+'</td><td>'+esc(drepCut(r.content,40))+'</td><td class="small">'+(K.length?"근로자 "+dn+"/"+K.length+"명 완료":"기업 전체")+'</td><td class="num">'+esc(md(r.due))+'</td><td class="c"><span class="b sm">'+esc(SL(r.status))+'</span></td></tr>'}).join("")+'</tbody></table>':'<p class="hint">없어요.</p>')+'</div>'};
 
 /* ---- 설정: 고객사 회신 독촉 기준 ---- */
-var _vSet36=vSet;vSet=function(){var h=_vSet36();if(S.role!=="admin")return h;return h+'<div class="card" style="margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface)"><b>채용 · 고객사 회신 기한</b> <span class="small muted">이력서 · 면접 결과를 고객사에서 이 일수 안에 못 받으면 운영파트 할 일이 기한 경과로 표시돼요</span><div style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="set-rpd" inputmode="numeric" value="'+esc(+appSet("rr_reply_days",3)||3)+'" style="width:70px">일<button class="btn sm pri" data-act="rpd-save">저장</button></div></div>'};
+var _vSet36=vSet;vSet=function(){var h=_vSet36();if(S.role!=="admin")return h;return h+'<div class="card" style="margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface)"><b>채용 · 고객사 회신 기한</b> <span class="small muted">이력서 · 면접 결과를 고객사에서 이 일수 안에 못 받으면 운영파트 할 일이 기한 경과로 표시돼요</span><div style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="set-rply" inputmode="numeric" value="'+esc(+appSet("rr_reply_days",3)||3)+'" style="width:70px">일<button class="btn sm pri" data-act="rply-save">저장</button></div></div>'};
 
 /* 예전 후보자: 이미 나온 결과는 안내한 것으로 (v36 이전 기록이 할 일로 쏟아지지 않게) */
 function cdTellNorm(){DB.rrr.forEach(function(x){if(!x.cands||!x.cands.some(function(c){return c&&!("told" in c)}))return;x.cands=x.cands.map(function(c){return c&&!("told" in c)?Object.assign({},c,{told:cdRes(c),told_on:""}):c})})}
@@ -9185,7 +9202,7 @@ function v36Act(a,el){var D0=el.dataset;switch(a){
   case"ho-ok":hoOk();return true;
   case"ho-undo":hoUndo(D0.id);return true;
   case"cd-tell":cdTell(D0.r,D0.i);return true;
-  case"rpd-save":(function(){var v=+String(($("#set-rpd")||{}).value||"").replace(/[^\d]/g,"");if(!(v>0&&v<31)){toast("1~30일로 넣어 주세요");return}var o=appSet("rr_reply_days",3);appSetPut("rr_reply_days",v);logChange("app_settings","rr_reply_days","채용 회신 기한","고객사 회신 기한",String(o),String(v),"브이드림 내부");toast("저장했어요");render()})();return true}
+  case"rply-save"/* v243 재소통 하루 건수(rpd-save)와 이름 겹침 */:(function(){var v=+String(($("#set-rply")||{}).value||"").replace(/[^\d]/g,"");if(!(v>0&&v<31)){toast("1~30일로 넣어 주세요");return}var o=appSet("rr_reply_days",3);appSetPut("rr_reply_days",v);logChange("app_settings","rr_reply_days","채용 회신 기한","고객사 회신 기한",String(o),String(v),"브이드림 내부");toast("저장했어요");render()})();return true}
   return false}
 
 /* ================================================================
@@ -16495,7 +16512,7 @@ document.addEventListener("change",function(ev){var t=ev.target,F=S.fbF;if(!F||!
 var _v139Act171=v139Act;v139Act=function(a,el){var D0=el.dataset;
   if(a==="rd-open"){var o=rndObj(D0.k,D0.id);if(!o)return true;S.rdF={k:D0.k,id:D0.id,to:0,why:"",memo:""};rndModal();return true}
   if(a==="rd-x"){S.rdF=null;$("#modal").innerHTML="";return true}
-  if(a==="rd-save"){rndSave();return true}
+  if(a==="rd-save"&&S.rdF){rndSave();return true}/* v243 차수 [저장]과 이름 겹침 · 보완 요청 창 열렸을 때만 */
   if(a==="fb-open"){S.fbF={off:{}};fbModal();return true}
   if(a==="fb-x"){S.fbF=null;$("#modal").innerHTML="";return true}
   if(a==="fb-save"){fbSave();return true}
@@ -19066,8 +19083,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v242 — 화면 오류 기록 · 근무 조건 칩 4종 · 등록된 합격자 버튼 복원 · 계약 정보 수정 반영 · 계약만료 미회신 통보 완료 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
-APP_VER="v242";APP_VER_ON="11/06";APP_NOTE="화면 오류도 오류 기록에 남김 / 근무 조건 칩(주5·4h · 주5·3h · 주4·4h · 그 외) · 목록 위 거르기 / 입사 등록된 합격자도 [계약 정보] · 대시보드에서 연 창도 같은 버튼 / 계약 정보 고치면 입구서 · 근로자 DB까지 / 계약만료 미회신 → [통보 완료] → 최종 확정";
+/* v243 — 계약 차수 삭제 누구나(이력) · 업무별 주 기준 7일 · 차수 [저장] · 회신 기한 [저장] 고침 · 차수 화면 정리 (이전 버전 기록은 src git log · 각 core/91xx~93xx 모듈 머리말) */
+APP_VER="v243";APP_VER_ON="11/06";APP_NOTE="계약 차수 삭제 관리자 제한 풀기(변경 이력) / 업무별 주 기준 = 그 업무의 한 주 전체 / 차수 지원안내 · 채널 [저장] 안 되던 문제 · 채용 회신 기한 [저장] 안 되던 문제 고침 / 차수: 진행 중 연보라 · 완료는 회색으로 접힘 · 머리줄 ✏️ · 기업 소통 한 줄 · 일괄 막대는 체크할 때만";
 
 /* ================================================================
    v208
@@ -20420,7 +20437,7 @@ function wkDow231(kind){var v=+appSet(kind==="in"?"wk_start_in":"wk_start_out",k
 function isWeek231(a,b){if(!a||!b)return false;var n=dd(a,b);return pd(a).getDay()===1&&n>=0&&n<=6}
 function wkOff231(kind){var o=(wkDow231(kind)-1+7)%7;return o>3?o-7:o}
 function bizOn231(a,b){return!!S.wkBiz&&isWeek231(a,b)}
-function bizRange231(kind,a,b){if(!bizOn231(a,b))return[a,b];var o=wkOff231(kind);return[addD(a,o),addD(b,o)]}
+function bizRange231(kind,a,b){if(!bizOn231(a,b))return[a,b];var o=wkOff231(kind);return[addD(a,o),addD(a,o+6)]}/* v243 그 업무의 한 주 전체(7일) */
 function bizLab231(kind,a,b){var R=bizRange231(kind,a,b);return md(R[0])+"~"+md(R[1])}
 function bizBtn231(a,b){var w=isWeek231(a,b),on=bizOn231(a,b),tip="입사 "+WD231[wkDow231("in")]+"요일 시작 · 퇴사 "+WD231[wkDow231("out")]+"요일 시작 (같은 주) · 계약만료는 고른 날짜 그대로"+(w?"":" · 기간이 한 주(월요일 시작)일 때만 써요");
   return'<button type="button" class="btn sm wkbiz231'+(on?" pri":"")+'" data-act="wk-biz" aria-pressed="'+(on?"true":"false")+'"'+(w?"":" disabled")+' title="'+esc(tip)+'">업무별 주 기준'+(on?" 켬":"")+'</button>'}
@@ -21156,6 +21173,59 @@ window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&
 regAfter("v242 창 제목 근무 칩",function(){if(!S.rrSel)return;var r=rcOf(S.rrSel),h=document.querySelector("aside.pnl h2.rrtt238");if(!r||!h||(h.nextElementSibling&&h.nextElementSibling.classList.contains("wkc242")))return;h.insertAdjacentHTML("afterend",wkChip242(r))});
 /* 계약만료 표 근로자 응답 칸: 미회신 · 통보 */
 var _wrStateBadge242=wrStateBadge;wrStateBadge=function(x){if(xNoticed242(x))return'<span class="b warn tip" tabindex="0" data-tip="근로자 미회신 · 결과 통보 '+esc(x.notice)+'">미회신 · 통보 '+esc(md(x.notice))+'</span>';return _wrStateBadge242.apply(this,arguments)};
+
+/* ================================================================
+   v243
+     ① 계약 차수 삭제: 관리자 제한 풀기 (한 번 더 눌러 확인 · 저장하면 변경 이력) — core/0039-…-13.js
+     ② 업무별 주 기준: 그 업무의 한 주 전체(7일) — core/9280-v231.js bizRange231
+     ③ 차수 [저장] 안 되던 문제: 숨긴 발굴 화면의 rd-save 가 가로챔 — 0197-…-08.js
+        같은 점검: 채용 회신 기한 [저장](rpd-save)이 재소통 하루 건수 저장으로 가로채짐 → rply-save
+     ④ 차수 화면 정리
+        · 색: 진행 중 차수 = 연보라 배경 · 완료 차수 = 회색 한 줄로 자동 접힘 (모든 후보 결과 끝 · 합격은 입사 등록까지)
+        · 접기 · 펼치기는 사람마다 기억 (직접 고른 것 우선) · 진행 중 후보가 다시 생기면 자동 펼침
+        · 머리줄 읽기 모드 (지원안내 · 채널 · 확인서류 글자 · ✏️ 누를 때만 입력칸 · [저장])
+        · 기업 소통 한 줄 (n건 · 마지막 기록 · [+ 기록]) · 일괄 막대는 후보 체크할 때만 · 빈 차수 '후보 없음' · 머리줄 고정
+   ================================================================ */
+/* ---------- ④ 완료 차수 자동 접기 ---------- */
+function rdDone243(x){var C=(x&&x.cands||[]).filter(function(c){return c&&String(c.name||"").trim()});return C.length>0&&C.every(function(c){return cdClosed(c)})}
+(function(){try{var v=JSON.parse(localStorage.getItem("vw_rrfold243")||"{}");if(v&&typeof v==="object")Object.keys(v).forEach(function(k){if(S.rrFold[k]==null)S.rrFold[k]=v[k]})}catch(e){}})();
+rrFolded=function(x){var v=S.rrFold[x.id];return v==null?rdDone243(x):v};
+function rdFoldSave243(){try{localStorage.setItem("vw_rrfold243",JSON.stringify(S.rrFold))}catch(e){}}
+window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="rr-fold"],[data-act="rr-foldall"]');if(b)setTimeout(rdFoldSave243,0)},true);
+/* 진행 중 후보가 다시 생기면: 직접 접지 않은 차수는 rdDone243 기준이라 자동으로 펼쳐짐 */
+/* ---------- ④ 차수 꾸미기 ---------- */
+S.rdEd243=S.rdEd243||{};S.rcOpen243=S.rcOpen243||{};S.rcAll243=S.rcAll243||{};
+regAfter("v243 차수 화면 정리",function(){if(!S.rrSel)return;[].forEach.call(document.querySelectorAll("aside.pnl .rrround"),function(R){if(R.dataset.v243)return;R.dataset.v243=1;
+  var fh=R.querySelector('.rrfh[data-act="rr-fold"]');
+  if(fh){var x0=DB.rrr.find(function(y){return y.id===fh.dataset.id});if(x0&&rdDone243(x0)){R.classList.add("rd243-done");var bb=fh.querySelector("b");if(bb&&!fh.querySelector(".rddn243"))bb.insertAdjacentHTML("afterend",' <span class="b sm rddn243">완료</span>')}return}
+  var del=R.querySelector('.rrrh [data-act="rd-del"]'),sv=R.querySelector('.rrrh [data-act="rd-save"]'),id=(sv||del||{dataset:{}}).dataset.id;var x=id&&DB.rrr.find(function(y){return y.id===id});if(!x)return;
+  R.classList.add(rdDone243(x)?"rd243-done":"rd243-ing");
+  /* 머리줄 읽기 모드 */
+  var hd=R.querySelector(".rrrh");if(hd&&!S.rdEd243[x.id]){var sel=hd.querySelector('select[data-rd$="|channel"]'),nt=hd.querySelector('input[data-rd$="|notice"]'),oth=[].filter.call(hd.querySelectorAll("input[data-rd],select[data-rd]"),function(e){return e!==sel&&e!==nt});
+    var parts=[];if(sel&&sel.value)parts.push('<span class="b sm">'+esc(sel.value)+'</span>');if(nt&&nt.value.trim())parts.push('<span class="rdnt243" title="지원안내">'+esc(nt.value.trim())+'</span>');oth.forEach(function(e){var v=String(e.value||"").trim();if(v)parts.push('<span class="small muted" title="'+esc(e.placeholder||"")+'">'+esc((e.placeholder||"").replace(/\s+/g," "))+' '+esc(v)+'</span>')});
+    [sel,nt,sv].concat(oth).forEach(function(e){if(e)e.classList.add("rdhide243")});
+    var anchor=del||null,html='<span class="rdtx243">'+parts.join(" · ")+'</span><button class="x rded243" data-act="rd-ed243" data-id="'+x.id+'" title="지원안내 · 채널 · 확인서류 고치기">✏️</button>';if(anchor)anchor.insertAdjacentHTML("beforebegin",html);else hd.insertAdjacentHTML("beforeend",html)}
+  else if(hd)hd.classList.add("rded-on243");
+  /* 기업 소통 한 줄 */
+  var cm=R.querySelector(".rrcomm");if(cm){var M=[].slice.call(cm.querySelectorAll(".memo")),inb=cm.querySelector(".memo-in"),lab=cm.querySelector("span.small.muted");
+    if(lab)lab.innerHTML='기업 소통 <b>'+M.length+'</b>건';
+    if(!S.rcAll243[x.id]&&M.length>1){M.slice(0,-1).forEach(function(m){m.classList.add("rdhide243")});M[M.length-1].insertAdjacentHTML("afterend",'<button class="linkbtn small" data-act="rc-all243" data-id="'+x.id+'">이전 '+(M.length-1)+'건 보기</button>')}
+    if(inb&&!S.rcOpen243[x.id]){inb.classList.add("rdhide243");cm.insertAdjacentHTML("beforeend",'<button class="btn xs" data-act="rc-open243" data-id="'+x.id+'">+ 기록</button>')}
+    cm.classList.add("rdcm243")}
+  /* 일괄 막대: 후보 체크할 때만 */
+  var bk=R.querySelector(".cdbulk");if(bk){bk.classList.add("rdbulk243");rdBulkSync243(R)}
+  /* 빈 차수 */
+  var tb=R.querySelector("table.rrc tbody"),rows=tb?[].filter.call(tb.children,function(tr){return!tr.classList.contains("ghost")}):[];
+  if(!rows.length){var tbl=R.querySelector("table.rrc");if(tbl)tbl.classList.add("rdhide243");if(bk)bk.classList.add("rdhide243");var add=R.querySelector('[data-act="cd-add"],[data-act="rr-cadd"]');var box=add&&add.parentElement;if(box&&!box.querySelector(".rdempty243"))box.insertAdjacentHTML("afterbegin",'<span class="rdempty243 small muted">후보 없음 ·</span>')}
+  })});
+function rdBulkSync243(R){var bk=R.querySelector(".cdbulk");if(!bk)return;var on=!!R.querySelector('table.rrc tbody input[type=checkbox]:checked');bk.classList.toggle("rdbulk-on243",on)}
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.type!=="checkbox")return;var R=t.closest&&t.closest(".rrround");if(R)setTimeout(function(){rdBulkSync243(R)},0)},true);
+regActs({
+  "rd-ed243":function(D0){S.rdEd243[D0.id]=true;render();var i=document.querySelector('input[data-rd="'+D0.id+'|notice"]');if(i)i.focus()},
+  "rc-open243":function(D0){S.rcOpen243[D0.id]=true;render();var i=document.querySelector('input[data-rc="'+D0.id+'"]');if(i)i.focus()},
+  "rc-all243":function(D0){S.rcAll243[D0.id]=true;render()}});
+/* [저장] 누르면 읽기 모드로 */
+window.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('.rrrh [data-act="rd-save"]');if(b&&b.dataset.id)delete S.rdEd243[b.dataset.id]},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
