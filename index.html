@@ -1700,6 +1700,17 @@ tr.rr2acc245>td,div.rr2acc245{border:2px solid #8B7CF6;border-radius:10px;backgr
 .pfx .fsec.empact245 .pesave.dkon245{display:inline-flex!important}
 .mcopt{padding:2px 10px!important;line-height:18px}
 .mcl{padding-top:0;padding-bottom:0}
+/* v247 인재 풀 단계 · 한 창 · 근로계약서 처리 주체 */
+.unig247{margin:-4px 0 10px}
+.unig247 .c{opacity:.7;margin-left:2px}
+tr.uni247gone td{opacity:.55}
+.uni247tag{background:#F3F4F6;color:#6B7280;margin-left:4px}
+.uni247pf{border-left:3px solid #0E9F8E}
+.uni247pf h3{display:flex;align-items:center;gap:8px}
+.lv247{font-weight:600}
+.ctrby247{margin:4px 0 6px}
+.ctrc.done247{border-color:#D1D5DB;color:#6B7280;background:#F3F4F6}
+.ctrrow247{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -19107,8 +19118,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v246 — 차수 옮긴 후보 '[object Object]에서' 표시 오류 · 대시보드 숫자 점선 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
-APP_VER="v246";APP_VER_ON="11/09";APP_NOTE="차수를 옮긴 후보에 '[object Object]에서'가 뜨던 오류 수정 · 불합격 연계 출처 되살림 / 재직자 대시보드 숫자 밑 점선이 칸 끝까지 그어지던 것 수정";
+/* v247 — 인재 풀 탭(대기 · 진행 중 4단계 · 완료) · 한 사람 = 한 창 · 직무 레벨 열 · 근로계약서 처리 주체 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
+APP_VER="v247";APP_VER_ON="11/09";APP_NOTE="인재 풀: 대기 · 진행 중(이력서 전달 · 면접 · 처우 협의 · 입사 대기) · 완료 조회 / 추천 · 포트폴리오 한 창 · 상태 하나 · 따로 보기 / 목록 직무 레벨 열 / 📎는 파일 있을 때만 · 입사 가능 추정 날짜 오류 / 근로계약서 처리 주체(채용 첨부 · 운영 서류 관리) · 📄진행중 · 완료 칩";
 
 /* ================================================================
    v208
@@ -21378,6 +21389,159 @@ regAfter("v245 고용 계약 안내",function(){if(!S.wm)return;[].forEach.call(
 /* 메일 · 쪽지 문구 {회사명} */
 var _mtFill245b=mtFill;mtFill=function(t){var c=coName(),a=[].slice.call(arguments);if(typeof t==="string")a[0]=t.replace(/\[\{회사명\}\]\s?/g,c?"["+c+"] ":"").replace(/\{회사명\}\s?/g,c?c+" ":"");return _mtFill245b.apply(this,a)};
 try{if(MT_V.common.indexOf("회사명")<0)MT_V.common.push("회사명");if(NT_V.common.indexOf("회사명")<0)NT_V.common.push("회사명")}catch(e){}
+
+/* ================================================================
+   v247
+     ① 인재 풀 탭: 대기 │ 진행 중(이력서 전달 · 면접 · 처우 협의 · 입사 대기) │ 완료 조회
+        · 최종 합격 → 입사일 전까지 '입사 대기' · 입사일 지나면 '취업완료'
+        · 연결된 근로자에게 등록일 이후 입사가 생기면 포트폴리오만 있는 사람도 같은 규칙
+        · 열어 둔 사람이 탭과 안 맞으면 흐리게 + '열어 둔 사람 · 닫으면 빠져요'
+     ② 인재 풀 한 사람 = 한 창: 추천 정보 + 📎 포트폴리오(레벨 · 급여 · 파일)를 한 창에
+        · 추천만 있는 사람도 레벨 · 급여 · 성별 · 파일을 넣으면 포트폴리오가 같이 생김 (추천은 그대로)
+        · 상태 하나: 창 머리 칩 = 목록 상태 · 상태 버튼을 누르면 포트폴리오 상태도 같이
+        · [따로 보기]: 잘못 묶인 사람 풀기 (portfolios.not_same 에 기록)
+        · 📎 는 파일 · 링크가 있을 때만 · 입사 가능 '추정 NaN' 고침 · 목록에 직무 레벨 열
+     ③ 근로계약서 처리 주체: 합격자 계약 정보에서 [채용: 첨부] / [운영: 서류 관리에서 진행]
+        · 운영이면 첨부 없어도 '계약서 대기' · 입구서 '계약서 없음' 안내에서 빠짐
+        · 신규입사자 · 입구서 · 후보 표에 📄진행중 / 📄완료 칩 (말풍선: 수취방법 · 단계 · 날짜)
+   ================================================================ */
+
+/* ---------- ① 단계 ---------- */
+var UNI_G247=["이력서 전달","면접","처우 협의","입사 대기"],UNI247={on:false};
+var UNI_GC247={"대기":"","이력서 전달":"p","면접":"warn","처우 협의":"warn","입사 대기":"t","취업완료":"ok","종료":""};
+S.uniT247=S.uniT247||"대기";S.uniG247=S.uniG247||"all";
+function uniCandK247(t,p){var L=[];(DB.rrr||[]).forEach(function(x){(x.cands||[]).forEach(function(c,i){if(c&&((t&&c.tal===t.id)||(p&&c.pf===p.id)))L.push({x:x,i:i,c:c})})});return L}
+function uniTalk247(o){return(DB.talks||[]).some(function(k){return k&&k.kind==="처우 협의"&&k.st!=="완료"&&k.st!=="취소"&&(k.ck||[]).indexOf(o.x.id+":"+o.i)>=0})}
+function uniHire247(st){if(!st)return"입사 대기";return st>TODAY?"입사 대기":"취업완료"}
+function uniStg247(r){var st=r.st0||r.st,L=uniCandK247(r.t,r.p),res=null;
+  L.forEach(function(o){if(res==="입사 대기"||o.c.final!=="합격")return;var eid=typeof o.c.hired==="string"?o.c.hired:o.c.emp,e=eid&&emp(eid);if(e&&e.cancelled)return;var g=uniHire247(e?empStart(e):"");if(g==="입사 대기"||!res)res=g});
+  if(res)return res;
+  if(r.wid&&r.created){var E=empsOfW(r.wid).filter(function(e){var s=empStart(e);return!e.cancelled&&s&&s>=r.created});if(E.length)return E.some(function(e){return empStart(e)>TODAY})?"입사 대기":"취업완료"}
+  if(st==="취업완료"||st==="종료")return st;
+  var live=L.filter(function(o){return talCandRes(o.c)==="진행 중"});
+  if(live.some(uniTalk247))return"처우 협의";if(live.some(function(o){return o.c.iv}))return"면접";if(live.length)return"이력서 전달";
+  if(st==="면접")return"면접";if(st==="제안중")return"이력서 전달";return"대기"}
+/* 따로 보기: 포트폴리오.notsame 에 "t:추천id" */
+function uniSplit247(R){var add=[];R.forEach(function(r){if(r.t&&r.p&&(r.p.notsame||[]).indexOf("t:"+r.t.id)>=0){add.push({t:null,p:r.p,pi:r.pi||uniPfInfo(r.p)});r.p=null;r.pi=null;r.st=uniSt(r.t,null)}});
+  add.forEach(function(r){r.st=uniSt(null,r.p);var i=r.pi;r.name=i.name;r.birth=i.birth;r.wid=i.wid;r.created=String(r.p.created||"").slice(0,10)});return R.concat(add)}
+function uniBase247(){var R=(typeof _uniRows179==="function"?_uniRows179:_uniRows247).apply(this,arguments);R=uniSplit247(R);R.forEach(function(r){r.st0=r.st;r.stg=uniStg247(r)});return R}
+function uniTabOk247(r){var q=String(S.qw||"").trim();if(q||S.uniFix238||S.uniJdMiss)return true;var T=S.uniT247||"대기",g=r.stg||uniStg247(r);
+  if(T==="all")return true;if(T==="대기")return g==="대기";if(T==="open")return UNI_G247.indexOf(g)>=0&&(S.uniG247==="all"||!S.uniG247||g===S.uniG247);
+  if(T==="done")return(g==="취업완료"||g==="종료")&&inDR("uni",uniDoneOn(r));return true}
+var _uniRows247=uniRows;uniRows=function(){var R=uniBase247.apply(this,arguments);if(!UNI247.on)return R;
+  R.forEach(function(r){r.st=r.stg});return R.filter(function(r){var ok=uniTabOk247(r);if(!ok&&uniSel179(r)){r._gone=1;return true}return ok})};
+uniTabOk=function(r){return uniTabOk247(r)};
+function uniCnt247(){var q=String(S.qw||"").trim(),c={o:0};uniBase247().forEach(function(r){if(S.uniF==="tal"&&!r.t)return;if(S.uniF==="pf"&&!r.p)return;if(q&&(r.name+" "+uniJobs(r)+" "+((r.ti||r.pi||{}).ph||"")).indexOf(q)<0)return;c[r.stg]=(c[r.stg]||0)+1;if(UNI_G247.indexOf(r.stg)>=0)c.o++});return c}
+var _vUni247=vUni;vUni=function(){var T=S.uniT247||"대기",h;S.uniTab="open";UNI247.on=true;try{h=_vUni247.apply(this,arguments)}finally{UNI247.on=false}
+  if(typeof h!=="string")return h;var c=uniCnt247();
+  var tabs=tabsHtml("uni-t247",T,[["대기","대기",c["대기"]||0],["open","진행 중",c.o],["done","완료 조회"]]);
+  if(T==="open")tabs+='<div class="seg sm unig247" role="group" aria-label="진행 단계">'+[["all","전체",c.o]].concat(UNI_G247.map(function(g){return[g,g,c[g]||0]})).map(function(x){return'<button class="'+((S.uniG247||"all")===x[0]?"on":"")+'" data-act="uni-g247" data-v="'+esc(x[0])+'">'+esc(x[1])+' <span class="c">'+x[2]+'</span></button>'}).join("")+'</div>';
+  if(T==="done")tabs+=dRBar("uni","취업완료 · 종료 (마지막 변경일)");
+  h=tabsSwap(h,"uni-tab",tabs);
+  h=h.replace("제안중(채용 요청 후보로 올라감) → 면접(면접 일정) → 취업완료(입사 등록)","이력서 전달(채용 요청 후보로 올라감) → 면접(면접 일정) → 처우 협의(조율 진행 중) → 입사 대기(최종 합격 · 입사일 전) → 취업완료(입사일 지남)").replace("📎은 포트폴리오가 있는 사람이에요","📎은 포트폴리오 파일 · 링크가 있는 사람이에요");
+  return h};
+regActs({
+  "uni-t247":function(D0){S.uniT247=D0.v;S.uniG247="all";tst("uni").page=1;render()},
+  "uni-g247":function(D0){S.uniG247=D0.v;tst("uni").page=1;render()}
+});
+/* 목록 줄: 단계 칩 · 📎(파일 있을 때만) · 열어 둔 사람 · 직무 레벨 열 */
+var UNI_J247=-1;
+regTable("uni",{id:"v247",
+  cols:function(C){UNI_J247=C.findIndex(function(c){return c.k==="j"});if(UNI_J247<0)return C;C.splice(UNI_J247+1,0,{k:"lv",h:"직무 레벨",t:"text",al:"c",f:function(r){return(r.p&&r.p.level)||"미입력"}});return C},
+  row:function(h,r){if(!r)return h;
+    h=h.replace(/<span class="b sm (?:undefined|p|warn|ok|t|)">(대기|이력서 전달|면접|처우 협의|입사 대기|취업완료|종료)<\/span>/,function(m,s){return'<span class="b sm '+(UNI_GC247[s]||"")+'">'+s+'</span>'});
+    if(r.p&&!(r.p.files||[]).length)h=h.replace(/ <span class="b sm t tip" tabindex="0" data-tip="포트폴리오 0개">📎<\/span>/,"");
+    if(r._gone)h=h.replace(/^(\s*<tr class=")/,"$1uni247gone ").replace(/<\/td>/,' <span class="b sm uni247tag">열어 둔 사람 · 닫으면 빠져요</span></td>');
+    if(UNI_J247>=0){var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(m){var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);if(T&&T.length>UNI_J247){var lv=r.p&&r.p.level;T.splice(UNI_J247+1,0,'<td class="c">'+(lv?'<b class="lv247">'+esc(lv)+'</b>':'<span class="muted small">—</span>')+'</td>');h=m[1]+T.join("")+m[3]}}}
+    return h}});
+
+/* ---------- ② 한 사람 = 한 창 ---------- */
+function uniRowOf247(P){P=P||{};var R=uniBase247();return R.find(function(r){return(P.t&&r.t&&r.t.id===P.t)||(!P.t&&P.p&&r.p&&r.p.id===P.p)})||null}
+function uniDom247(h){var d=document.createElement("div");d.innerHTML=h;return d}
+function uniPost247(as,r){if(!as)return;var b=as.querySelector(".ph .tags .b");if(b&&r){b.className="b "+(UNI_GC247[r.stg]||"");b.textContent=r.stg;b.title="인재 풀 상태 (목록과 같아요)"}
+  [].forEach.call(as.querySelectorAll(".stseg button"),function(x){if(x.textContent.trim()==="제안중"||x.textContent.trim()==="연계중")x.textContent="이력서 전달"})}
+function pfLink247(t,o){o=o||{};var me=(st(S.me)||{}).name||"",w=t.worker&&wk(t.worker),id=nid();
+  var p={id:id,created:stamp(),by:me,worker:t.worker||"",name:t.name||(w&&w.name)||"",phone:t.phone||(w&&w.phone)||"",birth:(w&&w.birth)||t.birth||"",gender:"",dis_type:(w&&w.dis_type)||"",dis_level:(w&&w.dis_level)||"",jobs:(t.jobs||[]).slice(),job_detail:t.job_detail||"",wish_hours:t.hours_etc||(t.hrs||[]).map(function(h){return"일 "+h}).join(" / "),wish_pay:"",level:"",files:[],
+    note:o.note||"인재 풀에서 같이 만듦",proposed:"",status:"대기",source:t.src_org&&typeof oOf==="function"?(oOf(t.src_org)||{}).short||t.source||"":t.source||"",source_mgr:t.mc_name||"",consent:!!o.consent,consent_on:o.consent?TODAY:"",keep_until:o.consent?addD(TODAY,365):"",src_org:t.src_org||"",main_contact:t.main_contact||"본인",guardian_rel:t.guardian_rel||"",gphone:t.gphone||"",mc_name:t.mc_name||""};
+  DB.pf.push(p);logChange("portfolios",p.id,p.name,"등록","","인재 풀에서 같이 만듦 (추천 정보는 그대로)","내부");return p}
+function uniQuick247(t){return'<div class="ps wide uni247pf"><h3>📎 포트폴리오 <span class="small muted">하나라도 넣으면 포트폴리오가 같이 만들어져요 · 추천 정보는 그대로</span></h3><div class="fg">'+
+  '<label class="f"><span>직무 레벨</span><select data-u247="level" data-t="'+esc(t.id)+'">'+opt(PF_LV,"","선택")+'</select></label>'+
+  '<label class="f"><span>희망급여</span><input data-u247="wish_pay" data-t="'+esc(t.id)+'" placeholder="예: 최저시급"></label>'+
+  '<label class="f"><span>성별</span><select data-u247="gender" data-t="'+esc(t.id)+'">'+opt(PF_GENDER,"","선택")+'</select></label>'+
+  '<label class="f full"><span>파일 올리기 (이력서 · 포트폴리오 · 여러 개)</span><input type="file" multiple data-tl2pf="'+esc(t.id)+'"></label></div></div>'}
+function uniAnchor247(as){return[].find.call(as.querySelectorAll(".ps"),function(ps){var h=ps.querySelector("h3");return h&&/근무 이력/.test(h.textContent)})||null}
+var _uniPanel247=uniPanel;uniPanel=function(){var P=S.uniPair||{};
+  if(!P.t||S.talSel!==P.t){var h0=_uniPanel247.apply(this,arguments);if(!h0||!P.p||S.pfSel!==P.p||P.t)return h0;var D0=uniDom247(h0);uniPost247(D0.querySelector("aside"),uniRowOf247(P));return D0.innerHTML}
+  var t=(DB.talent||[]).find(function(x){return x.id===P.t}),p=P.p&&pfOf(P.p);if(!t)return _uniPanel247.apply(this,arguments);
+  if(p&&(p.notsame||[]).indexOf("t:"+t.id)>=0){p=null;S.uniPair={t:t.id,p:null}}
+  var a="";S.pfSel=null;try{a=uniGrab(_vTalentOrig())}catch(e){console.warn(e)}if(!a)return"";
+  var A=uniDom247(a),as=A.querySelector("aside");if(!as)return a;uniPost247(as,uniRowOf247(S.uniPair));
+  if(!p){as.querySelectorAll("input[data-tl2pf]").forEach(function(i){var l=i.closest("label");if(l)l.remove()});var q=uniDom247(uniQuick247(t)).firstChild,an=uniAnchor247(as);if(an)an.parentNode.insertBefore(q,an);else as.appendChild(q);return stNameFix(A.innerHTML)}
+  S.pfSel=p.id;if(S.pfF&&S.pfF.id===p.id){S.pfF.status=p.status;S.pfF.st_manual=p.st_manual;S.pfF.st_reason=p.st_reason}
+  var B=uniDom247(pPf()),form=null,files=null;[].forEach.call(B.querySelectorAll("aside > .ps"),function(ps){if(!form&&ps.querySelector('[data-pff="level"]'))form=ps;else if(!files&&ps.querySelector("#pf-file"))files=ps});
+  as.querySelectorAll("input[data-tl2pf]").forEach(function(i){var l=i.closest("label");if(l)l.remove()});
+  var box=document.createElement("div");box.className="ps wide uni247pf";
+  box.innerHTML='<h3>📎 포트폴리오 <span class="small muted">레벨 · 급여 · 파일은 포트폴리오에 저장돼요</span><span class="grow"></span><button type="button" class="linkbtn small" data-act="uni-split247" data-t="'+esc(t.id)+'" data-p="'+esc(p.id)+'" title="다른 사람인데 한 줄로 묶였으면 눌러 주세요">따로 보기</button></h3>';
+  if(form){["name","phone","birth","dis_type","dis_level","job_detail","wish_hours","status"].forEach(function(k){var i=form.querySelector('[data-pff="'+k+'"]'),f=i&&i.closest(".f");if(f)f.remove()});var j=form.querySelector('[data-pff="jobs"]'),fj=j&&j.closest(".f");if(fj)fj.remove();while(form.firstChild)box.appendChild(form.firstChild)}
+  if(files){var fh=files.querySelector("h3");if(fh)fh.outerHTML='<div class="small" style="margin:10px 0 4px;font-weight:600">파일 · 링크</div>';while(files.firstChild)box.appendChild(files.firstChild)}
+  var an=uniAnchor247(as);if(an)an.parentNode.insertBefore(box,an);else as.appendChild(box);
+  return stNameFix(A.innerHTML)};
+/* 추천만 있는 사람: 칸을 넣으면 포트폴리오 같이 만들기 */
+document.addEventListener("change",function(ev){var x=ev.target;if(!x||!x.dataset||!x.dataset.u247)return;var t=(DB.talent||[]).find(function(y){return y.id===x.dataset.t});if(!t)return;var v=String(x.value||"").trim();if(!v)return;
+  var p=pfLink247(t);p[x.dataset.u247]=v;logChange("portfolios",p.id,p.name,{level:"직무 레벨",wish_pay:"희망급여",gender:"성별"}[x.dataset.u247]||x.dataset.u247,"",v,"내부");
+  S.uniPair={t:t.id,p:p.id};S.talSel=t.id;S.pfSel=p.id;S.pfF=null;if(LIVE&&READY)schedulePersist();toast("포트폴리오를 같이 만들고 저장했어요");render()},true);
+/* 추천 창 '서류 올리기': 인재 풀에서는 옮기지 않고 같이 만들기 */
+var _tl2pf247=tl2pf;tl2pf=function(tid,names){if(S.view!=="talent")return _tl2pf247.apply(this,arguments);var t=(DB.talent||[]).find(function(x){return x.id===tid});if(!t||!names||!names.length)return;
+  var FL=(S.tlFiles||[]).slice();S.tlFiles=[];var P=S.uniPair||{},p=P.t===tid&&P.p&&pfOf(P.p);if(!p)p=pfLink247(t,{consent:true,note:"인재 풀에서 서류 등록"});
+  S.uniPair={t:t.id,p:p.id};S.talSel=t.id;S.pfSel=p.id;S.pfF=null;if(FL.length)setTimeout(function(){pfUpload(p.id,FL)},0);toast("포트폴리오에 서류를 올려요 · 추천 정보는 그대로");render()};
+/* 상태 하나: 추천 상태를 바꾸면 묶인 포트폴리오도 같이 */
+function uniPairPf247(tid){var P=S.uniPair||{};return P.t===tid&&P.p?pfOf(P.p):null}
+function uniMirror247(t,p,auto){var pv=auto?pfAutoOf(p):(t.status==="연계중"?"제안중":t.status);if(PF_ST.indexOf(pv)<0)pv="대기";var b=p.status;if(b===pv&&!!p.st_manual===!!t.st_manual)return;
+  p.status=pv;p.st_manual=!!t.st_manual;p.st_reason=t.st_reason||"";if(S.pfF&&S.pfF.id===p.id){S.pfF.status=pv;S.pfF.st_manual=p.st_manual;S.pfF.st_reason=p.st_reason}
+  logChange("portfolios",p.id,p.name,"상태 (인재 풀 같이)",b,pv,"내부");if(LIVE&&READY)schedulePersist()}
+var _stSet247=stSet;stSet=function(kind,id,v){var r=_stSet247.apply(this,arguments);if(kind==="tl"){var p=uniPairPf247(id),t=stObj("tl",id);if(p&&t&&t.status===v){uniMirror247(t,p,false);render()}}return r};
+var _stAuto247=stAuto;stAuto=function(kind,id){var r=_stAuto247.apply(this,arguments);if(kind==="tl"){var p=uniPairPf247(id),t=stObj("tl",id);if(p&&t){uniMirror247(t,p,true);render()}}return r};
+regActs({
+  "uni-split247":function(D0){var p=pfOf(D0.p);if(!p)return;askConfirm("따로 보기","추천 정보와 포트폴리오를 다른 사람으로 나눌까요? 목록에 두 줄로 따로 나와요.","따로 보기",function(){p.notsame=(p.notsame||[]).concat(["t:"+D0.t]);logChange("portfolios",p.id,p.name,"같은 사람 아님 (인재 풀 따로 보기)","",D0.t,"내부");S.uniPair={t:D0.t,p:null};S.pfSel=null;S.pfF=null;if(LIVE&&READY)schedulePersist();toast("따로 나눴어요");render()})},
+  "close":function(){if(S.view==="talent"){S.uniPair=null;S.pfSel=null;S.pfF=null}return REG_NEXT}
+});
+/* 입사 가능 '추정 NaN' — 이전 계약 종료일이 2026.10.20 같은 모양이거나 비정상 */
+function dNorm247(v){var s=String(v||"").trim().replace(/[./]/g,"-").replace(/\s/g,""),m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);if(!m)return"";var d=m[1]+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[3]).slice(-2);return isNaN(new Date(d).getTime())?"":d}
+var _avOf247=avOf;avOf=function(p){if(p&&!p.av_now&&!p.av_from&&p.pe){var d=dNorm247(p.pe);if(!d)return{d:"",now:false,est:false};return _avOf247(Object.assign({},p,{pe:d}))}return _avOf247.apply(this,arguments)};
+
+/* ---------- ③ 근로계약서 처리 주체 ---------- */
+function ctrBy247(c){return c&&c.ci&&c.ci.ctr_by==="운영"?"운영":"채용"}
+function ctrEid247(c){return c?(typeof c.hired==="string"?c.hired:c.emp)||"":""}
+function candOfEmp247(eid){var hit=null;if(!eid)return null;(DB.rrr||[]).some(function(x){return(x.cands||[]).some(function(c,i){if(c&&ctrEid247(c)===eid){hit={x:x,i:i,c:c};return true}})});return hit}
+function ctrDoc247(eid){return(DB.casedocs||[]).filter(function(d){return d.emp===eid&&/근로\s?계약/.test(d.name||"")})[0]||null}
+function ctrOps247(c){var eid=ctrEid247(c),d=eid&&ctrDoc247(eid),done=false,tip="운영파트가 서류 관리에서 진행 · 아직 입사 서류(근로계약서) 건이 없어요";
+  if(d){var L=docSteps(d.method),n=+d.step||0,dt=(d.dates||[])[n-1]||"";done=n>=L.length;tip="근로계약서 · "+(d.method||"방법 미정")+" · "+(done?"완료":(L[n]||"")+" 대기")+(dt?" · "+String(dt).slice(5,10).replace("-","/"):"")}
+  return'<span class="ctrc ctr247 '+(done?"done247":"on")+' tip" tabindex="0" data-tip="'+esc(tip)+'"'+(eid&&emp(eid)?' data-act="ctr-go247" data-e="'+esc(eid)+'"':"")+'>📄'+(done?"완료":"진행중")+'</span>'}
+var _ctrChip247=ctrChip;ctrChip=function(xid,i){var o=cdGet(xid,i);if(o&&o.c&&ctrBy247(o.c)==="운영"&&o.c.final==="합격")return ctrOps247(o.c);return _ctrChip247.apply(this,arguments)};
+function ctrSeg247(xid,i,by){return'<div class="seg sm ctrby247" role="group" aria-label="근로계약서 처리">'+[["채용","채용: 첨부해서 입구서와 같이"],["운영","운영: 서류 관리에서 진행"]].map(function(x){return'<button type="button" class="'+(by===x[0]?"on":"")+'" data-act="ctr-by247" data-x="'+esc(xid)+'" data-i="'+i+'" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div>'}
+var _ciCtrHtml247=ciCtrHtml224;ciCtrHtml224=function(xid,i){var h=_ciCtrHtml247.apply(this,arguments),o=cdGet(xid,i);if(!h||!o||!o.c||o.c.final!=="합격")return h;var by=ctrBy247(o.c);
+  if(by==="운영")return'<div class="ps ci-ctr" data-x="'+esc(xid)+'" data-i="'+i+'"><h3>근로계약서</h3>'+ctrSeg247(xid,i,by)+'<div class="ctrrow247"><span class="small">운영파트가 서류 관리에서 원본 수취 · PDF 서명으로 진행해요 · 첨부하지 않아도 돼요</span><span class="grow"></span>'+ctrOps247(o.c)+'</div></div>';
+  return h.replace("</h3>","</h3>"+ctrSeg247(xid,i,by))};
+/* 예전(v217) 계약서 칸: 운영 처리면 숨김 */
+var _ctrSecPaint247=ctrSecPaint;ctrSecPaint=function(xid,i){_ctrSecPaint247.apply(this,arguments);var o=cdGet(xid,i),sec=document.querySelector("#modal .ctrsec");if(sec&&o&&o.c&&ctrBy247(o.c)==="운영")sec.remove()};
+function ctrRepaint247(xid,i){var md=document.querySelector("#modal .dlg");if(!md)return;var old=md.querySelector(".ci-ctr");if(old)old.outerHTML=ciCtrHtml224(xid,i);ctrSecPaint(xid,i)}
+regActs({
+  "ctr-by247":function(D0){var o=cdGet(D0.x,+D0.i);if(!o||!o.c)return;var b=ctrBy247(o.c),v=D0.v==="운영"?"운영":"채용";if(b===v)return;
+    cdPut(D0.x,+D0.i,function(c){if(v==="운영")c.ci.ctr_by="운영";else delete c.ci.ctr_by},true);
+    if(o.r)logChange("recruit_requests",o.r.id,cdCoName(o.r),"근로계약서 처리",b,(o.c.name||"")+" · "+v,"내부");toast(v==="운영"?"운영파트가 서류 관리에서 진행해요 · 첨부 없어도 돼요":"채용파트가 첨부해서 안내해요");ctrRepaint247(D0.x,+D0.i)},
+  "ctr-go247":function(D0){var e=emp(D0.e);if(!e)return;$("#modal").innerHTML="";S._wmLast=e.worker;S.wkPT="doc";openPanel("worker",e.worker)}
+});
+/* 입구서 보내기 전 '계약서 없음' 안내: 운영 처리는 빼기 */
+var _inAskSend247=inAskSend;inAskSend=function(ids){var r=_inAskSend247.apply(this,arguments);setTimeout(function(){var nb=document.querySelector("#modal .ctrmiss");if(!nb)return;
+  var miss=(ids||[]).map(inA).filter(function(a){if(!a||!a.rrr)return false;var o=cdGet(a.rrr,a.rri);return o&&coCtr(o.r)&&ctrBy247(o.c)!=="운영"&&!(a.extra||[]).some(function(e){return e&&e.kind==="ctr"})});
+  if(!miss.length){nb.remove();return}var b=nb.querySelector("b");if(b)b.textContent="근로계약서(미서명본) 없음 "+miss.length+"명"},5);return r};
+/* 신규입사자 목록: 운영 처리 칩 */
+regAfter("v247 신규입사자 계약서 칩",function(){if(S.view!=="onb")return;[].forEach.call(document.querySelectorAll('#main tr[data-act="onb-open"][data-e]'),function(tr){if(tr.querySelector(".ctr247"))return;var o=candOfEmp247(tr.dataset.e);if(!o||ctrBy247(o.c)!=="운영")return;
+  var b=tr.querySelector('[data-act="go-w"]');var h=" "+ctrOps247(o.c);if(b)b.insertAdjacentHTML("afterend",h);else{var td=tr.querySelector("td");if(td)td.insertAdjacentHTML("beforeend",h)}})});
+/* 한 창: 위쪽 [수정 저장]을 눌러도 포트폴리오 칸(레벨 · 급여 …)이 같이 저장되게 */
+function uniPfDirty247(){var p=S.pfF&&pfOf(S.pfF.id);if(!p)return false;return Object.keys(S.pfF).some(function(k){if(k==="files"||k==="id")return false;return JSON.stringify(p[k]==null?"":p[k])!==JSON.stringify(S.pfF[k]==null?"":S.pfF[k])})}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="tal-edit-save"]');if(!b||!b.closest("aside")||!b.closest("aside").querySelector(".uni247pf")||!S.pfF)return;pfRead(S.pfF);
+  setTimeout(function(){if(S.pfF&&uniPfDirty247())pfSave()},0)},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
