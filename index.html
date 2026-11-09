@@ -1684,7 +1684,7 @@ tr.mvd244 td{opacity:.55;background:#F3F3F6}
 /* v245 */
 .coname245{margin:0 0 12px}
 .dlnum245{all:unset;cursor:pointer;font:inherit;font-weight:800;font-size:inherit;color:inherit;border-bottom:2px dashed currentColor}
-.dtile .dlnum245{font-size:28px;line-height:1.2;display:inline-block;border-bottom-width:1px}
+.dtile .dlnum245{font-size:28px;line-height:1.2;display:inline-block;align-self:flex-start;justify-self:start;border-bottom-width:1px} /* v246 점선은 숫자 밑에만 */
 .iosum .dlnum245{font-size:inherit;font-weight:700;border-bottom-width:1px}
 .dlnum245:hover{color:var(--p)}
 .dlsub245,.dllr245,.iolr245{font-size:inherit}
@@ -18476,7 +18476,7 @@ var _pTodo196=pTodo;pTodo=function(t){var h=_pTodo196.apply(this,arguments);if(!
 /* 후보 줄 표시 */
 function lkChip(c,x,ix){if(c.lk){var L=c.lk;if(L.st==="linked"){var r=rcOf(L.to);return'<span class="b sm t lkc">→ '+esc(lkCo(r))+' '+(L.seq||"")+'차로 연계</span>'}if(L.st==="later")return'<span class="b sm lkc">인재 풀 대기</span>';if(L.st==="end")return'<span class="b sm lkc muted">연계 종료'+(L.why?" · "+esc(L.why):"")+'</span>'}
   if(lkElig(c,x)){if(lkBusy(c,x))return'<span class="b sm lkc">다른 요청 진행 중</span>';return'<span class="b sm warn lkc">채용파트 연계 검토 중</span>'+(partOf()==="채용파트"||S.role==="admin"?' <button class="btn xs" data-act="lk-open" data-x="'+esc(x.id)+'" data-i="'+ix+'">연계</button>':"")}
-  if(c.from)return'<span class="b sm muted lkc" title="이전 요청 불합격 후 연계">'+esc(c.from)+'에서</span>';return""}
+  if(c.from&&typeof c.from==="string"/* v246 */)return'<span class="b sm muted lkc" title="이전 요청 불합격 후 연계">'+esc(c.from)+'에서</span>';return""}
 regSection("round",{id:"rrRoundHtml196",order:8,transform:function(h,x){try{var C=x.cands||[];h=h.replace(/(<input data-cd="([^"|]+)\|(\d+)\|phone"[^>]*>)/g,function(m,inp,rid,i){var c=C[+i];if(!c)return m;var ch=lkChip(c,x,+i);return ch?inp+ch:inp})}catch(e){console.warn(e)}return h}});
 /* 채용 요청 화면 위: 연계 검토 대기 */
 var _vRreq196=vRreq;vRreq=function(){var h=_vRreq196.apply(this,arguments);try{var L=lkPending();if(!L.length)return h;var mine=L.filter(function(o){var w=rrRecruiter(o.r)||rr2Mgr();return w===S.me||(typeof sharedFor==="function"&&sharedFor(w,S.me))});
@@ -19107,8 +19107,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v245 — 회사 이름 설정 · 늦은 등록 · 대시보드 명단 복사 · 오류 기록 정리 · 요청 정보 아코디언 · 근로자 창 업무 버튼 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
-APP_VER="v245";APP_VER_ON="11/07";APP_NOTE="회사 이름은 관리자 설정에서 ({회사명}) / 늦은 등록 = 기간 전 입사 · 기간 안 등록 · '+ 늦은 등록 n' / 재직자 대시보드 숫자 누르면 명단 · 엑셀로 복사 / 오류 기록: 중복 기록은 빼고 화면 · 이유 설명 / 요청 정보 칸별 수정은 그 자리에서 / 근로자 창 고용·계약 버튼 바로 쓰기";
+/* v246 — 차수 옮긴 후보 '[object Object]에서' 표시 오류 · 대시보드 숫자 점선 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
+APP_VER="v246";APP_VER_ON="11/09";APP_NOTE="차수를 옮긴 후보에 '[object Object]에서'가 뜨던 오류 수정 · 불합격 연계 출처 되살림 / 재직자 대시보드 숫자 밑 점선이 칸 끝까지 그어지던 것 수정";
 
 /* ================================================================
    v208
@@ -21262,12 +21262,12 @@ function mvLink244(fx,fi,tx,ti){var A=[];(DB.intake||[]).forEach(function(a){if(
 /* 차수에서 i번째 후보를 빼고 뒤 후보들 연결 번호를 하나씩 당김 */
 function mvPull244(x,i){var C=(x.cands||[]).slice();C.splice(i,1);x.cands=C;for(var j=i+1;j<=C.length;j++)mvLink244(x.id,j,x.id,j-1)}
 function mvDo244(fromX,idx,toX){var r=rcOf(fromX.req),moved=[];idx.slice().sort(function(a,b){return b-a}).forEach(function(i){var c=fromX.cands[i];if(!c||!String(c.name||"").trim())return;
-    var n=JSON.parse(JSON.stringify(c));MV_CLR244.forEach(function(k){delete n[k]});n.from={x:fromX.id,seq:fromX.seq,at:stamp(),by:S.me||"",prev:JSON.parse(JSON.stringify(c))};
+    var n=JSON.parse(JSON.stringify(c));MV_CLR244.forEach(function(k){delete n[k]});n.mv={x:fromX.id,seq:fromX.seq,at:stamp(),by:S.me||"",prev:JSON.parse(JSON.stringify(c))};/* v246 from 은 v196 연계 출처(글자) · 옮김 기록은 mv */
     toX.cands=(toX.cands||[]).concat([n]);var ti=toX.cands.length-1;var L=mvLink244(fromX.id,i,toX.id,ti);mvPull244(fromX,i);
     logChange("recruit_requests",r.id,(coR(r)||{}).name||"","차수 변경",fromX.seq+"차 · "+c.name,toX.seq+"차"+(L.length?" (같이 옮김: "+L.join(" · ")+")":""),"내부");moved.unshift(c.name)});
   return moved}
-function mvUndo244(toX,ti){var n=toX.cands[ti];if(!n||!n.from)return"";var fromX=DB.rrr.find(function(y){return y.id===n.from.x});if(!fromX)return"원래 차수를 찾지 못했어요";
-  var back=JSON.parse(JSON.stringify(n.from.prev||n));delete back.from;fromX.cands=(fromX.cands||[]).concat([back]);var fi=fromX.cands.length-1;mvLink244(toX.id,ti,fromX.id,fi);mvPull244(toX,ti);
+function mvUndo244(toX,ti){var n=toX.cands[ti];mvFix246(n);if(!n||!n.mv)return"";var fromX=DB.rrr.find(function(y){return y.id===n.mv.x});if(!fromX)return"원래 차수를 찾지 못했어요";
+  var back=JSON.parse(JSON.stringify(n.mv.prev||n));delete back.mv;mvFix246(back);fromX.cands=(fromX.cands||[]).concat([back]);var fi=fromX.cands.length-1;mvLink244(toX.id,ti,fromX.id,fi);mvPull244(toX,ti);
   var r=rcOf(toX.req);logChange("recruit_requests",r.id,(coR(r)||{}).name||"","차수 변경 (되돌림)",toX.seq+"차 · "+n.name,fromX.seq+"차","내부");return""}
 /* 일괄 막대에 [다른 차수로 옮기기] */
 regAfter("v244 차수 옮기기 버튼",function(){if(!S.rrSel)return;var R0=rrRounds(S.rrSel);[].forEach.call(document.querySelectorAll("aside.pnl .rrround .cdbulk"),function(bk){if(bk.querySelector(".mv244"))return;var R=bk.closest(".rrround"),k=R&&R.querySelector("input.cdk[data-r]");var xid=k&&k.dataset.r;if(!xid)return;var x=DB.rrr.find(function(y){return y.id===xid});if(!x)return;
@@ -21280,9 +21280,13 @@ document.addEventListener("change",function(ev){var s=ev.target;if(!s||!s.datase
   askConfirm("다른 차수로 옮기기",nm+"님을 "+(to?to.seq+"차":"새 "+nextSeq+"차")+"로 옮길까요? "+x.seq+"차엔 회색 줄로 남고, 옮긴 차수에선 이력서 전달 · 결과를 새로 시작해요. 연결된 입구서 · 조율 요청도 같이 옮겨요.","옮기기",function(){
     if(!to){to={id:nid(),req:x.req,seq:nextSeq,cands:[],channel:x.channel||"",notice:"",created:TODAY};DB.rrr.push(to)}var M=mvDo244(x,idx,to);delete S.rrFold[to.id];afterAction("rr:"+x.req,M.length+"명을 "+to.seq+"차로 옮겼어요")})},true);
 /* 줄 표시: 원래 차수 회색 줄 · 옮긴 차수 표시 · 되돌리기 */
-regAfter("v244 옮긴 후보 줄",function(){if(!S.rrSel)return;[].forEach.call(document.querySelectorAll('aside.pnl .rrround tr input[data-cd$="|name"]'),function(inp){var tr=inp.closest("tr");if(!tr||tr.dataset.mv244)return;var q=inp.dataset.cd.split("|"),x=DB.rrr.find(function(y){return y.id===q[0]}),i=+q[1],c=x&&(x.cands||[])[i];if(!c||!c.from)return;
-  tr.dataset.mv244=1;inp.insertAdjacentHTML("afterend",'<span class="b sm mvf244 tip" tabindex="0" data-tip="'+esc(c.from.seq+"차에서 옮김 · "+String(c.from.at||"").slice(5,16))+'">'+esc(c.from.seq)+'차에서</span><button class="linkbtn small" data-act="mv-undo244" data-x="'+x.id+'" data-i="'+i+'" title="원래 차수로 되돌리기">↩</button>')})});
-regActs({"mv-undo244":function(D0){var x=DB.rrr.find(function(y){return y.id===D0.x});if(!x)return;var n=x.cands[+D0.i];askConfirm("되돌리기",(n&&n.name||"")+"님을 원래 "+(n&&n.from?n.from.seq:"")+"차로 되돌릴까요? 이 차수에서 입력한 내용은 지워져요.","되돌리기",function(){var e=mvUndo244(x,+D0.i);if(e){toast(e);return}afterAction("rr:"+x.req,"원래 차수로 되돌렸어요")})}});
+regAfter("v244 옮긴 후보 줄",function(){if(!S.rrSel)return;[].forEach.call(document.querySelectorAll('aside.pnl .rrround tr input[data-cd$="|name"]'),function(inp){var tr=inp.closest("tr");if(!tr||tr.dataset.mv244)return;var q=inp.dataset.cd.split("|"),x=DB.rrr.find(function(y){return y.id===q[0]}),i=+q[1],c=x&&(x.cands||[])[i];mvFix246(c);if(!c||!c.mv)return;
+  tr.dataset.mv244=1;inp.insertAdjacentHTML("afterend",'<span class="b sm mvf244 tip" tabindex="0" data-tip="'+esc(c.mv.seq+"차에서 옮김 · "+String(c.mv.at||"").slice(5,16))+'">'+esc(c.mv.seq)+'차에서</span><button class="linkbtn small" data-act="mv-undo244" data-x="'+x.id+'" data-i="'+i+'" title="원래 차수로 되돌리기">↩</button>')})});
+regActs({"mv-undo244":function(D0){var x=DB.rrr.find(function(y){return y.id===D0.x});if(!x)return;var n=x.cands[+D0.i];askConfirm("되돌리기",(n&&n.name||"")+"님을 원래 "+(n&&mvFix246(n)&&n.mv?n.mv.seq:"")+"차로 되돌릴까요? 이 차수에서 입력한 내용은 지워져요.","되돌리기",function(){var e=mvUndo244(x,+D0.i);if(e){toast(e);return}afterAction("rr:"+x.req,"원래 차수로 되돌렸어요")})}});
+
+/* v246 v244 에서 옮김 기록을 from 에 넣어 v196 연계 출처(글자)와 겹침 → mv 로 옮기고 원래 출처 되살림 */
+function mvFix246(c){if(c&&c.from&&typeof c.from==="object"){c.mv=c.from;var o=c.mv.prev&&c.mv.prev.from;if(typeof o==="string"&&o)c.from=o;else delete c.from}return c}
+regBefore("v246 옮김 기록 정리",function(){(DB.rrr||[]).forEach(function(x){(x.cands||[]).forEach(mvFix246)})});
 
 /* ================================================================
    v245
