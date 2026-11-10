@@ -1796,7 +1796,7 @@ aside.u255>.u255sync{margin:0 16px 4px}
 .bulk .btn.pri{background:#fff;color:#584C9D;border-color:#fff;font-weight:700}
 .bulk .x{color:#fff;white-space:nowrap;text-decoration:underline;margin-left:12px}
 tr.vgh .vg256{margin-left:8px;vertical-align:1px}
-.em256{margin:4px 0 0;font-size:13px}
+.em256{font-size:inherit}
 </style>
 </head>
 <body>
@@ -19204,8 +19204,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v256 — 선택 막대 글자 · 묶음 모두 선택 · 근로자 이메일 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
-APP_VER="v256";APP_VER_ON="11/10";APP_NOTE="선택 막대: [선택한 n건 처리] 버튼 · 안내 문구가 보이게 / 기업별 보기 묶음에 [이 기업 모두 선택] / 근로자 창 머리에 이메일(누르면 복사) · [메일 쓰기]";
+/* v257 — 근로자 창 머리: 이메일은 주 소통 연락처 오른쪽 · 인재 풀 바로가기 칩만 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
+APP_VER="v257";APP_VER_ON="11/10";APP_NOTE="근로자 창 머리: 이메일을 주 소통 연락처 오른쪽에 (누르면 복사 · 메일 쓰기 버튼 없앰) / [인재 풀에 추천] 버튼 없앰 · 인재 풀에 있는 사람만 상태 칩 줄 끝에 [인재 풀 →]";
 
 /* ================================================================
    v208
@@ -22193,9 +22193,9 @@ function u255DupCheck(){var box=document.querySelector(".u255dup");if(!box)retur
 document.addEventListener("input",function(ev){var t=ev.target;if(t&&t.dataset&&/^(phone|birth|name)$/.test(t.dataset.pff||"")&&S.pfSel==="new")u255DupCheck()},true);
 /* ---------- ② 근로자 창: 인재 풀 칩 ---------- */
 regSection("worker",{id:"v255 인재 풀 칩",order:90,transform:function(h,w){if(!w||typeof h!=="string")return h;var T=(DB.talent||[]).filter(function(t){return t.worker===w.id}).sort(function(a,b){return String(b.created).localeCompare(String(a.created))}),P=(DB.pf||[]).filter(function(p){return p.worker===w.id});
-  var t=T[0]||null,p=P[0]||null,chip;if(t||p){var st=t?u255Nat(t,"t"):u255Nat(p,"p");chip='<button type="button" class="b sm u255w" data-act="u255-go" data-t="'+(t?esc(t.id):"")+'" data-p="'+(p?esc(p.id):"")+'" title="인재 풀 창 열기">인재 풀 · '+esc(st)+(p?" · 🔄 포트폴리오":"")+(t?" · 🏢 추천 정보":"")+' →</button>'}
-  else chip='<button type="button" class="btn xs" data-act="u255-rec" data-w="'+esc(w.id)+'" title="이 근로자를 인재 풀에 추천 (근로자 DB와 연결된 채로)">인재 풀에 추천</button>';
-  var i=h.indexOf("</h2>");return i<0?h:h.slice(0,i+5)+'<div class="u255wk">'+chip+'</div>'+h.slice(i+5)}});
+  /* v257 따로 줄 · [인재 풀에 추천] 없앰 → 인재 풀에 있는 사람만 상태 칩 줄 끝에 바로가기 */
+  var t=T[0]||null,p=P[0]||null;if(!t&&!p)return h;var chip='<button type="button" class="b sm u255w" data-act="u255-go" data-t="'+(t?esc(t.id):"")+'" data-p="'+(p?esc(p.id):"")+'" title="인재 풀 창 열기">인재 풀 →</button>';
+  var i=h.indexOf('<div class="tags">');if(i<0)return h;var j=h.indexOf("</div>",i);return j<0?h:h.slice(0,j)+chip+h.slice(j)}});
 /* ---------- ④ 인재 풀 목록 ---------- */
 var _uniRows255=uniRows;uniRows=function(){var R=_uniRows255.apply(this,arguments);if(Array.isArray(R))R.forEach(function(r){if(r&&r.p&&r.p.birth)r.birth=r.p.birth});return R};
 regTable("uni",{id:"v255 만 나이 · 다름",cols:function(C){return C.map(function(c){if(c.k!=="b")return c;var o=Object.assign({},c);o.f=function(r){return talAge((r.p&&r.p.birth)||(r.pi&&r.pi.birth)||r.birth||"")};return o})},
@@ -22237,8 +22237,9 @@ regAfter("v256 묶음 모두 선택",function(){var M=typeof vgMode==="function"
     var all=L.every(function(e){return S.bulk&&S.bulk[e]});td.insertAdjacentHTML("beforeend",' <button type="button" class="btn xs vg256" data-act="vg256-all" data-e="'+esc(L.join(","))+'">'+(all?"선택 풀기":M==="co"?"이 기업 모두 선택":"모두 선택")+'</button>')})});
 regActs({"vg256-all":function(D0){var L=String(D0.e||"").split(",").filter(Boolean);S.bulk=S.bulk||{};var all=L.every(function(e){return S.bulk[e]});L.forEach(function(e){if(all)delete S.bulk[e];else S.bulk[e]=true});render()}});
 regSection("worker",{id:"v256 이메일",order:95,transform:function(h,w){if(!w||typeof h!=="string"||!w.email)return h;var m=String(w.email).trim();if(!m)return h;
-  var chip='<div class="em256"><span class="small muted">이메일</span> <button type="button" class="tel" data-act="copy" data-v="'+esc(m)+'" title="눌러서 복사">'+esc(m)+'</button> <a class="btn xs" href="mailto:'+esc(m)+'" target="_blank" rel="noopener">메일 쓰기</a></div>';
-  var i=h.indexOf("</h2>");return i<0?h:h.slice(0,i+5)+chip+h.slice(i+5)}});
+  /* v257 새 줄 · [메일 쓰기] 없앰 → 주 소통 연락처 오른쪽에 이메일 (누르면 복사) */
+  var i=h.indexOf('<div class="wmc">');if(i<0)return h;var j=h.indexOf("</div>",i);if(j<0)return h;
+  return h.slice(0,j)+' <span class="muted">·</span> <button type="button" class="tel em256" data-act="copy" data-v="'+esc(m)+'" title="눌러서 복사">'+esc(m)+'</button>'+h.slice(j)}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
