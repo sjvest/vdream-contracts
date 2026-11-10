@@ -1742,6 +1742,9 @@ tr.uni247gone td{opacity:.55}
 .jobw251 .jw251 span{min-width:64px;font-size:12px}
 .jobw251 .jw251 input{width:180px}
 .jobx251 .jx251{display:inline-flex;align-items:center;gap:4px;margin:0 12px 6px 0;padding:2px 8px;border:1px dashed #D6D3E0;border-radius:8px}
+/* v252 영업 진행 현황: 업데이트 필요는 흐리게 하지 않음 */
+tr.ldstale td{opacity:1}
+tr.ldstale .b.warn{font-weight:700;background:#FEF3C7;color:#92400E}
 </style>
 </head>
 <body>
@@ -19149,8 +19152,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v251 — 임시 담당자(이관 전) · 직무 목록 설정 하나로 · 입퇴사 현황 + 충족입사 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
-APP_VER="v251";APP_VER_ON="11/10";APP_NOTE="영업 기업 임시 담당자: 영업 요청 → 운영파트 관리자 지정 · 내 담당에 같이 보임 · 30일 지나면 이관 진행 알림 / 직무 목록: 표준 값 정규화 · 인재 풀 필터 · 영업 사전 공유도 직무 대분류 설정 · 업로드 인식 단어 · 목록에 없는 직무 알림 / 입퇴사 현황: + 충족입사 n";
+/* v252 — 영업파트 로그인 · 영업 기본 메뉴 · 영업 홈 재직자 있는 기업 · 영업 진행 현황 흐림 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
+APP_VER="v252";APP_VER_ON="11/10";APP_NOTE="영업파트 계정 로그인 가능 · 영업파트 기본 메뉴(영업 화면 · 채용 요청 · 기업 DB · 내 할 일) / 영업 홈: 재직자 있는 영업 기업 / 영업 진행 현황: 업데이트 필요 건 흐리게 하지 않음";
 
 /* ================================================================
    v208
@@ -21800,7 +21803,7 @@ var _pTodo251=pTodo;pTodo=function(t){var h=_pTodo251.apply(this,arguments);if(!
   return/<\/div><\/aside>$/.test(h)?h.replace(/<\/div><\/aside>$/,b+'</div></aside>'):h.replace(/<\/aside>$/,b+'</aside>')};
 /* 화면: 영업 홈 기업 이관 표 · 기업 창 · 기업 DB 목록 */
 regAfter("v251 임시 담당 표시",function(){var m=document.getElementById("main");
-  if(m)[].forEach.call(m.querySelectorAll('table.t button[data-act="s-coopen"][data-id]'),function(b){var tr=b.closest("tr");if(!tr||tr.dataset.tmp251)return;tr.dataset.tmp251=1;var c=comp(b.dataset.id);if(!c)return;var td=tr.children[1];if(td)td.insertAdjacentHTML("beforeend",tmpChip251(c));var last=tr.lastElementChild;if(last&&tmpOk251(c)||last&&tmpOf251(c))last.insertAdjacentHTML("afterbegin",tmpBtns251(c,true))});
+  if(m)[].forEach.call(m.querySelectorAll('#s-ho table.t button[data-act="s-coopen"][data-id], #main > table.t button[data-act="s-coopen"][data-id]'),/* v252 기업 이관 표만 */function(b){var tr=b.closest("tr");if(!tr||tr.dataset.tmp251)return;tr.dataset.tmp251=1;var c=comp(b.dataset.id);if(!c)return;var td=tr.children[1];if(td)td.insertAdjacentHTML("beforeend",tmpChip251(c));var last=tr.lastElementChild;if(last&&tmpOk251(c)||last&&tmpOf251(c))last.insertAdjacentHTML("afterbegin",tmpBtns251(c,true))});
 });
 regSection("company",{id:"tmp251",order:4,transform:function(h,c){try{if(!h||!c||!c.id||typeof h!=="string")return h;var t=tmpOf251(c);if(!t&&!tmpOk251(c))return h;var k=h.indexOf('<div class="ps wide hoLine">');if(k<0)return h;var e=h.indexOf("</div>",k);if(e<0)return h;return h.slice(0,e)+tmpChip251(c)+' <span class="tmpb251">'+tmpBtns251(c,true)+'</span>'+h.slice(e)}catch(x){return h}}});
 regTable("comp",{id:"v251",row:function(h,c){if(!c||typeof h!=="string"||!tmpOf251(c))return h;var ch=tmpChip251(c);if(!ch)return h;var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);if(!T||!T.length)return h;T[0]=T[0].replace(/<\/td>$/,ch+"</td>");return m[1]+T.join("")+m[3]}});
@@ -21827,6 +21830,28 @@ regActs({
   "jobw-save":function(){if(S.role!=="admin")return;var o={},b=jobWords251();[].forEach.call(document.querySelectorAll("[data-jobw]"),function(i){var v=String(i.value||"").trim();if(v)o[i.dataset.jobw]=v});appSetPut("job_words",o);logChange("app_settings","job_words","직무 인식 단어","업로드 자동 인식 단어",JSON.stringify(b),JSON.stringify(o),"내부");toast("저장했어요");render()},
   "jobx-add":function(D0){if(S.role!=="admin")return;var v=String(D0.v||"").trim();if(!v)return;var L=jobCats().slice();if(L.some(function(x){return x.n===v}))return;var k=L.findIndex(function(x){return x.n==="기타"});var it={n:v,h:false};if(k<0)L.push(it);else L.splice(k,0,it);jobSave(L,"추가 · "+v);try{jobsApply()}catch(e){}stdJobsSync251();toast(v+" 직무를 목록에 추가했어요");render()}
 });
+
+/* ================================================================
+   v252
+     ① 영업파트 로그인 허용 (예전: '담당자 배정용이라 로그인할 수 없어요') — core/0251-…-08.js
+        · 영업파트 기본 메뉴: 영업 홈 · 영업용 인재 풀 · 영업 진행 현황 · 채용 요청 · 기업 DB · 내 할 일
+          (그 밖의 메뉴는 관리자 › 메뉴 설정에서 영업파트를 켜야 보임)
+     ② 영업 홈 '재직자 있는 영업 기업': 담당이 영업팀이고 재직자가 있는 기업 전부 (진행 중 채용 요청 · 이관 상태)
+     ③ 영업 진행 현황: 업데이트 3일 지난 건을 흐리게 하지 않음 · '업데이트 필요' 칩만 진하게 (흐림은 결과 난 건만)
+   ================================================================ */
+var SALES_OK252={shome:1,spool:1,sleads:1,rreq:1,comp:1,todo:1};
+var _mpSee252=mpSee;mpSee=function(v){if(typeof meSales==="function"&&meSales()&&S.role!=="admin"&&!SALES_OK252[v]){var M=mpGet();return!!(M&&M.see&&M.see[v]&&M.see[v].indexOf("영업파트")>=0)}return _mpSee252.apply(this,arguments)};
+/* ② 재직자 있는 영업 기업 */
+function sWorkCos252(){return sCos().map(function(c){var es=DB.employments.filter(function(e){return e.company===c.id&&activeEmp(e)});return{c:c,n:es.length}}).filter(function(x){return x.n>0&&hoState(x.c)!=="완료"})}
+function sRrOpen252(cid){var o={};DB.rr.forEach(function(r){if(r.company!==cid||rrState(r)==="완료"||(typeof tRr==="function"&&tRr(r)))return;var k=r.kind||"신규";o[k]=(o[k]||0)+1});return o}
+var _vSHome252=vSHome;vSHome=function(){var h=_vSHome252.apply(this,arguments);if(typeof h!=="string")return h;var L=sWorkCos252(),tot=L.reduce(function(a,x){return a+x.n},0);
+  var tl='<button class="stile" data-act="s-jump252"><b class="num">'+L.length+'</b><span>재직자 있는 기업</span><small>담당 영업 · 재직 '+tot+'명 · 이관 전</small></button>';
+  var i=h.indexOf('<div class="stiles">');if(i>=0){var j=h.indexOf("</div>",i);if(j>0)h=h.slice(0,j)+tl+h.slice(j)}
+  var box='<div class="card sbox" id="s-wc252"><h3>재직자 있는 영업 기업 <span class="small muted">'+L.length+'곳 · 재직 '+tot+'명</span></h3><p class="hint" style="margin-top:0">담당이 영업팀이고 지금 재직자가 있는 기업이에요 · 이관이 끝나면 여기서 빠져요</p>'+
+    (L.length?'<table class="t"><thead><tr><th>기업</th><th class="c">재직</th><th>진행 중 채용 요청</th><th>이관</th><th>영업</th></tr></thead><tbody>'+L.sort(function(a,b){return b.n-a.n||String(a.c.name).localeCompare(String(b.c.name),"ko")}).map(function(x){var c=x.c,o=sRrOpen252(c.id),ks=Object.keys(o),sp=c.ho_from||c.manager;
+      return'<tr><td><button class="linkbtn" data-act="s-coopen" data-id="'+esc(c.id)+'">'+esc(c.name)+'</button>'+(coSub(c)?' <small class="muted">'+esc(coSub(c))+'</small>':"")+(typeof tmpChip251==="function"?tmpChip251(c):"")+'</td><td class="c num">'+x.n+'명</td><td class="small">'+(ks.length?ks.map(function(k){return esc(k)+" "+o[k]}).join(" · "):'<span class="muted">없음</span>')+'</td><td>'+hoBadge(c)+'</td><td class="small">'+esc((st(sp)||{}).name||"")+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint">재직자가 있는 영업 기업이 없어요.</p>')+'</div>';
+  var k=h.indexOf('<div class="card sbox" id="s-ho">');return k<0?h+box:h.slice(0,k)+box+h.slice(k)};
+regActs({"s-jump252":function(){var e=document.getElementById("s-wc252");if(e)e.scrollIntoView({behavior:"smooth",block:"start"})}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
@@ -22484,7 +22509,7 @@ function afterLogin(session){
   var g=$("#gate");g.hidden=false;g.innerHTML='<div class="dlg" style="padding:26px">불러오는 중…</div>';
   loadAll().then(function(){
     var me=DB.staff.find(function(x){return x.id===session.user.id});
-    if(!me||!me.active||me.part==="영업파트"){sb.auth.signOut();showGate(me&&me.part==="영업파트"?"영업파트 계정은 담당자 배정용이라 로그인할 수 없어요.":me?"비활성화된 계정입니다. 관리자에게 문의하세요.":"담당자 정보가 등록되지 않은 계정입니다. 관리자에게 문의하세요.");return}
+    if(!me||!me.active){/* v252 영업파트도 로그인 (영업 화면 · 채용 요청 · 기업 DB) */sb.auth.signOut();showGate(me?"비활성화된 계정입니다. 관리자에게 문의하세요.":"담당자 정보가 등록되지 않은 계정입니다. 관리자에게 문의하세요.");return}
     S.me=me.id;S.role=isAdminRole(me.role)?"admin":"staff";S.scope=S.role==="admin"?"all":"mine";
     READY=true;g.hidden=true;g.innerHTML="";loadPrefs();autoLinkMine();
     sb.rpc("vw_touch_login").then(function(){},function(){});
