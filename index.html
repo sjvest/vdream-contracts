@@ -1736,6 +1736,12 @@ tr.uni247gone td{opacity:.55}
 .st250.past250 .st250l{color:#B45309}
 .ntall250{margin-left:4px}.ntall250.on{background:#EEEBFB;color:#4C3FA0}
 .ntrd250{color:#6B7280}
+/* v251 임시 담당 · 직무 인식 단어 */
+.tmpb251 .btn{margin-left:4px}
+.jobw251 .jw251{display:inline-flex;align-items:center;gap:6px;margin:0 12px 6px 0}
+.jobw251 .jw251 span{min-width:64px;font-size:12px}
+.jobw251 .jw251 input{width:180px}
+.jobx251 .jx251{display:inline-flex;align-items:center;gap:4px;margin:0 12px 6px 0;padding:2px 8px;border:1px dashed #D6D3E0;border-radius:8px}
 </style>
 </head>
 <body>
@@ -19143,8 +19149,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v250 — 재직자 대시보드 기준 위로 · 재직 수 같은 기준 · ◀ 기간 ▶ 확대 · 명단 복사 줄바꿈 · 알림함 읽음 탭 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
-APP_VER="v250";APP_VER_ON="11/09";APP_NOTE="재직자 대시보드: 기준(계약시작일 · 브이워크 시작일)을 위로 · 재직 수도 같은 기준 / ◀ 기간 ▶: 현황 탭 · 관리자 · 발굴 · 채용 대시보드 · 완료 조회 막대 (과거면 색 + 지금으로) / 명단 엑셀 복사 줄바꿈 / 알림함 읽음 탭 · 읽은 순 · 안 읽음으로 · 전체 보기 따로";
+/* v251 — 임시 담당자(이관 전) · 직무 목록 설정 하나로 · 입퇴사 현황 + 충족입사 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
+APP_VER="v251";APP_VER_ON="11/10";APP_NOTE="영업 기업 임시 담당자: 영업 요청 → 운영파트 관리자 지정 · 내 담당에 같이 보임 · 30일 지나면 이관 진행 알림 / 직무 목록: 표준 값 정규화 · 인재 풀 필터 · 영업 사전 공유도 직무 대분류 설정 · 업로드 인식 단어 · 목록에 없는 직무 알림 / 입퇴사 현황: + 충족입사 n";
 
 /* ================================================================
    v208
@@ -20448,7 +20454,7 @@ function ioHtml230(){var D=ioData230(),admin=S.role==="admin",mineV=!admin||S.sc
     (function(){var wk=isWeek231(D.a,D.b),u=wk?"주":"달";/* v231 한 주면 한 주씩 */return'<div class="seg iomon" role="group" aria-label="한 '+u+'씩"><button data-act="io-mon" data-v="-1" aria-label="이전 '+u+'" title="이전 '+u+' 전체">◀</button><button data-act="io-mon" data-v="0" class="'+(ioIsMonth230()||wk?"on":"")+'" title="'+(wk?"월~일 한 주 · 누르면 이번 주":"1일 ~ 말일 한 달 전체 · 누르면 이번 달")+'">'+esc(wk?md(D.a)+"~"+md(addD(D.a,6)):ioIsMonth230()?ioPerLab230():"한 달씩")+'</button><button data-act="io-mon" data-v="1" aria-label="다음 '+u+'" title="다음 '+u+' 전체">▶</button></div>'})()+bizBtn231(D.a,D.b)+
     '<span class="grow"></span><span class="small muted">'+(admin&&S.mgr?esc(st(S.mgr).name)+" 담당 기업":(admin?mineV:S.ioScope235!=="all")?"내 담당 기업":"전체 기업")+'</span><button class="btn sm" data-act="io-xls">엑셀 내보내기</button></div>';
   h+=bizNote231(D.a,D.b);/* v231 */
-  h+='<div class="iosum"><div><b>계약만료 예정 '+D.X.length+'</b><span>'+esc(ioCntTxt230(cX,["연장","무기계약 전환","종료","미정"]))+'</span></div><div><b>퇴사 '+D.O.length+'</b><span>'+esc(ioCntTxt230(cO,["계약만료","중도퇴사","입사취소"]))+'</span></div><div><b>입사 '+IN.length+'</b><span>'+esc([ioCntTxt230(cI,["신규","대체"]),FL.length?"충족입사 "+FL.length:D.I.filter(function(o){return o.fillc}).length?"충족입사 "+D.I.filter(function(o){return o.fillc}).length:""].filter(Boolean).join(" · "))/* v232 충족입사 따로 */+(LT.length?' <b class="iolr245">+ 늦은 등록 '+LT.length+'</b>':"")/* v245 */+'</span></div></div>';
+  h+='<div class="iosum"><div><b>계약만료 예정 '+D.X.length+'</b><span>'+esc(ioCntTxt230(cX,["연장","무기계약 전환","종료","미정"]))+'</span></div><div><b>퇴사 '+D.O.length+'</b><span>'+esc(ioCntTxt230(cO,["계약만료","중도퇴사","입사취소"]))+'</span></div><div><b>입사 '+IN.length+'</b><span>'+esc([ioCntTxt230(cI,["신규","대체"]),!FL.length&&D.I.filter(function(o){return o.fillc}).length?"충족입사 "+D.I.filter(function(o){return o.fillc}).length+" 포함":""].filter(Boolean).join(" · "))+(FL.length?' <b class="iofl251">+ 충족입사 '+FL.length+'</b>':"")/* v251 충족입사도 늦은 등록처럼 + (계약시작일 기준 · 원래 기간에 이미 입사로 셈) · 브이워크 기준은 포함 */+(LT.length?' <b class="iolr245">+ 늦은 등록 '+LT.length+'</b>':"")/* v245 */+'</span></div></div>';
   var col=function(tit,sub,L,row,empty,cnt){return'<section class="iocol"><h3>'+tit+' <span class="c">'+(cnt!=null?cnt:L.length)+'</span><small class="muted">'+sub+'</small></h3>'+(L.length?'<ol class="iolist">'+L.map(row).join("")+'</ol>':'<p class="small muted ioempty">'+empty+'</p>')+'</section>'};
   h+='<div class="iocols">'+
     col("계약만료 예정","계약 기간 끝 · 날짜순",D.X,function(o){var cls=IO_DEC230[o.dec]!=null?IO_DEC230[o.dec]:"",stp=o.st!=null?XS.map(function(s){return(o.x&&o.x.steps&&o.x.steps[s[0]]?"✓ ":"· ")+s[1]}).join("  "):"";
@@ -21372,9 +21378,9 @@ function dashLists245(){var D=S.dash||{from:TODAY,to:TODAY},a=D.from,b=D.to,Es=d
   var head=Es.filter(function(e){return dashActiveOn(e,b)});
   var io=null;try{io=ioData230()}catch(e){}var lr=io?io.I.filter(function(o){return o.lr}).map(function(o){return o.e}):[];
   var L={in:ins,out:outs,cancel:canc,head:head,lr:lr};["신규","추가","대체"].forEach(function(k){L["in:"+k]=ins.filter(function(e){return(e.hire_type||"신규")===k})});["계약만료","중도퇴사"].forEach(function(k){L["out:"+k]=outs.filter(function(e){return e.end_type===k})});
-  if(io){L["io:X"]=io.X.map(function(o){return o.e});L["io:O"]=io.O.map(function(o){return o.e});L["io:I"]=io.I.filter(function(o){return!o.fill&&!o.lr}).map(function(o){return o.e});L["io:lr"]=lr}
+  if(io){L["io:X"]=io.X.map(function(o){return o.e});L["io:O"]=io.O.map(function(o){return o.e});L["io:I"]=io.I.filter(function(o){return!o.fill&&!o.lr}).map(function(o){return o.e});L["io:lr"]=lr;L["io:fl"]=io.I.filter(function(o){return o.fill}).map(function(o){return o.e})/* v251 */}
   return L}
-var DL_LAB245={in:"입사",out:"퇴사",cancel:"입사취소",head:"재직 (기간 끝)",lr:"늦은 등록","in:신규":"입사 · 신규","in:추가":"입사 · 추가","in:대체":"입사 · 대체","out:계약만료":"퇴사 · 계약만료","out:중도퇴사":"퇴사 · 중도퇴사","io:X":"계약만료 예정","io:O":"퇴사","io:I":"입사","io:lr":"늦은 등록"};
+var DL_LAB245={in:"입사",out:"퇴사",cancel:"입사취소",head:"재직 (기간 끝)",lr:"늦은 등록","io:fl":"충족입사","in:신규":"입사 · 신규","in:추가":"입사 · 추가","in:대체":"입사 · 대체","out:계약만료":"퇴사 · 계약만료","out:중도퇴사":"퇴사 · 중도퇴사","io:X":"계약만료 예정","io:O":"퇴사","io:I":"입사","io:lr":"늦은 등록"};
 function dlRows245(k){var E=(dashLists245()[k]||[]).filter(function(e){var w=wk(e.worker);return!(typeof isTestName==="function"&&w&&isTestName(w.name))});var seen={},R=[];
   E.forEach(function(e){var w=wk(e.worker)||{},c=comp(e.company)||{},key=e.id;if(seen[key])return;seen[key]=1;R.push([c.name||"",w.name||""])});return R.sort(function(x,y){return x[0].localeCompare(y[0])||x[1].localeCompare(y[1])})}
 function dlShow245(k){var R=dlRows245(k),D=S.dash||{},per=D.from===D.to?D.from:D.from+" ~ "+D.to;S.dl245=k;
@@ -21392,7 +21398,7 @@ regAfter("v245 현황 숫자 누르기",function(){if(S.view!=="dash")return;var
       var sm=t.querySelector("small");if(sm&&(k==="in"||k==="out")){sm.innerHTML=sm.innerHTML.replace(/(신규|추가|대체|계약만료|중도퇴사) (\d+)/g,function(x,a,n){return'<button class="linkbtn dlsub245" data-act="dl-show" data-k="'+DL_SUB245[a]+'">'+a+' '+n+'</button>'})}
       if(k==="in"){var n=(dashLists245().lr||[]).length;if(n&&sm&&!sm.querySelector(".dllr245"))sm.insertAdjacentHTML("beforeend",' <button class="linkbtn dllr245" data-act="dl-show" data-k="lr">+ 늦은 등록 '+n+'</button>')}})}
   else{var s=m.querySelector(".iosum");if(!s||s.dataset.dl245)return;s.dataset.dl245=1;[].forEach.call(s.querySelectorAll(":scope > div > b"),function(b){var t=b.textContent,k=/^계약만료/.test(t)?"io:X":/^퇴사/.test(t)?"io:O":/^입사/.test(t)?"io:I":"";if(k)b.outerHTML='<button class="dlnum245 sm" data-act="dl-show" data-k="'+k+'" title="명단 보기 · 엑셀 복사">'+esc(t)+'</button>'});
-    var lr=s.querySelector(".iolr245");if(lr)lr.outerHTML='<button class="linkbtn iolr245" data-act="dl-show" data-k="io:lr">'+esc(lr.textContent)+'</button>'}});
+    var lr=s.querySelector(".iolr245");if(lr)lr.outerHTML='<button class="linkbtn iolr245" data-act="dl-show" data-k="io:lr">'+esc(lr.textContent)+'</button>';var fl=s.querySelector("b.iofl251");if(fl)fl.outerHTML='<button class="linkbtn iolr245 iofl251" data-act="dl-show" data-k="io:fl">'+esc(fl.textContent)+'</button>'/* v251 */}});
 
 /* ---------- ④ 오류 기록 ---------- */
 var SE_HELP245={"권한":"서버 규칙상 이 사람은 이 작업을 할 수 없어요 · 관리자에게 알려 주세요 (DB 권한 확인)","같은 값":"같은 기록이 이미 있어요 · 대부분 그냥 두면 돼요","필수 값":"꼭 넣어야 하는 칸이 비었어요 · 그 칸을 채우고 다시 저장","허용되지 않는":"서버가 받지 않는 값이에요 · 다른 값으로 고르거나 관리자에게","네트워크":"연결이 끊겼어요 · 새로고침 후 다시","로그인":"로그인이 풀렸어요 · 다시 로그인 후 다시","연결된":"다른 데이터와 이어져 있어 못 지워요 · 연결된 것을 먼저 정리"};
@@ -21734,6 +21740,93 @@ regActs({"st250":function(D0){var v=+D0.v,k=D0.k;
   if(D0.src==="dr"){var R=dR(k);if(!v){var q0=R._q250||"y";R.s250=false;dRSet(k,q0);render();return}if(!R.s250||R.q!=="c"){R._q250=R.q==="c"?(R._q250||"y"):R.q}var X=stStep250(R.f,R.t,v);R.q="c";R.f=X[0];R.t=X[1];R.s250=true;["tddone","uni","req","rreq"].forEach(function(t){try{tst(t).page=1}catch(e){}});render();return}
   if(D0.src==="pq"){var P=S["pq_"+k];if(!P)return;if(!v){var q1=P._q250||"tweek",r=pqRange(q1);P.q=q1;P.a=r[0];P.b=r[1];render();return}if(P.q!=="c250")P._q250=P.q;var Y=stStep250(P.a,P.b,v);P.q="c250";P.a=Y[0];P.b=Y[1];render();return}
   if(D0.src==="rd"){S.rdOff=v?(+S.rdOff||0)+v:0;render()}}});
+
+/* ================================================================
+   v251
+     ① 임시 담당자: 영업 기업도 이관 전에 운영파트 임시 담당자를 둘 수 있게
+        · 영업 [임시 담당자 요청] (사유 선택) → 운영파트 관리자 · 최고관리자 할 일 → [지정] / [반려] · 언제든 [해제]
+        · 지정되면 기업 담당은 영업 그대로 · 임시 담당자에게 '내 담당'으로 같이 보임 · '임시 담당 ○○○' 칩 · 지정 알림(변경 이력 '임시 담당')
+        · 이관할 때 담당자에 임시 담당자가 미리 골라짐 · 이관 완료되면 임시 담당 저절로 끝
+        · 지정 후 30일 지나면 영업 · 관리자 할 일 '이관 진행 필요'
+        · 저장: companies.tmp_mgr (jsonb 배열 · 한 칸) — sql/v251_tmp_manager.sql
+     ② 직무 목록 하나로: 표준 값 정규화 · 인재 풀 직무 필터 · 영업 사전 공유도 '직무 대분류' 설정을 따름
+        · 직무마다 업로드 자동 인식 단어 (app_settings.job_words) · 데이터에만 있는 직무 알림 + [추가]
+     ③ 입퇴사 현황 집계: '+ 충족입사 n' (늦은 등록처럼 · 명단) · 브이워크 기준이면 '충족입사 n 포함'
+        (core/9270-v230.js · core/9400-v245.js)
+   ================================================================ */
+/* ---------- ① 임시 담당자 ---------- */
+function tmpCol251(){return colProbe238("companies","companies",[["tmp_mgr",null,"json"]])}
+regAfter("v251 임시 담당 칸",function(){tmpCol251()});
+function tmpOf251(c){var a=c&&c.tmp_mgr;return Array.isArray(a)&&a[0]&&typeof a[0]==="object"?a[0]:null}
+function tmpSet251(c,o){c.tmp_mgr=o?[o]:[];if(typeof c187Warn==="function")c187Warn("companies");if(typeof save187==="function")save187();else if(LIVE&&READY)schedulePersist()}
+function tmpCan251(){var me=st(S.me)||{};return me.role==="최고관리자"||(me.part==="운영파트"&&isAdminSt(me))}
+function tmpWho251(c){var t=tmpOf251(c);return t&&t.st==="지정"&&t.m?t.m:""}
+function tmpOk251(c){var s=hoState(c);return s==="영업"||s==="준비"||s==="반려"}
+function tmpOps251(){return DB.staff.filter(function(s){return s.active!==false&&s.part==="운영파트"})}
+function tmpChip251(c){var t=tmpOf251(c);if(!t)return"";if(t.st==="요청")return' <span class="b sm warn tip" tabindex="0" data-tip="'+esc("임시 담당자 요청 · "+(t.by||"")+" · "+String(t.on||"").slice(5).replace("-","/")+(t.note?" · "+t.note:""))+'">임시 담당 요청</span>';
+  if(t.st==="지정")return' <span class="b sm t tip tmpc251" tabindex="0" data-tip="'+esc("임시 담당 · "+String(t.on||"").slice(5).replace("-","/")+" 지정 ("+(t.by||"")+")"+(t.note?" · "+t.note:""))+'">임시 담당 '+esc((st(t.m)||{}).name||"")+'</span>';
+  if(t.st==="반려")return' <span class="b sm tip" tabindex="0" data-tip="'+esc("반려 사유: "+(t.note||""))+'">임시 담당 반려</span>';return""}
+function tmpBtns251(c,xs){var t=tmpOf251(c),k=xs?"btn xs":"btn",h="";if(!t||t.st==="반려"){if(tmpOk251(c))h+='<button type="button" class="'+k+'" data-act="tmp-req" data-id="'+esc(c.id)+'">임시 담당자 요청</button>';return h}
+  if(t.st==="요청"){if(tmpCan251())h+='<button type="button" class="'+k+' pri" data-act="tmp-asg" data-id="'+esc(c.id)+'">임시 담당 지정</button><button type="button" class="'+k+'" data-act="tmp-rej" data-id="'+esc(c.id)+'">반려</button>';else h+='<button type="button" class="'+k+'" data-act="tmp-cancel" data-id="'+esc(c.id)+'">요청 취소</button>'}
+  else if(t.st==="지정"&&tmpCan251())h+='<button type="button" class="'+k+'" data-act="tmp-off" data-id="'+esc(c.id)+'">임시 담당 해제</button>';return h}
+S.tmp251=S.tmp251||{};
+document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset)return;if(t.dataset.tmpn!=null)S.tmp251.note=t.value;if(t.dataset.tmpm!=null)S.tmp251.m=t.value},true);
+document.addEventListener("change",function(ev){var t=ev.target;if(t&&t.dataset&&t.dataset.tmpm!=null)S.tmp251.m=t.value},true);
+regActs({
+  "tmp-req":function(D0){var c=comp(D0.id);if(!c||!tmpOk251(c))return;S.tmp251={note:""};
+    ovAsk("임시 담당자 요청",'<p style="margin:0 0 8px"><b>'+esc(c.name)+'</b><br><span class="small muted">이관 전에 운영파트 임시 담당자를 요청해요 · 운영파트 관리자가 지정해요 · 기업 담당은 그대로 영업이에요</span></p><input data-tmpn placeholder="사유 (선택) · 예: 첫 입사 전 서류 · 계약 안내 필요" style="width:100%">',[{k:"ok",l:"요청",pri:true},{k:"x",l:"취소"}],function(a){if(a!=="ok")return;var c2=comp(D0.id);if(!c2)return;var n=String(S.tmp251.note||"").trim();
+      tmpSet251(c2,{st:"요청",by:(st(S.me)||{}).name||"",byid:S.me||"",on:TODAY,note:n});logChange("companies",c2.id,c2.name,"임시 담당자 요청","",n||"요청","내부");toast("요청했어요 · 운영파트 관리자 할 일로 가요");render()})},
+  "tmp-cancel":function(D0){var c=comp(D0.id),t=tmpOf251(c);if(!t||t.st!=="요청")return;tmpSet251(c,null);logChange("companies",c.id,c.name,"임시 담당자 요청","요청","취소","내부");toast("요청을 취소했어요");render()},
+  "tmp-asg":function(D0){if(!tmpCan251()){toast("운영파트 관리자 · 최고관리자만 지정할 수 있어요");return}var c=comp(D0.id),t=tmpOf251(c);if(!c)return;S.tmp251={m:""};
+    ovAsk("임시 담당 지정",'<p style="margin:0 0 8px"><b>'+esc(c.name)+'</b> · 영업 '+esc((st(c.ho_from||c.manager)||{}).name||"")+(t&&t.note?'<br><span class="small">요청 사유: '+esc(t.note)+'</span>':"")+'<br><span class="small muted">기업 담당은 영업 그대로 · 임시 담당자에게 \'내 담당\'으로 같이 보여요</span></p><select data-tmpm data-nosbx><option value="">운영파트 담당자 선택</option>'+tmpOps251().map(function(s){return'<option value="'+s.id+'">'+esc(s.name)+'</option>'}).join("")+'</select>',[{k:"ok",l:"지정",pri:true},{k:"x",l:"취소"}],function(a){if(a!=="ok")return;var m=S.tmp251.m;if(!m){toast("담당자를 골라 주세요");return}var c2=comp(D0.id);if(!c2)return;var t0=tmpOf251(c2)||{};
+      tmpSet251(c2,{st:"지정",m:m,by:(st(S.me)||{}).name||"",on:TODAY,note:t0.note||"",req:t0.by||""});logChange("companies",c2.id,c2.name,"임시 담당",(st(c2.manager)||{}).name||"",(st(m)||{}).name||"","내부");toast((st(m)||{}).name+" 님을 임시 담당으로 지정했어요");render()})},
+  "tmp-rej":function(D0){if(!tmpCan251())return;var c=comp(D0.id);if(!c)return;S.tmp251={note:""};
+    ovAsk("임시 담당 요청 반려",'<p style="margin:0 0 8px"><b>'+esc(c.name)+'</b></p><input data-tmpn placeholder="반려 사유" style="width:100%">',[{k:"ok",l:"반려",pri:true},{k:"x",l:"취소"}],function(a){if(a!=="ok")return;var n=String(S.tmp251.note||"").trim();if(!n){toast("반려 사유를 적어 주세요");return}var c2=comp(D0.id);if(!c2)return;
+      tmpSet251(c2,{st:"반려",by:(st(S.me)||{}).name||"",on:TODAY,note:n});logChange("companies",c2.id,c2.name,"임시 담당자 요청","요청","반려 · "+n,"내부");toast("반려했어요");render()})},
+  "tmp-off":function(D0){if(!tmpCan251())return;var c=comp(D0.id),t=tmpOf251(c);if(!t)return;askConfirm("임시 담당 해제",c.name+" 임시 담당("+((st(t.m)||{}).name||"")+")을 해제할까요?","해제",function(){tmpSet251(c,null);logChange("companies",c.id,c.name,"임시 담당 해제",(st(t.m)||{}).name||"","해제","내부");toast("해제했어요");render()})}
+});
+/* 내 담당: 임시 담당자에게도 그 기업이 보임 */
+var _scopeOK251=scopeOK;scopeOK=function(cid,who){if(_scopeOK251.apply(this,arguments))return true;if(who!==undefined)return false;var c=cid&&comp(cid),m=c&&tmpWho251(c);if(!m)return false;if(S.mgr)return m===S.mgr;if(S.scope==="mine")return m===S.me;return false};
+/* 이관 담당자 고르기: 임시 담당자 미리 */
+var _hoAsgDlg251=hoAsgDlg;hoAsgDlg=function(id){var r=_hoAsgDlg251.apply(this,arguments),c=comp(id),m=c&&tmpWho251(c);if(m&&S.hoP&&S.hoP.id===id&&!S.hoP.m){S.hoP.m=m;var s=document.querySelector('[data-hop="m"]');if(s)s.value=m}return r};
+/* 이관 완료되면 임시 담당 끝 */
+regBefore("v251 이관 완료 → 임시 담당 끝",function(){(DB.companies||[]).forEach(function(c){var t=tmpOf251(c);if(t&&c.ho_st==="완료"){tmpSet251(c,null);logChange("companies",c.id,c.name,"임시 담당","지정","이관 완료로 끝","내부")}})});
+/* 할 일: 요청 → 운영파트 관리자 · 30일 → 영업 + 관리자 */
+var _buildTodos251=buildTodos;buildTodos=function(){var L=_buildTodos251.apply(this,arguments);try{DB.companies.forEach(function(c){if(c.merged_into||c.deleted)return;var t=tmpOf251(c);if(!t)return;
+    if(t.st==="요청"){tdPush(L,{key:"tmpr:"+c.id,type:"tmpr",cat:"영업",task:"[임시 담당 요청] "+c.name+" · "+(t.by||"")+(t.note?" · "+t.note:""),worker:"",emp:"",company:c.id,base:t.on||TODAY,auto:false,fixedDue:addD(t.on||TODAY,1),tmpc:c.id});var o=L[L.length-1];o.assignee=hoMgr();o.proxy=false;o.orig=""}
+    else if(t.st==="지정"&&t.on&&dd(t.on,TODAY)>=30&&c.ho_st!=="요청"&&c.ho_st!=="완료"){[c.manager,hoMgr()].filter(function(v,i,A){return v&&A.indexOf(v)===i}).forEach(function(a,i){tdPush(L,{key:"tmp30:"+c.id+":"+i,type:"tmp30",cat:"영업",task:"[이관 진행 필요] "+c.name+" · 임시 담당 "+((st(t.m)||{}).name||"")+" "+dd(t.on,TODAY)+"일째",worker:"",emp:"",company:c.id,base:addD(t.on,30),auto:false,fixedDue:addD(t.on,30),tmpc:c.id});var o2=L[L.length-1];o2.assignee=a;o2.proxy=false;o2.orig=""})}})}catch(e){console.warn("[v251 임시 담당 할 일]",e)}return L};
+var _pTodo251=pTodo;pTodo=function(t){var h=_pTodo251.apply(this,arguments);if(!h||!t||(t.type!=="tmpr"&&t.type!=="tmp30"))return h;var c=comp(t.tmpc);if(!c)return h;
+  var b='<div class="ps wide"><h3>임시 담당'+tmpChip251(c)+'</h3><div class="obt">'+tmpBtns251(c,false)+(t.type==="tmp30"&&hoState(c)!=="완료"?'<button type="button" class="btn" data-act="s-coopen" data-id="'+esc(c.id)+'">기업 창 열기 (이관 준비)</button>':'<button type="button" class="btn" data-act="s-coopen" data-id="'+esc(c.id)+'">기업 창 열기</button>')+'</div></div>';
+  return/<\/div><\/aside>$/.test(h)?h.replace(/<\/div><\/aside>$/,b+'</div></aside>'):h.replace(/<\/aside>$/,b+'</aside>')};
+/* 화면: 영업 홈 기업 이관 표 · 기업 창 · 기업 DB 목록 */
+regAfter("v251 임시 담당 표시",function(){var m=document.getElementById("main");
+  if(m)[].forEach.call(m.querySelectorAll('table.t button[data-act="s-coopen"][data-id]'),function(b){var tr=b.closest("tr");if(!tr||tr.dataset.tmp251)return;tr.dataset.tmp251=1;var c=comp(b.dataset.id);if(!c)return;var td=tr.children[1];if(td)td.insertAdjacentHTML("beforeend",tmpChip251(c));var last=tr.lastElementChild;if(last&&tmpOk251(c)||last&&tmpOf251(c))last.insertAdjacentHTML("afterbegin",tmpBtns251(c,true))});
+});
+regSection("company",{id:"tmp251",order:4,transform:function(h,c){try{if(!h||!c||!c.id||typeof h!=="string")return h;var t=tmpOf251(c);if(!t&&!tmpOk251(c))return h;var k=h.indexOf('<div class="ps wide hoLine">');if(k<0)return h;var e=h.indexOf("</div>",k);if(e<0)return h;return h.slice(0,e)+tmpChip251(c)+' <span class="tmpb251">'+tmpBtns251(c,true)+'</span>'+h.slice(e)}catch(x){return h}}});
+regTable("comp",{id:"v251",row:function(h,c){if(!c||typeof h!=="string"||!tmpOf251(c))return h;var ch=tmpChip251(c);if(!ch)return h;var m=/^(\s*<tr[^>]*>)([\s\S]*)(<\/tr>\s*)$/.exec(h);if(!m)return h;var T=m[2].match(/<td\b[\s\S]*?<\/td>/g);if(!T||!T.length)return h;T[0]=T[0].replace(/<\/td>$/,ch+"</td>");return m[1]+T.join("")+m[3]}});
+
+/* ---------- ② 직무 목록 하나로 ---------- */
+function stdJobsSync251(){if(typeof STD_JOBS==="undefined"||typeof JOBS==="undefined")return;var A=JOBS.filter(function(x){return x!=="기타"}).concat(["기타"]);if(A.join("|")!==STD_JOBS.join("|"))STD_JOBS.splice.apply(STD_JOBS,[0,STD_JOBS.length].concat(A));
+  if(typeof JOB_ORD!=="undefined"){var B=STD_JOBS.concat(["미입력"]);if(B.join("|")!==JOB_ORD.join("|"))JOB_ORD.splice.apply(JOB_ORD,[0,JOB_ORD.length].concat(B))}}
+regBefore("v251 직무 목록 맞춤",function(){try{if(typeof jobsApply==="function")jobsApply()}catch(e){}stdJobsSync251()});
+stdJobsSync251();
+function jobWords251(){var o=appSet("job_words",null);return o&&typeof o==="object"?o:{}}
+var _jnRule251=jnRule;jnRule=function(t){var k=jnK(t);if(k&&!JN_GEN.test(k)){var W=jobWords251(),hit="";JOBS.some(function(j){var ws=String(W[j]||"").split(/[,·\/]/).map(function(x){return jnK(x)}).filter(Boolean);if(ws.some(function(w){return k.indexOf(w)>=0})){hit=j;return true}});if(hit)return hit}
+  var r=_jnRule251.apply(this,arguments);return r&&JOBS.indexOf(r)<0?"":r};
+function jobVals251(v){return(Array.isArray(v)?v:[v]).map(function(x){return x&&typeof x==="object"?x.job:x}).map(function(x){return String(x||"").trim()}).filter(Boolean)}
+function jobStray251(){var M={},add=function(v){jobVals251(v).forEach(function(j){if(JOBS.indexOf(j)<0)M[j]=(M[j]||0)+1})};
+  (DB.employments||[]).forEach(function(e){if(!e.cancelled)add(e.job)});(DB.rr||[]).forEach(function(r){add(r.jobs||[])});(DB.talent||[]).forEach(function(t){add(t.jobs||[])});(DB.pf||[]).forEach(function(p){add(p.jobs||[])});
+  return Object.keys(M).map(function(k){return[k,M[k]]}).sort(function(a,b){return b[1]-a[1]})}
+var _jobSetHtml251=jobSetHtml;jobSetHtml=function(){var h=_jobSetHtml251.apply(this,arguments);if(typeof h!=="string")return h;var W=jobWords251(),X=jobStray251();
+  var add='<div class="jobw251"><div class="small" style="margin:12px 0 6px;font-weight:600">업로드 자동 인식 단어 <span class="muted" style="font-weight:400">· 데이터 업로드에서 직무 칸에 이 단어가 있으면 그 직무로 채워요 · 쉼표로 여러 개</span></div>'+
+    JOBS.filter(function(j){return j!=="기타"}).map(function(j){return'<label class="jw251"><span>'+esc(j)+'</span><input data-jobw="'+esc(j)+'" value="'+esc(W[j]||"")+'" placeholder="예: '+esc({"뉴스스크랩":"스크랩, 기사","사무행정":"사무, 데이터 입력","미술":"그림, 일러스트","음악":"연주, 악기"}[j]||"단어")+'"></label>'}).join("")+
+    '<div style="margin-top:6px"><button type="button" class="btn sm" data-act="jobw-save">인식 단어 저장</button></div></div>'+
+    (X.length?'<div class="jobx251"><div class="small" style="margin:12px 0 6px;font-weight:600">데이터에는 있는데 목록에 없는 직무 '+X.length+'개 <span class="muted" style="font-weight:400">· 근로자 · 채용 요청 · 인재 풀에 적힌 값</span></div>'+X.slice(0,20).map(function(x){return'<span class="jx251">'+esc(x[0])+' <span class="muted small">'+x[1]+'건</span> <button type="button" class="linkbtn small" data-act="jobx-add" data-v="'+esc(x[0])+'">목록에 추가</button></span>'}).join("")+'</div>':"");
+  var i=h.lastIndexOf("</div>");return i<0?h+add:h.slice(0,i)+add+h.slice(i)};
+regActs({
+  "jobw-save":function(){if(S.role!=="admin")return;var o={},b=jobWords251();[].forEach.call(document.querySelectorAll("[data-jobw]"),function(i){var v=String(i.value||"").trim();if(v)o[i.dataset.jobw]=v});appSetPut("job_words",o);logChange("app_settings","job_words","직무 인식 단어","업로드 자동 인식 단어",JSON.stringify(b),JSON.stringify(o),"내부");toast("저장했어요");render()},
+  "jobx-add":function(D0){if(S.role!=="admin")return;var v=String(D0.v||"").trim();if(!v)return;var L=jobCats().slice();if(L.some(function(x){return x.n===v}))return;var k=L.findIndex(function(x){return x.n==="기타"});var it={n:v,h:false};if(k<0)L.push(it);else L.splice(k,0,it);jobSave(L,"추가 · "+v);try{jobsApply()}catch(e){}stdJobsSync251();toast(v+" 직무를 목록에 추가했어요");render()}
+});
 
 /* ============ 렌더 ============ */
 function renderMain(){
