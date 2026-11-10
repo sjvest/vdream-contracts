@@ -1797,6 +1797,17 @@ aside.u255>.u255sync{margin:0 16px 4px}
 .bulk .x{color:#fff;white-space:nowrap;text-decoration:underline;margin-left:12px}
 tr.vgh .vg256{margin-left:8px;vertical-align:1px}
 .em256{font-size:inherit}
+/* v258 장애 재판정 수취 · 입사 상세 생년월일 */
+.drc258{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line,#e3e1ee)}
+.drc258:first-child{border-top:0}
+.drc258d{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink);min-width:86px}
+.drc258 select{max-width:140px}
+.drc258l{margin-top:6px}
+.ob258{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px;font-size:13px}
+.drc258{flex-wrap:nowrap;gap:6px}.drc258d{min-width:76px;flex:none}.drc258 select{max-width:118px;flex:none}.drc258 input[type=date]{max-width:138px!important;flex:none}.drc258 input[data-disr$="|etc"]{max-width:96px!important}
+.drc258>.small{flex:none;white-space:nowrap}
+@media (max-width:640px){.drc258{flex-wrap:wrap}}
+.drc258r{display:inline-flex;gap:5px;align-items:center;padding:5px 12px;font-size:13px;cursor:pointer}.drc258r input{margin:0}.drc258r.on{background:var(--p,#584C9D);color:#fff}
 </style>
 </head>
 <body>
@@ -19204,8 +19215,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v257 — 근로자 창 머리: 이메일은 주 소통 연락처 오른쪽 · 인재 풀 바로가기 칩만 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
-APP_VER="v257";APP_VER_ON="11/10";APP_NOTE="근로자 창 머리: 이메일을 주 소통 연락처 오른쪽에 (누르면 복사 · 메일 쓰기 버튼 없앰) / [인재 풀에 추천] 버튼 없앰 · 인재 풀에 있는 사람만 상태 칩 줄 끝에 [인재 풀 →]";
+/* v258 — 장애 재판정 수취 기록 · 입사 상세 생년월일 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
+APP_VER="v258";APP_VER_ON="11/10";APP_NOTE="장애 재판정 확인: 확인서류 하나(복지카드 · 판정서류) 고르고 수취채널 · 수취일 · 재판정 기록에 수취 이력 · 최근 수취 / 입사 상세 '주소 · 생년월일': 비어 있으면 입력 · 입구서 등 값으로 채우기";
 
 /* ================================================================
    v208
@@ -22240,6 +22251,60 @@ regSection("worker",{id:"v256 이메일",order:95,transform:function(h,w){if(!w|
   /* v257 새 줄 · [메일 쓰기] 없앰 → 주 소통 연락처 오른쪽에 이메일 (누르면 복사) */
   var i=h.indexOf('<div class="wmc">');if(i<0)return h;var j=h.indexOf("</div>",i);if(j<0)return h;
   return h.slice(0,j)+' <span class="muted">·</span> <button type="button" class="tel em256" data-act="copy" data-v="'+esc(m)+'" title="눌러서 복사">'+esc(m)+'</button>'+h.slice(j)}});
+
+/* ================================================================
+   v258
+     ① 장애 재판정 확인 칸 (장애 재판정 창 · 근로자 창 · 입사 상세): 확인서류 = 복지카드 or 판정서류 하나 → 수취채널 · 수취일
+        · 채널: 브이워크 · 카카오톡 · 채널톡 · 메일 · 문자 · 고객사 전달 · 대면 · 기타(직접 입력)
+        · [재판정 정보 저장] → 변경 이력에 '복지카드 수취 · 메일 · 날짜' → 오른쪽 재판정 기록 표에 쌓임 (SQL 없음)
+        · 칸 아래 · 접힌 요약에 최근 수취
+     ② 입사 상세 '주소' 칸 → '주소 · 생년월일': 근로자 DB 생년월일이 없을 때만 입력칸
+        · 같은 사람의 입구서 → 채용 요청 계약정보 → 포트폴리오 생년월일을 찾아 [이걸로 채우기] (한 번 눌러 확인)
+        · 신규입사자 표는 기존 '입력 필요' 칸이 생년월일 빠짐을 이미 보여 줌
+   ================================================================ */
+/* ---------- ① 수취 ---------- */
+var DIS_RCV_CH=["브이워크","카카오톡","채널톡","메일","문자","고객사 전달","대면","기타"];
+function disRcvLast(wid){var o={};(DB.logs||[]).forEach(function(l){if(l.row!==wid)return;var m=/^장애 재판정 · (.+) 수취$/.exec(String(l.field||""));if(!m)return;var k=m[1];if(!o[k]||String(l.at)>String(o[k].at))o[k]=l});return o}
+function disRcvTxt(wid){var o=disRcvLast(wid),K=Object.keys(o);if(!K.length)return"";return K.map(function(k){var l=o[k];return k+" "+String(l.after||"").replace(/^.+? 수취 · /,"")+(l.by?" ("+l.by+")":"")}).join(" · ")}
+function disRcvBox(F){/* v258 확인서류는 둘 중 하나 (복지카드 or 판정서류) */var cur=(F.docs||[]).length===1?F.docs[0]:"",R=cur?((F.recv=F.recv||{})[cur]||(F.recv[cur]={ch:"",etc:"",on:TODAY})):null;
+  var h='<div class="drc258"><span class="seg sm" role="radiogroup" aria-label="확인서류">'+DIS_DOCS.map(function(d){return'<label class="drc258r'+(cur===d?" on":"")+'"><input type="radio" name="dis258doc" data-dis258="'+esc(d)+'"'+(cur===d?" checked":"")+'> '+esc(d)+'</label>'}).join("")+'</span>'+(cur?'<button type="button" class="linkbtn small" data-act="dis258-none">선택 해제</button>':'<span class="small muted">새로 받은 서류를 고르면 수취채널 · 수취일 칸이 나와요</span>')+'</div>';
+  if((F.docs||[]).length>1)h+='<div class="small muted">예전 기록: '+esc(F.docs.join(" · "))+' (하나를 고르면 그걸로 바뀌어요)</div>';
+  if(cur)h+='<div class="drc258"><span class="small muted">수취채널</span><select data-disr="'+esc(cur)+'|ch" aria-label="수취채널"><option value="">선택</option>'+DIS_RCV_CH.map(function(c){return'<option'+(R.ch===c?" selected":"")+'>'+c+'</option>'}).join("")+'</select>'+
+    (R.ch==="기타"?'<input data-disr="'+esc(cur)+'|etc" value="'+esc(R.etc||"")+'" placeholder="직접 입력" aria-label="기타 수취채널">':"")+'<span class="small muted">수취일</span><input type="date" data-disr="'+esc(cur)+'|on" value="'+esc(R.on||TODAY)+'" aria-label="수취일"></div>';
+  return h}
+var _disBody258=disBody;disBody=function(eid){var h=_disBody258.apply(this,arguments);if(typeof h!=="string"||!S.disF||S.disF.emp!==eid)return h;var F=S.disF,e=emp(eid),last=e?disRcvTxt(e.worker):"";
+  var i=h.indexOf('<div class="f full"><span>확인서류</span>');if(i<0)return h;var j=h.indexOf("</div></div></div>",i);if(j<0)return h;
+  var box='<div class="f full drc258w"><span>확인서류 · 수취</span><div>'+disRcvBox(F)+(last?'<div class="small muted drc258l">최근 수취 · '+esc(last)+'</div>':"")+'</div></div>';
+  return h.slice(0,i)+box+h.slice(j+12)};
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!S.disF)return;var F=S.disF;
+  if(t.dataset.dis258){ev.stopImmediatePropagation();if(t.checked)F.docs=[t.dataset.dis258];render();return}
+  if(t.dataset.disr){var q=t.dataset.disr.split("|");F.recv=F.recv||{};var R=F.recv[q[0]]||(F.recv[q[0]]={ch:"",etc:"",on:TODAY});R[q[1]]=t.value;if(q[1]==="ch")render()}},true);
+document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.disr||!S.disF)return;var q=t.dataset.disr.split("|"),F=S.disF;F.recv=F.recv||{};var R=F.recv[q[0]]||(F.recv[q[0]]={ch:"",etc:"",on:TODAY});R[q[1]]=t.value},true);
+/* 저장 버튼: 원래 저장(0250)보다 먼저 · 같은 검사를 통과할 때만 수취 기록 */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="dis-save"]');if(!b)return;var F=S.disF,eid=b.dataset.e;if(!F||F.emp!==eid)return;
+  if(!F.result||(DIS_NEED_REASON[F.result]&&!String(F.reason||"").trim())||(F.result==="확인완료"&&!F.recheck&&!F.permanent))return;
+  var e=emp(eid),w=e&&wk(e.worker);if(!w)return;var miss=[];
+  (F.docs||[]).forEach(function(d){var R=(F.recv||{})[d];if(!R||!R.ch)return;var ch=R.ch==="기타"?(String(R.etc||"").trim()||"기타"):R.ch;if(R.ch==="기타"&&!String(R.etc||"").trim())miss.push(d);
+    logChange("workers",w.id,w.name,"장애 재판정 · "+d+" 수취","",d+" 수취 · "+ch+" · "+(R.on||TODAY),"내부")});
+  if(miss.length)toast(miss.join(", ")+" 수취채널 '기타' 내용이 비어 있어요");},true);
+var _fdDisSum258=fdDisSum;fdDisSum=function(d){var h=_fdDisSum258.apply(this,arguments);if(typeof h!=="string"||!d||!d.worker)return h;var t=disRcvTxt(d.worker);if(!t)return h;return h.replace('<span class="grow"></span>',' <span class="small muted">· 최근 수취 '+esc(t)+'</span><span class="grow"></span>')};
+/* ---------- ② 입사 상세 생년월일 ---------- */
+function obCand258(e,w){var L=[],seen={},add=function(src,b){b=String(b||"").trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(b)||seen[b])return;seen[b]=1;L.push({src:src,b:b})};
+  (DB.intake||[]).filter(function(a){return a.emp===e.id||(!a.emp&&w.phone&&normPhone(a.phone||"").slice(-8)===normPhone(w.phone).slice(-8)&&a.cid===e.company)}).forEach(function(a){add("입구서",a.birth)});
+  (DB.rrr||[]).forEach(function(x){(x.cands||[]).forEach(function(c){if(c.hired===e.id||(c.hired===true&&c.emp===e.id))add("채용 요청 계약정보",(c.ci&&c.ci.birth)||c.birth)})});
+  (DB.pf||[]).forEach(function(p){if(p.worker===w.id)add("포트폴리오",p.birth)});return L}
+function obBirth258(e,w){if(w.birth)return'<div class="ob258"><span class="small muted">생년월일</span> <b class="num">'+esc(w.birth)+'</b> <span class="small muted">근로자 DB</span></div>';
+  var C=obCand258(e,w);return'<div class="ob258 miss"><span class="b sm warn">생년월일 미입력</span> <input type="date" data-obirth="'+esc(w.id)+'" aria-label="생년월일" style="max-width:170px"> <button type="button" class="btn xs pri" data-act="ob258-save" data-w="'+esc(w.id)+'">저장</button>'+
+    C.map(function(c){return' <button type="button" class="btn xs" data-act="ob258-fill" data-w="'+esc(w.id)+'" data-v="'+esc(c.b)+'" data-s="'+esc(c.src)+'">'+esc(c.src)+' 값 '+esc(c.b)+' 로 채우기</button>'}).join("")+'</div>'}
+regSection("onb",{id:"v258 생년월일",order:9,transform:function(h,e){if(typeof h!=="string"||!e)return h;var w=wk(e.worker);if(!w)return h;var i=h.indexOf('<div class="ps onbaddr">');if(i<0)return h;
+  h=h.replace('<div class="ps onbaddr"><h3>주소 ','<div class="ps onbaddr"><h3>주소 · 생년월일 ');var k=h.indexOf("</h3>",i);if(k<0)return h;return h.slice(0,k+5)+obBirth258(e,w)+h.slice(k+5)}});
+function obSave258(wid,v,src){var w=wk(wid);if(!w)return;v=String(v||"").trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast("생년월일을 골라 주세요");return}
+  var o=DB.workers.find(function(x){return x.id!==w.id&&x.birth===v&&String(x.name||"").replace(/\s/g,"")===String(w.name||"").replace(/\s/g,"")});
+  var go=function(){var b=w.birth||"";w.birth=v;logChange("workers",w.id,w.name,"생년월일",b,v+(src?" ("+src+" 값)":""),"내부");if(LIVE&&READY)schedulePersist();toast("생년월일을 저장했어요");render()};
+  if(o)askConfirm("같은 이름 · 생년월일 근로자가 있어요",o.name+" ("+v+") 근로자가 이미 있어요. 같은 사람이면 근로자 병합이 필요해요. 그래도 저장할까요?","저장",go);else go()}
+regActs({"dis258-none":function(){if(S.disF){S.disF.docs=[];render()}},"ob258-save":function(D0){var i=document.querySelector('[data-obirth="'+D0.w+'"]');obSave258(D0.w,i&&i.value,"")},
+  "ob258-fill":function(D0){askConfirm("생년월일 채우기",D0.s+"에 적힌 "+D0.v+" 로 근로자 DB 생년월일을 채울까요?","채우기",function(){obSave258(D0.w,D0.v,D0.s)})}});
+/* 신규입사자 표: 생년월일 빠짐은 이미 '입력 필요' 칸(v239)에 들어 있어 따로 배지 안 붙임 */
 
 /* ============ 렌더 ============ */
 function renderMain(){
