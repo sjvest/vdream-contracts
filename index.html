@@ -1791,6 +1791,12 @@ tr.lk255x>td{background:#FAFAFD}
 .lk255o{text-align:left;border:1px solid var(--line,#e3e1ee);background:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer;white-space:normal}
 aside.u255>.u255sync,aside.u255>.u255tabs,aside.u255>.u255sum,aside.u255>.u255log{grid-column:1/-1}
 aside.u255>.u255sync{margin:0 16px 4px}
+/* v256 선택 막대(보라 배경) 위 글자 · 버튼 · 묶음 모두 선택 · 근로자 이메일 */
+.bulk .small.muted{color:rgba(255,255,255,.85)}
+.bulk .btn.pri{background:#fff;color:#584C9D;border-color:#fff;font-weight:700}
+.bulk .x{color:#fff;white-space:nowrap;text-decoration:underline;margin-left:12px}
+tr.vgh .vg256{margin-left:8px;vertical-align:1px}
+.em256{margin:4px 0 0;font-size:13px}
 </style>
 </head>
 <body>
@@ -19198,8 +19204,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v255 — 인재 풀 창 A안 · 근로자 창 인재 풀 칩 · 불합격 연계 처리 칸 · 인재 풀 만 나이 (이전 버전 기록은 src git log · 각 core/91xx~94xx 모듈 머리말) */
-APP_VER="v255";APP_VER_ON="11/10";APP_NOTE="인재 풀 창: 머리 카드 + 탭(요약 · 희망 조건 · 서류 · 파일 · 연계 기록 · 메모 · 기타) · 근로자 DB 칩 · 발굴페이지 연동 표시 · 두 기록 값 다름 칩 / 새 포트폴리오: 필수 칸만 + 같은 사람 찾기 / 근로자 창: 인재 풀 칩 · [인재 풀에 추천] / 불합격 연계: [다른 요청에 넣기 ▾] [인재 풀에 남기기] [연계 안 함 ▾] / 인재 풀 목록 만 나이 · 생년월일 다름 · 상태 다름";
+/* v256 — 선택 막대 글자 · 묶음 모두 선택 · 근로자 이메일 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
+APP_VER="v256";APP_VER_ON="11/10";APP_NOTE="선택 막대: [선택한 n건 처리] 버튼 · 안내 문구가 보이게 / 기업별 보기 묶음에 [이 기업 모두 선택] / 근로자 창 머리에 이메일(누르면 복사) · [메일 쓰기]";
 
 /* ================================================================
    v208
@@ -22218,6 +22224,21 @@ regActs({
 });
 document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.lk255q==null)return;var q=t.value.trim(),box=t.parentNode.querySelector(".lk255sl");if(!box)return;var n=0;
   [].forEach.call(box.querySelectorAll(".lk255o"),function(b){var hit=!!q&&String(b.getAttribute("data-q")||"").indexOf(q)>=0&&n<8;if(hit)n++;b.hidden=!hit})},true);
+
+/* ================================================================
+   v256
+     ① 선택 막대(보라 배경): 안내 문구 · [선택한 n건 처리] · 선택 해제가 배경에 묻혀 안 보이던 것 (styles/app.css)
+     ② 기업별 보기 묶음 머리줄: [이 기업 모두 선택] (체크박스가 있는 표 · 계약만료 등) → 바로 [선택한 n건 처리]
+     ③ 근로자 창 머리: 이메일 (누르면 복사) · [메일 쓰기]
+   ================================================================ */
+regAfter("v256 묶음 모두 선택",function(){var M=typeof vgMode==="function"?vgMode():"";if(!M)return;
+  [].forEach.call(document.querySelectorAll("#main tr.vgh"),function(tr){var td=tr.querySelector("td");if(!td||td.querySelector(".vg256"))return;var L=[],x=tr.nextElementSibling;
+    while(x&&!x.classList.contains("vgh")){var c=x.querySelector('input[data-ch="bulk-pick"]');if(c)L.push(c.dataset.e);x=x.nextElementSibling}if(!L.length)return;
+    var all=L.every(function(e){return S.bulk&&S.bulk[e]});td.insertAdjacentHTML("beforeend",' <button type="button" class="btn xs vg256" data-act="vg256-all" data-e="'+esc(L.join(","))+'">'+(all?"선택 풀기":M==="co"?"이 기업 모두 선택":"모두 선택")+'</button>')})});
+regActs({"vg256-all":function(D0){var L=String(D0.e||"").split(",").filter(Boolean);S.bulk=S.bulk||{};var all=L.every(function(e){return S.bulk[e]});L.forEach(function(e){if(all)delete S.bulk[e];else S.bulk[e]=true});render()}});
+regSection("worker",{id:"v256 이메일",order:95,transform:function(h,w){if(!w||typeof h!=="string"||!w.email)return h;var m=String(w.email).trim();if(!m)return h;
+  var chip='<div class="em256"><span class="small muted">이메일</span> <button type="button" class="tel" data-act="copy" data-v="'+esc(m)+'" title="눌러서 복사">'+esc(m)+'</button> <a class="btn xs" href="mailto:'+esc(m)+'" target="_blank" rel="noopener">메일 쓰기</a></div>';
+  var i=h.indexOf("</h2>");return i<0?h:h.slice(0,i+5)+chip+h.slice(i+5)}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
