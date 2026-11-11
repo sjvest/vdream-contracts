@@ -1811,6 +1811,14 @@ tr.vgh .vg256{margin-left:8px;vertical-align:1px}
 button.drc258r{border:0;background:#fff;color:var(--ink);font:inherit;font-size:13px}button.drc258r+button.drc258r{border-left:1px solid var(--line,#e3e1ee)}
 .drc258o{display:inline-block;width:14px;height:14px;border-radius:50%;border:1.5px solid #9A97AE;background:#fff;box-sizing:border-box}
 button.drc258r.on{background:var(--p,#584C9D);color:#fff}button.drc258r.on .drc258o{border:4px solid #fff;background:var(--p,#584C9D)}
+/* v260 공유 알림 */
+.sh260co{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+.sh260co #sh260cw{flex:1;min-width:300px}
+.sh260set .sh260row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.sh260set .sh260row>.small.muted:first-child{min-width:110px}
+.sh260set .ochips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sh260late{display:flex;flex-direction:column;gap:2px}
+#sh260m{z-index:9000}
 </style>
 </head>
 <body>
@@ -19218,8 +19226,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v259 — 장애 재판정 확인서류 선택 왔다갔다 고침 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
-APP_VER="v259";APP_VER_ON="11/10";APP_NOTE="장애 재판정 확인서류 [복지카드 | 판정서류] 선택이 왔다갔다 안 되던 것 고침";
+/* v260 — 채널톡 · 알림함 공유 알림 자동 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
+APP_VER="v260";APP_VER_ON="11/11";APP_NOTE="작업하면 채널톡 · 알림함에 공유 알림 저절로 (기업정보 · 서류 · 월간레포트 · 업무 방식 · 계약카운트 · 퇴사 · 입사취소 · 무기계약) · 같은 날 같은 건은 스레드 · 관리자 노티 하루 한 번 · 관리자 › 설정 › 공유 알림";
 
 /* ================================================================
    v208
@@ -19529,6 +19537,7 @@ function nScan(quiet){if(!S.me||!READY)return;if(!NOTI.bootUntil)NOTI.bootUntil=
     add({id:"mm:"+m.id,gk:"rs:"+m.tid,by:m.author||"",type:"reqshare",t:nts(m.at),co:nCoName(cid),wk:k&&wk(k.worker)?wk(k.worker).name:"",title:"고객사 공유 기록 · "+(k&&wk(k.worker)?wk(k.worker).name:""),body:String(m.body||"").slice(0,100)+" · "+(m.author||""),go:{k:"reqw",id:m.tid}})});
   /* 사전 공유 */
   (DB.leads||[]).forEach(function(L){var by=L.by||(st(L.sid)||{}).name||"";if(by===me||!nDuty("이력서 전달",null))return;var t=L.at?nts(L.at):first("ld:"+L.id,L.on?L.on+" 00:00":"");add({id:"ld:"+L.id,gk:"ld:"+L.id,by:by,shared:nShared("이력서 전달"),type:"leads",t:t,co:L.cname||"",wk:"",title:"영업 사전 공유 · "+(L.cname||""),body:[by,typeof ldJobsTxt==="function"?ldJobsTxt(L):""].filter(Boolean).join(" · "),go:{k:"leads",id:L.id}})});
+  if(typeof nShare260==="function")nShare260(add);/* v260 공유 알림 · 관리자 노티 */
   }catch(e){console.warn("[알림]",e)}
   E.sort(function(a,b){return b.t.localeCompare(a.t)});E=nGroup(E);E.forEach(function(G){var ak=nAck(G);if(ak&&!N.read[G.id]){N.read[G.id]=nts(ak.at)||nNow();fsNew=true;nDrop(G.id)}});NOTI.ev=E;
   if(N._fresh){E.forEach(function(e){N.read[e.id]=e.t});delete N._fresh;fsNew=true}
@@ -22307,6 +22316,211 @@ function obSave258(wid,v,src){var w=wk(wid);if(!w)return;v=String(v||"").trim();
 regActs({"dis258-doc":function(D0){if(S.disF){S.disF.docs=[D0.v];render()}},"dis258-none":function(){if(S.disF){S.disF.docs=[];render()}},"ob258-save":function(D0){var i=document.querySelector('[data-obirth="'+D0.w+'"]');obSave258(D0.w,i&&i.value,"")},
   "ob258-fill":function(D0){askConfirm("생년월일 채우기",D0.s+"에 적힌 "+D0.v+" 로 근로자 DB 생년월일을 채울까요?","채우기",function(){obSave258(D0.w,D0.v,D0.s)})}});
 /* 신규입사자 표: 생년월일 빠짐은 이미 '입력 필요' 칸(v239)에 들어 있어 따로 배지 안 붙임 */
+
+/* ================================================================
+   v260 공유 알림 (채널톡 팀챗 · 앱 안 알림함)
+     · 담당자가 하던 작업을 하면 저절로: 기업정보 · 서류 체결 방식 · 월간레포트 · 업무 방식 변경 · 계약카운트 증가(추가 채용 요청)
+       · 계약카운트 감소(대체 미진행 · 사유) · 퇴사자 업데이트 · 입사취소 · 무기계약 전환 (관리자 › 설정 › 공유 알림에서 켜고 끄기)
+     · 양식: ■ 양식명 [기업명] - (작성자 파트) / 작성 김현구 · 기업 담당 박유리 / 내용 · 채널톡은 근로자 이름 가림 (홍○○)
+     · 같은 기업 · 같은 종류 · 같은 기준일 · 같은 작업일 → 첫 건은 새 글 · 다음 건은 그 글 스레드 답글(오늘 누적)
+     · 계열사 반영(여러 기업 한 번에) → 그룹 이름으로 새 글 1개 + 스레드에 바뀐 기업 · 담당 목록
+     · 기준일에서 n일(기본 3) 지나 처리 → 제목에 ⚠ · 관리자 설정 '늦은 처리' 목록
+     · 되돌림(최종 확정 되돌림 · 입사취소 해제 · 대체 여부 바꿈) → 같은 스레드에 '정정'
+     · 관리자 노티: 하루 한 번 (9시 이후 처음 접속한 사람이 보냄 · 서버가 하루 한 번만 받음) · 운영파트 · 채용파트
+       원글 = 파트 · 담당자별 건수 / 스레드 = 담당자마다 할 일 목록
+     · 서버: sql/v260_share_channeltalk.sql (vw_ct_post · vw_share_log) · 키는 server_secrets 에만
+   ================================================================ */
+var SH_K=[
+  ["info","기업정보 변경",1,"고객사 연락처 · 부서 · 계약 담당자가 바뀔 때"],
+  ["doc","서류 체결 방식 변경",1,"근로계약서 체결 방식 · 원본 수취 방식이 바뀔 때"],
+  ["report","월간레포트 발송 변경",1,"월간레포트 발송 시기가 바뀔 때"],
+  ["order","업무 방식 변경",1,"지시주체 · 지시채널이 바뀔 때"],
+  ["inc","계약카운트 증가",1,"채용 요청 '추가'를 등록할 때"],
+  ["dec","계약카운트 감소",1,"계약만료 · 중도퇴사 '대체 채용 안 함'을 정할 때 (사유)"],
+  ["lea","퇴사자 업데이트",1,"중도퇴사를 등록할 때"],
+  ["cxl","입사취소",1,"입사취소를 처리할 때"],
+  ["fte","무기계약 전환",1,"계약만료 최종 결정이 무기계약 전환일 때"],
+  ["dis","장애 재판정 결과",0,"장애 재판정 정보를 저장할 때"],
+  ["svc","서비스 종료일 변경",0,"임대계약 종료일이 바뀔 때"],
+  ["mgr","담당 변경",0,"기업 담당 · 대무자가 바뀔 때"]];
+var SH_KL={};SH_K.forEach(function(k){SH_KL[k[0]]=k});
+var SH_THREAD={inc:1,dec:1,lea:1,cxl:1,fte:1,dis:1};
+var SH_DG=[["ops","운영파트",[["late","늦은 처리 (기준일 지나 처리)"],["exp30","만료 D-30 · 안내 메일 미발송"],["two60","2년 도래 60일 이내 · 미처리"],["dis","재판정일 지남 · 결과 미입력"],["ctr14","입사 14일 · 근로계약서 미수취"],["tmp2","영업 이관 요청 2일 · 담당 미지정"]]],
+  ["rec","채용파트",[["due0","마감 지남 · 후보 0명"],["in3","입사 3일 전 · 입구서 미발송"],["lk7","불합격 연계 대기 7일"],["nomgr","채용 담당 미지정 1일"],["chk","확인 필요 (입사 · 근로자 DB 연결)"]]]];
+var SH={buf:[],t:0,why:"",no:false,mute:0,pend:null,grp:{},dgTry:""};
+function shCfg(){var v=appSet("ct_share",null);v=v&&typeof v==="object"?v:{};return{grp:v.grp||"",grp_n:v.grp_n||"",admin_grp:v.admin_grp||"",admin_grp_n:v.admin_grp_n||"",kinds:v.kinds||{},late:v.late>0?+v.late:3,bc:!!v.bc,to:Object.assign({mgr:1,bk:1,lead:1},v.to||{}),items:v.items||{},dg:v.dg!==false}}
+function shOn(k){var c=shCfg(),v=c.kinds[k];return v==null?!!(SH_KL[k]||[])[2]:!!v}
+function shItemOn(k){var c=shCfg();return c.items[k]!==false}
+function shPut(o){var b=JSON.stringify(shCfg()),n=Object.assign(shCfg(),o);appSetPut("ct_share",n);SH.mute++;try{logChange("app_settings","ct_share","공유 알림","설정",b,JSON.stringify(n),"내부")}finally{SH.mute--}if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}
+function shMask(n){n=String(n||"").trim();if(!n)return"";var a=Array.from(n);return a[0]+"○".repeat(Math.max(1,a.length-1))}
+function shDay(d){d=d||TODAY;var w="일월화수목금토"[new Date(d+"T00:00:00").getDay()];return md(d)+"("+w+")"}
+function shName(id){return(st(id)||{}).name||""}
+function shCoAct(cid){return(DB.employments||[]).filter(function(e){return e.company===cid&&activeEmp(e)}).length}
+function shCoRec(cid){return(DB.rr||[]).filter(function(r){return r.company===cid&&(typeof rrState!=="function"||rrState(r)!=="완료")&&r.status!=="취소"&&r.status!=="보류"}).reduce(function(s,r){return s+(typeof rrHead==="function"?rrHead(r):+r.headcount||0)},0)}
+function shLbl(){if(SH._lbl)return SH._lbl;var o={};try{Object.keys(cfKeys()).forEach(function(k){o[cfLabel(k)]=k})}catch(e){}o["담당자"]="manager";o["대무자"]="backup";return SH._lbl=o}
+function shCoKind(field){var k=shLbl()[field]||"";if(/^doc_contract_(recv|form)$/.test(k)||/ 제출 방식$/.test(field))return"doc";if(k==="monthly_report")return"report";if(k==="order_by"||k==="order_ch"||/^지시/.test(field))return"order";
+  if(/^(contact_|sub_|ctr_)/.test(k))return"info";if(k==="service_end")return"svc";if(k==="manager"||k==="backup")return"mgr";return""}
+function shEmpW(wid,f){var L=(DB.employments||[]).filter(function(e){return e.worker===wid&&(!f||f(e))});return L.sort(function(a,b){return String(b.start_date||"").localeCompare(String(a.start_date||""))})[0]||null}
+/* ---------- ① 작업 → 알림 거리 (변경 이력을 그대로 받아서) ---------- */
+var _logChange260=logChange;logChange=function(table,row,label,field,before,after,source){var r=_logChange260.apply(this,arguments);
+  try{if(!SH.mute&&READY&&S.me&&source!=="자동"&&table!=="share"){SH.buf.push({table:table,row:row,label:label,field:String(field||""),before:before==null?"":String(before),after:after==null?"":String(after)});clearTimeout(SH.t);SH.t=setTimeout(shFlush,0)}}catch(e){}return r};
+function shEv(l){var t=l.table,f=l.field,a=l.after,b=l.before;
+  if(t==="companies"){var k=shCoKind(f);if(!k)return null;return{kind:k,cid:l.row,line:f+": "+(b||"(빈 값)")+" → "+(a||"(빈 값)")}}
+  if(t==="recruit_requests"&&f==="채용 요청 등록"&&/^추가( |$)/.test(a)){var r=rcOf(l.row);if(!r||!r.company)return null;return{kind:"inc",cid:r.company,base:TODAY,n:typeof rrHead==="function"?rrHead(r):+r.headcount||0,jobs:typeof rrJobsShort==="function"?rrJobsShort(r):"",rr:r.id}}
+  if(t!=="workers")return null;var w=wk(l.row);if(!w)return null;
+  if(f==="대체 채용 희망"&&(a==="아니오"||b==="아니오")){var e=shEmpW(w.id,function(e){var x=xOf(e.id);return x&&x.corp==="종료"});if(!e)return null;var tm=(typeof xmTerm==="function"?xmTerm(e.id,xOf(e.id)):null)||curTerm(e.id)||{};
+    return{kind:"dec",cid:e.company,base:tm.end||e.end_date||TODAY,eid:e.id,name:w.name,src:"계약만료",undo:a!=="아니오"}}
+  if(f==="중도퇴사"&&!b){var m=/마지막 근무일 (\d{4}-\d\d-\d\d)/.exec(a),d=m?m[1]:"",e2=shEmpW(w.id,function(e){return e.end_type==="중도퇴사"&&(!d||e.end_date===d)});if(!e2)return null;
+    return{kind:"lea",cid:e2.company,base:e2.end_date||d,eid:e2.id,name:w.name,why:[e2.leave_reason,e2.leave_detail].filter(Boolean).join(" · ")||String(a.split(" · ").pop()||"")}}
+  if(f==="입사취소"&&!b){var e3=shEmpW(w.id,function(e){return e.cancelled});if(!e3)return null;var p=a.split(" · ");return{kind:"cxl",cid:e3.company,base:e3.start_date||TODAY,eid:e3.id,name:w.name,why:p.length>=3?p.slice(2).join(" · "):(e3.cancel_reason||"")}}
+  if(f==="입사취소 해제"){var e4=shEmpW(w.id,function(e){return!e.cancelled});if(!e4)return null;return{kind:"cxl",cid:e4.company,base:e4.start_date||TODAY,eid:e4.id,name:w.name,undo:true}}
+  if(f==="계약만료 최종 결정"&&/^무기계약 전환/.test(a)){var e5=shEmpW(w.id,function(e){var x=xOf(e.id);return x&&x.decision==="무기계약 전환"});if(!e5)return null;var x5=xOf(e5.id),nt=x5.newSeq?termsOf(e5.id).find(function(t){return t.seq===x5.newSeq}):null;
+    return{kind:"fte",cid:e5.company,base:nt&&nt.start?addD(nt.start,-1):TODAY,eid:e5.id,name:w.name,from:nt&&nt.start||""}}
+  if(f==="계약만료 최종 확정 되돌림"&&b==="무기계약 전환"){var e6=shEmpW(w.id);if(!e6)return null;var t6=curTerm(e6.id)||{};return{kind:"fte",cid:e6.company,base:t6.end||TODAY,eid:e6.id,name:w.name,undo:true}}
+  if(f==="장애 재판정 확인"){var e7=shEmpW(w.id,function(e){return activeEmp(e)});if(!e7)return null;return{kind:"dis",cid:e7.company,base:TODAY,eid:e7.id,name:w.name,res:a}}
+  return null}
+function shFlush(){var B=SH.buf;SH.buf=[];if(!B.length)return;var why=SH.why,no=SH.no;SH.why="";SH.no=false;if(no)return;var E=[];B.forEach(function(l){try{var e=shEv(l);if(e&&e.cid&&comp(e.cid))E.push(e)}catch(x){console.warn("[공유 알림]",x)}});
+  E=E.filter(function(e){return shOn(e.kind)});if(!E.length)return;
+  var dec=E.filter(function(e){return e.kind==="dec"&&!e.undo&&!e.why});if(dec.length){shAskWhy(E,why);return}
+  shSend(E,why)}
+/* ---------- ② 대체 미진행 사유 (작업 끝에 한 번 · 일괄도 한 번) ---------- */
+function shAskWhy(E,why){SH.pend={E:E,why:why};var D=E.filter(function(e){return e.kind==="dec"&&!e.undo}),old=document.getElementById("sh260m");if(old)old.remove();
+  document.body.insertAdjacentHTML("beforeend",'<div id="sh260m" class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="대체 미진행 사유" style="width:min(460px,calc(100vw - 32px))"><div class="ph"><div><div class="k">공유 알림 · 계약카운트 감소</div><h2>대체 미진행 사유</h2></div><button class="close" data-act="sh260-skip" aria-label="닫기">×</button></div>'+
+    '<div class="ps"><p class="small muted" style="margin:0 0 6px">'+esc(D.map(function(e){return(comp(e.cid)||{}).name+" · "+e.name}).slice(0,5).join(", ")+(D.length>5?" 외 "+(D.length-5)+"명":""))+'</p><input id="sh260why" style="width:100%" maxlength="200" placeholder="예: 고객사 인원 감축 · 직무 없어짐 (비워도 보내져요)" value="'+esc(why||"")+'"></div>'+
+    '<div class="ps foot"><button class="btn" data-act="sh260-no">알림 없이</button><span class="grow"></span><button class="btn pri" data-act="sh260-go">공유</button></div></div></div>');
+  setTimeout(function(){var i=document.getElementById("sh260why");if(i)i.focus()},30)}
+function shWhyDone(send){var P=SH.pend,i=document.getElementById("sh260why"),v=i?String(i.value||"").trim():"";SH.pend=null;var m=document.getElementById("sh260m");if(m)m.remove();if(!P||!send)return;
+  P.E.forEach(function(e){if(e.kind==="dec"&&!e.undo)e.why=v});shSend(P.E,P.why)}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("#sh260m [data-act]");if(!b)return;ev.stopPropagation();ev.preventDefault();var a=b.dataset.act;shWhyDone(a==="sh260-go"||a==="sh260-skip")},true);
+document.addEventListener("keydown",function(ev){if(!document.getElementById("sh260m"))return;if(ev.key==="Enter"&&ev.target&&ev.target.id==="sh260why"){ev.preventDefault();shWhyDone(true)}else if(ev.key==="Escape"){ev.stopPropagation();shWhyDone(true)}},true);
+/* 중도퇴사 '대체 안 함' (할 일 버튼 · 변경 이력이 없어서 따로) */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="lea-norr"]');if(!b||!READY||!S.me)return;var k=String(b.dataset.k||""),eid=k.replace(/^repl:/,""),e=emp(eid);if(!e||!shOn("dec"))return;var w=wk(e.worker)||{};
+  setTimeout(function(){var m=DB.meta[k];if(!m||m.status!=="완료")return;shFlushDirect([{kind:"dec",cid:e.company,base:e.end_date||TODAY,eid:e.id,name:w.name||"",src:"중도퇴사"}])},0)},true);
+function shFlushDirect(E){E=E.filter(function(e){return e.cid&&comp(e.cid)&&shOn(e.kind)});if(!E.length)return;if(E.some(function(e){return e.kind==="dec"&&!e.undo&&!e.why})){shAskWhy(E,"");return}shSend(E,"")}
+/* ---------- ③ 글 만들기 ---------- */
+function shHead(kind,cid,late,extra){var c=comp(cid)||{},me=st(S.me)||{},mg=assignee(cid),mn=shName(c.manager),who=me.name||"";
+  var t="■ "+SH_KL[kind][1]+" ["+(extra||c.name||"")+"]"+(late>0?" ⚠ 기준일 "+late+"일 지나 처리":"")+" - ("+(me.part||"")+")";
+  var by="작성 "+who+(mn&&mn!==who?" · 기업 담당 "+mn+(mg.proxy&&shName(mg.who)&&shName(mg.who)!==who?" (대무 "+shName(mg.who)+")":""):"");return{t:t,by:by}}
+function shLate(kind,base){if(!SH_THREAD[kind]||kind==="inc"||!base||base>=TODAY)return 0;var n=dd(base,TODAY);return n>shCfg().late?n:0}
+function shKey(cid,kind,base){return"sh|"+cid+"|"+kind+"|"+(base||"")+"|"+TODAY}
+function shPrevLogs(pre){return(DB.logs||[]).filter(function(l){return l.table==="share"&&String(l.row||"").indexOf(pre)===0})}
+function shPerson(e,mask){var n=mask?shMask(e.name):e.name;
+  if(e.kind==="dec")return"· "+n+" · "+(e.src==="중도퇴사"?"중도퇴사 마지막 근무일 ":"계약만료 ")+e.base+" · 대체 미진행";
+  if(e.kind==="lea")return"· 근로자명: "+n+"\n· 퇴사일: "+e.base+"\n· 사유: "+(e.why||"—");
+  if(e.kind==="cxl")return"· 근로자명: "+n+"\n· 입사 예정일: "+e.base+"\n· 사유: "+(e.why||"—");
+  if(e.kind==="fte")return"· "+n+" · "+(e.from?e.from+"부터 ":"")+"무기계약 전환 확정";
+  if(e.kind==="dis")return"· "+n+" · "+String(e.res||"").slice(0,80);return"· "+n}
+function shSend(E,why){var co={},per={},undo=[];
+  E.forEach(function(e){if(e.undo){undo.push(e);return}if(!SH_THREAD[e.kind]){(co[e.cid]=co[e.cid]||[]).push(e);return}var k=shKey(e.cid,e.kind,e.base);(per[k]=per[k]||[]).push(e)});
+  var cids=Object.keys(co);
+  if(cids.length>1)shSendGroup(cids,co,why);else cids.forEach(function(cid){shSendCo(cid,co[cid],why)});
+  Object.keys(per).forEach(function(k){shSendPer(k,per[k])});
+  undo.forEach(function(e){shSendUndo(e)})}
+function shKindOf(L){var ks=[];L.forEach(function(e){if(ks.indexOf(e.kind)<0)ks.push(e.kind)});return ks}
+function shSendCo(cid,L,why){var ks=shKindOf(L),k=ks.length===1?ks[0]:"info",H=shHead(k,cid,0);if(ks.length>1)H.t=H.t.replace("■ 기업정보 변경","■ 기업정보 변경 ("+ks.map(function(x){return SH_KL[x][1].replace(/ 변경$/,"")}).join(" · ")+")");
+  var body=H.by+"\n"+L.map(function(e){return"· "+e.line}).join("\n")+(why?"\n· 변경 근거: "+why:"");
+  shOut({kind:k,cid:cid,key:null,title:H.t,body:body,app:body,reply:null})}
+function shSendGroup(cids,co,why){var c0=comp(cids[0])||{},gn=c0.group_name||c0.name||"",ks=[];cids.forEach(function(c){shKindOf(co[c]).forEach(function(k){if(ks.indexOf(k)<0)ks.push(k)})});var k=ks.length===1?ks[0]:"info";
+  var H=shHead(k,cids[0],0,gn+" 그룹 · "+cids.length+"곳 일괄"),lines=[];co[cids[0]].forEach(function(e){if(lines.indexOf(e.line)<0)lines.push(e.line)});
+  var body=H.by+"\n"+lines.map(function(x){return"· "+x}).join("\n")+(why?"\n· 변경 근거: "+why:"")+"\n· 바뀐 기업 "+cids.length+"곳 · 스레드에 목록";
+  var list="바뀐 기업 "+cids.length+"곳\n"+cids.map(function(c){var o=comp(c)||{};return"· "+o.name+" · 담당 "+(shName(o.manager)||"—")}).join("\n");
+  var to=[];cids.forEach(function(c){shTo(c).forEach(function(x){if(to.indexOf(x)<0)to.push(x)})});
+  shOut({kind:k,cid:cids[0],key:null,title:H.t,body:body,app:body+"\n"+list,list:list,to:to})}
+function shSendPer(key,L){var e0=L[0],cid=e0.cid,kind=e0.kind,late=shLate(kind,e0.base),H=shHead(kind,cid,late),prev=shPrevLogs(key),pre=key.slice(0,key.lastIndexOf("|")+1),old=shPrevLogs(pre).filter(function(l){return l.row!==key});
+  var n=L.reduce(function(s,e){return s+(kind==="inc"?+e.n||0:1)},0),cum=n+prev.reduce(function(s,l){var m=/\|n:(-?\d+)/.exec(l.before||"");return s+(m?+m[1]:0)},0);
+  var act=shCoAct(cid),rec=shCoRec(cid),cnt="";
+  if(kind==="inc")cnt="· 추가 채용 "+n+"명"+(e0.jobs?" ("+e0.jobs+")":"")+"\n· 재직 기준 "+act+"명 → "+(act+n)+"명 · 진행 중 채용 "+Math.max(0,rec-n)+"명 별도";
+  if(kind==="dec")cnt="· 사유: "+(e0.why||"—")+"\n· 재직 기준 "+act+"명 → 만료 후 "+Math.max(0,act-cum)+"명 · 진행 중 채용 "+rec+"명 별도";
+  var ppl=function(mask){return kind==="inc"?"":L.map(function(e){return shPerson(e,mask)}).join("\n")};
+  var oldLine=old.length?"\n· 같은 기준일 이전 공유: "+old.map(function(l){return md(String(l.at||"").slice(0,10))}).filter(function(v,i,a){return a.indexOf(v)===i}).join(", "):"";
+  var mk=function(mask){return H.by+"\n"+[ppl(mask),cnt].filter(Boolean).join("\n")+oldLine};
+  var rep=function(mask){return"+ 추가 · 작성 "+((st(S.me)||{}).name||"")+"\n"+[ppl(mask),cnt].filter(Boolean).join("\n")+"\n오늘 누적 "+(kind==="dec"?"−":kind==="inc"?"+":"")+cum+(kind==="inc"?"명":"명")};
+  shOut({kind:kind,cid:cid,key:key,title:H.t,body:mk(true),app:prev.length?rep(false):mk(false),reply:rep(true),n:n,late:late,first:!prev.length,wk:L.map(function(e){return e.name}).join(", ")})}
+function shSendUndo(e){var L=(DB.logs||[]).filter(function(l){return l.table==="share"&&String(l.row||"").indexOf("sh|"+e.cid+"|"+e.kind+"|")===0&&(l.after||"").indexOf(e.name)>=0});if(!L.length)return;var l=L[0],key=l.row,me=(st(S.me)||{}).name||"";
+  var lab={dec:"대체 미진행 취소",cxl:"입사취소 해제",fte:"무기계약 전환 확정 되돌림"}[e.kind]||"정정";
+  var t=function(mask){return"정정 · "+(mask?shMask(e.name):e.name)+" "+lab+" · 작성 "+me};
+  shOut({kind:e.kind,cid:e.cid,key:key,title:l.label||"",body:"",app:t(false),reply:t(true),n:-1,undo:true,wk:e.name})}
+/* 받는 사람 (앱 안): 기업 담당 · 대무자 · 파트 관리자 · 작성자 빼고 */
+function shTo(cid){var c=comp(cid)||{},C=shCfg(),L=[];if(C.to.mgr&&c.manager)L.push(c.manager);if(C.to.bk&&c.backup)L.push(c.backup);
+  if(C.to.lead){var pt=(st(c.manager)||{}).part||"";(DB.staff||[]).forEach(function(s){if(s&&s.part===pt&&isAdminRole(s.role)&&!s.inactive&&L.indexOf(s.id)<0)L.push(s.id)})}
+  return L.filter(function(x,i){return x&&x!==S.me&&L.indexOf(x)===i})}
+function shOut(o){var to=o.to||shTo(o.cid),meta="to:"+to.join(",")+"|co:"+o.cid+"|k:"+o.kind+(o.n!=null?"|n:"+o.n:"")+(o.late?"|late:"+o.late:"");
+  SH.mute++;try{logChange("share",o.key||("sh1|"+o.cid+"|"+o.kind+"|"+nid().slice(0,8)),o.title,SH_KL[o.kind][1],meta,o.app,"내부")}finally{SH.mute--}
+  if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();
+  SH.last=o;if(!LIVE||typeof sb==="undefined"||!sb)return;var C=shCfg();if(!C.grp){return}
+  shRpc("share",o.key,o.title,o.body,o.key?o.reply:null,o.list||null,false,{kind:o.kind,by:(st(S.me)||{}).name||"",cid:o.cid})}
+function shRpc(chan,key,title,body,reply,list,once,meta){if(!LIVE||typeof sb==="undefined"||!sb)return Promise.resolve(null);
+  return Promise.resolve(sb.rpc("vw_ct_post",{p_chan:chan,p_key:key||null,p_title:title,p_body:body||"",p_reply:reply||null,p_list:list||null,p_once:!!once,p_meta:meta||{}})).then(function(r){
+    if(r&&r.error){SH.err=String(r.error.message||r.error.code||"");if(/vw_ct_post|PGRST202|42883|Could not find/i.test(SH.err))SH.noSrv=true;console.warn("[공유 알림]",SH.err);return null}
+    var d=r&&r.data;if(d&&(d.mode==="root"||d.mode==="pending")){clearTimeout(SH.rt);SH.rt=setTimeout(function(){try{sb.rpc("vw_ct_resolve").then(function(){},function(){})}catch(e){}},4000)}
+    if(d&&d.ok===false&&d.why!=="no_group")console.warn("[공유 알림]",d.why);return d},function(e){console.warn("[공유 알림]",e);return null})}
+/* ---------- ④ 기업 창: 변경 근거 · 알림 없이 저장 ---------- */
+regSection("company",{id:"v260 공유 알림",order:60,transform:function(h,c){if(typeof h!=="string"||!c)return h;var i=h.indexOf('<button class="btn pri" data-act="comp-save"');if(i<0)return h;
+  var x='<div class="sh260co"><input id="sh260cw" data-ch="sh260" maxlength="200" placeholder="변경 근거 (선택 · 공유 알림에 들어가요)" aria-label="변경 근거"><label class="small"><input type="checkbox" id="sh260cn" data-ch="sh260"> 알림 없이 저장</label></div>';return h.slice(0,i)+x+h.slice(i)}});
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="comp-save"],[data-act="sib-apply"],[data-act="sib-ok"]');if(!b)return;var w=document.getElementById("sh260cw"),n=document.getElementById("sh260cn");SH.why=w?String(w.value||"").trim():"";SH.no=!!(n&&n.checked)},true);
+/* ---------- ⑤ 앱 안 알림함 ---------- */
+NOTI_T.push({k:"share",g:"공통",n:"공유 알림 (채널톡과 같은 내용)",c:"내 담당 기업에 기업정보 · 계약카운트 · 퇴사 · 입사취소 · 무기계약 전환 같은 공유 알림이 올 때 · 같은 스레드에 답글이 붙으면 다시 새 알림",w:"기업 담당 · 대무자 · 파트 관리자 (관리자 › 설정 › 공유 알림)",d:"pop"});NTK.share=NOTI_T[NOTI_T.length-1];
+NTAG.share=["공유 알림","co"];NCOL.share=["#584C9D","#F1EEFD"];
+NOTI_T.push({k:"admdg",g:"공통",n:"관리자 노티 (하루 한 번)",c:"9시 이후 · 우리 파트 급한 업무 건수 (운영 · 채용 · 영업)",w:"파트 관리자 · 최고관리자",d:"box"});NTK.admdg=NOTI_T[NOTI_T.length-1];NTAG.admdg=["관리자 노티",""];NCOL.admdg=["#C2410C","#FFF1E0"];
+function nShare260(add){var lim=nts(addD(TODAY,-14));(DB.logs||[]).forEach(function(l){if(!l||l.table!=="share"||nts(l.at)<lim)return;var m=/^to:([^|]*)\|co:([^|]*)/.exec(l.before||"");if(!m)return;if(m[1].split(",").indexOf(S.me)<0)return;
+    add({id:"sh:"+l.id,gk:"sh:"+l.row,type:"share",by:l.by||"",t:nts(l.at),co:nCoName(m[2]),wk:"",title:l.label||"",body:String(l.after||"").split("\n").slice(0,4).join(" · ").slice(0,160),go:{k:"company",id:m[2]}})});
+  try{var me=st(S.me)||{};if(isAdminRole(me.role)&&new Date().getHours()>=9){var D=shDigest(),P=me.role==="최고관리자"?Object.keys(D):[me.part];P.forEach(function(p){var G=D[p];if(!G||!G.n)return;
+    add({id:"dg:"+TODAY+":"+p,gk:"dg:"+TODAY+":"+p,type:"admdg",t:TODAY+" 09:00",co:"",wk:"",title:p+" 관리자 노티 · "+G.n+"건",body:G.sum,go:{k:"todo"}})})}}catch(e){}}
+/* ---------- ⑥ 관리자 노티 (급한 업무) ---------- */
+function shDgAdd(G,part,who,txt){var p=G[part]||(G[part]={n:0,by:{}});var k=who||"공통";(p.by[k]=p.by[k]||[]).push(txt);p.n++}
+function shDigest(){var G={},C=shCfg(),on=function(k){return C.items[k]!==false},cn=function(cid){return(comp(cid)||{}).name||""};
+  var opsWho=function(cid){var a=assignee(cid);return shName(a.who)?shName(a.who)+(a.proxy?" (대무 · 원 담당 "+shName(a.orig)+")":""):"공통"};
+  var recWho=function(r){var w=typeof rrRecruiter==="function"?rrRecruiter(r):"";return shName(w)||w||"공통"};
+  var T=function(f){try{f()}catch(e){console.warn("[관리자 노티]",e)}};
+  if(on("late"))T(function(){var y=addD(TODAY,-1);(DB.logs||[]).forEach(function(l){if(l.table!=="share"||String(l.at||"").slice(0,10)!==y)return;var m=/late:(\d+)/.exec(l.before||""),c=/co:([^|]*)/.exec(l.before||"");if(!m)return;shDgAdd(G,"운영파트",l.by||"공통","늦은 처리 · "+String(l.label||"").replace(/^■ /,"").replace(/ - \(.*$/,""))})});
+  (DB.employments||[]).forEach(function(e){if(!activeEmp(e)||!comp(e.company))return;var w=wk(e.worker)||{},nm=shMask(w.name),x=xOf(e.id),t=curTerm(e.id);
+    if(on("exp30"))T(function(){if(!t||!t.end||t.type==="무기계약")return;var d=dd(TODAY,t.end);if(d<0||d>30)return;if(x&&((x.steps&&x.steps.mail)||x.decision||x.corp))return;shDgAdd(G,"운영파트",opsWho(e.company),"만료 D-"+d+" 안내 메일 미발송 · "+cn(e.company)+" "+nm)});
+    if(on("two60"))T(function(){var Y=typeof twoY==="function"?twoY(e.id):null;if(!Y||Y.ex)return;var d=dd(TODAY,Y.lim);if(d<0||d>60)return;shDgAdd(G,"운영파트",opsWho(e.company),"2년 도래 "+md(Y.lim)+" (D-"+d+") · "+cn(e.company)+" "+nm)});
+    if(on("dis"))T(function(){var z=disOf(e.id);if(!z||!z.recheck||z.permanent||z.recheck>=TODAY)return;shDgAdd(G,"운영파트",opsWho(e.company),"재판정일 "+md(z.recheck)+" 지남 · "+cn(e.company)+" "+nm)});
+    if(on("ctr14"))T(function(){if(!e.start_date||dd(e.start_date,TODAY)<14||dd(e.start_date,TODAY)>60)return;var L=(DB.casedocs||[]).filter(function(c){return c.emp===e.id&&/근로계약서/.test(c.name||"")&&!(typeof isExtDoc==="function"&&isExtDoc(c))});if(!L.length)return;
+      var open=L.some(function(c){var S0=typeof docSteps==="function"?docSteps(c.method):[];return S0.length&&(c.step||0)<S0.length});if(open)shDgAdd(G,"운영파트",opsWho(e.company),"입사 "+dd(e.start_date,TODAY)+"일 · 근로계약서 미수취 · "+cn(e.company)+" "+nm)})});
+  if(on("tmp2"))T(function(){(DB.companies||[]).forEach(function(c){(c.tmp_mgr||[]).forEach(function(q){if(q&&q.st==="요청"&&q.on&&dd(String(q.on).slice(0,10),TODAY)>=2)shDgAdd(G,"운영파트","공통","영업 이관 요청 "+dd(String(q.on).slice(0,10),TODAY)+"일 · 담당 미지정 · "+c.name)})})});
+  (DB.rr||[]).forEach(function(r){if(typeof rrState==="function"&&rrState(r)==="완료")return;if(r.status==="취소"||r.status==="보류"||(typeof tRr==="function"&&tRr(r)))return;var co=nRrCo(r);
+    if(on("due0"))T(function(){if(!r.due_date||r.due_date>=TODAY)return;if((typeof rrCands==="function"?rrCands(r.id):[]).length)return;shDgAdd(G,"채용파트",recWho(r),"마감 "+md(r.due_date)+" 지남 · 후보 0명 · "+co)});
+    if(on("nomgr"))T(function(){if(rrRecruiter(r))return;var c=String(r.created||r.requested||"").slice(0,10);if(!c||dd(c,TODAY)<1)return;shDgAdd(G,"채용파트","공통","채용 담당 미지정 "+dd(c,TODAY)+"일 · "+co)});
+    if(on("in3"))T(function(){if(!r.start_date||r.start_date<TODAY||dd(TODAY,r.start_date)>3)return;var ok=(typeof rrCands==="function"?rrCands(r.id):[]).filter(function(c){return c.final==="합격"&&!c.hired}).length;if(!ok)return;var sent=(DB.intake||[]).filter(function(a){return a.rr===r.id&&a.sent_at}).length;if(ok>sent)shDgAdd(G,"채용파트",recWho(r),"입사 "+md(r.start_date)+" (D-"+dd(TODAY,r.start_date)+") · 입구서 미발송 "+(ok-sent)+"명 · "+co)})});
+  if(on("lk7"))T(function(){if(typeof lkRows253!=="function")return;lkRows253().forEach(function(o){if(o.st!=="wait"||!o.d||dd(o.d,TODAY)<7)return;shDgAdd(G,"채용파트",recWho(o.r),"불합격 연계 대기 "+dd(o.d,TODAY)+"일 · "+nRrCo(o.r)+" "+shMask(o.c.name))})});
+  if(on("chk"))T(function(){var n=(typeof HC_CHK254!=="undefined"&&HC_CHK254||[]).length;if(n)shDgAdd(G,"채용파트","공통","확인 필요 (입사 · 근로자 DB 연결) "+n+"건")});
+  Object.keys(G).forEach(function(p){var o=G[p],ks=Object.keys(o.by).sort(function(a,b){return a==="공통"?1:b==="공통"?-1:o.by[b].length-o.by[a].length});o.order=ks;o.sum=o.n+"건 · "+ks.map(function(k){return k.replace(/ \(.*$/,"")+" "+o.by[k].length}).join(" · ")});return G}
+function shDgSend(force){var C=shCfg();if(!C.dg||!C.admin_grp||!LIVE||!READY||!S.me||typeof sb==="undefined"||!sb)return;var h=new Date().getHours();if(!force&&(h<9||(typeof nWork==="function"&&!nWork(new Date()))))return;
+  var k="vw_dg260_"+TODAY;if(!force){if(SH.dgTry===TODAY)return;SH.dgTry=TODAY;try{if(localStorage.getItem(k))return}catch(e){}}
+  var G=shDigest();[["운영파트"],["채용파트"]].forEach(function(p0){var p=p0[0],o=G[p];if(!o||!o.n)return;var key="dg|"+TODAY+"|"+p+(force?"|"+Date.now():"");
+    var title="■ "+p+" 관리자 노티 "+shDay()+" - (자동)";
+    shRpc("admin",key,title,o.sum,null,null,true,{kind:"digest",by:"자동"}).then(function(d){if(!d||d.mode!=="root")return;o.order.forEach(function(w){var L=o.by[w];shRpc("admin",key,title,"","["+p+"] "+w+" ("+L.length+")\n"+L.map(function(x){return"· "+x}).join("\n"),null,false,{kind:"digest"})})})});
+  try{localStorage.setItem(k,"1")}catch(e){}}
+regAfter("v260 관리자 노티",function(){if(READY&&S.me)setTimeout(function(){shDgSend(false)},5000)});
+/* ---------- ⑦ 관리자 › 설정 › 공유 알림 ---------- */
+function shSetHtml(){var C=shCfg(),grp=SH.grp.list||[];var gsel=function(k,nk){var v=C[k],nm=C[nk];return'<select data-sh260g="'+k+'"><option value="">'+(v?esc(nm||v):"고르기")+'</option>'+grp.map(function(g){return'<option value="'+esc(g.id)+'"'+(g.id===v?" selected":"")+'>'+esc(g.name)+'</option>'}).join("")+'</select>'+(v&&!grp.length?' <span class="small muted">'+esc(nm||"")+' · '+esc(v)+'</span>':"")};
+  var late=(DB.logs||[]).filter(function(l){return l.table==="share"&&/late:\d+/.test(l.before||"")}).slice(0,10);
+  var h='<div class="card dutycard sh260set"><b>공유 알림 (채널톡)</b> <span class="small muted">담당자가 작업하면 저절로 · 채널톡 팀챗과 알림함에 같은 내용 · 키는 서버에만</span>'+(SH.noSrv?'<div class="b warn" style="margin-top:6px">서버 함수가 없어요 · v260 SQL을 실행해 주세요</div>':"")+
+    '<div class="sh260row"><span class="small muted">공유 알림 그룹</span>'+gsel("grp","grp_n")+'<button class="btn xs" data-act="sh260-groups">그룹 불러오기</button><button class="btn xs" data-act="sh260-test" data-c="share"'+(C.grp?"":" disabled")+'>시험 보내기</button></div>'+
+    '<div class="sh260row"><span class="small muted">관리자 노티 그룹</span>'+gsel("admin_grp","admin_grp_n")+'<button class="btn xs" data-act="sh260-test" data-c="admin"'+(C.admin_grp?"":" disabled")+'>시험 보내기</button><label class="small"><input type="checkbox" data-sh260o="dg"'+(C.dg?" checked":"")+'> 하루 한 번 보내기 (9시 이후)</label><button class="btn xs" data-act="sh260-dgnow"'+(C.admin_grp?"":" disabled")+'>지금 한 번 보내기</button></div>'+
+    '<div class="sh260row"><span class="small muted">알림 종류</span><div class="ochips">'+SH_K.map(function(k){var on=shOn(k[0]);return'<label class="ochip'+(on?" on":"")+'" title="'+esc(k[3])+'"><input type="checkbox" data-sh260k="'+k[0]+'"'+(on?" checked":"")+'> '+esc(k[1])+'</label>'}).join("")+'</div></div>'+
+    '<div class="sh260row"><span class="small muted">알림함 받는 사람</span>'+[["mgr","기업 담당"],["bk","대무자"],["lead","파트 관리자"]].map(function(x){return'<label class="small"><input type="checkbox" data-sh260t="'+x[0]+'"'+(C.to[x[0]]?" checked":"")+'> '+x[1]+'</label>'}).join(" ")+'</div>'+
+    '<div class="sh260row"><span class="small muted">늦은 처리 기준</span><input type="number" min="1" max="60" data-sh260o="late" value="'+C.late+'" style="width:64px" aria-label="늦은 처리 기준 일수"><span class="small muted">일 지나 처리하면 제목에 ⚠</span><label class="small"><input type="checkbox" data-sh260o="bc"'+(C.bc?" checked":"")+'> 스레드 답글을 대화창에도 보이기</label></div>'+
+    '<div class="sh260row"><span class="small muted">관리자 노티 항목</span>'+SH_DG.map(function(P){return'<div class="ochips"><b class="small">'+P[1]+'</b>'+P[2].map(function(it){var on=shItemOn(it[0]);return'<label class="ochip'+(on?" on":"")+'"><input type="checkbox" data-sh260i="'+it[0]+'"'+(on?" checked":"")+'> '+esc(it[1])+'</label>'}).join("")+'</div>'}).join("")+'</div>'+
+    '<div class="sh260row"><span class="small muted">늦은 처리 (최근)</span>'+(late.length?'<div class="sh260late">'+late.map(function(l){var m=/late:(\d+)/.exec(l.before);return'<div class="small">'+esc(md(String(l.at).slice(0,10)))+' · '+esc(String(l.label||"").replace(/^■ /,""))+' · '+esc(l.by||"")+' <span class="b sm warn">'+m[1]+'일</span></div>'}).join("")+'</div>':'<span class="small muted">없어요</span>')+'</div></div>';
+  return h}
+regAfter("v260 설정 공유 알림",function(){if(S.view!=="set"||S.role!=="admin")return;if(document.querySelector("#main .sh260set"))return;var L=document.querySelector('#main .stp[data-tab="link"]');/* 설정 탭 '연동 · 알림' */
+  if(L){L.insertAdjacentHTML("afterbegin",shSetHtml());return}var d=document.querySelector("#main .dutycard");if(d)d.insertAdjacentHTML("afterend",shSetHtml())});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.closest||!t.closest(".sh260set"))return;var C=shCfg(),D=t.dataset;
+  if(D.sh260k){var K=Object.assign({},C.kinds);K[D.sh260k]=t.checked;shPut({kinds:K})}
+  else if(D.sh260t){var T0=Object.assign({},C.to);T0[D.sh260t]=t.checked?1:0;shPut({to:T0})}
+  else if(D.sh260i){var I=Object.assign({},C.items);I[D.sh260i]=t.checked;shPut({items:I})}
+  else if(D.sh260o==="late"){shPut({late:Math.max(1,Math.min(60,+t.value||3))})}
+  else if(D.sh260o==="bc"){shPut({bc:t.checked})}else if(D.sh260o==="dg"){shPut({dg:t.checked})}
+  else if(D.sh260g){var g=(SH.grp.list||[]).find(function(x){return x.id===t.value}),o={};o[D.sh260g]=t.value;o[D.sh260g+"_n"]=g?g.name:"";shPut(o)}
+  else return;toast("저장했어요");render()},true);
+regActs({"sh260-groups":function(){if(!LIVE||typeof sb==="undefined"||!sb){toast("실제 연결에서만 불러올 수 있어요");return}toast("채널톡 그룹을 불러오는 중…");
+    Promise.resolve(sb.rpc("vw_ct_groups_req")).then(function(r){if(r.error){toast("불러오기 실패 · "+String(r.error.message||"").slice(0,60));return}var id=r.data,tries=0;
+      var poll=function(){tries++;Promise.resolve(sb.rpc("vw_ct_groups_res",{p_req:id})).then(function(q){var d=q&&q.data;if(d&&d.ok){SH.grp.list=d.groups||[];toast("그룹 "+SH.grp.list.length+"개");render();return}if(d&&d.why==="wait"&&tries<8){setTimeout(poll,1500);return}toast("불러오기 실패 · "+(d&&d.why||""))})};setTimeout(poll,1500)})},
+  "sh260-test":function(D0){var me=st(S.me)||{};shRpc(D0.c,null,"■ [시험] 운영페이지 공유 알림 연결 확인 - ("+(me.part||"")+")","작성 "+(me.name||"")+" · "+stamp(),null,null,false,{kind:"test",by:me.name||""}).then(function(d){toast(d&&d.ok?"보냈어요 · 채널톡에서 확인해 주세요":"보내기 실패 · "+(d&&d.why||SH.err||""))})},
+  "sh260-dgnow":function(){askConfirm("관리자 노티 지금 보내기","오늘 기준 급한 업무를 관리자 노티 그룹에 지금 한 번 보낼까요? (하루 한 번 자동과 별개)","보내기",function(){shDgSend(true);toast("보냈어요")})}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
