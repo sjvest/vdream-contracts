@@ -404,6 +404,11 @@ function plGemKey(){var k=window.PL_CONFIG&&window.PL_CONFIG.GEMINI_API_KEY;k=St
 function plGemErr(code,m,st){if(code===400&&/API key/i.test(m))return"Gemini 키가 올바르지 않아요 (HTML 맨 위 GEMINI_API_KEY 확인)";if(code===403)return"Gemini 키 권한 오류 (키 제한 · 사용 설정 확인) · "+m;if(code===429)return"Gemini 사용량 초과 · 잠시 뒤 다시 해 주세요";return"Gemini 오류 "+code+(m?" · "+m:"")}
 /* 사진 줄이기: 긴 변 1600px · JPEG (읽을 수 없는 형식이면 원본 그대로) */
 function plShrink(b64,mime){return new Promise(function(res){try{var im=new Image();im.onload=function(){try{var W=im.naturalWidth,H=im.naturalHeight,m=1600,sc=Math.min(1,m/Math.max(W,H));if(sc>=1&&b64.length<1500000){res({data:b64,mime:mime});return}var cv=document.createElement("canvas");cv.width=Math.round(W*sc);cv.height=Math.round(H*sc);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);var d=cv.toDataURL("image/jpeg",0.85).split(",")[1];res({data:d,mime:"image/jpeg"})}catch(e){res({data:b64,mime:mime})}};im.onerror=function(){res({data:b64,mime:mime})};im.src="data:"+mime+";base64,"+b64}catch(e){res({data:b64,mime:mime})}})}
+/* 명함 읽기 서버(Gemini)가 일시적으로 바쁠 때(503 등) 자동으로 두 번까지 다시 시도 (2026-11-11) */
+function plOcrMsg(r){var ctx=r&&r.error&&r.error.context;if(ctx&&typeof ctx.clone==="function")return ctx.clone().json().then(function(j){return(j&&j.error)||""},function(){return""});return Promise.resolve((r&&r.data&&r.data.error)||(r&&r.error&&r.error.message)||"")}
+function plOcrInvoke(body,n){var again=function(){return new Promise(function(g){setTimeout(g,1500*n)}).then(function(){return plOcrInvoke(body,n+1)})};
+  return R.functions.invoke("card-ocr",{body:body}).then(function(r){var ok=r&&r.data&&r.data.ok&&r.data.card;if(ok||n>=3)return r;
+    return plOcrMsg(r).then(function(m){return /\b50[0-4]\b|\b429\b|overload|unavailable|busy/i.test(m)?again():r})},function(e){if(n>=3)throw e;return again()})}
 var _fetch=window.fetch.bind(window);
 window.fetch=function(u,o){var url=String(u&&u.url||u||"");
   if(/chat\.googleapis\.com/.test(url)){var text="";try{text=JSON.parse(o&&o.body||"{}").text||""}catch(e){}
@@ -418,9 +423,9 @@ window.fetch=function(u,o){var url=String(u&&u.url||u||"");
         return _fetch(u2,Object.assign({},o,{body:JSON.stringify(bd)})).then(function(res){return res.json().then(function(d){if(d&&d.error){var m=d.error.message||"",st=d.error.status||res.status;d.error.message=plGemErr(res.status,m,st)}return new Response(JSON.stringify(d),{status:200,headers:{"Content-Type":"application/json"}})},function(){return new Response(JSON.stringify({error:{message:"Gemini 응답 오류 "+res.status}}),{status:200})})},function(e){return new Response(JSON.stringify({error:{message:"Gemini에 연결하지 못했어요 · "+String(e&&e.message||e)}}),{status:200})})}
       /* 키가 없으면: 지금처럼 운영페이지 Edge Function(card-ocr) */
       if(!R)return new Response(JSON.stringify({error:{message:"로그인이 필요해요"}}),{status:200});
-      return R.functions.invoke("card-ocr",{body:{image:sm.data,mime:sm.mime}}).then(function(r){var c=r&&r.data&&r.data.ok&&r.data.card;
+      return plOcrInvoke({image:sm.data,mime:sm.mime},1).then(function(r){var c=r&&r.data&&r.data.ok&&r.data.card;
         if(!c){var why=(r&&r.data&&r.data.error)||"";var ctx=r&&r.error&&r.error.context;var p=ctx&&typeof ctx.json==="function"?ctx.json().then(function(j){return(j&&j.error)||("서버 오류 "+(ctx.status||""))},function(){return"서버 오류 "+(ctx.status||"")}):Promise.resolve(why||(r&&r.error&&r.error.message)||"");
-          return p.then(function(m){return new Response(JSON.stringify({error:{message:"명함 글자 읽기 실패 · "+(m||"원인 알 수 없음")}}),{status:200})})}
+          return p.then(function(m){if(/\b50[0-4]\b|overload|unavailable/i.test(m||""))m="Gemini가 일시적으로 바빠요 (자동으로 3번 시도함) · 잠시 뒤 다시 시도해 주세요";return new Response(JSON.stringify({error:{message:"명함 글자 읽기 실패 · "+(m||"원인 알 수 없음")}}),{status:200})})}
         var j={org_name:c.org||null,contact_name:c.name||null,contact_title:c.title||null,mobile:c.mobile||null,fax:c.fax||null,phone:c.phone||null,email:c.email||null,address:c.address||null,website:c.website||null};
         return new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify(j)}]}}]}),{status:200,headers:{"Content-Type":"application/json"}})},function(e){return new Response(JSON.stringify({error:{message:"명함 글자 읽기 실패 · "+String(e&&e.message||e)}}),{status:200})})})}
   return _fetch(u,o)};
