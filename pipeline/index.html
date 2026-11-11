@@ -9642,7 +9642,7 @@ async function openOrg(id){
         <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}> 부정적</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="toggleAlwaysContact(${id})" title="자주 연락하는 기관은 연락 기준(14/20일) 알림에서 빼고 따로 관리해요" style="${o.always_contact?'background:#e0ecff;color:#1d4ed8;border-color:#93b4f5;font-weight:800;':''}">${o.always_contact?'상시 연락 기관 (해제)':'상시 연락 기관으로'}</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleOwnerOnlyContact(${id})" title="담당자만 연락해야 하는 기관 — 다른 팀원에게 '연락하지 않기' 표시를 보여줘요 (동작을 막지는 않아요)" style="${o.owner_only_contact?'background:#fef3c7;color:#b45309;border-color:#f3c76b;font-weight:800;':''}">${o.owner_only_contact?(ownerLabel(o.member)+' 담당 전용 연락 (해제)'):'담당자 전용 연락으로'}</button>
+      ${window.PLA?'':`<button class="btn btn-ghost btn-sm" onclick="toggleOwnerOnlyContact(${id})" title="담당자만 연락해야 하는 기관 — 다른 팀원에게 '연락하지 않기' 표시를 보여줘요 (동작을 막지는 않아요)" style="${o.owner_only_contact?'background:#fef3c7;color:#b45309;border-color:#f3c76b;font-weight:800;':''}">${o.owner_only_contact?(ownerLabel(o.member)+' 담당 전용 연락 (해제)'):'담당자 전용 연락으로'}</button>`}
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})">연락 완료</button>
       <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})">정보 수정</button>
       ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})">기관 삭제</button>` : ''}
@@ -11343,7 +11343,7 @@ function histHtml(o){var h='<div class="vwsec"><h5>변경 이력 <span class="vw
   if(!OX.hist.length)return h+'<p class="vwmuted" style="margin:0">기록이 없어요</p></div>';
   return h+'<table><tr><th>시각</th><th>항목</th><th>변경</th><th>누가</th></tr>'+OX.hist.map(function(x){return'<tr><td class="vwmuted" style="white-space:nowrap">'+E(A.kst(x.changed_at).slice(2,16))+'</td><td>'+E(x.field||"")+'</td><td>'+(x.before?'<span class="vwmuted">'+E(String(x.before).slice(0,40))+'</span> → ':"")+E(String(x.after||"").slice(0,60))+'</td><td class="vwmuted">'+E(x.changed_by_name||"")+(x.source==="발굴 앱"?" · 발굴":"")+'</td></tr>'}).join("")+'</table></div>'}
 function orgXHtml(o){var C=(Array.isArray(o.contacts)?o.contacts:[]).slice().sort(function(a,b){return(a.out?1:0)-(b.out?1:0)});
-  var h=orgInfoHtml(o)+'<div class="vwsec"><h5>소통 제한 <span class="vwmuted" style="font-weight:500">운영페이지와 같이 써요</span></h5><div class="vwban">'+BAN.map(function(b){return'<button class="'+(o[b[0]]?"on":"")+'" data-vwo="ban" data-f="'+b[0]+'" title="'+E(b[2])+'">'+b[1]+(o[b[0]]?" · 켜짐":"")+'</button>'}).join("")+'</div></div>';
+  var h=orgInfoHtml(o)+'<div class="vwsec"><h5>소통 제한 <span class="vwmuted" style="font-weight:500">운영페이지와 같이 써요</span></h5><div class="vwban">'+BAN.map(function(b){return'<button class="'+(o[b[0]]?"on":"")+'" data-vwo="ban" data-f="'+b[0]+'" title="'+E(b[2])+'">'+b[1]+(o[b[0]]?" · 켜짐":"")+'</button>'}).join("")+(function(){var co=(cache.orgs||[]).find(function(x){return x._vw===o.id}),on=!!(co&&co.owner_only_contact),lb=ownerLabel(co&&co.member);if(!co)return"";return'<button class="'+(on?"on":"")+'" data-vwo="owner" title="이 기관은 담당자('+E(lb)+')만 연락해요 · 다른 팀원은 연락하지 않기 (표시만 해요, 막지는 않아요)">👤 '+E(lb)+'만 연락'+(on?" · 켜짐":"")+'</button>'})()+'</div></div>';
   h+='<div class="vwsec"><h5>기관 연락처 <span class="vwmuted" style="font-weight:500">⭐ 연락창구 = 재직자 이슈 소통 · 👤 기관 담당자 = 기관 주 담당</span></h5>';
   if(!C.length)h+='<p class="vwmuted" style="margin:0">등록된 담당자가 없어요 · 위 \'담당자\'를 추가하면 여기서 지정할 수 있어요</p>';
   else h+='<table><tr><th>이름</th><th>직책 · 부서</th><th>연락처</th><th></th></tr>'+C.map(function(c){var win=o.window_contact_id===c.id,hd=!!c.head,n=ctOwners(o,c.id);
@@ -11370,6 +11370,7 @@ document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.targe
     A.upd("organizations",o.id,P).then(function(){var LB={short_name:"약칭",phone:"대표 전화",email:"대표 이메일"};Object.keys(P).forEach(function(k){A.clog("organizations",o.id,P.short_name||sh,LB[k],B[k],P[k]||"")});OX.edit=false;T("기관 정보를 저장했어요");redraw()},function(e){b.disabled=false;fail(e);OX.edit=false;redraw()});return}
   if(a==="hist"){R().from("change_logs").select("changed_at,changed_by_name,field,before,after,source").eq("table_name","organizations").eq("row_id",o.id).order("changed_at",{ascending:false}).limit(50).then(function(r){OX.hist=(r&&r.data)||[];OX.histFor=o.id;repaint()});return}
   if(a==="ct-edit"){ctEdit(o,b.getAttribute("data-c"));return}
+  if(a==="owner"){var co=(cache.orgs||[]).find(function(x){return x._vw===o.id});if(!co)return;b.disabled=true;toggleOwnerOnlyContact(co.id);return}
   if(a==="ban"){var f=b.getAttribute("data-f"),lab=BAN.find(function(x){return x[0]===f}),nv=!o[f],p={};p[f]=nv;b.disabled=true;
     A.upd("organizations",o.id,p).then(function(){A.clog("organizations",o.id,sh,lab[1].replace(/^\S+\s/,""),nv?"":"Y",nv?"Y":"");T(lab[1]+(nv?" 켰어요":" 껐어요"));repaint()},function(e){fail(e);redraw()});return}
   var cid=b.getAttribute("data-c"),C=(o.contacts||[]).slice(),c=C.find(function(x){return x.id===cid});if(!c)return;
