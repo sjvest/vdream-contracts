@@ -1819,6 +1819,14 @@ button.drc258r.on{background:var(--p,#584C9D);color:#fff}button.drc258r.on .drc2
 .sh260set .ochips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .sh260late{display:flex;flex-direction:column;gap:2px}
 #sh260m{z-index:9000}
+/* v261 채널톡 보낸 기록 */
+.ct261id{width:150px}
+.ct261no{display:block;margin-top:8px}
+.ct261log .ct261h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ct261t{width:100%;margin-top:8px;font-size:13px}
+.ct261t td,.ct261t th{padding:5px 8px;vertical-align:top}
+.ct261t tr.bad td{background:#FFF6F5}
+@media(max-width:700px){.ct261t th:nth-child(3),.ct261t td:nth-child(3){display:none}}
 </style>
 </head>
 <body>
@@ -19226,8 +19234,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v260 — 채널톡 · 알림함 공유 알림 자동 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
-APP_VER="v260";APP_VER_ON="11/11";APP_NOTE="작업하면 채널톡 · 알림함에 공유 알림 저절로 (기업정보 · 서류 · 월간레포트 · 업무 방식 · 계약카운트 · 퇴사 · 입사취소 · 무기계약) · 같은 날 같은 건은 스레드 · 관리자 노티 하루 한 번 · 관리자 › 설정 › 공유 알림";
+/* v261 — 채널톡 전송 확인 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
+APP_VER="v261";APP_VER_ON="11/11";APP_NOTE="채널톡 보낸 기록 (관리자 › 설정 › 연동 · 알림) · 원글 · 답글 전송 결과 · 실패 다시 보내기 · 알림함 카드에 채널톡 ✓/✕ · 실패하면 관리자 알림 · 그룹 ID 직접 입력 (비밀방)";
 
 /* ================================================================
    v208
@@ -22445,10 +22453,11 @@ function shTo(cid){var c=comp(cid)||{},C=shCfg(),L=[];if(C.to.mgr&&c.manager)L.p
   if(C.to.lead){var pt=(st(c.manager)||{}).part||"";(DB.staff||[]).forEach(function(s){if(s&&s.part===pt&&isAdminRole(s.role)&&!s.inactive&&L.indexOf(s.id)<0)L.push(s.id)})}
   return L.filter(function(x,i){return x&&x!==S.me&&L.indexOf(x)===i})}
 function shOut(o){var to=o.to||shTo(o.cid),meta="to:"+to.join(",")+"|co:"+o.cid+"|k:"+o.kind+(o.n!=null?"|n:"+o.n:"")+(o.late?"|late:"+o.late:"");
-  SH.mute++;try{logChange("share",o.key||("sh1|"+o.cid+"|"+o.kind+"|"+nid().slice(0,8)),o.title,SH_KL[o.kind][1],meta,o.app,"내부")}finally{SH.mute--}
+  var key=o.key||("sh1|"+o.cid+"|"+o.kind+"|"+nid().slice(0,8));/* v261 스레드 없는 글도 키를 서버에 같이 → 알림함 · 보낸 기록에서 전송 결과 찾기 */
+  SH.mute++;try{logChange("share",key,o.title,SH_KL[o.kind][1],meta,o.app,"내부")}finally{SH.mute--}
   if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();
   SH.last=o;if(!LIVE||typeof sb==="undefined"||!sb)return;var C=shCfg();if(!C.grp){return}
-  shRpc("share",o.key,o.title,o.body,o.key?o.reply:null,o.list||null,false,{kind:o.kind,by:(st(S.me)||{}).name||"",cid:o.cid})}
+  shRpc("share",key,o.title,o.body,o.key?o.reply:null,o.list||null,false,{kind:o.kind,by:(st(S.me)||{}).name||"",cid:o.cid})}
 function shRpc(chan,key,title,body,reply,list,once,meta){if(!LIVE||typeof sb==="undefined"||!sb)return Promise.resolve(null);
   return Promise.resolve(sb.rpc("vw_ct_post",{p_chan:chan,p_key:key||null,p_title:title,p_body:body||"",p_reply:reply||null,p_list:list||null,p_once:!!once,p_meta:meta||{}})).then(function(r){
     if(r&&r.error){SH.err=String(r.error.message||r.error.code||"");if(/vw_ct_post|PGRST202|42883|Could not find/i.test(SH.err))SH.noSrv=true;console.warn("[공유 알림]",SH.err);return null}
@@ -22521,6 +22530,68 @@ regActs({"sh260-groups":function(){if(!LIVE||typeof sb==="undefined"||!sb){toast
       var poll=function(){tries++;Promise.resolve(sb.rpc("vw_ct_groups_res",{p_req:id})).then(function(q){var d=q&&q.data;if(d&&d.ok){SH.grp.list=d.groups||[];toast("그룹 "+SH.grp.list.length+"개");render();return}if(d&&d.why==="wait"&&tries<8){setTimeout(poll,1500);return}toast("불러오기 실패 · "+(d&&d.why||""))})};setTimeout(poll,1500)})},
   "sh260-test":function(D0){var me=st(S.me)||{};shRpc(D0.c,null,"■ [시험] 운영페이지 공유 알림 연결 확인 - ("+(me.part||"")+")","작성 "+(me.name||"")+" · "+stamp(),null,null,false,{kind:"test",by:me.name||""}).then(function(d){toast(d&&d.ok?"보냈어요 · 채널톡에서 확인해 주세요":"보내기 실패 · "+(d&&d.why||SH.err||""))})},
   "sh260-dgnow":function(){askConfirm("관리자 노티 지금 보내기","오늘 기준 급한 업무를 관리자 노티 그룹에 지금 한 번 보낼까요? (하루 한 번 자동과 별개)","보내기",function(){shDgSend(true);toast("보냈어요")})}});
+
+/* ================================================================
+   v261 채널톡 전송 확인
+     · 관리자 › 설정 › 연동 · 알림 › '채널톡 보낸 기록' (오늘 · 실패만 · 내 담당 · 7일) · 원글 · 답글 결과 · [다시 보내기]
+     · 상태: ✓ 전송됨 · ⏳ 보내는 중 · ✕ 실패(이유) · ? 확인 안 됨(10분 넘게 응답 없음)
+     · 알림함 공유 알림 카드에 '채널톡 ✓ / ✕ / ⏳ / 미설정'
+     · 실패 · 확인 안 됨 → 관리자 알림함 '채널톡 전송 실패 n건' · 관리자 노티(운영파트 · 공통)
+     · 그룹 ID 직접 입력 (비밀방처럼 [그룹 불러오기]에 안 나오는 방)
+     · 서버: sql/v261_share_channeltalk.sql (v260 포함 · 답글 결과 reply_reqs · vw_ct_retry)
+   ================================================================ */
+var CT261={rows:null,at:0,busy:false,f:"today",err:""};
+function ct261Load(force){if(!LIVE||typeof sb==="undefined"||!sb||CT261.busy)return;if(!force&&CT261.rows&&Date.now()-CT261.at<60000)return;CT261.busy=true;
+  var since=new Date(Date.now()-7*864e5).toISOString();
+  Promise.resolve(sb.rpc("vw_ct_resolve")).catch(function(){}).then(function(){return sb.from("vw_share_log").select("id,at,chan,key,kind,title,status,err,replies,reply_reqs,by_name,meta,retries,root_msg,pending").gte("at",since).order("at",{ascending:false}).limit(300)}).then(function(r){
+    CT261.busy=false;CT261.at=Date.now();if(r&&r.error){CT261.err=String(r.error.message||r.error.code||"");if(!CT261.rows)CT261.rows=[]}else{CT261.err="";CT261.rows=(r&&r.data)||[]}
+    if(S.view==="set"||(typeof NOTI!=="undefined"&&NOTI.open))render()},function(e){CT261.busy=false;CT261.err=String(e&&e.message||e);CT261.rows=CT261.rows||[]})}
+function ct261By(key){var L=CT261.rows||[];for(var i=0;i<L.length;i++)if(L[i].key===key)return L[i];return null}
+function ct261RepFail(r){return(r.reply_reqs||[]).filter(function(x){return x&&x.sc!=null&&!(x.sc>=200&&x.sc<300)}).length}
+function ct261RepWait(r){return(r.reply_reqs||[]).filter(function(x){return x&&x.sc==null}).length+((r.pending||[]).length||0)}
+function ct261St(r){if(!r)return{k:"none",t:"기록 없음",c:""};if(r.status==="fail")return{k:"fail",t:"✕ 실패",c:"bad"};if(r.status==="lost")return{k:"lost",t:"? 확인 안 됨",c:"warn"};
+  if(r.status==="sent")return{k:"wait",t:"⏳ 보내는 중",c:""};var f=ct261RepFail(r);if(f)return{k:"rfail",t:"✕ 답글 "+f+"건 실패",c:"bad"};if(ct261RepWait(r))return{k:"wait",t:"⏳ 답글 보내는 중",c:""};return{k:"ok",t:"✓ 전송됨",c:"ok"}}
+function ct261Bad(r){var k=ct261St(r).k;return k==="fail"||k==="lost"||k==="rfail"}
+function ct261Why(r){var e=String((r&&r.err)||"");if(!e){var x=(r&&r.reply_reqs||[]).find(function(x){return x&&x.sc!=null&&!(x.sc>=200&&x.sc<300)});e=x?String(x.sc)+" "+String(x.err||""):""}
+  if(r&&r.status==="lost"||/^0 lost|^lost/.test(e))return"채널톡 응답 확인 안 됨 (10분)";if(/keys missing/.test(e))return"채널톡 키 없음 (server_secrets 확인)";if(/^40[13]/.test(e))return"권한 없음 (키 · 그룹 권한 확인)";if(/^404/.test(e))return"그룹을 찾을 수 없음 (그룹 ID 확인)";
+  if(/^429/.test(e))return"채널톡 요청 많음 (잠시 뒤 다시)";if(/^5\d\d/.test(e))return"채널톡 서버 오류";if(/bad group/.test(e))return"그룹 ID 형식 오류";return e.slice(0,80)}
+/* ---------- 알림함 카드 · 관리자 실패 알림 ---------- */
+NOTI_T.push({k:"ctfail",g:"공통",n:"채널톡 전송 실패",c:"공유 알림이 채널톡에 안 갔거나 확인이 안 될 때 (관리자 › 설정 › 연동 · 알림 › 채널톡 보낸 기록에서 다시 보내기)",w:"파트 관리자 · 최고관리자",d:"pop"});NTK.ctfail=NOTI_T[NOTI_T.length-1];NTAG.ctfail=["채널톡 실패",""];NCOL.ctfail=["#C0392B","#FDECEA"];
+var _nShare261=nShare260;nShare260=function(add){var C=shCfg();ct261Load(false);
+  _nShare261(function(o){if(o&&o.type==="share"){var k=String(o.gk||"").replace(/^sh:/,""),r=ct261By(k),t=!C.grp?"채널톡 미설정":!LIVE?"":r?"채널톡 "+ct261St(r).t.replace(/^(✓|✕|⏳|\?) .*$/,"$1"):CT261.rows?"채널톡 ?":"";if(t)o.body=t+" · "+(o.body||"")}add(o)});
+  try{var me=st(S.me)||{};if(!isAdminRole(me.role)||!CT261.rows)return;var B=CT261.rows.filter(function(r){return ct261Bad(r)&&String(r.at).slice(0,10)>=addD(TODAY,-3)});if(!B.length)return;
+    add({id:"ctf:"+TODAY+":"+B.length,gk:"ctf:"+TODAY,type:"ctfail",t:nts(B[0].at),co:"",wk:"",title:"채널톡 전송 실패 "+B.length+"건",body:B.slice(0,3).map(function(r){return String(r.title||"").replace(/^■ /,"").replace(/ - \(.*$/,"")+" · "+ct261Why(r)}).join(" / "),go:{k:"set"}})}catch(e){}};
+/* 관리자 노티 · 운영파트 공통 */
+SH_DG[0][2].push(["ctfail","채널톡 전송 실패 (어제까지 3일)"]);
+var _shDigest261=shDigest;shDigest=function(){var G=_shDigest261.apply(this,arguments);try{if(shItemOn("ctfail")&&CT261.rows){var y=addD(TODAY,-3);CT261.rows.filter(function(r){return r.chan==="share"&&ct261Bad(r)&&String(r.at).slice(0,10)>=y&&String(r.at).slice(0,10)<TODAY}).forEach(function(r){shDgAdd(G,"운영파트","공통","채널톡 전송 실패 · "+String(r.title||"").replace(/^■ /,"").replace(/ - \(.*$/,"")+" · "+ct261Why(r))});
+  Object.keys(G).forEach(function(p){var o=G[p],ks=Object.keys(o.by).sort(function(a,b){return a==="공통"?1:b==="공통"?-1:o.by[b].length-o.by[a].length});o.order=ks;o.sum=o.n+"건 · "+ks.map(function(k){return k.replace(/ \(.*$/,"")+" "+o.by[k].length}).join(" · ")})}}catch(e){}return G};
+/* ---------- 설정: 그룹 ID 직접 입력 · 보낸 기록 ---------- */
+var _shSetHtml261=shSetHtml;shSetHtml=function(){var h=_shSetHtml261.apply(this,arguments),C=shCfg();
+  h=h.replace(/(<select data-sh260g="(grp|admin_grp)">[\s\S]*?<\/select>)/g,function(m,a,k){return a+'<input class="ct261id" data-sh261id="'+k+'" placeholder="ID 직접 입력" aria-label="'+(k==="grp"?"공유 알림":"관리자 노티")+' 그룹 ID 직접 입력" value="" maxlength="40">'});
+  if(!C.grp)h=h.replace('<div class="sh260row">','<div class="b warn ct261no">채널톡 그룹 미설정 · 지금은 알림함에만 표시 중이에요 · 그룹을 고르거나 ID를 직접 넣어 주세요</div><div class="sh260row">');
+  return h+ct261LogHtml()};
+function ct261LogHtml(){var C=shCfg();if(!LIVE)return'<div class="card dutycard ct261log"><b>채널톡 보낸 기록</b> <span class="small muted">실제 연결에서만 보여요</span></div>';
+  var R=(CT261.rows||[]).filter(function(r){return r.chan==="share"||r.chan==="admin"}),f=CT261.f,mine=function(r){var c=comp((r.meta||{}).cid)||{};return c.manager===S.me||c.backup===S.me};
+  var L=R.filter(function(r){return f==="all"?true:f==="fail"?ct261Bad(r):f==="mine"?mine(r):String(r.at).slice(0,10)===TODAY||new Date(r.at).toDateString()===new Date().toDateString()});
+  var nb=R.filter(ct261Bad).length,nt=R.filter(function(r){return new Date(r.at).toDateString()===new Date().toDateString()}).length;
+  var h='<div class="card dutycard ct261log"><div class="ct261h"><b>채널톡 보낸 기록</b> <span class="small muted">최근 7일 · 원글과 스레드 답글 결과</span><span class="grow"></span>'+
+    '<span class="seg sm">'+[["today","오늘 "+nt],["fail","실패만 "+nb],["mine","내 담당 기업"],["all","7일 전체"]].map(function(x){return'<button type="button" class="'+(f===x[0]?"on":"")+'" data-act="ct261-f" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</span>'+
+    '<button class="btn xs" data-act="ct261-reload"'+(CT261.busy?" disabled":"")+'>'+(CT261.busy?"확인 중…":"새로고침")+'</button></div>';
+  if(CT261.err)h+='<div class="b warn" style="margin-top:6px">보낸 기록을 못 불러왔어요 · v261 SQL을 실행했는지 확인해 주세요 ('+esc(CT261.err.slice(0,60))+')</div>';
+  if(!CT261.rows)h+='<div class="small muted" style="margin-top:6px">불러오는 중…</div>';
+  else if(!L.length)h+='<div class="small muted" style="margin-top:6px">'+(f==="fail"?"실패한 전송이 없어요":"보낸 기록이 없어요")+'</div>';
+  else h+='<table class="ct261t"><thead><tr><th>시각</th><th>제목</th><th>작성</th><th>답글</th><th>상태</th><th></th></tr></thead><tbody>'+L.slice(0,80).map(function(r){var s=ct261St(r),rp=(r.reply_reqs||[]).length,rf=ct261RepFail(r),rw=ct261RepWait(r),d=new Date(r.at);
+    var tm=(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+    return'<tr class="'+(ct261Bad(r)?"bad":"")+'"><td class="num small">'+tm+'</td><td>'+(r.chan==="admin"?'<span class="b sm">관리자 노티</span> ':"")+esc(String(r.title||"").replace(/^■ /,""))+(r.retries?' <span class="small muted">· 다시 보냄 '+r.retries+'</span>':"")+'</td><td class="small">'+esc(r.by_name||"")+'</td>'+
+      '<td class="small num">'+(rp||rw?(rp-rf-(r.reply_reqs||[]).filter(function(x){return x&&x.sc==null}).length)+"/"+(rp+((r.pending||[]).length||0))+(rf?' <span class="b sm bad">✕'+rf+'</span>':""):"—")+'</td>'+
+      '<td><span class="b sm '+s.c+'">'+esc(s.t)+'</span>'+(ct261Bad(r)?'<div class="small muted">'+esc(ct261Why(r))+'</div>':"")+'</td><td>'+(ct261Bad(r)?'<button class="btn xs" data-act="ct261-retry" data-id="'+r.id+'">다시 보내기</button>':"")+'</td></tr>'}).join("")+'</tbody></table>';
+  return h+'</div>'}
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.sh261id)return;ev.stopPropagation();var v=String(t.value||"").trim();if(!v)return;
+  if(!/^[0-9A-Za-z_-]{1,40}$/.test(v)){toast("그룹 ID는 숫자 · 영문만 넣어 주세요");return}var o={};o[t.dataset.sh261id]=v;o[t.dataset.sh261id+"_n"]="직접 입력";shPut(o);toast("그룹 ID를 저장했어요 · [시험 보내기]로 확인해 주세요");render()},true);
+regActs({"ct261-f":function(D0){CT261.f=D0.v;render()},"ct261-reload":function(){ct261Load(true);render()},
+  "ct261-retry":function(D0){if(!LIVE||typeof sb==="undefined"||!sb)return;Promise.resolve(sb.rpc("vw_ct_retry",{p_id:+D0.id})).then(function(r){var d=r&&r.data;if(r&&r.error){toast("다시 보내기 실패 · "+String(r.error.message||"").slice(0,60));return}
+    toast(d&&d.ok?"다시 보냈어요 · 몇 초 뒤 상태가 바뀌어요":"다시 보내기 실패 · "+(d&&d.why||""));setTimeout(function(){ct261Load(true)},4000)})}});
+regAfter("v261 보낸 기록 불러오기",function(){if(S.view==="set"&&S.role==="admin")ct261Load(false)});
 
 /* ============ 렌더 ============ */
 function renderMain(){
