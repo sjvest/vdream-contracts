@@ -92,9 +92,9 @@ function orgOld(o){var p=plOf(o),C=Array.isArray(o.contacts)?o.contacts:[],win=C
     member:stName(o.owner_id)||p.member||"",accompany:stName(o.sub_owner_id)||p.accompany||"",stage:o.stage==null?0:o.stage,premeil:{"완료":1,"요구":2}[o.pre_mail]||0,school:{"필요":1,"완료":2}[o.edu_status]||0,
     date:o.first_meeting||null,mou_date:o.mou_date||null,memo:o.memo||"",website:o.website||"",region:o.region||"",address:o.address||"",business_card_url:p.business_card_url||null,
     lastcontact:plc>lc?plc:(lc||null),created_by:p.created_by||null,created_by_name:p.created_by_name||"",created_at:o.created_at||iso(o.created_on),updated_at:o.updated_at||o.created_at||null,updated_by_name:p.updated_by_name||"",
-    short_name:o.short_name||"",is_starred:!!o.pin,mou_checklist:p.mou_checklist||null,contacts:C.map(ctOld),member_history:p.member_history||[],is_test:!!p.is_test,always_contact:!!p.always_contact,contact_tier:o.tier||null,
+    short_name:o.short_name||"",is_starred:!!o.pin,mou_checklist:p.mou_checklist||null,contacts:C.map(ctOld),member_history:p.member_history||[],is_test:!!p.is_test,always_contact:!!p.always_contact,owner_only_contact:!!p.owner_only_contact,contact_tier:o.tier||null,
     card_image:BLOB["oimg:"+o.id]||null,business_card_thumb:BLOB["othumb:"+o.id]||null,_vw:o.id})}
-var ORG_DIRECT=["short_name","name","cat","source","event_id","contact","contact_title","phone","mobile","fax","email","member","accompany","stage","premeil","school","date","mou_date","memo","website","region","address","business_card_url","lastcontact","created_by","created_by_name","created_at","updated_at","updated_by_name","is_starred","mou_checklist","contacts","member_history","is_test","always_contact","contact_tier","card_image","business_card_thumb","id"];
+var ORG_DIRECT=["short_name","name","cat","source","event_id","contact","contact_title","phone","mobile","fax","email","member","accompany","stage","premeil","school","date","mou_date","memo","website","region","address","business_card_url","lastcontact","created_by","created_by_name","created_at","updated_at","updated_by_name","is_starred","mou_checklist","contacts","member_history","is_test","always_contact","owner_only_contact","contact_tier","card_image","business_card_thumb","id"];
 function orgNew(p,cur,isNew){var x={},pl={},has=function(k){return k in p},o=cur||{},C=Array.isArray(o.contacts)?o.contacts:[];
   if(has("short_name")&&S(p.short_name).trim())x.short_name=S(p.short_name).trim().slice(0,20);if(has("name")){x.full_name=S(p.name).trim();}
   if(has("cat"))x.category=p.cat||null;if(has("source"))x.found_via=SRC_O2N[p.source]||p.source||null;if(has("event_id"))pl.event_id=txt("evt",p.event_id);
@@ -102,7 +102,7 @@ function orgNew(p,cur,isNew){var x={},pl={},has=function(k){return k in p},o=cur
   if(has("stage"))x.stage=p.stage==null||isNaN(+p.stage)?0:+p.stage;if(has("premeil"))x.pre_mail={1:"완료",2:"요구"}[+p.premeil]||null;if(has("school"))x.edu_status={1:"필요",2:"완료"}[+p.school]||null;
   if(has("date"))x.first_meeting=d10(p.date);if(has("mou_date"))x.mou_date=d10(p.mou_date);if(has("memo"))x.memo=p.memo||"";if(has("website"))x.website=p.website||null;if(has("region"))x.region=p.region||null;if(has("address"))x.address=p.address||null;
   if(has("is_starred"))x.pin=!!p.is_starred;if(has("contact_tier"))x.tier=p.contact_tier||null;
-  ["fax","business_card_url","lastcontact","created_by","created_by_name","updated_by_name","mou_checklist","member_history","is_test","always_contact"].forEach(function(k){if(has(k))pl[k]=p[k]});
+  ["fax","business_card_url","lastcontact","created_by","created_by_name","updated_by_name","mou_checklist","member_history","is_test","always_contact","owner_only_contact"].forEach(function(k){if(has(k))pl[k]=p[k]});
   if(has("lastcontact"))pl.lastcontact=d10(p.lastcontact);
   /* 연락처: 예전 contacts 배열 또는 대표 담당자 칸 */
   if(has("contacts")){C=ctMerge(p.contacts,C,o.id||"n");x.contacts=C}
@@ -2765,7 +2765,7 @@ async function loadOrgs(){
   let data,error;
   for(let attempt=0;attempt<3;attempt++){
     ({data,error}=await sb.from('orgs')
-      .select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier,always_contact')
+      .select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier,always_contact,owner_only_contact')
       .order('created_at',{ascending:false})
       .limit(5000));
     if(!error)break;
@@ -2863,7 +2863,7 @@ async function loadApplications(){
 // ===== 경량/화면별 Loader 함수 (Hybrid Loading 2단계 대비 — 아직 어디서도 호출하지 않음) =====
 async function loadOrgLite(){
   const {data,error}=await sb.from('orgs')
-    .select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test,business_card_thumb,event_id,always_contact')
+    .select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test,business_card_thumb,event_id,always_contact,owner_only_contact')
     .order('created_at',{ascending:false});
   if(error) console.error('[Supabase Error] orgs(lite) 조회 실패:', error);
   return {data,error};
@@ -2888,7 +2888,7 @@ async function loadRecentLogs(){
 }
 async function loadOrgDetail(orgId){
   const [orgRes,logsRes,talentsRes,appsRes]=await Promise.all([
-    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,updated_at,updated_by_name,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier,always_contact').eq('id',orgId).single(),
+    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,updated_at,updated_by_name,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier,always_contact,owner_only_contact').eq('id',orgId).single(),
     sb.from('contact_logs').select('*').eq('org_id',orgId).order('logged_at',{ascending:false}),
     sb.from('talents').select('*').eq('source_org_id',orgId).order('created_at',{ascending:false}),
     sb.from('candidate_applications').select('*').eq('org_id',orgId).order('created_at',{ascending:false}),
@@ -2901,7 +2901,7 @@ async function loadOrgDetail(orgId){
 }
 async function loadAnalyticsData(){
   const [o,t,a,j]=await Promise.all([
-    sb.from('orgs').select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test,business_card_thumb,always_contact'),
+    sb.from('orgs').select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test,business_card_thumb,always_contact,owner_only_contact'),
     sb.from('talents').select('*'),
     sb.from('candidate_applications').select('*'),
     sb.from('jobs').select('*'),
@@ -4908,7 +4908,7 @@ function renderOrgs(){try{cgEnsureFresh(renderOrgs);}catch(e){}try{updateOrgSort
       <td style="padding:14px 16px;width:490px;max-width:490px;overflow:hidden;">
         <div class="nm-wrap" style="display:flex;align-items:center;gap:10px;min-width:0;width:450px;max-width:100%;">
           ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;flex-shrink:0;"></div>'}
-          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${cpIcon(o.name)}${awardBadge(o.id)}${o.always_contact?'<span style="font-size:9px;font-weight:800;color:#1d4ed8;background:#e0ecff;padding:1px 6px;border-radius:8px;margin-left:4px;">상시</span>':''}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span><span onclick="showHealthDetail(${o.id},event)" style="flex-shrink:0;width:46px;text-align:center;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
+          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${cpIcon(o.name)}${awardBadge(o.id)}${o.always_contact?'<span style="font-size:9px;font-weight:800;color:#1d4ed8;background:#e0ecff;padding:1px 6px;border-radius:8px;margin-left:4px;">상시</span>':''}${o.owner_only_contact?`<span title="${o.member||'담당자'} 담당자만 연락하는 기관이에요 (다른 팀원은 연락하지 않기)" style="font-size:9px;font-weight:800;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:8px;margin-left:4px;">${o.member||'담당자'} 전용</span>`:''}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span><span onclick="showHealthDetail(${o.id},event)" style="flex-shrink:0;width:46px;text-align:center;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
         </div>
       </td>
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
@@ -9642,6 +9642,7 @@ async function openOrg(id){
         <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}> 부정적</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="toggleAlwaysContact(${id})" title="자주 연락하는 기관은 연락 기준(14/20일) 알림에서 빼고 따로 관리해요" style="${o.always_contact?'background:#e0ecff;color:#1d4ed8;border-color:#93b4f5;font-weight:800;':''}">${o.always_contact?'상시 연락 기관 (해제)':'상시 연락 기관으로'}</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleOwnerOnlyContact(${id})" title="담당자만 연락해야 하는 기관 — 다른 팀원에게 '연락하지 않기' 표시를 보여줘요 (동작을 막지는 않아요)" style="${o.owner_only_contact?'background:#fef3c7;color:#b45309;border-color:#f3c76b;font-weight:800;':''}">${o.owner_only_contact?((o.member||'담당자')+' 전용 연락 (해제)'):'담당자 전용 연락으로'}</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})">연락 완료</button>
       <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})">정보 수정</button>
       ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})">기관 삭제</button>` : ''}
@@ -10732,6 +10733,16 @@ async function toggleAlwaysContact(id){
   toast(next?'상시 연락 기관으로 표시했어요 (연락 기준 알림에서 제외)':'상시 연락 표시를 해제했어요');
   openOrg(id);
   [()=>renderOrgs(),()=>renderDashboard(),()=>renderActions(),()=>renderContactGap()].forEach(fn=>{try{fn();}catch(e){console.error(e);}});
+}
+async function toggleOwnerOnlyContact(id){
+  const o=cache.orgs.find(x=>x.id===id);if(!o)return;
+  const next=!o.owner_only_contact;
+  const{error}=await sb.from('orgs').update({owner_only_contact:next}).eq('id',id);
+  if(error){console.error('[Supabase Error] 담당자 전용 연락 변경 실패:',error);toast('오류: 담당자 전용 표시가 저장되지 않았습니다 — '+error.message);return;}
+  o.owner_only_contact=next;
+  toast(next?`담당자(${o.member||'미배정'}) 전용 연락 기관으로 표시했어요`:'담당자 전용 표시를 해제했어요');
+  openOrg(id);
+  try{renderOrgs();}catch(e){console.error(e);}
 }
 function showAlwaysContactOrgs(){nav('orgs');const sel=document.getElementById('filter-always');if(sel)sel.value='only';renderOrgs();}
 async function markContacted(id){
