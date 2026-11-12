@@ -1882,6 +1882,8 @@ label.rr265tk{opacity:.6}
 .tk4wd{display:inline-flex;gap:2px}.tk4wd .chip.xs{padding:0 6px;font-size:11.5px;min-width:22px}.tk4t select{max-width:190px}.tk4g.ok{color:#13877d;font-weight:600}.tk4g.bad{color:#B42318;font-weight:600}
 .cib267{display:block;width:100%;margin-top:3px;font-size:12px}
 .rp267{white-space:nowrap}button.rp267{cursor:pointer;border:0}.rp267line{display:flex;align-items:center;gap:8px;padding-top:6px;padding-bottom:6px}.b.sm.g{background:#F1F1F4;color:#888}
+/* v268 중도퇴사 대체 채용 줄 */
+.lea268 b{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.b.sm.bm{background:#F1F1F4;color:#555}
 </style>
 </head>
 <body>
@@ -19289,8 +19291,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v267 — 처우 협의 조율 · 대체 현황 표시 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
-APP_VER="v267";APP_VER_ON="11/12";APP_NOTE="조율 요청 처우 협의 (입사일 · 근로시간 · 근무 요일 · 급여 · 기타 / 선택 · 동의 → 후보별 회신 → 계약 정보 기본값) · 합격자 근무 요일 칸 · 공용 양식 조건 근무 요일 · 대체 현황 (계약만료 · 근로자 DB · 중도퇴사)";
+/* v268 — 이슈보고 이모지 · 중도퇴사 대체 칸 · 추천인재 같은 사람 확인 (이전 버전 기록은 src git log · 각 core/91xx~96xx 모듈 머리말) */
+APP_VER="v268";APP_VER_ON="11/12";APP_NOTE="채널톡 이슈보고 🚨 (긴급 🚨🚨🚨) · 중도퇴사 목록 대체 칸 · 중도퇴사 창 대체 채용 줄 (안 함 · 다시 정하기 · 바로 정하기) · 추천인재 같은 사람 확인 · 포트폴리오 등록 연락처/생년월일 하나 필수 · 같은 이름 확인";
 
 /* ================================================================
    v208
@@ -23381,6 +23383,74 @@ regAfter("v267 대체 현황 · 계약만료 창",function(){if(!(S.sel&&String(
 /* 중도퇴사: '대체 요청 진행 중' 버튼 자리 */
 var _leaBtns267=leaBtns;leaBtns=function(e,sz){var h=_leaBtns267.apply(this,arguments);if(!e||e.cancelled||!e.end_type||typeof h!=="string")return h;var s=rp267(e);if(!s||s.k==="none"||s.k==="old")return h;var x=" "+rp267Html(e);
   if(/data-act="rr-go"[^>]*>대체 요청 진행 중<\/button>/.test(h))return h.replace(/ ?<button class="b sm p" data-act="rr-go"[^>]*>대체 요청 진행 중<\/button>/,x);if(s.k==="in"||s.k==="no")return h.replace(/ ?<button class="btn [^"]*" data-act="lea-rr" data-e="[^"]*">대체 채용 요청<\/button>/,x);return h};
+
+/* ================================================================
+   v268
+     ① 채널톡 이슈보고 이모지: 일반 '■ 이슈보고 🚨' · 긴급 '🚨 긴급 / ■ 이슈보고 🚨🚨🚨' (채널톡 글에만 · 알림함 · 보낸 기록은 그대로)
+     ② 중도퇴사 목록 '대체' 칸 · 중도퇴사 창 '대체 채용' 줄 (안 함 · 정한 날 · 정한 사람 · [다시 정하기] / 미정 → [대체 채용 요청] [대체 안 함])
+        · 할 일 [대체 안 함] 누를 때 변경 이력 남김
+     ③ 추천인재 같은 사람: 이름은 같은데 연락처 · 생년월일이 비어 따로 보이는 건 → [같은 사람 확인] (묶기 · 다른 사람)
+        · 포트폴리오 새로 등록: 연락처 · 생년월일 중 하나 필수 · 같은 이름 추천인재 · 근로자가 있으면 같은 사람인지 묻기
+   ================================================================ */
+/* ---------- ① 이슈보고 이모지 ---------- */
+function is268Title(t){if(typeof t!=="string")return t;return t.replace(/^(🚨 긴급\n)?■ 이슈보고\n/,function(m,u){return u?u+"■ 이슈보고 🚨🚨🚨\n":"■ 이슈보고 🚨\n"})}
+var _shRpc268=shRpc;shRpc=function(chan,key,title){var a=[].slice.call(arguments);a[2]=is268Title(title);return _shRpc268.apply(this,a)};
+/* ---------- ② 중도퇴사 대체 ---------- */
+function lea268Who(e){var L=(DB.logs||[]).filter(function(l){return l.field==="대체 채용 (중도퇴사)"&&l.row===e.worker&&/안 함/.test(l.after||"")&&String(l.after||"").indexOf(e.id)>=0});var l=L[L.length-1];return l?md(String(l.at||"").slice(0,10))+" "+(l.by||""):""}
+function lea268Row(e){var s=rp267(e),k="repl:"+e.id,h;
+  if(!s||s.k==="none"||s.k==="old")h='<span class="b sm warn">⚠ 아직 안 정함</span> <button type="button" class="btn xs act" data-act="lea-rr" data-e="'+e.id+'">대체 채용 요청</button> <button type="button" class="btn xs" data-act="lea268-no" data-e="'+e.id+'">대체 안 함</button>';
+  else if(s.k==="no"){var w=lea268Who(e);h='<span class="b sm bm">대체 안 함</span> <span class="small muted">'+(w?esc(w):"정한 사람 기록 없음")+'</span> <button type="button" class="linkbtn small" data-act="lea268-re" data-e="'+e.id+'">다시 정하기</button>'}
+  else h=rp267Html(e);
+  return'<div class="lea268"><span>대체 채용</span><b>'+h+'</b></div>'}
+var _vLea268=vLea;vLea=function(){var h=_vLea268.apply(this,arguments),sel=S.leaSel;if(!sel||sel==="new"||typeof h!=="string")return h;var e=emp(sel);if(!e||!e.end_type)return h;
+  var i=h.indexOf("<h3>퇴사 정보");if(i<0)return h;var j=h.indexOf("</h3>",i);if(j>0)h=h.slice(0,i)+h.slice(i,j).replace(/ ?<(span|button)[^>]*class="b sm[^"]*rp267"[^>]*>[^<]*<\/\1>/g,"").replace(/ ?<button[^>]*data-act="lea-rr"[^>]*>대체 채용 요청<\/button>/,"")+h.slice(j);
+  var k=h.indexOf('<div class="kv">',i);if(k<0)return h;k+='<div class="kv">'.length;return h.slice(0,k)+lea268Row(e)+h.slice(k)};
+regTable("lea",{id:"v268 대체",cols:function(C){if(C.some(function(c){return c.k==="rp267"}))return C;C.push({k:"rp267",_keep:true,h:"대체",t:"text",f:function(e){return rp267Txt(e)}});return C},
+  row:function(h,e){if(typeof h!=="string")return h;var i=h.lastIndexOf("</tr>");if(i<0)return h;return h.slice(0,i)+'<td class="rp267td">'+rp267Html(e,{dash:1})+'</td>'+h.slice(i)}});
+function lea268Log(e,v){var w=wk(e.worker)||{};logChange("workers",e.worker,w.name||"","대체 채용 (중도퇴사)","",v+" · "+((comp(e.company)||{}).name||"")+" · "+e.id,"내부")}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="lea-norr"]');if(!b)return;var eid=String(b.dataset.k||"").replace(/^repl:/,""),e=emp(eid);if(e)setTimeout(function(){var m=DB.meta["repl:"+eid];if(m&&m.status==="완료")lea268Log(e,"안 함")},0)},true);
+regActs({
+  "lea268-no":function(D0){var e=emp(D0.e);if(!e)return;askConfirm("대체 채용 안 함",((wk(e.worker)||{}).name||"")+"님 자리는 대체 채용을 하지 않을까요? 할 일 '대체 채용 여부 확인'도 닫혀요.","대체 안 함",function(){setMeta("repl:"+e.id,{status:"완료"});lea268Log(e,"안 함");
+    if(typeof shOn==="function"&&shOn("dec"))try{shFlushDirect([{kind:"dec",cid:e.company,base:e.end_date||TODAY,eid:e.id,name:(wk(e.worker)||{}).name||"",src:"중도퇴사"}])}catch(x){}
+    if(LIVE&&READY)schedulePersist();toast("대체 채용 안 함으로 정했어요");render()})},
+  "lea268-re":function(D0){var e=emp(D0.e);if(!e)return;askConfirm("다시 정하기","'대체 안 함'을 풀까요? 할 일에 '대체 채용 여부 확인'이 다시 생겨요.","풀기",function(){setMeta("repl:"+e.id,{status:""});lea268Log(e,"다시 정하기 (안 함 풀기)");if(LIVE&&READY)schedulePersist();toast("다시 정할 수 있게 했어요");render()})}
+});
+/* ---------- ③ 추천인재 같은 사람 확인 ---------- */
+function uni268Nm(s){return String(s||"").replace(/\s/g,"")}
+function uni268Pairs(){var R=uniRows(),T=R.filter(function(r){return r.t}),P=R.filter(function(r){return r.p&&!r.t}),L=[];
+  P.forEach(function(rp){var p=rp.p,pi=rp.pi||uniPfInfo(p),nm=uni268Nm(pi.name);if(!nm)return;var thin=!normPhone(pi.ph||"")&&!pi.birth;
+    T.forEach(function(rt){var t=rt.t,ti=rt.ti||uniTalInfo(t);if(uni268Nm(ti.name)!==nm)return;var x=p.notsame||[];if(x.indexOf("x:"+t.id)>=0||x.indexOf("t:"+t.id)>=0)return;var tthin=!normPhone(ti.ph||"")&&!ti.birth;if(!thin&&!tthin)return;L.push({t:t,p:p,ti:ti,pi:pi})})});return L}
+function uni268Info(i,src){return[i.birth?"생년월일 "+i.birth:"생년월일 없음",normPhone(i.ph||"")?"연락처 "+i.ph:"연락처 없음",src].filter(Boolean).join(" · ")}
+function uni268Open(){var L=uni268Pairs();
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="같은 사람 확인" style="width:min(760px,calc(100vw - 32px))"><div class="ph"><div><div class="k">추천인재</div><h2>같은 사람 확인 · '+L.length+'건</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps">'+
+    '<p class="small" style="margin:0 0 8px">이름은 같은데 한쪽에 연락처 · 생년월일이 없어 따로 보이는 건이에요 · 같은 사람이면 묶고, 동명이인이면 [다른 사람]</p>'+
+    (L.length?'<table class="mini"><thead><tr><th>이름</th><th>추천인재</th><th>포트폴리오</th><th></th></tr></thead><tbody>'+L.map(function(x){return'<tr><td><b>'+esc(x.ti.name)+'</b></td><td class="small">'+esc(uni268Info(x.ti,x.t.origin||x.t.source||""))+'</td><td class="small">'+esc(uni268Info(x.pi,(x.p.source||"포트폴리오")+" · 등록 "+md(String(x.p.created||"").slice(0,10))))+'</td><td class="nowrap"><button class="btn xs pri" data-act="uni268-join" data-t="'+esc(x.t.id)+'" data-p="'+esc(x.p.id)+'">같은 사람 · 묶기</button> <button class="btn xs" data-act="uni268-no" data-t="'+esc(x.t.id)+'" data-p="'+esc(x.p.id)+'">다른 사람</button></td></tr>'}).join("")+'</tbody></table>':'<p class="hint">확인할 건이 없어요</p>')+
+    '</div><div class="ps foot"><span class="grow"></span><button class="btn" data-act="modal-close">닫기</button></div></div></div>'}
+var _vUni268=vUni;vUni=function(){var h=_vUni268.apply(this,arguments);if(S.role!=="admin"||typeof h!=="string")return h;var n=uni268Pairs().length;if(!n)return h;var bar='<div class="fbbar"><span class="small">이름이 같은데 연락처 · 생년월일이 없어 따로 보이는 건 <b>'+n+'건</b></span><span class="grow"></span><button class="btn sm pri" data-act="uni268-open">같은 사람 확인</button></div>';var i=h.indexOf('<div class="tabs"');return i<0?bar+h:h.slice(0,i)+bar+h.slice(i)};
+regActs({
+  "uni268-open":function(){uni268Open()},
+  "uni268-join":function(D0){var t=(DB.talent||[]).find(function(x){return x.id===D0.t}),p=pfOf(D0.p);if(!t||!p)return;var ti=uniTalInfo(t),pi=uniPfInfo(p),ch=[];
+    if(t.worker&&wk(t.worker)&&p.worker!==t.worker){p.worker=t.worker;ch.push("근로자 DB 연결")}if(!normPhone(p.phone||"")&&ti.ph){p.phone=ti.ph;ch.push("연락처")}if(!p.birth&&ti.birth){p.birth=ti.birth;ch.push("생년월일")}
+    if(!t.worker&&p.worker&&wk(p.worker)){t.worker=p.worker;ch.push("추천인재 근로자 연결")}if(!ch.length&&!pi.birth&&!normPhone(pi.ph||"")){toast("두 쪽 모두 연락처 · 생년월일이 없어 묶을 수 없어요 · 한쪽에 먼저 적어 주세요");return}
+    logChange("portfolios",p.id,p.name||ti.name||"","같은 사람으로 묶기","","추천인재와 묶음 · "+ch.join(" · "),"내부");toast("한 줄로 묶었어요");uni268Open();render();if(document.querySelector("#modal .dlg"))uni268Open()},
+  "uni268-no":function(D0){var p=pfOf(D0.p);if(!p)return;p.notsame=(p.notsame||[]).concat(["x:"+D0.t]);logChange("portfolios",p.id,p.name||"","동일인 아님 (추천인재)","",D0.t,"내부");toast("다른 사람으로 표시했어요 · 다시 묻지 않아요");uni268Open();render();if(document.querySelector("#modal .dlg"))uni268Open()}
+});
+/* 포트폴리오 새로 등록: 연락처 · 생년월일 중 하나 · 같은 이름 확인 */
+var PF268={ok:false,hit:null};
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="pf-save"]');if(!b||S.pfSel!=="new"||!S.pfF)return;if(PF268.ok){PF268.ok=false;return}
+  var g=function(k){var i=document.querySelector('aside [data-pff="'+k+'"]');return i?String(i.value||"").trim():String(S.pfF[k]||"").trim()},nm=g("name"),ph=g("phone"),bd=g("birth");if(!nm)return;
+  if(!normPhone(ph)&&!bd){ev.preventDefault();ev.stopImmediatePropagation();toast("연락처나 생년월일 중 하나는 꼭 적어 주세요 (같은 사람 확인용)");var i=document.querySelector('aside [data-pff="phone"]');if(i)i.focus();return}
+  var n=uni268Nm(nm),pn=normPhone(ph),H=[];(DB.talent||[]).forEach(function(t){var ti=uniTalInfo(t);if(uni268Nm(ti.name)!==n)return;var tp=normPhone(ti.ph||"");if((pn.length>=9&&tp===pn)||(bd&&ti.birth===bd))return;H.push({k:"t",id:t.id,lab:"추천인재 · "+uni268Info(ti,""),wid:ti.wid,ph:ti.ph,birth:ti.birth})});
+  (DB.workers||[]).forEach(function(w){if(uni268Nm(w.name)!==n||H.some(function(x){return x.wid===w.id}))return;var wp=normPhone(w.phone||"");if((pn.length>=9&&wp===pn)||(bd&&w.birth===bd))return;H.push({k:"w",id:w.id,lab:"근로자 DB · "+uni268Info({ph:w.phone,birth:w.birth},""),wid:w.id,ph:w.phone,birth:w.birth})});
+  if(!H.length)return;ev.preventDefault();ev.stopImmediatePropagation();PF268.hit=H;
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="같은 사람인가요" style="width:min(560px,calc(100vw - 32px))"><div class="ph"><div><div class="k">포트폴리오 등록</div><h2>같은 이름이 이미 있어요</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps">'+
+    '<p class="small" style="margin:0 0 8px"><b>'+esc(nm)+'</b> · 지금 적은 정보: '+esc(uni268Info({ph:ph,birth:bd},""))+'</p>'+H.slice(0,6).map(function(x,i){return'<div class="rr265o"><div class="grow small">'+esc(x.lab)+'</div><button class="btn xs pri" data-act="pf268-link" data-i="'+i+'">이 사람이에요 · 연결</button></div>'}).join("")+
+    '</div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><span class="grow"></span><button class="btn" data-act="pf268-go">다른 사람이에요 · 그대로 등록</button></div></div></div>'},true);
+function pf268Save(){$("#modal").innerHTML="";PF268.ok=true;var b=document.querySelector('aside [data-act="pf-save"]')||document.querySelector('[data-act="pf-save"]');if(b)b.click();else PF268.ok=false}
+regActs({
+  "pf268-go":function(){pf268Save()},
+  "pf268-link":function(D0){var x=(PF268.hit||[])[+D0.i];if(!x||!S.pfF)return;if(x.wid&&wk(x.wid))S.pfF.worker=x.wid;var set=function(k,v){var i=document.querySelector('aside [data-pff="'+k+'"]');if(i&&!String(i.value||"").trim()&&v){i.value=v;i.dispatchEvent(new Event("input",{bubbles:true}));i.dispatchEvent(new Event("change",{bubbles:true}))}if(!S.pfF[k]&&v)S.pfF[k]=v};set("phone",x.ph);set("birth",x.birth);pf268Save()}
+});
 
 /* ============ 렌더 ============ */
 function renderMain(){
