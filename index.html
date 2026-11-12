@@ -1871,6 +1871,12 @@ label.rr265tk{opacity:.6}
 .ct265bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;padding:7px 10px;border-radius:8px;background:#F1EEFD}.ct265bar .grow{flex:1}
 .ct265r{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:3px}.ct265r select{max-width:210px;font-size:12px}.ct265one{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
 .lk265{white-space:normal}
+/* v266 특이사항 입력 3줄 · 범위 선택칸 폭 */
+.cn265 .cnadd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;gap:6px;align-items:start}
+.cn265 .cnadd select{grid-row:1;grid-column:1;width:auto!important;max-width:190px;min-width:0;flex:none}
+.cn265 .cnadd textarea{grid-row:1;grid-column:2;width:100%!important;min-width:0;box-sizing:border-box;resize:vertical;min-height:72px;line-height:1.5;font:inherit}
+.cn265 .cnadd .btn{grid-row:2;grid-column:2;justify-self:end}
+.cn265 .cni.edit{flex-wrap:wrap}.cn265 .cni.edit textarea{flex:1 1 300px;min-width:0;min-height:72px;resize:vertical;line-height:1.5;font:inherit;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -19278,8 +19284,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v265 — 대체 요청 합치기 · 기업 특이사항(그룹 · 기업 · 부서) · 근로계약서 공용 양식 · 연계 결과 표시 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
-APP_VER="v265";APP_VER_ON="11/12";APP_NOTE="합격정보 한 번에 근무시간 앞 '주5일 4시간' 빠짐 · 대체 채용 요청 합치기 (만들 때 묻기 · 2건 합치기 · 다른 요청에 있는 사람 옮기기) · 기업 특이사항 그룹/기업/부서 목록 + 한 칸 보기 · 기업 메모 계열사 같이 등록 · 근로계약서 공용 양식 · 기관 인재 · 추천인재 연계 결과 · 채널톡 알림 ▶ 링크 (이슈보고 · 공유 알림)";
+/* v266 — 기업 특이사항 입력칸 3줄 · 범위 선택칸 폭 (이전 버전 기록은 src git log · 각 core/91xx~95xx 모듈 머리말) */
+APP_VER="v266";APP_VER_ON="11/12";APP_NOTE="기업 특이사항 입력 · 고치기 칸 기본 3줄 (Enter 등록 · Shift+Enter 줄바꿈) · 범위 선택칸이 너무 넓던 것 고침";
 
 /* ================================================================
    v208
@@ -23227,6 +23233,21 @@ var _is263Send265=is263Send;is263Send=function(x){var h=lk265Panel()||(x&&x.work
 var _shSendPer265=shSendPer;shSendPer=function(key,L){var o=LK265,e0=L&&L[0];LK265=lk265Url(L&&L.length===1&&e0.eid?lk265Wk(e0.eid):lk265Co(e0&&e0.cid))||null;try{return _shSendPer265.apply(this,arguments)}finally{LK265=o}};
 var _shSendCo265=shSendCo;shSendCo=function(cid){var o=LK265;LK265=lk265Url(lk265Co(cid))||null;try{return _shSendCo265.apply(this,arguments)}finally{LK265=o}};
 var _shSendGroup265=shSendGroup;shSendGroup=function(cids){var o=LK265;LK265=lk265Url(lk265Co(cids&&cids[0]))||null;try{return _shSendGroup265.apply(this,arguments)}finally{LK265=o}};
+
+/* ================================================================
+   v266
+     ① 기업 특이사항 입력 · 고치기 칸: 기본 3줄 (내용 길면 늘어남) · Enter 등록 · Shift+Enter 줄바꿈
+     ② 범위 선택칸이 줄을 다 차지하던 것 고침 (선택칸 좁게 · 입력칸 넓게 · [추가]는 오른쪽 아래)
+   ================================================================ */
+var _cnBox266=cnBox;cnBox=function(c,ctx){var h=_cnBox266.apply(this,arguments);if(typeof h!=="string")return h;
+  h=h.replace(/<input data-ch="cn265" data-cnin="([^"]*)" placeholder="[^"]*" aria-label="특이사항 추가">/,function(m,id){return'<textarea data-ch="cn265" data-cnin="'+id+'" rows="3" placeholder="예: 출근 08:00 · 지각 기준 5분 (한 건에 한 가지) · Enter 등록 · Shift+Enter 줄바꿈" aria-label="특이사항 추가"></textarea>'});
+  h=h.replace(/<input data-ch="cn265" data-cne="([^"]*)" value="([^"]*)" aria-label="특이사항 고치기">/,function(m,id,v){return'<textarea data-ch="cn265" data-cne="'+id+'" rows="3" aria-label="특이사항 고치기">'+v+'</textarea>'});
+  return h};
+function cn266Fit(t){if(!t||t.tagName!=="TEXTAREA")return;t.style.height="auto";var min=t.rows?t.rows*20+12:72;t.style.height=Math.max(min,t.scrollHeight+2)+"px"}
+/* Shift+Enter 는 줄바꿈 (v265 Enter 등록보다 먼저) */
+window.addEventListener("keydown",function(ev){var t=ev.target;if(!t||!t.dataset||t.tagName!=="TEXTAREA")return;if((t.dataset.cnin!=null||t.dataset.cne!=null)&&ev.key==="Enter"&&ev.shiftKey){ev.stopImmediatePropagation();setTimeout(function(){cn266Fit(t)},0)}},true);
+document.addEventListener("input",function(ev){var t=ev.target;if(t&&t.dataset&&(t.dataset.cnin!=null||t.dataset.cne!=null))cn266Fit(t)},true);
+regAfter("v266 특이사항 칸 높이",function(){[].forEach.call(document.querySelectorAll("textarea[data-cnin],textarea[data-cne]"),function(t){if(t.value)cn266Fit(t)})});
 
 /* ============ 렌더 ============ */
 function renderMain(){
