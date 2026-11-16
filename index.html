@@ -19143,8 +19143,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v274 — 채널톡 파트별 공통 태그 · 기관 창 추천인재 · 포트폴리오 한 줄 · 같은 이름 확인 · 중복 등록 알림 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v274";APP_VER_ON="11/16";APP_NOTE="채널톡 '공통일 때' 태그를 파트마다(표시 이름 · 팀 ID) · 기관 창: 같은 사람의 추천인재 · 포트폴리오를 한 줄로 · 이름만 같은 쌍 확인(관리자) · 중복 등록 알림";
+/* v275 — 기관 창 같은 사람 묶기 (근로자 DB 없어도) (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v275";APP_VER_ON="11/16";APP_NOTE="기관 창 [같은 사람]: 취업 전(근로자 DB 없음)이어도 묶기 · 이름 + 연락처/생일 같으면 자동으로 한 줄 · 나중에 근로자 DB 연결되면 같이";
 
 /* ================================================================
    v208
@@ -23634,8 +23634,11 @@ regActs({"tag273-fold":function(){S.tag273O=!S.tag273O;render()},
 function pt274Adm(){return S.role==="admin"||isAdminSt(st(S.me)||{})}
 function pt274Nm(s){return String(s||"").replace(/\s/g,"")}
 function pt274Skip(p,tid){var x=p.notsame||[];return x.indexOf("x:"+tid)>=0||x.indexOf("t:"+tid)>=0}
-function pt274Map(oid){var both={},drop={},n=0,T=(DB.talent||[]).filter(function(t){return t&&t.src_org===oid&&t.worker});
-  (DB.pf||[]).forEach(function(p){if(!p||p.src_org!==oid||!p.worker)return;var t=T.find(function(t){return t.worker===p.worker&&!drop[t.id]&&!pt274Skip(p,t.id)});if(t){both[p.id]=t.id;drop[t.id]=1;n++}});return{both:both,drop:drop,n:n}}
+/* v275 같은 사람 = 근로자 DB 같음 · 직접 묶음(notsame 에 "s:추천id") · 이름 + 연락처/생일 같음 (취업 전이라 근로자 DB가 없어도) */
+function pt274Linked(p,tid){return(p.notsame||[]).indexOf("s:"+tid)>=0}
+function pt274Same(p,t){if(pt274Skip(p,t.id))return false;if(pt274Linked(p,t.id))return true;if(p.worker&&t.worker)return p.worker===t.worker;try{return uniSame(uniPfInfo(p),uniTalInfo(t))}catch(e){return false}}
+function pt274Map(oid){var both={},drop={},n=0,T=(DB.talent||[]).filter(function(t){return t&&t.src_org===oid});
+  (DB.pf||[]).forEach(function(p){if(!p||p.src_org!==oid)return;var t=T.find(function(t){return!drop[t.id]&&pt274Same(p,t)});if(t){both[p.id]=t.id;drop[t.id]=1;n++}});return{both:both,drop:drop,n:n}}
 var _oTalents274;oTalents=layer("oTalents",oTalents,11961,"v274 같은 사람 한 줄",function(p){_oTalents274=p;return function(oid){var L=_oTalents274.apply(this,arguments);try{var M=pt274Map(oid);if(!M.n)return L;
   return L.filter(function(t){return!(t.k==="tl"&&M.drop[t.id])}).map(function(t){return t.k==="pf"&&M.both[t.id]?Object.assign({},t,{both:M.both[t.id]}):t})}catch(e){console.warn("[v274]",e);return L}}});
 /* 'PF' 옆에 '추천' (기관 창 HTML 에서) */
@@ -23652,10 +23655,14 @@ regSection("org",{id:"pt274",order:9,transform:function(h){try{if(typeof h!=="st
     return'<div class="pt274r"><b>'+esc(nm)+'</b><span class="small"><span class="b sm t">PF</span> '+esc(pt274Info(x.p))+'</span><span class="small"><span class="b sm ok">추천</span> '+esc(pt274Info(x.t,1))+'</span><span class="grow"></span><button type="button" class="btn xs pri" data-act="pt274-same" data-p="'+esc(x.p.id)+'" data-t="'+esc(x.t.id)+'">같은 사람</button><button type="button" class="btn xs" data-act="pt274-no" data-p="'+esc(x.p.id)+'" data-t="'+esc(x.t.id)+'">다른 사람</button></div>'}).join("")+'</div>';
   return h.slice(0,k)+b+h.slice(k)}catch(e){console.warn("[v274 확인]",e);return h}}});
 regActs({"pt274-same":function(D0){if(!pt274Adm())return;var p=pfOf(D0.p),t=(DB.talent||[]).find(function(x){return x.id===D0.t});if(!p||!t)return;
-    if(p.worker&&t.worker&&p.worker!==t.worker){toast("근로자 DB에 두 사람으로 따로 있어요 · 관리자 › 병합에서 먼저 합쳐 주세요");return}var w=p.worker||t.worker;if(!w){toast("둘 다 근로자 DB에 연결이 없어 합칠 수 없어요 · 한쪽을 근로자 DB에 연결해 주세요");return}
+    if(p.worker&&t.worker&&p.worker!==t.worker){toast("근로자 DB에 두 사람으로 따로 있어요 · 관리자 › 병합에서 먼저 합쳐 주세요");return}var w=p.worker||t.worker;
+    if(!w){/* v275 취업 전(근로자 DB 없음)이면 직접 묶음 */p.notsame=(p.notsame||[]).filter(function(x){return x!=="x:"+t.id&&x!=="t:"+t.id}).concat(["s:"+t.id]);logChange("portfolios",p.id,p.name||"","같은 사람 (추천인재와 묶음)","",t.id,"내부");if(LIVE&&READY)schedulePersist();toast("같은 사람으로 묶었어요 · 한 줄로 보여요");render();return}
     var nm=(wk(w)||{}).name||p.name||"";if(!p.worker){p.worker=w;logChange("portfolios",p.id,nm,"같은 사람 (추천인재와)","","근로자 DB 연결","내부")}if(!t.worker){t.worker=w;logChange("talent_picks",t.id,nm,"같은 사람 (포트폴리오와)","","근로자 DB 연결","내부")}
     if(LIVE&&READY)schedulePersist();toast("같은 사람으로 맞췄어요 · 한 줄로 보여요");render()},
   "pt274-no":function(D0){if(!pt274Adm())return;var p=pfOf(D0.p);if(!p)return;p.notsame=(p.notsame||[]).concat(["x:"+D0.t]);logChange("portfolios",p.id,p.name||"","동일인 아님 (추천인재)","",D0.t,"내부");if(LIVE&&READY)schedulePersist();toast("다른 사람으로 표시했어요 · 다시 묻지 않아요");render()}});
+/* v275 묶인 쌍: 한쪽이 근로자 DB에 연결되면 다른 쪽도 */
+regBefore("v275 묶인 쌍 근로자 DB 따라가기",function(){var ch=0;(DB.pf||[]).forEach(function(p){(p.notsame||[]).forEach(function(x){if(String(x).indexOf("s:")!==0)return;var t=(DB.talent||[]).find(function(y){return y.id===String(x).slice(2)});if(!t)return;
+  if(p.worker&&!t.worker&&wk(p.worker)){t.worker=p.worker;logChange("talent_picks",t.id,(wk(p.worker)||{}).name||"","근로자 DB 연결 (묶인 포트폴리오 따라)","",p.worker,"내부");ch++}else if(t.worker&&!p.worker&&wk(t.worker)){p.worker=t.worker;logChange("portfolios",p.id,p.name||"","근로자 DB 연결 (묶인 추천인재 따라)","",t.worker,"내부");ch++}})});if(ch&&LIVE&&READY)schedulePersist()});
 /* ③ 막기: 근로자 → 추천인재 등록 때 포트폴리오가 있으면 알림 */
 var _talAdd274;talAdd=layer("talAdd",talAdd,11961,"v274 포트폴리오 확인",function(p){_talAdd274=p;return function(o){var t=_talAdd274.apply(this,arguments);try{if(t&&o&&o.worker){var pf=(DB.pf||[]).find(function(x){return x.worker===o.worker&&x.status!=="종료"});if(pf){setTimeout(function(){toast("이 사람은 포트폴리오에도 있어요 · 기관 창 · 인재 풀에서는 한 줄로 보여요")},50)}}}catch(e){}return t}});
 
