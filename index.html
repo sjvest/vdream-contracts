@@ -1893,6 +1893,9 @@ label.rr265tk{opacity:.6}
 .tk272bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:7px 10px;margin:0 0 8px;border:1px solid var(--line-2);border-radius:10px;background:#FAF9FD;font-size:13px}
 /* v273 처우 협의 근로자 요청 · 담당자 태그 */
 .tk273 .tk273w,.tk273 .tk273a{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:2px 0}.tk273 .tk273w input,.tk273 .tk273a input{min-width:110px;flex:1}.tag273t{max-height:300px;overflow:auto;margin:4px 0 8px}.tag273t select,.tag273t input{min-width:220px}
+/* v274 같은 사람 확인 */
+.pt274box{border:1px solid #F3D9A8;background:#FFF8EC;border-radius:10px;padding:8px 12px;margin:4px 0 10px;font-size:13px}.pt274r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0;border-top:1px dashed #F0E0C0}.pt274r:first-of-type{border-top:0}
+.tag274t{margin:4px 0 8px}.tag274t td{vertical-align:middle}.tag274t label{margin-right:6px}
 </style>
 </head>
 <body>
@@ -15685,6 +15688,7 @@ pfImport=layer("pfImport",pfImport,8516,"v159 채용 요청 목록 (정리)",fun
     if(!ph0&&!b){C.chk++;warn.push(r2+"행 "+nm+": ⚠ 연락처 · 생년월일이 없어 같은 사람인지 확인 못 했어요 (새로 등록 · 동명이인 확인 필요)")}
     if(t){var tn=[t.reason,t.ev_note].filter(function(x){return String(x||"").trim()}).join(" · ");if(tn)p.note=(p.note?p.note+"\n":"")+"[추천인재에서 이관] "+tn;
       if(t.status==="연계중"){warn.push(r2+"행 "+nm+": ⚠ 추천인재가 연계중이라 추천인재는 그대로 두고 포트폴리오만 만들었어요");C.chk++}
+      else if(t.status==="연계완료"){warn.push(r2+"행 "+nm+": ⚠ 추천인재가 연계완료라 그대로 두고 포트폴리오도 만들었어요 (기관 창에서는 한 줄)");C.chk++}/* v274 */
       else if(t.status==="대기"||t.status==="보류"){var b0=t.status;t.status="종료";t.close_type="기타";t.close_reason="포트폴리오로 이관";t.closed_at=stamp();logChange("talent_picks",t.id,nm,"추천인재 → 포트폴리오 이관",b0,"종료 (포트폴리오로 이관)","내부")}
       C.mv++;warn.push(r2+"행 "+nm+": 추천인재에서 포트폴리오로 옮김")}
     else if(w){C.link++}else C.new++;
@@ -19139,8 +19143,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v273 — 처우 협의 근로자 요청 · 채용방 그룹 · 담당자 태그 · 업무보고 그룹 ID (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v273";APP_VER_ON="11/16";APP_NOTE="처우 협의 '근로자 요청' 흐름 · 처우 협의 알림은 받는 쪽 기준(채용방 그룹) · 채널톡 담당자 태그 · 업무보고 그룹 ID 보이기";
+/* v274 — 채널톡 파트별 공통 태그 · 기관 창 추천인재 · 포트폴리오 한 줄 · 같은 이름 확인 · 중복 등록 알림 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v274";APP_VER_ON="11/16";APP_NOTE="채널톡 '공통일 때' 태그를 파트마다(표시 이름 · 팀 ID) · 기관 창: 같은 사람의 추천인재 · 포트폴리오를 한 줄로 · 이름만 같은 쌍 확인(관리자) · 중복 등록 알림";
 
 /* ================================================================
    v208
@@ -23618,6 +23622,69 @@ regActs({"tag273-fold":function(){S.tag273O=!S.tag273O;render()},
     Promise.resolve(sb.rpc("vw_ct_managers_req")).then(function(r){if(r.error){toast("불러오기 실패 · "+(/managers_req|PGRST202|Could not find/i.test(String(r.error.message||""))?"v273 SQL을 실행해 주세요":String(r.error.message||"").slice(0,60)));return}var id=r.data,tries=0;
       var poll=function(){tries++;Promise.resolve(sb.rpc("vw_ct_managers_res",{p_req:id})).then(function(q){var d=q&&q.data;if(d&&d.ok){SH.mgrL=d.managers||[];var n=tag273Auto();S.tag273O=true;toast("매니저 "+SH.mgrL.length+"명 · 자동으로 짝 맞춤 "+n+"명");render();return}if(d&&d.why==="wait"&&tries<8){setTimeout(poll,1500);return}toast("불러오기 실패 · "+(d&&d.why||""))})};setTimeout(poll,1500)})},
   "tag273-test":function(){var me=st(S.me)||{},a=tag273Part("채용파트"),b=tag273One(S.me);shRpc("hire",null,"■ [시험] 담당자 태그 확인\n[운영페이지] - ("+(me.part||"")+")","공통: "+(a.ch||"(없음)")+"\n나: "+(b.ch||"(매니저 짝 없음)")+"\n작성 "+(me.name||"")+" · "+stamp(),null,null,false,{kind:"test",by:me.name||""}).then(function(d){toast(d&&d.ok?"보냈어요 · 채널톡에서 태그 알림이 오는지 확인해 주세요":"보내기 실패 · "+(d&&d.why||SH.err||""))})}});
+
+/* ================================================================
+   v274 같은 기관 · 같은 사람이 추천인재 + 포트폴리오로 두 번 보이는 것
+     ① 기관 창(인재 탭 · 성과 숫자 등 oTalents 를 쓰는 곳): 근로자 DB가 같은 사람은 한 줄 · 'PF' 옆에 '추천' (누르면 추천인재)
+        · '따로 보기'(t:) · '다른 사람'(x:) 으로 표시한 건 합치지 않음
+     ② 이름만 같은 쌍(관리자): 인재 탭 위 '같은 사람인지 확인' → [같은 사람] 근로자 DB 연결을 맞춤 · [다른 사람] 다시 안 물음
+     ③ 막기: 근로자 → 추천인재 등록 때 포트폴리오가 있으면 알림 · 포트폴리오 일괄 업로드 때 '연계완료' 추천인재도 확인 필요로
+   기록은 지우지 않음 (추천 경위 · 파일 이력이 달라서)
+   ================================================================ */
+function pt274Adm(){return S.role==="admin"||isAdminSt(st(S.me)||{})}
+function pt274Nm(s){return String(s||"").replace(/\s/g,"")}
+function pt274Skip(p,tid){var x=p.notsame||[];return x.indexOf("x:"+tid)>=0||x.indexOf("t:"+tid)>=0}
+function pt274Map(oid){var both={},drop={},n=0,T=(DB.talent||[]).filter(function(t){return t&&t.src_org===oid&&t.worker});
+  (DB.pf||[]).forEach(function(p){if(!p||p.src_org!==oid||!p.worker)return;var t=T.find(function(t){return t.worker===p.worker&&!drop[t.id]&&!pt274Skip(p,t.id)});if(t){both[p.id]=t.id;drop[t.id]=1;n++}});return{both:both,drop:drop,n:n}}
+var _oTalents274;oTalents=layer("oTalents",oTalents,11961,"v274 같은 사람 한 줄",function(p){_oTalents274=p;return function(oid){var L=_oTalents274.apply(this,arguments);try{var M=pt274Map(oid);if(!M.n)return L;
+  return L.filter(function(t){return!(t.k==="tl"&&M.drop[t.id])}).map(function(t){return t.k==="pf"&&M.both[t.id]?Object.assign({},t,{both:M.both[t.id]}):t})}catch(e){console.warn("[v274]",e);return L}}});
+/* 'PF' 옆에 '추천' (기관 창 HTML 에서) */
+function pt274Chip(h,oid){var M=pt274Map(oid);if(!M.n)return h;Object.keys(M.both).forEach(function(pid){var key='data-act="ot-open" data-k="pf" data-id="'+pid+'"',i=h.indexOf(key);if(i<0)return;var re=/<span class="b sm t">(PF|포트폴리오)<\/span>/g;re.lastIndex=i;var m=re.exec(h);if(!m)return;var tid=M.both[pid],t=(DB.talent||[]).find(function(x){return x.id===tid})||{},e=m.index+m[0].length;
+  h=h.slice(0,e)+' <span class="b sm ok pt274" data-act="ot-open" data-k="tl" data-id="'+esc(tid)+'" title="추천인재 기록도 있어요 ('+esc(t.status||"")+') · 누르면 추천인재" style="cursor:pointer">'+(m[1]==="포트폴리오"?"추천인재":"추천")+'</span>'+h.slice(e)});return h}
+regSection("org",{id:"pt274chip",order:8,transform:function(h){try{if(typeof h!=="string"||!S.om||S.om==="new")return h;return pt274Chip(h,S.om)}catch(e){console.warn("[v274 표시]",e);return h}}});
+/* ② 이름만 같은 쌍 (관리자) */
+function pt274Name(oid){var M=pt274Map(oid),L=[];(DB.pf||[]).forEach(function(p){if(!p||p.src_org!==oid||M.both[p.id])return;var nm=pt274Nm(p.name||((wk(p.worker)||{}).name||""));if(!nm)return;
+  (DB.talent||[]).forEach(function(t){if(!t||t.src_org!==oid||M.drop[t.id]||pt274Skip(p,t.id))return;if(p.worker&&t.worker&&p.worker===t.worker)return;var tn=pt274Nm(t.name||((wk(t.worker)||{}).name||""));if(tn===nm)L.push({p:p,t:t})})});return L}
+function pt274Info(o,isT){var w=o.worker&&wk(o.worker),ph=normPhone(o.phone||(w&&w.phone)||""),b=o.birth||(w&&w.birth)||"";return[ph?"연락처 끝 "+ph.slice(-4):"연락처 없음",b?"생일 "+b:"생일 없음",w?"근로자 DB 연결":"근로자 DB 없음"].join(" · ")}
+regSection("org",{id:"pt274",order:9,transform:function(h){try{if(typeof h!=="string"||S.orgPT!=="talent"||!pt274Adm())return h;var oid=S.om;if(!oid||oid==="new")return h;var L=pt274Name(oid);if(!L.length)return h;
+  var k=h.indexOf('<h3 style="margin:4px 0 6px">기관 추천 인재');if(k<0)return h;
+  var b='<div class="pt274box"><b>⚠ 이름이 같은 포트폴리오 · 추천인재 '+L.length+'쌍</b> <span class="small muted">같은 사람이면 한 줄로 합쳐 보여요 · 기록은 그대로 남아요</span>'+L.map(function(x){var nm=x.p.name||((wk(x.p.worker)||{}).name||"");
+    return'<div class="pt274r"><b>'+esc(nm)+'</b><span class="small"><span class="b sm t">PF</span> '+esc(pt274Info(x.p))+'</span><span class="small"><span class="b sm ok">추천</span> '+esc(pt274Info(x.t,1))+'</span><span class="grow"></span><button type="button" class="btn xs pri" data-act="pt274-same" data-p="'+esc(x.p.id)+'" data-t="'+esc(x.t.id)+'">같은 사람</button><button type="button" class="btn xs" data-act="pt274-no" data-p="'+esc(x.p.id)+'" data-t="'+esc(x.t.id)+'">다른 사람</button></div>'}).join("")+'</div>';
+  return h.slice(0,k)+b+h.slice(k)}catch(e){console.warn("[v274 확인]",e);return h}}});
+regActs({"pt274-same":function(D0){if(!pt274Adm())return;var p=pfOf(D0.p),t=(DB.talent||[]).find(function(x){return x.id===D0.t});if(!p||!t)return;
+    if(p.worker&&t.worker&&p.worker!==t.worker){toast("근로자 DB에 두 사람으로 따로 있어요 · 관리자 › 병합에서 먼저 합쳐 주세요");return}var w=p.worker||t.worker;if(!w){toast("둘 다 근로자 DB에 연결이 없어 합칠 수 없어요 · 한쪽을 근로자 DB에 연결해 주세요");return}
+    var nm=(wk(w)||{}).name||p.name||"";if(!p.worker){p.worker=w;logChange("portfolios",p.id,nm,"같은 사람 (추천인재와)","","근로자 DB 연결","내부")}if(!t.worker){t.worker=w;logChange("talent_picks",t.id,nm,"같은 사람 (포트폴리오와)","","근로자 DB 연결","내부")}
+    if(LIVE&&READY)schedulePersist();toast("같은 사람으로 맞췄어요 · 한 줄로 보여요");render()},
+  "pt274-no":function(D0){if(!pt274Adm())return;var p=pfOf(D0.p);if(!p)return;p.notsame=(p.notsame||[]).concat(["x:"+D0.t]);logChange("portfolios",p.id,p.name||"","동일인 아님 (추천인재)","",D0.t,"내부");if(LIVE&&READY)schedulePersist();toast("다른 사람으로 표시했어요 · 다시 묻지 않아요");render()}});
+/* ③ 막기: 근로자 → 추천인재 등록 때 포트폴리오가 있으면 알림 */
+var _talAdd274;talAdd=layer("talAdd",talAdd,11961,"v274 포트폴리오 확인",function(p){_talAdd274=p;return function(o){var t=_talAdd274.apply(this,arguments);try{if(t&&o&&o.worker){var pf=(DB.pf||[]).find(function(x){return x.worker===o.worker&&x.status!=="종료"});if(pf){setTimeout(function(){toast("이 사람은 포트폴리오에도 있어요 · 기관 창 · 인재 풀에서는 한 줄로 보여요")},50)}}}catch(e){}return t}});
+
+/* ================================================================
+   v274-2 채널톡 '공통일 때' 태그 = 파트마다 (표시 이름 · 팀 ID · ID 없을 때 방식)
+     · 팀 ID 있으면 팀 태그 <link type="team"> (14401 로 확인됨) · 없으면 글자만 / 파트 모두 / 안 함
+     · 받는 쪽 'part:채용파트' 처럼 파트 공용이면 그 파트 줄 · 아니면 차례 쪽 파트
+     · 예전 한 줄 설정(team_nm · team_id)은 채용파트 줄로 옮김
+   ================================================================ */
+function tag274Parts(){var P={};(DB.staff||[]).forEach(function(s){if(s&&s.part&&s.active!==false&&!s.inactive)P[s.part]=1});["채용파트","운영파트"].forEach(function(p){P[p]=1});return Object.keys(P).sort(function(a,b){var o=["채용파트","운영파트","영업파트"];var i=o.indexOf(a),j=o.indexOf(b);return(i<0?9:i)-(j<0?9:j)||a.localeCompare(b)})}
+function tag274Def(part){return part==="채용파트"?TAG273_DEF:"인재경영_"+part}
+var _shCfg274;shCfg=layer("shCfg",shCfg,11961,"v274 파트별 공통 태그",function(p){_shCfg274=p;return function(){var c=_shCfg274.apply(this,arguments),v=appSet("ct_share",null)||{},T=v.tagp&&typeof v.tagp==="object"&&!Array.isArray(v.tagp)?v.tagp:null;
+  if(!T){T={};if(v.team_id||v.team_nm)T["채용파트"]={nm:v.team_nm||TAG273_DEF,id:v.team_id||"",mode:v.tag_mode==="all"?"all":"text"}}c.tagp=T;return c}});
+function tag274Row(part){var r=shCfg().tagp[part]||{};return{nm:String(r.nm||"").trim()||tag274Def(part),id:/^[0-9A-Za-z_-]{1,40}$/.test(r.id||"")?r.id:"",mode:/^(text|all|none)$/.test(r.mode||"")?r.mode:"text"}}
+tag273Part=function(part){var r=tag274Row(part);if(r.id)return{ch:'<link type="team" value="'+r.id+'">@'+tag273Esc(r.nm)+'</link>',app:"@"+r.nm};
+  if(r.mode==="all"){var L=(DB.staff||[]).filter(function(s){return s&&s.part===part&&s.active!==false&&!s.inactive}).map(function(s){return tag273One(s.id)}).filter(function(x){return x.ch});if(L.length)return{ch:L.map(function(x){return x.ch}).join(" "),app:L.map(function(x){return x.app}).join(" ")}}
+  if(r.mode==="none")return{ch:"",app:""};return{ch:"@"+tag273Esc(r.nm),app:"@"+r.nm}};
+tag273=function(who,side){var C=shCfg();if(!C.tag)return{ch:"",app:""};var w=String(who||""),m=/^part:(.+)$/.exec(w);if(w&&st(w)&&w.indexOf(":")<0)return tag273One(w);return tag273Part(m?m[1]:(side==="rec"?"채용파트":"운영파트"))};
+function tag274Put(part,o){var T=Object.assign({},shCfg().tagp);T[part]=Object.assign({},tag274Row(part),T[part]||{},o);shPut({tagp:T})}
+var _shSetHtml274;shSetHtml=layer("shSetHtml",shSetHtml,11961,"v274 파트별 공통 태그",function(p){_shSetHtml274=p;return function(){var h=_shSetHtml274.apply(this,arguments),C=shCfg();
+  var rows=tag274Parts().map(function(part){var r=tag274Row(part),q=esc(part),mem=(DB.staff||[]).filter(function(s){return s&&s.part===part&&s.active!==false&&!s.inactive});
+    return'<tr><td><b>'+q+'</b></td><td><input data-tag274="'+q+'|nm" value="'+esc(r.nm)+'" style="width:160px" aria-label="'+q+' 표시 이름"></td><td><input data-tag274="'+q+'|id" value="'+esc(r.id)+'" placeholder="팀 ID" maxlength="40" style="width:100px" aria-label="'+q+' 팀 ID"></td><td class="small">'+
+      (r.id?'<span class="b sm ok">팀 태그</span>':[["text","글자만"],["all","파트 모두"],["none","안 함"]].map(function(m){return'<label><input type="radio" name="tag274-'+q+'" data-tag274="'+q+'|mode" value="'+m[0]+'"'+(r.mode===m[0]?" checked":"")+'> '+m[1]+'</label>'}).join(" ")+(r.mode==="all"?'<div class="small muted">'+mem.map(function(s){return esc(s.name)+(C.mgr[s.id]?"":" (짝 없음)")}).join(" · ")+'</div>':""))+
+      '</td><td><button type="button" class="btn xs" data-act="tag274-test" data-p="'+q+'"'+(C.hire_grp||C.grp?"":" disabled")+'>태그 시험 보내기</button></td></tr>'}).join("");
+  var blk='<div class="sh260row tag273"><span class="small muted">공통일 때</span><span class="small muted">받는 쪽이 파트 공용이면 그 파트 줄대로 태그해요 · 팀 ID가 있으면 팀 태그</span></div><div class="tag274t"><table class="t"><thead><tr><th>파트</th><th>표시 이름</th><th>팀 ID</th><th>ID 없을 때</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return hp(h,/<div class="sh260row tag273"><span class="small muted">공통일 때<\/span>[\s\S]*?<\/div>/,blk,"9650-v274#1")}});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.tag274)return;ev.stopPropagation();var q=t.dataset.tag274.split("|"),part=q[0],f=q[1],v=String(t.value||"").trim(),o={};
+  if(f==="id"){if(v&&!/^[0-9A-Za-z_-]{1,40}$/.test(v)){toast("팀 ID는 숫자 · 영문만 넣어 주세요");return}o.id=v}else if(f==="nm")o.nm=v.slice(0,30)||tag274Def(part);else if(f==="mode")o.mode=v;tag274Put(part,o);toast("저장했어요");render()},true);
+regActs({"tag274-test":function(D0){var part=D0.p,me=st(S.me)||{},a=tag273Part(part),b=tag273One(S.me);shRpc(part==="채용파트"?"hire":"share",null,"■ [시험] 담당자 태그 확인 · "+part+"\n[운영페이지] - ("+(me.part||"")+")","공통("+part+"): "+(a.ch||"(태그 안 함)")+"\n나: "+(b.ch||"(매니저 짝 없음)")+"\n작성 "+(me.name||"")+" · "+stamp(),null,null,false,{kind:"test",by:me.name||""}).then(function(d){toast(d&&d.ok?"보냈어요 · "+(part==="채용파트"?"채용방":"공유 그룹")+"에서 태그 알림을 확인해 주세요":"보내기 실패 · "+(d&&d.why||SH.err||""))})}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
