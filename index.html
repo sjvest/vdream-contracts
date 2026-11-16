@@ -18216,7 +18216,7 @@ var _dtable193;dtable=layer("dtable",dtable,10301,"최근 컨택 03",function(p)
   if(k==="spool"&&Array.isArray(cols)&&rowFn){cols=cols.concat([{k:"lc",h:"최근 컨택",t:"num",v:function(r){return r.lcn==null?9999:r.lcn}}]);var rf=rowFn;rowFn=function(r){return hp(rf.apply(this,arguments),/<\/tr>\s*$/,'<td class="small">'+(r.lcn==null?'<span class="muted">없음</span>':'<span class="'+(r.lcn>ctDays()?"ctold":"")+'">'+(r.lcn===0?"오늘":r.lcn+"일 전")+'</span>')+'</td></tr>',"0226-최근-컨택-03#1")}}
   if(k==="uni"&&Array.isArray(cols)&&rowFn){var lcOf=function(r){var x=r.t?lastCt("tl",r.t):"",y=r.p?lastCt("pf",r.p):"";return[x,y].sort().pop()||""};cols=cols.concat([{k:"lc",h:"최근 컨택",t:"num",v:function(r){var n=ctAgo(lcOf(r));return n==null?9999:n}}]);var rf2=rowFn;
     rowFn=function(r){var n=ctAgo(lcOf(r));return hp(rf2.apply(this,arguments),/<\/tr>\s*$/,'<td class="small c">'+(n==null?'<span class="muted">없음</span>':'<span class="'+(n>ctDays()?"ctold":"")+'">'+(n===0?"오늘":n+"일 전")+'</span>')+'</td></tr>',"0226-최근-컨택-03#2")}}
-  if(k==="exp"&&rowFn){var rf3=rowFn;rowFn=function(e){var h=rf3.apply(this,arguments);try{var ee=e&&e.e?e.e:e,w=ee&&ee.worker;if(!w)return h;var L=wkLinks(w);var add=L.length?' <span class="b sm t tip rlb" tabindex="0" data-tip="'+esc(L.map(function(x){return x.co+" "+x.seq+"차"}).join(" / "))+'">연계 중 · '+esc(L[0].co)+(L.length>1?" 외 "+(L.length-1):"")+'</span>':' <button class="btn xs rlb" data-act="rk-open" data-w="'+esc(w)+'" title="이 근로자를 진행 중인 채용 요청 후보로 넣어요">채용 연계</button>';
+  if(k==="exp"&&rowFn){var rf3=rowFn;rowFn=function(e){var h=rf3.apply(this,arguments);try{var ee=e&&e.e?e.e:e,w=ee&&ee.worker;if(!w)return h;var L=wkLinks(w);var add=L.length?' <span class="b sm t tip rlb" tabindex="0" data-tip="'+esc(L.map(function(x){return x.co+" "+x.seq+"차"}).join(" / "))+'">연계 중 · '+esc(L[0].co)+(L.length>1?" 외 "+(L.length-1):"")+'</span>':rk278Btns(w)/* v278 파트별 버튼 (채용 연계 · 추천인재 등록) */;
       return h.replace(new RegExp('(data-act="go-w" data-id="'+w.replace(/[^\w-]/g,"")+'">[^<]*</button>)'),"$1"+add)}catch(x){return h}}}
   return _dtable193.call(this,k,cols,rows,rowFn,empty)}});
 /* 관리자 설정 */
@@ -19151,8 +19151,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v277 — 공유 알림 설정 한 화면 · 요청자 · 작성자 태그 · 같은 사람 DB 합치기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v277";APP_VER_ON="11/16";APP_NOTE="공유 알림 설정 화면 정리(연결 · 알림 방 · 관리자 노티 · 업무보고 · 알림함) · 요청자 · 작성자 태그 · 추천인재 · 포트폴리오 같은 사람 DB에서 합치기(설정 › 데이터 정리)";
+/* v278 — 계약만료 이름 옆 버튼 파트별 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v278";APP_VER_ON="11/16";APP_NOTE="계약만료 표: 채용파트는 [채용 연계] · 운영파트는 [추천인재 등록] (직무 · 근무시간 미리 채움)";
 
 /* ================================================================
    v208
@@ -23823,6 +23823,28 @@ regActs({"pt277-one":function(D0){if(S.role!=="admin")return;var p=pfOf(D0.p),t=
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="ot-save"]');if(!b)return;var nT=(DB.talent||[]).length,nP=(DB.pf||[]).length;setTimeout(function(){try{
   if((DB.talent||[]).length>nT){var t=DB.talent[DB.talent.length-1],p=(DB.pf||[]).find(function(x){return pt274Same(x,t)});if(p){pt277Merge(p,t);toast("이미 포트폴리오에 있는 사람이라 추천 기록을 포트폴리오에 붙였어요");render()}}
   else if((DB.pf||[]).length>nP){var p2=DB.pf[DB.pf.length-1],t2=(DB.talent||[]).find(function(x){return pt274Same(p2,x)});if(t2){pt277Merge(p2,t2);toast("같은 사람의 추천인재를 새 포트폴리오로 합쳤어요");render()}}}catch(e){console.warn("[v277 막기]",e)}},0)},true);
+
+/* ================================================================
+   v278 계약만료 표 이름 옆 버튼 = 파트별
+     · 채용파트: [채용 연계] (진행 중인 채용 요청 후보로)
+     · 운영파트: [추천인재 등록] → 등록 창 (지금 고용 건 직무 · 기존 근무시간 · 희망 근로시간 미리 채움) · 이미 대기면 '추천인재 대기'
+     · 관리자(관리자 계정): 둘 다 · 다른 파트: 없음 · 연계 중이면 모두 '연계 중' 표시 (그대로)
+   ================================================================ */
+function rk278Btns(w){var adm=S.role==="admin",pt=(st(S.me)||{}).part||"",h="";
+  if(adm||pt==="채용파트")h+=' <button class="btn xs rlb" data-act="rk-open" data-w="'+esc(w)+'" title="이 근로자를 진행 중인 채용 요청 후보로 넣어요">채용 연계</button>';
+  if(adm||pt==="운영파트"){if(talWait(w))h+=' <span class="b sm ok rlb" data-w="'+esc(w)+'" title="이미 추천인재(대기)로 등록돼 있어요">추천인재 대기</span>';else if(!talBlock(w))h+=' <button class="btn xs rlb" data-act="rk278-tal" data-w="'+esc(w)+'" title="재연계할 수 있게 추천인재로 넘겨요 · 직무 · 근무시간은 미리 채워져요">추천인재 등록</button>'}
+  return h}
+function rk278Hours(ps,pe){var m1=/^(\d{1,2}):(\d{2})$/.exec(ps||""),m2=/^(\d{1,2}):(\d{2})$/.exec(pe||"");if(!m1||!m2)return null;var d=((+m2[1])*60+(+m2[2])-(+m1[1])*60-(+m1[2]))/60;if(!(d>0))return null;
+  if(d>=2.9&&d<=3.1)return{h:"3시간"};if(d>=4.4&&d<=4.6)return{h:"4시간"};if(d>=3.9&&d<=4.1)return{h:"4시간"};return{h:"기타",etc:(Math.round(d*10)/10)+"시간 ("+ps+"~"+pe+")"}}
+function rk278Fill(wid){var F=talNewF(wid),E=DB.employments.filter(function(e){return e.worker===wid&&!e.cancelled}).sort(function(a,b){return String((termsOf(b.id)[0]||{}).start||"").localeCompare(String((termsOf(a.id)[0]||{}).start||""))}),e=E.find(function(x){return activeEmp(x)})||E[0];
+  if(e){if(!F.job&&e.job)F.job=e.job;if((!F.ps||!F.pe)&&e.rr){var r=rcOf(e.rr);if(r&&r.time_note){var m=String(r.time_note).match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);if(m){F.ps=pad(+m[1])+":"+m[2];F.pe=pad(+m[3])+":"+m[4]}}}}
+  var H=rk278Hours(F.ps,F.pe);if(H&&!F.hours){F.hours=H.h;if(H.etc)F.hoursEtc=H.etc}F.reason=F.reason||"";
+  /* 지금 등록 창은 직무 · 근로시간을 칩(F.jobs · F.hrs)으로 받음 */
+  F.jobs=Array.isArray(F.jobs)?F.jobs.slice():[];F.hrs=Array.isArray(F.hrs)?F.hrs.slice():[];
+  if(e&&e.job&&!F.jobs.length){var J=typeof TAL_JOBS!=="undefined"?TAL_JOBS:[],j=String(e.job),hit=J.find(function(x){return x!=="기타"&&(j.indexOf(x)>=0||x.indexOf(j)>=0||(x==="사무행정"&&/사무|행정|데이터|입력/.test(j)))});if(hit)F.jobs.push(hit);else{F.jobs.push("기타");F.job_etc=j}}
+  if(!F.hrs.length&&H){var hh=H.h!=="기타"?H.h:(function(){var m=/^([\d.]+)시간/.exec(H.etc||"");return m?Math.floor(+m[1])+"시간":""})();if(hh)F.hrs.push(hh)}
+  return F}
+regActs({"rk278-tal":function(D0){var w=D0.w;if(!wk(w))return;if(talWait(w)){toast("이미 추천인재(대기)로 등록돼 있어요");return}if(talBlock(w)){toast("중도퇴사자는 추천인재로 등록하지 않아요");return}S.talW=rk278Fill(w);S.jdD={v:""};render()}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
