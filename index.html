@@ -1902,6 +1902,8 @@ label.rr265tk{opacity:.6}
 .rm276r{display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px;align-items:center;margin:5px 0;font-size:13px}.rm276f{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rm276b{display:flex;justify-content:flex-end;gap:6px;margin-top:4px}
 .rm276k{display:inline-flex;align-items:center;gap:3px;font-size:12px;padding:1px 4px 1px 9px;border-radius:999px;background:#EEEAFB;color:#3C3489;margin:2px 4px 2px 0}.rm276k.off{background:#F1EFE8;color:#5F5E5A}.rm276k .x{border:0;background:none;cursor:pointer;color:inherit;padding:0 4px;font-size:13px}
 .rm276add{font-size:12px;height:26px;margin:2px 0}.rm276m td.c,.rm276m th.c{text-align:center}.rm276m tr.dup td{background:#FFF4E2}.rm276m tr.off td{color:var(--ink-3,#888)}
+/* v277 공유 알림 설정 한 화면 */
+.sh277s{border-top:1px solid var(--line-2);margin-top:10px;padding-top:8px}.sh277h{margin-bottom:4px}.sh277h b{font-size:13.5px}.sh277miss{margin:6px 0 2px;padding:6px 10px;border-radius:8px;background:#FFF4E2;color:#854F0B;font-size:12.5px}.sh260set .rm276g{margin-top:4px}
 </style>
 </head>
 <body>
@@ -19149,8 +19151,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v276 — 채널톡 알림 방 (파트별 · 이관 · 공통 · 중복) · 수급 요청 발굴방 알림 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v276";APP_VER_ON="11/16";APP_NOTE="채널톡 알림 방: 파트마다 채널 · 태그 · 받을 알림 (옮기기 · 공통 · 같이 받기 · 한눈에 보기) · 인재 수급 요청 → 발굴방 알림 (장애유형 · 마감 · 취소/완료 답글)";
+/* v277 — 공유 알림 설정 한 화면 · 요청자 · 작성자 태그 · 같은 사람 DB 합치기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v277";APP_VER_ON="11/16";APP_NOTE="공유 알림 설정 화면 정리(연결 · 알림 방 · 관리자 노티 · 업무보고 · 알림함) · 요청자 · 작성자 태그 · 추천인재 · 포트폴리오 같은 사람 DB에서 합치기(설정 › 데이터 정리)";
 
 /* ================================================================
    v208
@@ -22426,17 +22428,7 @@ function shDgSend(force){var C=shCfg();if(!C.dg||!C.admin_grp||!LIVE||!READY||!S
   try{localStorage.setItem(k,"1")}catch(e){}}
 regAfter("v260 관리자 노티",function(){if(READY&&S.me)setTimeout(function(){shDgSend(false)},5000)});
 /* ---------- ⑦ 관리자 › 설정 › 공유 알림 ---------- */
-function shSetHtml(){var C=shCfg(),grp=SH.grp.list||[];var gsel=function(k,nk){var v=C[k],nm=C[nk];return'<select data-sh260g="'+k+'"><option value="">'+(v?esc(nm||v):"고르기")+'</option>'+grp.map(function(g){return'<option value="'+esc(g.id)+'"'+(g.id===v?" selected":"")+'>'+esc(g.name)+'</option>'}).join("")+'</select>'+(v&&!grp.length?' <span class="small muted">'+esc(nm||"")+' · '+esc(v)+'</span>':"")};
-  var late=(DB.logs||[]).filter(function(l){return l.table==="share"&&/late:\d+/.test(l.before||"")}).slice(0,10);
-  var h='<div class="card dutycard sh260set"><b>공유 알림 (채널톡)</b> <span class="small muted">담당자가 작업하면 저절로 · 채널톡 팀챗과 알림함에 같은 내용 · 키는 서버에만</span>'+(SH.noSrv?'<div class="b warn" style="margin-top:6px">서버 함수가 없어요 · v260 SQL을 실행해 주세요</div>':"")+
-    '<div class="sh260row"><span class="small muted">공유 알림 그룹</span>'+gsel("grp","grp_n")+'<button class="btn xs" data-act="sh260-groups">그룹 불러오기</button><button class="btn xs" data-act="sh260-test" data-c="share"'+(C.grp?"":" disabled")+'>시험 보내기</button></div>'+
-    '<div class="sh260row"><span class="small muted">관리자 노티 그룹</span>'+gsel("admin_grp","admin_grp_n")+'<button class="btn xs" data-act="sh260-test" data-c="admin"'+(C.admin_grp?"":" disabled")+'>시험 보내기</button><label class="small"><input type="checkbox" data-sh260o="dg"'+(C.dg?" checked":"")+'> 하루 한 번 보내기 (9시 이후)</label><button class="btn xs" data-act="sh260-dgnow"'+(C.admin_grp?"":" disabled")+'>지금 한 번 보내기</button></div>'+
-    '<div class="sh260row"><span class="small muted">알림 종류</span><div class="ochips">'+SH_K.map(function(k){var on=shOn(k[0]);return'<label class="ochip'+(on?" on":"")+'" title="'+esc(k[3])+'"><input type="checkbox" data-sh260k="'+k[0]+'"'+(on?" checked":"")+'> '+esc(k[1])+'</label>'}).join("")+'</div></div>'+
-    '<div class="sh260row"><span class="small muted">알림함 받는 사람</span>'+[["mgr","기업 담당"],["bk","대무자"],["lead","파트 관리자"]].map(function(x){return'<label class="small"><input type="checkbox" data-sh260t="'+x[0]+'"'+(C.to[x[0]]?" checked":"")+'> '+x[1]+'</label>'}).join(" ")+'</div>'+
-    '<div class="sh260row"><span class="small muted">늦은 처리 기준</span><input type="number" min="1" max="60" data-sh260o="late" value="'+C.late+'" style="width:64px" aria-label="늦은 처리 기준 일수"><span class="small muted">일 지나 처리하면 제목에 ⚠</span><label class="small"><input type="checkbox" data-sh260o="bc"'+(C.bc?" checked":"")+'> 스레드 답글을 대화창에도 보이기</label></div>'+
-    '<div class="sh260row"><span class="small muted">관리자 노티 항목</span>'+SH_DG.map(function(P){return'<div class="ochips"><b class="small">'+P[1]+'</b>'+P[2].map(function(it){var on=shItemOn(it[0]);return'<label class="ochip'+(on?" on":"")+'"><input type="checkbox" data-sh260i="'+it[0]+'"'+(on?" checked":"")+'> '+esc(it[1])+'</label>'}).join("")+'</div>'}).join("")+'</div>'+
-    '<div class="sh260row"><span class="small muted">늦은 처리 (최근)</span>'+(late.length?'<div class="sh260late">'+late.map(function(l){var m=/late:(\d+)/.exec(l.before);return'<div class="small">'+esc(md(String(l.at).slice(0,10)))+' · '+esc(String(l.label||"").replace(/^■ /,""))+' · '+esc(l.by||"")+' <span class="b sm warn">'+m[1]+'일</span></div>'}).join("")+'</div>':'<span class="small muted">없어요</span>')+'</div></div>';
-  return h}
+function shSetHtml(){return""}/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 regAfter("v260 설정 공유 알림",function(){if(S.view!=="set"||S.role!=="admin")return;if(document.querySelector("#main .sh260set"))return;var L=document.querySelector('#main .stp[data-tab="link"]');/* 설정 탭 '연동 · 알림' */
   if(L){L.insertAdjacentHTML("afterbegin",shSetHtml());return}var d=document.querySelector("#main .dutycard");if(d)d.insertAdjacentHTML("afterend",shSetHtml())});
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.closest||!t.closest(".sh260set"))return;var C=shCfg(),D=t.dataset;
@@ -22488,10 +22480,7 @@ SH_DG[0][2].push(["ctfail","채널톡 전송 실패 (어제까지 3일)"]);
 var _shDigest261;shDigest=layer("shDigest",shDigest,11841,"v261",function(p){_shDigest261=p;return function(){var G=_shDigest261.apply(this,arguments);try{if(shItemOn("ctfail")&&CT261.rows){var y=addD(TODAY,-3);CT261.rows.filter(function(r){return r.chan==="share"&&ct261Bad(r)&&String(r.at).slice(0,10)>=y&&String(r.at).slice(0,10)<TODAY}).forEach(function(r){var q=shParse263(r.title);shDgAdd(G,"운영파트","공통",(q.co?"["+q.co+"] "+(q.wk?q.wk+" ":"")+q.kind:q.kind)+" · 채널톡 전송 실패 · "+ct261Why(r))/* v263 *//* v262 [기업명] 업무명 */});
   Object.keys(G).forEach(function(p){var o=G[p],ks=Object.keys(o.by).sort(function(a,b){return a==="공통"?1:b==="공통"?-1:o.by[b].length-o.by[a].length});o.order=ks;o.sum=o.n+"건 · "+ks.map(function(k){return k.replace(/ \(.*$/,"")+" "+o.by[k].length}).join(" · ")})}}catch(e){}return G}});
 /* ---------- 설정: 그룹 ID 직접 입력 · 보낸 기록 ---------- */
-var _shSetHtml261;shSetHtml=layer("shSetHtml",shSetHtml,11841,"v261",function(p){_shSetHtml261=p;return function(){var h=_shSetHtml261.apply(this,arguments),C=shCfg();
-  h=hp(h,/(<select data-sh260g="(grp|admin_grp)">[\s\S]*?<\/select>)/g,function(m,a,k){return a+'<input class="ct261id" data-sh261id="'+k+'" placeholder="ID 직접 입력" aria-label="'+(k==="grp"?"공유 알림":"관리자 노티")+' 그룹 ID 직접 입력" value="" maxlength="40">'},"9530-v261-2#1");
-  if(!C.grp)h=hp(h,'<div class="sh260row">','<div class="b warn ct261no">채널톡 그룹 미설정 · 지금은 알림함에만 표시 중이에요 · 그룹을 고르거나 ID를 직접 넣어 주세요</div><div class="sh260row">',"9530-v261-2#2");
-  return h+ct261LogHtml()}});
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 function ct261LogHtml(){var C=shCfg();if(!LIVE);
   var R=(CT261.rows||[]).filter(function(r){return r.chan==="share"||r.chan==="admin"}),f=CT261.f,mine=function(r){var c=comp((r.meta||{}).cid)||{};return c.manager===S.me||c.backup===S.me};
   var L=R.filter(function(r){return f==="all"?true:f==="fail"?ct261Bad(r):f==="mine"?mine(r):String(r.at).slice(0,10)===TODAY||new Date(r.at).toDateString()===new Date().toDateString()});
@@ -22532,8 +22521,7 @@ var _shDigest262;shDigest=layer("shDigest",shDigest,11851,"v262",function(p){_sh
   var ks=Object.keys(o.by).sort(function(a,b){return a==="공통"?1:b==="공통"?-1:o.by[b].length-o.by[a].length});o.order=ks;o.sum=o.n+"건 · "+ks.map(function(k){return k.replace(/ \(.*$/,"")+" "+o.by[k].length}).join(" · ")})}catch(e){}return G}});
 /* 봇 이름 (설정에 남기기 · 서버가 읽음) */
 var _shCfg262;shCfg=layer("shCfg",shCfg,11851,"v262",function(p){_shCfg262=p;return function(){var c=_shCfg262.apply(this,arguments),v=appSet("ct_share",null);c.bot=v&&typeof v==="object"&&v.bot?String(v.bot):"";return c}});
-var _shSetHtml262;shSetHtml=layer("shSetHtml",shSetHtml,11851,"v262",function(p){_shSetHtml262=p;return function(){var h=_shSetHtml262.apply(this,arguments),C=shCfg(),a='<div class="sh260row"><span class="small muted">알림 종류';
-  return h.replace(a,'<div class="sh260row"><span class="small muted">봇 이름</span><input data-sh262bot maxlength="20" style="width:150px" value="'+esc(C.bot||"운영페이지")+'" aria-label="채널톡 봇 이름"><span class="small muted">채널톡에 보이는 보낸 사람 이름 · 한글 · 영문 · 숫자 20자</span></div>'+a)}});
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.hasAttribute||!t.hasAttribute("data-sh262bot"))return;ev.stopPropagation();var v=String(t.value||"").trim()||"운영페이지";
   if(!/^[가-힣A-Za-z0-9 _-]{1,20}$/.test(v)){toast("봇 이름은 한글 · 영문 · 숫자 20자까지예요");return}shPut({bot:v});toast("봇 이름을 저장했어요 · [시험 보내기]로 확인해 주세요");render()},true);
 
@@ -22807,10 +22795,7 @@ setInterval(function(){try{rep264Send(false)}catch(e){}},60000);
 regAfter("v264 업무보고",function(){if(READY&&S.me)setTimeout(function(){try{rep264Send(false)}catch(e){}},8000)});
 /* v270 '오늘 한 줄 보고' 입력칸 지움 (승인 안 된 기능) · 입력된 값(DB.meta rep:날짜:담당)은 지우지 않음 */
 /* 설정 */
-var _shSetHtml264;shSetHtml=layer("shSetHtml",shSetHtml,11871,"v264",function(p){_shSetHtml264=p;return function(){var h=_shSetHtml264.apply(this,arguments),C=shCfg(),grp=SH.grp.list||[],a='<div class="sh260row"><span class="small muted">봇 이름';
-  var row='<div class="sh260row"><span class="small muted">업무보고 그룹</span><select data-sh260g="rep_grp"><option value="">'+(C.rep_grp?esc(C.rep_grp_n||C.rep_grp):"고르기")+'</option>'+grp.map(function(g){return'<option value="'+esc(g.id)+'"'+(g.id===C.rep_grp?" selected":"")+'>'+esc(g.name)+'</option>'}).join("")+'</select>'+(C.rep_grp&&!grp.length?' <span class="small muted">'+esc(C.rep_grp_n||"")+' · '+esc(C.rep_grp)+'</span>':"")/* v273 다른 그룹처럼 이름 · ID */+'<input class="ct261id" data-sh261id="rep_grp" placeholder="ID 직접 입력" maxlength="40" aria-label="업무보고 그룹 ID 직접 입력"><button class="btn xs" data-act="sh260-test" data-c="report"'+(C.rep_grp?"":" disabled")+'>시험 보내기</button>'+
-    '<label class="small"><input type="checkbox" data-sh264o="rep"'+(C.rep?" checked":"")+'> 영업일</label><input type="time" step="300" data-sh264o="rep_at" value="'+esc(C.rep_at)+'" aria-label="업무보고 시각"><span class="small muted">파트마다 원글 · 사람마다 스레드</span><button class="btn xs" data-act="rep264-now"'+(C.rep_grp?"":" disabled")+'>지금 한 번 보내기</button></div>';
-  return h.indexOf(a)>=0?h.replace(a,row+a):h}});
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.sh264o)return;ev.stopPropagation();var o={};if(t.dataset.sh264o==="rep")o.rep=t.checked;else{if(!/^\d{2}:\d{2}$/.test(t.value)){toast("시각을 골라 주세요");return}o.rep_at=t.value}shPut(o);toast("저장했어요");render()},true);
 regActs({"rep264-now":function(){askConfirm("업무보고 지금 보내기","오늘 기준 업무보고를 업무보고 그룹에 지금 한 번 보낼까요? (영업일 자동 발송과 별개)","보내기",function(){toast(rep264Send(true)?"보냈어요":"보낼 수 없어요 · 그룹 · 연결을 확인해 주세요")})}});
 
@@ -23324,9 +23309,7 @@ function rep269Parts(){var L=["운영파트","채용파트","영업파트","발�
 var _shCfg269;shCfg=layer("shCfg",shCfg,11921,"v269",function(p){_shCfg269=p;return function(){var c=_shCfg269.apply(this,arguments),v=appSet("ct_share",null)||{},P=v.rep_parts&&typeof v.rep_parts==="object"?v.rep_parts:null,o={};rep269Parts().forEach(function(p){o[p]=P&&p in P?!!P[p]:!!REP269_DEF[p]});c.rep_parts=o;return c}});
 function rep269On(part){var o=shCfg().rep_parts||{};return part in o?!!o[part]:!!REP269_DEF[part]}
 var _rep264Data269;rep264Data=layer("rep264Data",rep264Data,11921,"v269",function(p){_rep264Data269=p;return function(){var P=_rep264Data269.apply(this,arguments),o={};Object.keys(P||{}).forEach(function(k){if(rep269On(k))o[k]=P[k]});return o}});
-var _shSetHtml269;shSetHtml=layer("shSetHtml",shSetHtml,11921,"v269",function(p){_shSetHtml269=p;return function(){var h=_shSetHtml269.apply(this,arguments),a='<div class="sh260row"><span class="small muted">봇 이름';if(typeof h!=="string"||h.indexOf(a)<0)return h;var o=shCfg().rep_parts||{};
-  var row='<div class="sh260row rep269"><span class="small muted">업무보고 파트</span>'+rep269Parts().map(function(p){return'<label class="ckl small"><input type="checkbox" data-rep269="'+esc(p)+'"'+(o[p]?" checked":"")+'> '+esc(p)+'</label>'}).join("")+'<span class="small muted">켠 파트만 보내요</span></div>';
-  return h.replace(a,row+a)}});
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.rep269==null)return;ev.stopPropagation();var o=Object.assign({},shCfg().rep_parts||{});o[t.dataset.rep269]=t.checked;shPut({rep_parts:o});toast(t.dataset.rep269+" 업무보고 "+(t.checked?"켬":"끔"));render()},true);
 
 /* ---------- ② 화면 그리는 중 남는 기록 = 자동 ---------- */
@@ -23572,7 +23555,8 @@ var _tk4Share273;tk4Share=layer("tk4Share",tk4Share,11951,"v273 받는 쪽 기�
   else lines=M.A.map(function(row){var R=tk4Res(t,row.c),b=tk4Bad(t,row.c);return"· "+row.o.name+": "+I.map(function(x){return tk4Lab(x)+" "+(R[x.k]||((row.c.g||{})[x.k]==="미동의"?"미동의":"—"))}).join(" · ")+(row.c.m?" ("+row.c.m+")":"")+(b.length?" ⚠":"")});
   if(t.due&&toRec)lines.push("· 언제까지: "+md(t.due));
   var who=tkWho(t),tg=tag273(who,toRec?"rec":"ops"),head="["+tk273Org(t)+"] "+(toRec?"채용파트 차례":"운영파트 차례");
-  var body=(tg.ch?tg.ch+" ":"")+head+"\n"+H.by+"\n"+lines.join("\n"),app=(tg.app?tg.app+" ":"")+head+"\n"+H.by+"\n"+lines.join("\n");
+  var myT=shCfg().tag?tag273One(S.me):{ch:""},byCh=myT.ch?H.by.replace(/^작성 [^·]+/,"작성 "+myT.ch+" "):H.by;/* v277 작성자(넘긴 사람) 태그 */
+  var body=(tg.ch?tg.ch+" ":"")+head+"\n"+byCh+"\n"+lines.join("\n"),app=(tg.app?tg.app+" ":"")+head+"\n"+H.by+"\n"+lines.join("\n");
   var to=[who].filter(function(x){return x&&st(x)&&x!==S.me});shOut({kind:kind,cid:r.company,key:null,title:H.t,body:body,app:app,reply:null,to:to.length?to:undefined,wk:N.join(", "),chan:toRec?"hire":"share"})}});
 /* ---------- ③ 근로자 요청 흐름 ---------- */
 function tkWC(t,k){return tk4C(t,k)}
@@ -23607,17 +23591,7 @@ regActs({"tk273-hand":function(D0){var t=tkOf(D0.id);if(!t)return;var M=tk4M(t),
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="tk2-create"]');if(!b)return;var n0=(DB.talks||[]).length;setTimeout(function(){setTimeout(function(){var x=(DB.talks||[]).length>n0?DB.talks[DB.talks.length-1]:null;if(!x||!tk273W(x))return;
   var I=tk4Def(rcOf(x.rr)).map(function(i){return Object.assign({},i,{on:i.k==="wh"})});tk4Set(x,I);x.turn=tk2MyPart()==="운영파트"?"ops":"rec";S.tk4Ed=x.id;tkSave();render()},0)},0)},true);
 /* ---------- ② 설정: 채용방 그룹 · 담당자 태그 ---------- */
-var _shSetHtml273;shSetHtml=layer("shSetHtml",shSetHtml,11951,"v273",function(p){_shSetHtml273=p;return function(){var h=_shSetHtml273.apply(this,arguments),C=shCfg(),grp=SH.grp.list||[],ML=SH.mgrL||[];
-  var row='<div class="sh260row"><span class="small muted">채용방 그룹</span><select data-sh260g="hire_grp"><option value="">'+(C.hire_grp?esc(C.hire_grp_n||C.hire_grp):"고르기")+'</option>'+grp.map(function(g){return'<option value="'+esc(g.id)+'"'+(g.id===C.hire_grp?" selected":"")+'>'+esc(g.name)+'</option>'}).join("")+'</select>'+(C.hire_grp&&!grp.length?' <span class="small muted">'+esc(C.hire_grp_n||"")+' · '+esc(C.hire_grp)+'</span>':"")+
-    '<input class="ct261id" data-sh261id="hire_grp" placeholder="ID 직접 입력" maxlength="40" aria-label="채용방 그룹 ID 직접 입력"><button class="btn xs" data-act="sh260-test" data-c="hire"'+(C.hire_grp?"":" disabled")+'>시험 보내기</button><span class="small muted">처우 협의 · 채용파트로 넘김 (비어 있으면 공유 그룹)</span></div>';
-  var act=(DB.staff||[]).filter(function(s){return s&&s.active!==false&&!s.inactive}).sort(function(a,b){return String(a.part||"").localeCompare(String(b.part||""))||String(a.name||"").localeCompare(String(b.name||""))});
-  var nOk=act.filter(function(s){return C.mgr[s.id]}).length,open=!!S.tag273O;
-  var tag='<div class="sh260row tag273"><span class="small muted">담당자 태그</span><label class="small"><input type="checkbox" data-sh273="tag"'+(C.tag?" checked":"")+'> 받는 담당 태그</label><button class="btn xs" data-act="tag273-load">매니저 불러오기</button><span class="small muted">짝 맞춘 직원 '+nOk+' / '+act.length+'명</span><button class="linkbtn small" data-act="tag273-fold">'+(open?"접기":"직원 ↔ 매니저 보기")+'</button></div>'+
-    '<div class="sh260row tag273"><span class="small muted">공통일 때</span>'+[["team","팀 태그"],["all","파트 모두"],["text","글자만"]].map(function(m){return'<label class="small"><input type="radio" name="tag273m" data-sh273="tag_mode" value="'+m[0]+'"'+(C.tag_mode===m[0]?" checked":"")+'> '+m[1]+'</label>'}).join("")+
-    '<input data-sh273="team_nm" value="'+esc(C.team_nm)+'" placeholder="팀 이름" style="width:150px" aria-label="팀 이름"><input data-sh273="team_id" value="'+esc(C.team_id)+'" placeholder="팀 ID (팀 태그일 때)" maxlength="40" style="width:150px" aria-label="팀 ID"><button class="btn xs" data-act="tag273-test"'+(C.hire_grp||C.grp?"":" disabled")+'>태그 시험 보내기</button><span class="small muted">팀 태그는 채널톡 문서에 없는 방식이라 시험해 보고 써 주세요</span></div>';
-  if(open)tag+='<div class="tag273t"><table class="t"><thead><tr><th>직원</th><th>파트</th><th>채널톡 매니저</th></tr></thead><tbody>'+act.map(function(s){var m=C.mgr[s.id]||"",hit=ML.find(function(x){return x.id===m});
-    return'<tr><td>'+esc(s.name)+'</td><td class="small">'+esc(s.part||"")+'</td><td>'+(ML.length?'<select data-tag273m="'+esc(s.id)+'"><option value="">— 없음 —</option>'+ML.map(function(x){return'<option value="'+esc(x.id)+'"'+(x.id===m?" selected":"")+'>'+esc(x.name)+(x.email?" · "+esc(x.email):"")+'</option>'}).join("")+'</select>':'<input data-tag273m="'+esc(s.id)+'" value="'+esc(m)+'" placeholder="매니저 ID" maxlength="40">')+(m&&!hit&&ML.length?' <span class="small muted">'+esc(m)+'</span>':"")+'</td></tr>'}).join("")+'</tbody></table></div>';
-  var a='<div class="sh260row"><span class="small muted">업무보고 그룹';return h.indexOf(a)>=0?h.replace(a,row+tag+a):h+row+tag}});
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 function tag273Auto(){var C=shCfg(),ML=SH.mgrL||[],M=Object.assign({},C.mgr),n=0;(DB.staff||[]).forEach(function(s){if(!s||M[s.id])return;var em=String(s.email||"").toLowerCase(),hit=em&&ML.find(function(x){return String(x.email||"").toLowerCase()===em});
   if(!hit){var L=ML.filter(function(x){return x.name&&x.name===s.name});if(L.length===1)hit=L[0]}if(hit){M[s.id]=hit.id;n++}});if(n)shPut({mgr:M});return n}
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)return;
@@ -23688,16 +23662,10 @@ tag273Part=function(part){var r=tag274Row(part);if(r.id)return{ch:'<link type="t
   if(r.mode==="none")return{ch:"",app:""};return{ch:"@"+tag273Esc(r.nm),app:"@"+r.nm}};
 tag273=function(who,side){var C=shCfg();if(!C.tag)return{ch:"",app:""};var w=String(who||""),m=/^part:(.+)$/.exec(w);if(w&&st(w)&&w.indexOf(":")<0)return tag273One(w);return tag273Part(m?m[1]:(side==="rec"?"채용파트":"운영파트"))};
 function tag274Put(part,o){var T=Object.assign({},shCfg().tagp);T[part]=Object.assign({},tag274Row(part),T[part]||{},o);shPut({tagp:T})}
-var _shSetHtml274;shSetHtml=layer("shSetHtml",shSetHtml,11961,"v274 파트별 공통 태그",function(p){_shSetHtml274=p;return function(){var h=_shSetHtml274.apply(this,arguments),C=shCfg();
-  var rows=tag274Parts().map(function(part){var r=tag274Row(part),q=esc(part),mem=(DB.staff||[]).filter(function(s){return s&&s.part===part&&s.active!==false&&!s.inactive});
-    return'<tr><td><b>'+q+'</b></td><td><input data-tag274="'+q+'|nm" value="'+esc(r.nm)+'" style="width:160px" aria-label="'+q+' 표시 이름"></td><td><input data-tag274="'+q+'|id" value="'+esc(r.id)+'" placeholder="팀 ID" maxlength="40" style="width:100px" aria-label="'+q+' 팀 ID"></td><td class="small">'+
-      (r.id?'<span class="b sm ok">팀 태그</span>':[["text","글자만"],["all","파트 모두"],["none","안 함"]].map(function(m){return'<label><input type="radio" name="tag274-'+q+'" data-tag274="'+q+'|mode" value="'+m[0]+'"'+(r.mode===m[0]?" checked":"")+'> '+m[1]+'</label>'}).join(" ")+(r.mode==="all"?'<div class="small muted">'+mem.map(function(s){return esc(s.name)+(C.mgr[s.id]?"":" (짝 없음)")}).join(" · ")+'</div>':""))+
-      '</td><td><button type="button" class="btn xs" data-act="tag274-test" data-p="'+q+'"'+(C.hire_grp||C.grp?"":" disabled")+'>태그 시험 보내기</button></td></tr>'}).join("");
-  var blk='<div class="sh260row tag273"><span class="small muted">공통일 때</span><span class="small muted">받는 쪽이 파트 공용이면 그 파트 줄대로 태그해요 · 팀 ID가 있으면 팀 태그</span></div><div class="tag274t"><table class="t"><thead><tr><th>파트</th><th>표시 이름</th><th>팀 ID</th><th>ID 없을 때</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-  return hp(h,/<div class="sh260row tag273"><span class="small muted">공통일 때<\/span>[\s\S]*?<\/div>/,blk,"9650-v274#1")}});
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.tag274)return;ev.stopPropagation();var q=t.dataset.tag274.split("|"),part=q[0],f=q[1],v=String(t.value||"").trim(),o={};
   if(f==="id"){if(v&&!/^[0-9A-Za-z_-]{1,40}$/.test(v)){toast("팀 ID는 숫자 · 영문만 넣어 주세요");return}o.id=v}else if(f==="nm")o.nm=v.slice(0,30)||tag274Def(part);else if(f==="mode")o.mode=v;tag274Put(part,o);toast("저장했어요");render()},true);
-regActs({"tag274-test":function(D0){var part=D0.p,me=st(S.me)||{},a=tag273Part(part),b=tag273One(S.me);shRpc(typeof rmGrp==="function"&&rmGrp(part)?"room:"+part:(part==="채용파트"?"hire":"share")/* v276 그 파트 방으로 */,null,"■ [시험] 담당자 태그 확인 · "+part+"\n[운영페이지] - ("+(me.part||"")+")","공통("+part+"): "+(a.ch||"(태그 안 함)")+"\n나: "+(b.ch||"(매니저 짝 없음)")+"\n작성 "+(me.name||"")+" · "+stamp(),null,null,false,{kind:"test",by:me.name||""}).then(function(d){toast(d&&d.ok?"보냈어요 · "+(part==="채용파트"?"채용방":"공유 그룹")+"에서 태그 알림을 확인해 주세요":"보내기 실패 · "+(d&&d.why||SH.err||""))})}});
+regActs({"tag274-test":function(D0){var part=D0.p,me=st(S.me)||{},a=tag273Part(part),b=tag273One(S.me);if(typeof rmGrp==="function"&&!rmGrp(part)){toast(part+" 방에 채널이 없어요 · 채널을 먼저 골라 주세요");return}/* v277 공통방으로 빠지지 않게 */shRpc("room:"+part,null,"■ [시험] 담당자 태그 확인 → "+part+" 방\n[운영페이지] - ("+(me.part||"")+")","공통("+part+"): "+(a.ch||"(태그 안 함)")+"\n나: "+(b.ch||"(매니저 짝 없음)")+"\n작성 "+(me.name||"")+" · "+stamp(),null,null,false,{kind:"test",by:me.name||""}).then(function(d){toast(d&&d.ok?"보냈어요 · "+(part==="채용파트"?"채용방":"공유 그룹")+"에서 태그 알림을 확인해 주세요":"보내기 실패 · "+(d&&d.why||SH.err||""))})}});
 
 /* ================================================================
    v276 채널톡 알림 방 (파트별)
@@ -23739,15 +23707,10 @@ function rm276Card(k){var C=shCfg(),grp=SH.grp.list||[],g=rmGrp(k),gn=rmGrpN(k),
     (r.id?'<span class="b sm ok">팀 태그</span>':'<span class="small muted">ID 없을 때</span>'+[["text","글자만"],["all","파트 모두"],["none","안 함"]].map(function(m){return'<label class="small"><input type="radio" name="tag274-'+q+'" data-tag274="'+q+'|mode" value="'+m[0]+'"'+(r.mode===m[0]?" checked":"")+'> '+m[1]+'</label>'}).join(""))+'</div></div>'}
   h+='<div class="rm276r" style="align-items:start"><span class="small muted" style="padding-top:4px">이 방으로</span><div>'+(mine.length?mine.map(function(x){var n=rmOf(x[0]).length;return'<span class="rm276k'+(shOn(x[0])?"":" off")+'">'+esc(x[1])+(n>1?' <i class="small" title="다른 방에도 가요">+'+(n-1)+'</i>':"")+(shOn(x[0])?"":' <i class="small">꺼짐</i>')+'<button type="button" class="x" data-act="rm276-off" data-k="'+esc(x[0])+'" data-r="'+q+'" aria-label="이 방에서 빼기" title="이 방에서 빼기">×</button></span>'}).join(""):'<span class="small muted">아직 없어요</span>')+
     (rest.length?'<select class="rm276add" data-rm276add="'+q+'"><option value="">+ 알림 가져오기</option>'+rest.map(function(x){var o=rmOf(x[0]);return'<option value="'+esc(x[0])+'">'+esc(x[1])+' ('+(o.length?esc(o.join(" · ")):"보내지 않음")+')</option>'}).join("")+'</select>':"")+'</div></div>';
-  h+='<div class="rm276b"><button type="button" class="btn xs" data-act="rm276-test" data-r="'+q+'"'+(g?"":" disabled")+'>시험 보내기</button>'+(isC?"":'<button type="button" class="btn xs" data-act="tag274-test" data-p="'+q+'"'+(C.grp||g?"":" disabled")+'>태그 시험 보내기</button>')+'</div></div>';return h}
-function rm276Matrix(){var R=rmList(),K=rm276Kinds();return'<div class="rm276m"><table class="t"><thead><tr><th>알림</th>'+R.map(function(r){return'<th class="c">'+esc(r===ROOM_C?"공통방":r)+(rmGrp(r)?"":'<div class="small muted" style="font-weight:400">채널 없음</div>')+'</th>'}).join("")+'</tr></thead><tbody>'+
-  K.map(function(x){var o=rmOf(x[0]),dup=o.length>1;return'<tr class="'+(dup?"dup":"")+(shOn(x[0])?"":" off")+'"><td>'+esc(x[1])+(shOn(x[0])?"":' <span class="small muted">(꺼짐)</span>')+(o.length?"":' <span class="b sm">보내지 않음</span>')+(dup?' <span class="b sm warn">'+o.length+'곳</span>':"")+'</td>'+R.map(function(r){return'<td class="c"><input type="checkbox" data-rm276x="'+esc(x[0])+'|'+esc(r)+'"'+(o.indexOf(r)>=0?" checked":"")+' aria-label="'+esc(x[1])+' → '+esc(r)+'"></td>'}).join("")+'</tr>'}).join("")+'</tbody></table><p class="small muted" style="margin:4px 0 0">한 알림을 여러 방에 체크하면 방마다 따로 가요 (같은 사람이 두 번 받을 수 있어요) · 알림 켜고 끄기는 아래 목록에서</p></div>'}
-var _shSetHtml276;shSetHtml=layer("shSetHtml",shSetHtml,11971,"v276 알림 방",function(p){_shSetHtml276=p;return function(){var h=_shSetHtml276.apply(this,arguments);try{
-  h=hp(h,/<div class="sh260row"><span class="small muted">채용방 그룹<\/span>[\s\S]*?<\/div>/,"","9660-v276#1");
-  h=hp(h,/<div class="sh260row tag273"><span class="small muted">공통일 때<\/span>[\s\S]*?<\/div><div class="tag274t">[\s\S]*?<\/table><\/div>/,"","9660-v276#2");
-  var blk='<div class="rm276"><div class="rm276top"><b>알림 방</b> <span class="small muted">파트마다 채널 · 태그 · 받을 알림 (옮기기 · 공통 · 같이 받기)</span><span class="grow"></span><button type="button" class="btn xs" data-act="sh260-groups">그룹 불러오기</button><button type="button" class="btn xs'+(S.rm276mx?" pri":"")+'" data-act="rm276-mx">'+(S.rm276mx?"카드로 보기":"한눈에 보기")+'</button></div>'+
-    (S.rm276mx?rm276Matrix():'<div class="rm276g">'+rmList().map(rm276Card).join("")+'</div>')+'</div>';
-  var re=/<div class="sh260row"><span class="small muted">공유 알림 그룹<\/span>[\s\S]*?<\/div>/,m=re.exec(h);if(m)h=h.slice(0,m.index)+blk+h.slice(m.index+m[0].length);else h=h+blk}catch(e){console.warn("[v276 화면]",e)}return h}});
+  h+='<div class="rm276b"><button type="button" class="btn xs" data-act="rm276-test" data-r="'+q+'"'+(g?"":" disabled")+'>시험 보내기</button>'+(isC?"":'<button type="button" class="btn xs" data-act="tag274-test" data-p="'+q+'"'+(g?"":" disabled")+'>태그 시험 보내기</button>')+'</div></div>';return h}
+function rm276Matrix(){var R=rmList(),K=rm276Kinds();return'<div class="rm276m"><table class="t"><thead><tr><th>알림</th><th class="c">켜기<div class="small muted" style="font-weight:400">알림함 포함</div></th>'+/* v277 켜기 칸 = 예전 '알림 종류' */R.map(function(r){return'<th class="c">'+esc(r===ROOM_C?"공통방":r)+(rmGrp(r)?"":'<div class="small muted" style="font-weight:400">채널 없음</div>')+'</th>'}).join("")+'</tr></thead><tbody>'+
+  K.map(function(x){var o=rmOf(x[0]),dup=o.length>1;return'<tr class="'+(dup?"dup":"")+(shOn(x[0])?"":" off")+'"><td>'+esc(x[1])+(shOn(x[0])?"":' <span class="small muted">(꺼짐)</span>')+(o.length?"":' <span class="b sm">보내지 않음</span>')+(dup?' <span class="b sm warn">'+o.length+'곳</span>':"")+'</td><td class="c"><input type="checkbox" data-sh260k="'+esc(x[0])+'"'+(shOn(x[0])?" checked":"")+' aria-label="'+esc(x[1])+' 켜기"></td>'+R.map(function(r){return'<td class="c"><input type="checkbox" data-rm276x="'+esc(x[0])+'|'+esc(r)+'"'+(o.indexOf(r)>=0?" checked":"")+' aria-label="'+esc(x[1])+' → '+esc(r)+'"></td>'}).join("")+'</tr>'}).join("")+'</tbody></table><p class="small muted" style="margin:4px 0 0">한 알림을 여러 방에 체크하면 방마다 따로 가요 (같은 사람이 두 번 받을 수 있어요) · 켜기를 끄면 채널톡 · 알림함 모두 안 가요</p></div>'}
+/* v277 설정 화면은 뼈대/공유알림/9670-v277.js 한 곳에서 그림 (덧댄 화면 코드 지움) */
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)return;var D=t.dataset;
   if(D.rm276g!=null){ev.stopPropagation();var g=(SH.grp.list||[]).find(function(x){return x.id===t.value});rmPutRoom(D.rm276g,{grp:t.value,grp_n:g?g.name:""});toast("저장했어요");render();return}
   if(D.rm276id!=null){ev.stopPropagation();var v=String(t.value||"").trim();if(!v)return;if(!/^[0-9A-Za-z_-]{1,40}$/.test(v)){toast("그룹 ID는 숫자 · 영문만 넣어 주세요");return}rmPutRoom(D.rm276id,{grp:v,grp_n:"직접 입력"});toast("그룹 ID를 저장했어요 · [시험 보내기]로 확인해 주세요");render();return}
@@ -23765,13 +23728,101 @@ function sq276Body(q){var r=rcOf(q.rr)||{},c=comp(r.company)||{},dis=String(rrDi
   var tg=tag273("part:발굴파트","x"),head=(st0?st0+" ":"")+(q.job||"")+" "+(q.n||1)+"명 채용건 공유드립니다.";
   var L=["["+(c.name||r.company_label||"")+"]","■ 매칭 기업 정보","ㅇ 직 무 : "+(q.job||rrJobsTxt(r)||""),"ㅇ 근무형태 : "+(r.work_type||"—"),"ㅇ 급 여 : "+(rrPay(r)||"—"),"ㅇ 근무시간 : "+(rrHours(r)||"—"),"ㅇ 입사일자 : "+(st0?st0+" 예정":"—"),"ㅇ 계약기간 : "+(rrTerm(r)||rrTermTxt(r)||"—"),
     "ㅇ 장애유형 : "+(dis?(/제외|필수/.test(dis)?dis:dis+" (유형 무관)"):"무관"),"ㅇ 마감일자 : "+(q.due?md(q.due):"—")];
-  var memo=String(q.memo||"").trim();if(memo)L.push("","전달사항: "+memo);L.push("","요청 "+(q.by||"")+(q.round?" · "+q.round+"차":""));
-  return{ch:(tg.ch?tg.ch+" ":"")+head+"\n\n"+L.join("\n"),app:(tg.app?tg.app+" ":"")+head+"\n"+L.join("\n"),cid:r.company||""}}
+  var memo=String(q.memo||"").trim();if(memo)L.push("","전달사항: "+memo);var rq=sq277Req(q),rd=q.round?" · "+q.round+"차":"";/* v277 요청자 태그 */
+  return{ch:(tg.ch?tg.ch+" ":"")+head+"\n\n"+L.join("\n")+"\n\n요청 "+(rq.ch||q.by||"")+rd,app:(tg.app?tg.app+" ":"")+head+"\n"+L.join("\n")+"\n\n요청 "+(rq.app||q.by||"")+rd,cid:r.company||""}}
+function sq277Req(q){var s0=(DB.staff||[]).find(function(x){return x&&x.name===q.by});return s0&&shCfg().tag?tag273One(s0.id):{ch:"",app:""}}
 function sq276Send(q){if(!q||!shOn("sq"))return;var B=sq276Body(q),to=(DB.staff||[]).filter(function(s){return s&&s.part==="발굴파트"&&s.active!==false&&!s.inactive&&s.id!==S.me}).map(function(s){return s.id});
   shOut({kind:"sq",cid:B.cid,key:sq276Key(q),title:"■ 인재 수급 요청 ["+((comp(B.cid)||{}).name||"")+"] - ("+((st(S.me)||{}).part||"")+")",body:B.ch,app:B.app,reply:null,to:to,wk:q.job||""})}
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="sq-save2"]');if(!b)return;var n0=(DB.supq||[]).length;setTimeout(function(){var L=DB.supq||[];if(L.length>n0)try{sq276Send(L[L.length-1])}catch(e){console.warn("[v276 수급 요청 알림]",e)}},0)},true);
-var _sqClose276;sqClose=layer("sqClose",sqClose,11971,"v276 수급 요청 답글",function(p){_sqClose276=p;return function(q,stt,why){var b=q&&q.status,r=_sqClose276.apply(this,arguments);try{if(q&&shOn("sq")&&b!==stt){var me=(st(S.me)||{}).name||"",t=(stt==="취소"?"취소":stt)+" · "+(why||"")+" · "+me;
+var _sqClose276;sqClose=layer("sqClose",sqClose,11971,"v276 수급 요청 답글",function(p){_sqClose276=p;return function(q,stt,why){var b=q&&q.status,r=_sqClose276.apply(this,arguments);try{if(q&&shOn("sq")&&b!==stt){var me=(st(S.me)||{}).name||"",rq=sq277Req(q),t=(stt==="취소"?"취소":stt)+" · "+(why||"")+" · "+me+(rq.ch&&q.by!==me?" · 요청 "+rq.ch:"");/* v277 요청자 태그 */
   shOut({kind:"sq",cid:(rcOf(q.rr)||{}).company||"",key:sq276Key(q),title:"■ 인재 수급 요청 "+stt,body:"",app:"수급 요청 "+stt+" · "+(q.job||"")+" · "+(why||""),reply:t,to:(DB.staff||[]).filter(function(s){return s&&s.part==="발굴파트"&&s.active!==false&&s.id!==S.me}).map(function(s){return s.id}),wk:q.job||""})}}catch(e){console.warn("[v276 수급 요청 답글]",e)}return r}});
+
+/* ================================================================
+   v277 설정 › 연동 · 알림 › 공유 알림 (채널톡) — 한 곳에서 그림
+     ① 연결 (봇 이름 · 그룹 불러오기 · 담당자 태그 · 매니저 짝 · 채널 없는 방 요약)
+     ② 알림 방 (파트 카드 · 한눈에 보기 표 첫 칸 '켜기' = 예전 '알림 종류')
+     ③ 관리자 노티 ④ 업무보고 ⑤ 알림함 ⑥ 보낸 기록
+   · 예전 버전(v260~v276)이 덧대던 화면 코드는 지움 · 저장값 · 저장 동작(data-*)은 그대로
+   ================================================================ */
+function sh277Grp(k,nk){var C=shCfg(),grp=SH.grp.list||[],v=C[k],nm=C[nk];return'<select data-sh260g="'+k+'"><option value="">'+(v?esc(nm||v):"고르기")+'</option>'+grp.map(function(g){return'<option value="'+esc(g.id)+'"'+(g.id===v?" selected":"")+'>'+esc(g.name)+'</option>'}).join("")+'</select>'+
+  '<input class="ct261id" data-sh261id="'+k+'" placeholder="ID 직접 입력" maxlength="40" aria-label="그룹 ID 직접 입력">'+(v?' <span class="small muted">'+esc(nm||"")+' · '+esc(v)+'</span>':"")}
+function sh277Sec(n,title,sub,body){return'<div class="sh277s"><div class="sh277h"><b>'+n+' '+title+'</b>'+(sub?' <span class="small muted">'+sub+'</span>':"")+'</div>'+body+'</div>'}
+function sh277Row(lab,body){return'<div class="sh260row"><span class="small muted">'+lab+'</span>'+body+'</div>'}
+shSetHtml=function(){var C=shCfg(),ML=SH.mgrL||[];
+  var act=(DB.staff||[]).filter(function(s){return s&&s.active!==false&&!s.inactive}).sort(function(a,b){return String(a.part||"").localeCompare(String(b.part||""))||String(a.name||"").localeCompare(String(b.name||""))}),nOk=act.filter(function(s){return C.mgr[s.id]}).length;
+  var miss=rmList().filter(function(r){return!rmGrp(r)});
+  /* ① 연결 */
+  var b1=sh277Row("봇 이름",'<input data-sh262bot maxlength="20" style="width:150px" value="'+esc(C.bot||"운영페이지")+'" aria-label="채널톡 봇 이름"><span class="small muted">채널톡에 보이는 보낸 사람 이름</span><span class="grow"></span><button type="button" class="btn xs" data-act="sh260-groups">그룹 불러오기</button>')+
+    sh277Row("담당자 태그",'<label class="small"><input type="checkbox" data-sh273="tag"'+(C.tag?" checked":"")+'> 담당자 · 요청자 · 작성자 태그</label><button type="button" class="btn xs" data-act="tag273-load">매니저 불러오기</button><span class="small muted">짝 맞춘 직원 '+nOk+' / '+act.length+'명</span><button type="button" class="linkbtn small" data-act="tag273-fold">'+(S.tag273O?"접기":"직원 ↔ 매니저 보기")+'</button>');
+  if(S.tag273O)b1+='<div class="tag273t"><table class="t"><thead><tr><th>직원</th><th>파트</th><th>채널톡 매니저</th></tr></thead><tbody>'+act.map(function(s){var m=C.mgr[s.id]||"",hit=ML.find(function(x){return x.id===m});
+    return'<tr><td>'+esc(s.name)+'</td><td class="small">'+esc(s.part||"")+'</td><td>'+(ML.length?'<select data-tag273m="'+esc(s.id)+'"><option value="">— 없음 —</option>'+ML.map(function(x){return'<option value="'+esc(x.id)+'"'+(x.id===m?" selected":"")+'>'+esc(x.name)+(x.email?" · "+esc(x.email):"")+'</option>'}).join("")+'</select>':'<input data-tag273m="'+esc(s.id)+'" value="'+esc(m)+'" placeholder="매니저 ID" maxlength="40">')+(m&&!hit&&ML.length?' <span class="small muted">'+esc(m)+'</span>':"")+'</td></tr>'}).join("")+'</tbody></table></div>';
+  if(miss.length)b1+='<div class="sh277miss">'+esc(miss.map(function(r){return r===ROOM_C?"공통방":r}).join(" · "))+' 방에 채널이 없어요 · 그 방으로 가는 알림은 채널톡에 안 가요 (알림함은 그대로)</div>';
+  /* ② 알림 방 */
+  var b2='<div class="rm276top"><span class="small muted">파트마다 채널 · 태그 · 받을 알림 (옮기기 · 공통 · 같이 받기)</span><span class="grow"></span><button type="button" class="btn xs'+(S.rm276mx?" pri":"")+'" data-act="rm276-mx">'+(S.rm276mx?"카드로 보기":"한눈에 보기")+'</button></div>'+(S.rm276mx?rm276Matrix():'<div class="rm276g">'+rmList().map(rm276Card).join("")+'</div>');
+  /* ③ 관리자 노티 */
+  var late=(DB.logs||[]).filter(function(l){return l.table==="share"&&/late:\d+/.test(l.before||"")}).slice(0,10);
+  var b3=sh277Row("그룹",sh277Grp("admin_grp","admin_grp_n")+'<button type="button" class="btn xs" data-act="sh260-test" data-c="admin"'+(C.admin_grp?"":" disabled")+'>시험 보내기</button>')+
+    sh277Row("보내기",'<label class="small"><input type="checkbox" data-sh260o="dg"'+(C.dg?" checked":"")+'> 하루 한 번 (9시 이후)</label><button type="button" class="btn xs" data-act="sh260-dgnow"'+(C.admin_grp?"":" disabled")+'>지금 한 번 보내기</button>')+
+    sh277Row("항목",SH_DG.map(function(P){return'<div class="ochips"><b class="small">'+P[1]+'</b>'+P[2].map(function(it){var on=shItemOn(it[0]);return'<label class="ochip'+(on?" on":"")+'"><input type="checkbox" data-sh260i="'+it[0]+'"'+(on?" checked":"")+'> '+esc(it[1])+'</label>'}).join("")+'</div>'}).join(""))+
+    sh277Row("늦은 처리 기준",'<input type="number" min="1" max="60" data-sh260o="late" value="'+C.late+'" style="width:64px" aria-label="늦은 처리 기준 일수"><span class="small muted">일 지나 처리하면 알림 제목에 ⚠</span>')+
+    sh277Row("늦은 처리 (최근)",late.length?'<div class="sh260late">'+late.map(function(l){var m=/late:(\d+)/.exec(l.before);return'<div class="small">'+esc(md(String(l.at).slice(0,10)))+' · '+esc(String(l.label||"").replace(/^■ /,""))+' · '+esc(l.by||"")+' <span class="b sm warn">'+m[1]+'일</span></div>'}).join("")+'</div>':'<span class="small muted">없어요</span>');
+  /* ④ 업무보고 */
+  var rp=C.rep_parts||{};
+  var b4=sh277Row("그룹",sh277Grp("rep_grp","rep_grp_n")+'<button type="button" class="btn xs" data-act="sh260-test" data-c="report"'+(C.rep_grp?"":" disabled")+'>시험 보내기</button>')+
+    sh277Row("보내기",'<label class="small"><input type="checkbox" data-sh264o="rep"'+(C.rep?" checked":"")+'> 영업일</label><input type="time" step="300" data-sh264o="rep_at" value="'+esc(C.rep_at)+'" aria-label="업무보고 시각"><button type="button" class="btn xs" data-act="rep264-now"'+(C.rep_grp?"":" disabled")+'>지금 한 번 보내기</button><span class="small muted">파트마다 원글 · 사람마다 스레드</span>')+
+    sh277Row("보낼 파트",rep269Parts().map(function(p){return'<label class="ckl small"><input type="checkbox" data-rep269="'+esc(p)+'"'+(rp[p]?" checked":"")+'> '+esc(p)+'</label>'}).join(""));
+  /* ⑤ 알림함 */
+  var b5=sh277Row("받는 사람",[["mgr","기업 담당"],["bk","대무자"],["lead","파트 관리자"]].map(function(x){return'<label class="small"><input type="checkbox" data-sh260t="'+x[0]+'"'+(C.to[x[0]]?" checked":"")+'> '+x[1]+'</label>'}).join(" "))+
+    sh277Row("스레드 답글",'<label class="small"><input type="checkbox" data-sh260o="bc"'+(C.bc?" checked":"")+'> 채널톡 대화창에도 보이기</label>');
+  return'<div class="card dutycard sh260set"><b>공유 알림 (채널톡)</b> <span class="small muted">담당자가 작업하면 저절로 · 채널톡과 알림함에 같은 내용 · 키는 서버에만</span>'+(SH.noSrv?'<div class="b warn" style="margin-top:6px">서버 함수가 없어요 · v260 SQL을 실행해 주세요</div>':"")+
+    sh277Sec("①","연결","",b1)+sh277Sec("②","알림 방","",b2)+sh277Sec("③","관리자 노티","급한 업무 하루 한 번",b3)+sh277Sec("④","업무보고","영업일 저녁",b4)+sh277Sec("⑤","알림함","앱 안 알림",b5)+'</div>'+ct261LogHtml()};
+
+/* ================================================================
+   v277 추천인재 · 포트폴리오 같은 사람 = DB에서 하나로 (발굴페이지도 한 번만 보이게)
+     · 같은 사람: 근로자 DB 같음 · 직접 묶음(s:) · 이름 + 연락처/생일 같음 ('다른 사람' · '따로 보기' 표시는 제외)
+     · 합치기: 추천 경위 · 평가 · 직무 · 희망 근무 등 → 포트폴리오 메모 '[추천인재에서 합침]' · 비어 있는 칸은 채움
+       연결 바꿔 달기: 채용 요청 후보(c.tal → c.pf) · 기관 추천 기록(orec) · 수급 요청 연결 · 메모(talent_picks → portfolios)
+       추천인재 기록 전체를 변경 이력에 남기고 추천인재 줄은 DB에서 지움
+     · 화면: 설정 › 데이터 정리 '같은 사람 합치기' ([합치기] · [모두 합치기])
+     · 막기: 기관 창 [+ 인재 등록]으로 같은 사람이 들어오면 바로 포트폴리오 하나로 합침
+   ================================================================ */
+function pt277Why(p,t){if(pt274Linked(p,t.id))return"직접 묶음";if(p.worker&&t.worker&&p.worker===t.worker)return"근로자 DB 같음";return"이름 + 연락처/생일 같음"}
+function pt277Pairs(){var T={},used={},L=[];(DB.talent||[]).forEach(function(t){if(!t)return;var k=pt274Nm(t.name||((wk(t.worker)||{}).name||""));(T[k]=T[k]||[]).push(t)});
+  (DB.pf||[]).forEach(function(p){if(!p)return;var k=pt274Nm(p.name||((wk(p.worker)||{}).name||"")),C=(T[k]||[]).slice();
+    (p.notsame||[]).forEach(function(x){if(String(x).indexOf("s:")===0){var t=(DB.talent||[]).find(function(y){return y.id===String(x).slice(2)});if(t&&C.indexOf(t)<0)C.push(t)}});
+    if(p.worker)(DB.talent||[]).forEach(function(t){if(t&&t.worker===p.worker&&C.indexOf(t)<0)C.push(t)});
+    C.forEach(function(t){if(used[t.id]||!pt274Same(p,t))return;used[t.id]=1;L.push({p:p,t:t,why:pt277Why(p,t)})})});return L}
+function pt277Merge(p,t){var nm=p.name||t.name||((wk(t.worker||p.worker)||{}).name||""),L=talLinks(t),n=0,add=[];
+  var jt=[].concat(t.jobs||[]).concat(t.job?[t.job]:[]).filter(Boolean);
+  [["경로",[t.origin,t.source].filter(Boolean).join(" · ")],["사유",t.reason],["평가",t.ev_note],["직무",jt.join(", ")],["희망 근무",t.hours_etc||(t.hrs||[]).join(", ")||t.hours],["지역",t.region],["상태",t.status],["등록",String(t.created||"").slice(0,10)+(t.by?" "+t.by:"")]].forEach(function(x){if(String(x[1]||"").trim())add.push(x[0]+" "+String(x[1]).trim())});
+  p.note=(p.note?p.note+"\n":"")+"[추천인재에서 합침 "+md(TODAY)+"] "+add.join(" · ");
+  if(!p.worker&&t.worker)p.worker=t.worker;if(!p.src_org&&t.src_org)p.src_org=t.src_org;if(!p.phone&&t.phone)p.phone=t.phone;if(!p.birth&&t.birth)p.birth=t.birth;
+  ["main_contact","guardian_rel","gphone","mc_name","mc_ct"].forEach(function(k){if(!p[k]&&t[k])p[k]=t[k]});
+  var J=(p.jobs||[]).slice();jt.forEach(function(j){if(J.indexOf(j)<0)J.push(j)});p.jobs=J;if(!p.wish_hours&&(t.hours_etc||t.hours))p.wish_hours=t.hours_etc||t.hours;
+  if(t.hire_emp&&!p.hired_emp){p.hired_emp=t.hire_emp;p.hired_on=p.hired_on||t.ldate||"";p.status="취업완료"}else if(t.status==="연계중"&&(p.status==="대기"||!p.status))p.status="제안중";
+  L.C.forEach(function(x){if(x.c.tal===t.id){if(!x.c.pf)x.c.pf=p.id;delete x.c.tal;n++}});
+  L.O.forEach(function(o){o.k="pf";o.pid=p.id;n++});
+  L.Q.forEach(function(q){var seen={};q.links=(q.links||[]).map(function(l){return l.k==="tl"&&l.id===t.id?{k:"pf",id:p.id}:l}).filter(function(l){var k=l.k+":"+l.id;if(seen[k])return false;seen[k]=1;return true});n++});
+  (DB.memos||[]).forEach(function(m){if(m&&m.table==="talent_picks"&&m.tid===t.id){m.table="portfolios";m.tid=p.id;n++}});
+  p.notsame=(p.notsame||[]).filter(function(x){return["s:","x:","t:"].every(function(z){return x!==z+t.id})});
+  logChange("talent_picks",t.id,nm,"포트폴리오와 합침 (추천인재 지움)",JSON.stringify(t).slice(0,3800),"포트폴리오 "+p.id,"내부");
+  logChange("portfolios",p.id,nm,"추천인재 합침","",t.id+" · 연결 "+n+"건 옮김","내부");
+  DB.talent=(DB.talent||[]).filter(function(x){return x.id!==t.id});if(typeof SNAP!=="undefined"&&SNAP&&SNAP.talent)delete SNAP.talent[t.id];
+  if(LIVE&&typeof sb!=="undefined"&&sb)sb.from("talent_picks").delete().eq("id",t.id).then(function(r){if(r&&r.error){toast("서버에서 추천인재를 지우지 못했어요: "+r.error.message+" · 다시 불러올게요");loadAll().then(render)}});
+  if(LIVE&&READY)schedulePersist();return n}
+function pt277Card(){var L=pt277Pairs(),on=S.role==="admin";if(!on)return"";
+  return'<div class="card dutycard pt277card"><b>추천인재 · 포트폴리오 같은 사람 합치기</b> <span class="small muted">DB에서 포트폴리오 하나로 합쳐요 · 발굴페이지에서도 한 번만 보여요 · 추천인재 기록은 변경 이력에 남아요</span>'+
+    (L.length?'<div class="obt" style="margin:6px 0"><span class="small"><b>'+L.length+'쌍</b></span><span class="grow"></span><button type="button" class="btn sm pri" data-act="pt277-all">모두 합치기 ('+L.length+'쌍)</button></div><table class="t"><thead><tr><th>이름</th><th>포트폴리오</th><th>추천인재</th><th>같은 이유</th><th></th></tr></thead><tbody>'+
+      L.map(function(x){var p=x.p,t=x.t,lk=talLinks(t),ln=lk.C.length+lk.O.length+lk.Q.length,po=p.src_org&&typeof oOf==="function"&&oOf(p.src_org),to=t.src_org&&typeof oOf==="function"&&oOf(t.src_org);
+        return'<tr><td><b>'+esc(p.name||t.name||((wk(t.worker)||{}).name||""))+'</b></td><td class="small">'+esc((po&&po.short)||p.source||"")+' · '+esc(p.status||"")+'</td><td class="small">'+esc((to&&to.short)||t.origin||"")+' · '+esc(t.status||"")+(ln?' · 연결 '+ln+'건':"")+'</td><td class="small">'+esc(x.why)+'</td><td><button type="button" class="btn xs" data-act="pt277-one" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'">합치기</button></td></tr>'}).join("")+'</tbody></table>':'<p class="small muted" style="margin:6px 0 0">합칠 쌍이 없어요</p>')+'</div>'}
+regAfter("v277 같은 사람 합치기 카드",function(){if(S.view!=="set"||S.role!=="admin")return;var T=document.querySelector('#main .stp[data-tab="clean"]');if(!T)return;var old=T.querySelector(".pt277card");var h=pt277Card();if(old){old.outerHTML=h;return}T.insertAdjacentHTML("afterbegin",h)});
+regActs({"pt277-one":function(D0){if(S.role!=="admin")return;var p=pfOf(D0.p),t=(DB.talent||[]).find(function(x){return x.id===D0.t});if(!p||!t)return;
+    askConfirm("같은 사람 합치기",(p.name||"")+" · 추천인재를 포트폴리오로 합치고 추천인재 기록은 지울까요? (변경 이력에 남아요)","합치기",function(){var n=pt277Merge(p,t);toast("합쳤어요"+(n?" · 연결 "+n+"건 옮김":""));render()})},
+  "pt277-all":function(){if(S.role!=="admin")return;var L=pt277Pairs();if(!L.length)return;askConfirm("모두 합치기",L.length+"쌍을 포트폴리오 하나로 합치고 추천인재 기록은 지울까요? (변경 이력에 남아요)","모두 합치기",function(){var n=0;L.forEach(function(x){n+=pt277Merge(x.p,x.t)});toast(L.length+"쌍 합쳤어요"+(n?" · 연결 "+n+"건 옮김":""));render()})}});
+/* 막기: 기관 창 [+ 인재 등록] 으로 같은 사람이 들어오면 바로 하나로 */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="ot-save"]');if(!b)return;var nT=(DB.talent||[]).length,nP=(DB.pf||[]).length;setTimeout(function(){try{
+  if((DB.talent||[]).length>nT){var t=DB.talent[DB.talent.length-1],p=(DB.pf||[]).find(function(x){return pt274Same(x,t)});if(p){pt277Merge(p,t);toast("이미 포트폴리오에 있는 사람이라 추천 기록을 포트폴리오에 붙였어요");render()}}
+  else if((DB.pf||[]).length>nP){var p2=DB.pf[DB.pf.length-1],t2=(DB.talent||[]).find(function(x){return pt274Same(p2,x)});if(t2){pt277Merge(p2,t2);toast("같은 사람의 추천인재를 새 포트폴리오로 합쳤어요");render()}}}catch(e){console.warn("[v277 막기]",e)}},0)},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
