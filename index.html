@@ -1909,6 +1909,17 @@ label.rr265tk{opacity:.6}
 .rm276k .rm279t{border:0;background:none;color:inherit;font:inherit;padding:0;cursor:pointer}.rm276k .rm279t:hover{text-decoration:underline}
 .u255 .tdel{display:none!important}.u255 [data-act="pf-del"]{display:none!important}/* v279 예전 삭제 버튼 대신 아래 [삭제] */
 .rh280{margin-top:6px}.rh280 summary{cursor:pointer}.rh280 div{padding:2px 0 2px 14px}
+
+/* v283 직무 상세 · 소속 근로자 나눠 보기 */
+input.jd282{width:9em;font-size:12px;padding:2px 4px;border:1px solid #D9D6E6;border-radius:5px;text-overflow:ellipsis}
+input.jd282:focus{width:16em}
+.jdc282{display:none;font-size:11px;color:var(--muted,#888)}
+input[data-jd282]:focus+.jdc282{display:inline}
+.jdc282.over{color:#c0392b;display:inline}
+.jd282t{color:var(--muted,#777);cursor:help}
+.jd282box{margin-bottom:10px}
+.ce282h{margin:12px 0 4px;font-size:13px}
+.ce282h .linkbtn{font-weight:700;font-size:13px}
 </style>
 </head>
 <body>
@@ -6324,7 +6335,7 @@ var _erc23;expRowCells=layer("expRowCells",expRowCells,1341,"v23 계약만료 �
 /* ---- 상세(오른쪽 창): 6단계 목록 · 지금 단계에 [다음 ▶] ---- */
 expBody=layer("expBody",expBody,6351,"v23 계약만료 다음 지금 00 (정리)",function(p){return function(eid){
   var e=emp(eid),x=xOf(eid)||{steps:{},corp:"",wish:"",decision:""},ts=termsOf(eid),t=x.newSeq&&ts.length>1?ts[ts.length-2]:ts[ts.length-1],d=dd(TODAY,t.end),i=xmCur(x),F=xmFlags(x),L=xmLast(x);
-  var h='<div class="ps"><h3>계약 정보 <button class="linkbtn small" data-act="ce-open" data-e="'+eid+'" style="font-weight:500">계약 정보 수정</button></h3><div class="kv"><div><span>현재 차수</span><b>'+seqBadge(t.seq)+'</b></div><div><span>계약시작일</span><b class="num">'+t.start+'</b></div><div><span>계약만료일</span><b class="num">'+(t.end||"—")+'</b></div><div><span>만료까지</span><b class="num">'+(t.end?dlabel(d):"—")+'</b></div><div><span>직무</span><b>'+(e.job?esc(empJob(e)):'<span class="muted">미입력</span>')+'</b></div><div><span>근로자 연락처</span><b>'+mtel(wk(e.worker))+'</b></div></div></div>';
+  var h='<div class="ps"><h3>계약 정보 <button class="linkbtn small" data-act="ce-open" data-e="'+eid+'" style="font-weight:500">계약 정보 수정</button></h3><div class="kv"><div><span>현재 차수</span><b>'+seqBadge(t.seq)+'</b></div><div><span>계약시작일</span><b class="num">'+t.start+'</b></div><div><span>계약만료일</span><b class="num">'+(t.end||"—")+'</b></div><div><span>만료까지</span><b class="num">'+(t.end?dlabel(d):"—")+'</b></div><div><span>직무</span><b>'+(e.job?jdHtml(e)/* v283 */:'<span class="muted">미입력</span>')+'</b></div><div><span>근로자 연락처</span><b>'+mtel(wk(e.worker))+'</b></div></div></div>';
   h+='<div class="ps" data-spec="4"><h3>진행 단계 <span class="small muted" style="font-weight:400;letter-spacing:0">[다음 ▶]으로 지금 단계 처리</span></h3>'+twoYBox(eid)+'<ol class="xmlist">'+XS.map(function(s,j){var na=xmNA(x,j),dn=F[j]&&!na,cur=j===i,dt=xmDate(x,j);
       var sub=j===1&&x.corp?esc(expDecTxt(x))+(x.corp==="종료"&&x.repl?" · 대체 채용 "+esc(x.repl):""):j===2&&x.corp?esc(wrState(x)):j===3?(x.decision?esc(x.decision)+(x.newSeq?" · "+x.newSeq+"차 생성":""):finalOf(x)?"확정 대기":""):na?"해당 없음 (고객사가 이미 앎)":"";
       return'<li class="'+(na?"na":dn?"d":cur?"c":"")+'"><span class="no">'+(dn?"✓":na?"–":j+1)+'</span><span class="lb">'+s[1]+(sub?'<small>'+sub+'</small>':"")+'</span><span class="rt">'+(dt?'<span class="num small muted">'+md(dt)+'</span>':"")+(cur?' '+xmBtns(eid,"xs"):"")+'</span></li>'}).join("")+'</ol>'+
@@ -6748,7 +6759,7 @@ function pWk24(w){
       '<label class="f"><span>브이워크 아이디</span><input data-wf="flip" value="'+esc(w.flip||"")+'"></label>'+(o?'<div class="f"><span>기관</span><b style="padding:6px 0">'+olink(o.id)+(o.phone?' <span class="small muted">'+esc(o.phone)+'</span>':"")+'</b></div>':'<div></div>')+'</div>'+save+'</div>';
     h+='<div class="ps wide"><h3>정보 요약</h3><div class="kv">'+
       '<div><span>생년월일</span><b class="num">'+esc(w.birth||"—")+'</b></div><div><span>장애</span><b>'+(w.non_dis?"비장애인 판정":esc([w.dis_type,w.dis_level].filter(Boolean).join(" · ")||"—"))+'</b></div>'+
-      '<div><span>현재 기업</span><b>'+(c?clink(c.id):"—")+'</b></div><div><span>직무</span><b>'+(e&&e.job?esc(empJob(e)):"—")+'</b></div>'+
+      '<div><span>현재 기업</span><b>'+(c?clink(c.id):"—")+'</b></div><div><span>직무</span><b>'+(e&&e.job?jdHtml(e)/* v283 상세 8자 · 마우스 올리면 전체 */:"—")+'</b></div>'+
       '<div><span>차수 · 계약만료</span><b>'+(t?seqBadge(t.seq)+' '+endCell(e,t):"—")+'</b></div><div><span>브이워크 시작일</span><b class="num">'+esc(e&&e.vwork_start||"—")+'</b></div>'+
       '<div><span>장애 재판정</span><b>'+(z?disLabel(z.emp):"미입력")+'</b></div><div><span>근태 · 업무</span><b>'+(DB.att.some(function(a){return a.worker===w.id})?'최근 90일 쪽지 '+attRecent(w.id).length+'회'+attBadge(w.id):"기록 없음")+'</b></div></div></div>'+talWorkerBox(w)}
   else if(pt==="person"){
@@ -16642,7 +16653,7 @@ regSection("company",{id:"pComp174",order:2,transform:function(h,c){if(typeof h!
     h=hp(hp(h,'<option value="복합">복합</option>','<option value="복합">복합 (직무별)</option>',"0199-v174-채용-요청에서-신규입사-10#1"),'<option value="복합" selected="">복합</option>','<option value="복합" selected="">복합 (직무별)</option>',"0199-v174-채용-요청에서-신규입사-10#2")}
   if(S.compPTab==="emp"){h=hp(hp(h,'<th>상태</th><th>차수</th>','<th>상태</th><th>직무</th><th>차수</th>',"0199-v174-채용-요청에서-신규입사-10#3"),/<tr><td colspan="7" class="muted">소속 근로자가 없습니다/,'<tr><td colspan="8" class="muted">소속 근로자가 없습니다',"0199-v174-채용-요청에서-신규입사-10#4");
     DB.employments.filter(function(e){return e.company===c.id}).forEach(function(e){var p=h.indexOf('data-act="go-w" data-id="'+e.worker+'"');if(p<0)return;var q=h.indexOf("</td>",h.indexOf("</td>",h.indexOf("</td>",p)+5)+5);if(q<0)return;var ob=obyOf(e,c);
-      var cell='<td class="small">'+(e.job?esc(e.job)+(e.job_detail?'<div class="muted">'+esc(e.job_detail)+'</div>':""):'<span class="b sm warn">직무 미입력</span>')+(c.order_by===OBY_MIX?'<div><span class="b sm '+(ob?"t":"warn")+'">'+esc(ob||"지시주체 미지정")+'</span></div>':"")+'</td>';h=h.slice(0,q+5)+cell+h.slice(q+5)})}
+      var cell='<td class="small">'+(e.job?esc(e.job)+(e.job_detail?'<div class="muted" title="'+esc(e.job_detail)+'">'+esc(jdCut(e.job_detail))+'</div>':"")/* v283 8자 */:'<span class="b sm warn">직무 미입력</span>')+(c.order_by===OBY_MIX?'<div><span class="b sm '+(ob?"t":"warn")+'">'+esc(ob||"지시주체 미지정")+'</span></div>':"")+'</td>';h=h.slice(0,q+5)+cell+h.slice(q+5)})}
   return h}});
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.matches||!t.matches('[data-cf="order_by"]'))return;var root=t.closest(".pnl");var b=root&&root.querySelector(".obyj");if(b)b.style.display=t.value===OBY_MIX?"":"none"},true);
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="comp-save"]');if(!b)return;var root=b.closest(".pnl"),c=comp(b.dataset.id);if(!root||!c)return;var sel=root.querySelector('[data-cf="order_by"]'),S0=root.querySelectorAll("[data-oj]");if(!sel||!S0.length)return;var mix=sel.value===OBY_MIX;
@@ -19156,8 +19167,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v282 — 같은 사람 합치기 서버 함수 · 추천인재 삭제 확인 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v282";APP_VER_ON="11/17";APP_NOTE="같은 사람 합치기: 발굴페이지 지원 기록 · 파일도 포트폴리오로 옮기고 추천인재는 서버에서 확실히 지움 · 값이 다른 쌍(합격 기업 · 장애유형 · 장애정도 · 연락처 · 메모)은 하나씩 골라 합치기 · 메모 중복 없이 합치고 미리보기 · 추천인재 삭제가 서버에서 안 되면 알림 · 발굴 지원 기록이 걸린 추천인재는 지우기 전에 알림 · 관리자 내 할 일에 같은 사람 쌍 · 포트폴리오 일괄 업로드 때 근로자 DB 장애유형 우선";
+/* v283 — 직무 상세 · 기업 창 소속 근로자 나눠 보기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v283";APP_VER_ON="11/17";APP_NOTE="직무 상세: 근로자 창 고용·계약 · 계약 정보 수정에서 모든 직무 입력(40자) · 화면에는 8자까지 · 마우스 올리면 전체 · 비어 있으면 대체 대상 · 추천 기록에서 미리 채움 · 근로자 DB 재직 중 표에 직무 칸(상세 없음 거르기) · 기업 창 소속 근로자: 재직 중 / 계약 종료(종료 구분 · 재입사 희망 · 재입사 제한) / 입사 취소 나눠 보기";
 
 /* ================================================================
    v208
@@ -24073,6 +24084,75 @@ regTodo("v282 같은 사람 합치기",function(L){try{if(S.role!=="admin")retur
 regSection("todo",{id:"pt282dup",order:10,at:"top",when:function(t){return t&&t.type==="pt282dup"},html:function(t){
   return'<div class="ps wide"><h3>같은 사람 합치기</h3><p class="small" style="margin:0 0 8px">추천인재와 포트폴리오에 같은 사람이 '+esc(String(t.n||""))+'쌍 있어요. 발굴페이지에서 두 줄로 보여요. 합치면 하나로 보이고 발굴 지원 기록도 옮겨져요</p><div class="obt"><button class="btn pri" data-act="pt282-goset">설정 › 데이터 정리 열기</button></div></div>'}});
 regActs({"pt282-goset":function(){S.setTab="clean";try{localStorage.setItem("vw_settab","clean")}catch(e){}$("#modal").innerHTML="";go("set")}});
+
+/* ================================================================
+   v283 직무 상세 (입사 기록 e.job_detail) — 모든 직무 · 입력 40자 · 화면에는 8자까지 · 마우스 올리면 전체
+     · 근로자 창 고용·계약 카드: 직무 옆에 직무 상세 칸 (같은 [저장] 버튼으로 저장 · 변경 이력)
+     · [계약 정보 수정] 창: 맨 위에 직무 · 직무 상세 (직무 저장)
+     · 직무별 안내: 음악 '악기' · 미술 '분야' · 그 외 '업무'
+     · 비어 있으면 칸을 누를 때 미리 채움: 대체 대상 → 추천인재(악기 · 기타 직무) · 포트폴리오(직무 상세) · 저장해야 확정
+     · 근로자 DB(재직 중) 표: '직무' 칸 · '상세 없음' 거르기
+   ================================================================ */
+var JD_MAX=40,JD_SHOW=8;
+function jdCut(s){s=String(s||"");return s.length>JD_SHOW?s.slice(0,JD_SHOW)+"…":s}
+function jdHtml(e){if(!e||!e.job)return"";var d=String(e.job_detail||"");return esc(e.job)+(d?' <span class="jd282t" title="'+esc(d)+'">('+esc(jdCut(d))+')</span>':"")}
+function jdHint(job){return job==="음악"?"악기 · 예: 피아노":job==="미술"?"분야 · 예: 일러스트":"업무 · 예: 뉴스 스크랩"}
+function jdSug(e){if(!e)return"";var r=e.replaced&&emp(e.replaced);if(r&&r.job_detail&&(!e.job||r.job===e.job))return r.job_detail;
+  var t=(DB.talent||[]).find(function(x){return x.hire_emp===e.id})||(DB.talent||[]).filter(function(x){return x.worker===e.worker}).slice(-1)[0];
+  if(t&&(e.job==="음악"?t.inst:t.job_etc||t.inst))return e.job==="음악"?t.inst:(t.job_etc||t.inst);
+  var p=(DB.pf||[]).find(function(x){return x.hired_emp===e.id})||(DB.pf||[]).filter(function(x){return x.worker===e.worker}).slice(-1)[0];
+  return p&&p.job_detail?String(p.job_detail).slice(0,JD_MAX):""}
+/* 직무 상세 입력칸 꾸미기 (카드 · 계약 정보 수정 창 · 직무 확정 창 공통) */
+function jdDeco(root){[].forEach.call((root||document).querySelectorAll('input[data-dk$="|job_detail"]:not([data-jd282])'),function(i){i.setAttribute("data-jd282","1");
+  var id=i.dataset.dk.split("|")[0].slice(4),e=emp(id);i.maxLength=Math.max(JD_MAX,i.value.length);i.placeholder=jdHint(e&&e.job);if(i.value)i.title=i.value;
+  var s=jdSug(e);if(!i.value&&s){i.placeholder="추천: "+s+" (누르면 채움)";i.dataset.jdsug=s}
+  if(!i.nextElementSibling||!i.nextElementSibling.classList.contains("jdc282"))i.insertAdjacentHTML("afterend",'<span class="jdc282">'+i.value.length+'/'+JD_MAX+'</span>')})}
+document.addEventListener("focusin",function(ev){var i=ev.target;if(!i||!i.dataset||!i.dataset.jdsug||i.value)return;i.value=i.dataset.jdsug;i.select();var b=i.parentElement&&i.parentElement.querySelector('[data-act="dk-save"]');if(b)b.classList.add("dkon245")});
+document.addEventListener("input",function(ev){var i=ev.target;if(!i||!i.hasAttribute||!i.hasAttribute("data-jd282"))return;var c=i.nextElementSibling;if(c&&c.classList.contains("jdc282"))c.textContent=i.value.length+"/"+JD_MAX;i.title=i.value;
+  if(i.value.length>JD_MAX){c&&c.classList.add("over");}else c&&c.classList.remove("over");
+  if(i.value.length>=JD_MAX&&!i.dataset.jdw){i.dataset.jdw=1;toast("직무 상세는 "+JD_MAX+"자까지예요 · 긴 내용은 입사 메모에 적어 주세요")}});
+/* 저장할 때 40자 넘는 값 막기 (예전 값은 그대로 두고 고칠 때만) */
+var _dkSave282=dkSave;dkSave=function(scope){if(String(scope).indexOf("job:")===0){var i=document.querySelector('[data-dk="'+scope+'|job_detail"]');if(i&&i.value.trim().length>JD_MAX&&i.value.trim()!==(i.dataset.orig||"")){toast("직무 상세는 "+JD_MAX+"자까지예요 · 줄여 주세요 (긴 내용은 입사 메모에)");i.focus();return}}return _dkSave282.apply(this,arguments)};
+/* 근로자 창 고용·계약 카드: 직무 옆에 상세 칸 */
+regAfter("v283 직무 상세 칸",function(){if(!S.wm)return;[].forEach.call(document.querySelectorAll('aside.pnl select[data-dk$="|job"]'),function(sel){var k=sel.dataset.dk.split("|")[0];if(document.querySelector('[data-dk="'+k+'|job_detail"]'))return;var e=emp(k.slice(4));if(!e)return;
+    sel.insertAdjacentHTML("afterend",' <input class="jd282" data-dk="'+esc(k)+'|job_detail" data-orig="'+esc(e.job_detail||"")+'" value="'+esc(e.job_detail||"")+'" aria-label="직무 상세">')});jdDeco(document.querySelector("aside.pnl"))});
+/* [계약 정보 수정] 창: 직무 · 직무 상세 */
+ceModal=layer("ceModal",ceModal,12001,"v283 직무 상세",function(p){return function(){var r=p.apply(this,arguments);try{var C=S.ce,e=C&&emp(C.eid),ps=document.querySelector("#modal .dlg-ce .ps");
+  if(e&&ps&&!ps.querySelector('[data-dks="job:'+e.id+'"]')){ps.insertAdjacentHTML("afterbegin",'<div class="jd282box">'+jobFields(e)+'</div>');jdDeco(ps)}}catch(x){console.warn("[v283 계약 정보 직무]",x)}return r}});
+regAfter("v283 직무 상세 꾸미기",function(){jdDeco(document.getElementById("main"))});
+/* 근로자 DB(재직 중) 표: 직무 칸 · 상세 없음 거르기 */
+function jdCol(w){var e=curEmpOfW(w.id);if(!e||!e.job)return"직무 미입력";return e.job_detail?e.job:e.job+" · 상세 없음"}
+regTable("wk-act",{id:"v283 직무",cols:function(C){if(C.some(function(c){return c.k==="jd282"}))return C;C.push({k:"jd282",_keep:true,h:"직무",t:"text",f:jdCol});return C},
+  row:function(h,w){if(typeof h!=="string"||/data-jd282c/.test(h)||!w||!w.id)return h;var e=curEmpOfW(w.id);
+    var c=e&&e.job?jdHtml(e)+(e.job_detail?"":' <span class="b sm warn">상세 없음</span>'):'<span class="muted">—</span>';return h.replace(/<\/tr>\s*$/,'<td class="small nowrap" data-jd282c="1">'+c+'</td></tr>')}});
+
+/* ================================================================
+   v283 기업 창 › 소속 근로자: 재직 중 / 계약 종료 / 입사 취소 나눠 보기
+     · 재직 중(종료 처리 전 · 입사 예정 포함): 근로자 · 연락처 · 상태 · 직무(상세 8자) · 차수 · 계약시작일 · 계약만료일(30일 안 색) · 장애 재판정
+     · 계약 종료(계약만료 · 중도퇴사 · 퇴사): 접어 두고 인원수 · 종료일 최근 순 · 종료 구분 · 재입사 희망 · 재입사 제한(v280 개월 수)
+     · 입사 취소: 맨 아래 한 줄 · 눌러서 펼침
+   ================================================================ */
+S.ce282=S.ce282||{};
+function ce282End(e){return e.end_date||((termsOf(e.id).slice().sort(function(a,b){return(+a.seq||0)-(+b.seq||0)}).slice(-1)[0])||{}).end||""}
+function ce282Job(e,c){var ob=c&&c.order_by===OBY_MIX?obyOf(e,c):null;return(e.job?jdHtml(e):'<span class="b sm warn">직무 미입력</span>')+(c&&c.order_by===OBY_MIX?' <span class="b sm '+(ob?"t":"warn")+'">'+esc(ob||"지시주체 미지정")+'</span>':"")}
+function ce282Row(e,cols){var w=wk(e.worker),A=termAll(e),L=termIss(e.id),end=A.end||"",d=end?dd(TODAY,end):null;
+  return'<tr><td>'+wlink(e.worker)+'</td><td>'+mtel(w)+'</td><td>'+stBadge(statusOf(e))+'</td><td class="small nowrap">'+ce282Job(e,comp(e.company))+'</td><td class="nowrap">'+seqCell(e,A,L)+'</td><td class="num">'+esc(A.start)+(A.n>1?' <span class="small muted">최초</span>':"")+'</td><td class="num">'+esc(end||"무기")+(d!=null&&d>=0&&d<=30?' <span class="b sm warn">D-'+d+'</span>':"")+'</td><td>'+disLabel1(e.id)+'</td></tr>'+texRow(e,cols,A,L)}
+function ce282Out(e){var w=wk(e.worker),end=ce282End(e),lim=end?addM(end,typeof rh280M==="function"?rh280M():3):"",st0=statusOf(e);
+  return'<tr><td>'+wlink(e.worker)+'</td><td>'+mtel(w)+'</td><td><span class="b">'+esc(e.end_type||st0)+'</span></td><td class="small nowrap">'+(e.job?jdHtml(e):'<span class="muted">—</span>')+'</td><td class="num">'+esc(end||"—")+'</td><td class="small">'+(e.rehire?'<span class="b sm ok">재입사 희망</span>':'<span class="muted">—</span>')+(lim&&lim>=TODAY?' <span class="b sm warn" title="같은 기업 재입사 제한 (퇴사 후 '+esc(String(typeof rh280M==="function"?rh280M():3))+'개월)">재입사 제한 ~'+esc(lim)+'</span>':"")+'</td><td class="small">'+esc(e.leave_reason||e.leave_detail||"")+'</td><td></td></tr>'}
+regSection("company",{id:"pComp283",order:3,transform:function(h,c){if(typeof h!=="string"||!c||S.compPTab!=="emp")return h;
+  /* v165 · v174(직무 칸) 표를 통째로 바꿈 */
+  var a='<table class="mini"><thead><tr><th>근로자</th><th>연락처</th><th>상태</th>',i=h.indexOf(a);if(i<0)return h;var j=h.indexOf("</tbody></table>",i);if(j<0||h.slice(i,j).indexOf("<th>장애 재판정</th>")<0)return h;
+  var es=DB.employments.filter(function(e){return e.company===c.id}),act=[],out=[],can=[];
+  es.forEach(function(e){if(e.cancelled)can.push(e);else if(activeEmp(e))act.push(e);else out.push(e)});
+  act.sort(function(x,y){return String(ce282End(x)||"9999").localeCompare(String(ce282End(y)||"9999"))});out.sort(function(x,y){return String(ce282End(y)).localeCompare(String(ce282End(x)))});
+  var op=S.ce282[c.id]||{},hd='<thead><tr><th>근로자</th><th>연락처</th><th>상태</th><th>직무</th><th>차수</th><th>계약시작일</th><th>계약만료일</th><th>장애 재판정</th></tr></thead>';
+  var t='<h4 class="ce282h">재직 중 <span class="small muted">'+act.length+'명</span></h4><table class="mini ce282">'+hd+'<tbody>'+(act.length?act.map(function(e){return ce282Row(e,8)}).join(""):'<tr><td colspan="8" class="muted">재직 중인 근로자가 없어요</td></tr>')+'</tbody></table>';
+  t+='<h4 class="ce282h"><button type="button" class="linkbtn" data-act="ce282-tog" data-c="'+esc(c.id)+'" data-k="out" aria-expanded="'+(op.out?"true":"false")+'">계약 종료 <span class="small muted">'+out.length+'명</span> '+(op.out?"▴":"▾")+'</button></h4>'+
+    (op.out?'<table class="mini ce282 ce282o"><thead><tr><th>근로자</th><th>연락처</th><th>종료 구분</th><th>직무</th><th>종료일</th><th>재입사</th><th>사유</th><th></th></tr></thead><tbody>'+(out.length?out.map(ce282Out).join(""):'<tr><td colspan="8" class="muted">계약 종료한 근로자가 없어요</td></tr>')+'</tbody></table>':"");
+  if(can.length)t+='<h4 class="ce282h"><button type="button" class="linkbtn" data-act="ce282-tog" data-c="'+esc(c.id)+'" data-k="can" aria-expanded="'+(op.can?"true":"false")+'">입사 취소 <span class="small muted">'+can.length+'건</span> '+(op.can?"▴":"▾")+'</button></h4>'+
+    (op.can?'<table class="mini ce282"><tbody>'+can.map(function(e){return'<tr><td>'+wlink(e.worker)+'</td><td class="small">'+(e.job?jdHtml(e):"")+'</td><td class="small muted">'+esc(e.cancel_reason||"")+'</td></tr>'}).join("")+'</tbody></table>':"");
+  return h.slice(0,i)+t+h.slice(j+"</tbody></table>".length)}});
+regActs({"ce282-tog":function(D0){var o=S.ce282[D0.c]||(S.ce282[D0.c]={});o[D0.k]=!o[D0.k];render()}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
