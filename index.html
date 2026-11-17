@@ -1908,6 +1908,7 @@ label.rr265tk{opacity:.6}
 .pt279del{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line-2)}.pt279org{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border:1px solid #CFC9E6;background:#F6F4FC;border-radius:10px;padding:7px 12px;margin:4px 0 10px;font-size:13px}
 .rm276k .rm279t{border:0;background:none;color:inherit;font:inherit;padding:0;cursor:pointer}.rm276k .rm279t:hover{text-decoration:underline}
 .u255 .tdel{display:none!important}.u255 [data-act="pf-del"]{display:none!important}/* v279 예전 삭제 버튼 대신 아래 [삭제] */
+.rh280{margin-top:6px}.rh280 summary{cursor:pointer}.rh280 div{padding:2px 0 2px 14px}
 </style>
 </head>
 <body>
@@ -19155,8 +19156,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v279 — 조율 요청 알림 · 담당 · 차례 · 인재 삭제 · 기관 합치기 · 칩 켜기 · 선택 목록 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v279";APP_VER_ON="11/16";APP_NOTE="조율 요청 채널톡 알림(채용파트로 · 운영파트로) · [담당 · 차례 바꾸기] · 인재 풀 [삭제] · 기관 창 이 기관 모두 합치기 · 알림 칩 눌러 켜고 끄기 · 확인 창 안 선택 목록 안 가려짐";
+/* v280 — 같은 기업 재입사 제한 · 수급 요청 직무 상세 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v280";APP_VER_ON="11/17";APP_NOTE="같은 기업 재입사 제한(대체 대상 · 재직 중 · 퇴사 후 3개월은 추천에서 뺌 · 설정 › 채용 · 단가) · 인재 수급 요청 알림에 직무 상세";
 
 /* ================================================================
    v208
@@ -23735,8 +23736,8 @@ SH_K.push(["sq","인재 수급 요청",1,"채용 요청에서 발굴파트에 �
 function sq276Key(q){return"sq|"+q.id}
 function sq276Body(q){var r=rcOf(q.rr)||{},c=comp(r.company)||{},dis=String(rrDisTxt(r)||"").trim(),st0=r.start_date?(+r.start_date.slice(5,7))+"월 "+(+r.start_date.slice(8,10))+"일":(r.start_note||"");
   var tg=tag273("part:발굴파트","x"),head=(st0?st0+" ":"")+(q.job||"")+" "+(q.n||1)+"명 채용건 공유드립니다.";
-  var L=["["+(c.name||r.company_label||"")+"]","■ 매칭 기업 정보","ㅇ 직 무 : "+(q.job||rrJobsTxt(r)||""),"ㅇ 근무형태 : "+(r.work_type||"—"),"ㅇ 급 여 : "+(rrPay(r)||"—"),"ㅇ 근무시간 : "+(rrHours(r)||"—"),"ㅇ 입사일자 : "+(st0?st0+" 예정":"—"),"ㅇ 계약기간 : "+(rrTerm(r)||rrTermTxt(r)||"—"),
-    "ㅇ 장애유형 : "+(dis?(/제외|필수/.test(dis)?dis:dis+" (유형 무관)"):"무관"),"ㅇ 마감일자 : "+(q.due?md(q.due):"—")];
+  var L=["["+(c.name||r.company_label||"")+"]","■ 매칭 기업 정보","ㅇ 직 무 : "+(q.job||rrJobsTxt(r)||""),/* v280 직무 상세 */].concat((function(){var j=(r.jobs||[]).find(function(x){return x&&x.job===q.job})||((r.jobs||[]).length===1?r.jobs[0]:null),d=j&&String(j.detail||"").replace(/\s+/g," ").trim();return d?["ㅇ 직무 상세 : "+d]:[]})()).concat(["ㅇ 근무형태 : "+(r.work_type||"—"),"ㅇ 급 여 : "+(rrPay(r)||"—"),"ㅇ 근무시간 : "+(rrHours(r)||"—"),"ㅇ 입사일자 : "+(st0?st0+" 예정":"—"),"ㅇ 계약기간 : "+(rrTerm(r)||rrTermTxt(r)||"—"),
+    "ㅇ 장애유형 : "+(dis?(/제외|필수/.test(dis)?dis:dis+" (유형 무관)"):"무관"),"ㅇ 마감일자 : "+(q.due?md(q.due):"—")]);
   var memo=String(q.memo||"").trim();if(memo)L.push("","전달사항: "+memo);var rq=sq277Req(q),rd=q.round?" · "+q.round+"차":"";/* v277 요청자 태그 */
   return{ch:(tg.ch?tg.ch+" ":"")+head+"\n\n"+L.join("\n")+"\n\n요청 "+(rq.ch||q.by||"")+rd,app:(tg.app?tg.app+" ":"")+head+"\n"+L.join("\n")+"\n\n요청 "+(rq.app||q.by||"")+rd,cid:r.company||""}}
 function sq277Req(q){var s0=(DB.staff||[]).find(function(x){return x&&x.name===q.by});return s0&&shCfg().tag?tag273One(s0.id):{ch:"",app:""}}
@@ -23916,6 +23917,40 @@ var _tkSave279;tkSave=layer("tkSave",tkSave,11991,"v279 조율 요청 알림",fu
   var sb=b==="ops"||b==="cw"?"ops":"rec",sa=tk2Side(t);if(sb===sa||(t.turn!=="ops"&&t.turn!=="rec"))return;tk279Send(t,sa==="rec")})}catch(e){console.warn("[v279 조율 요청 알림]",e)}return _tkSave279.apply(this,arguments)}});
 /* ⑥ 칩 눌러 켜고 끄기 */
 regActs({"rm279-tog":function(D0){var k=D0.k,K=Object.assign({},shCfg().kinds);K[k]=!shOn(k);shPut({kinds:K});toast(((SH_KL[k]||[])[1]||k)+(K[k]?" 켬":" 끔"));render()}});
+
+/* ================================================================
+   v280
+   ① 같은 기업 재입사 제한 (추천에서 빼기)
+      · 대체 대상 본인 · 이 기업 재직 중 · 이 기업 퇴사 후 N개월(기본 3, 설정 › 채용 · 단가) 안 → 추천 · 불합격 연계 추천 요청에서 빠짐
+      · 추천 칸 아래 '같은 기업 재입사 제한 n명' (펼치면 이유 · 가능일) · 직접 넣을 때는 경고 후 '그래도 넣기'
+   ② 인재 수급 요청 알림: 고른 직무의 '직무 상세' 줄 (9660-v276 안에서)
+   ================================================================ */
+function rh280M(){var v=parseInt(appSet("rehire_m",3),10);return isNaN(v)||v<0?3:v}
+function rh280End(e){return e.end_date||(termsOf(e.id).slice(-1)[0]||{}).end||""}
+function rh280Block(wid,r){if(!wid||!r||!r.company)return null;
+  if((r.replaced||[]).some(function(id){return(emp(id)||{}).worker===wid}))return{why:"대체 대상 본인"};
+  var E=empsOfW(wid).filter(function(e){return e.company===r.company&&!e.cancelled});if(!E.length)return null;var last="";
+  for(var i=0;i<E.length;i++){var end=rh280End(E[i]);if(!end||end>=TODAY)return{why:"이 기업 재직 중"};if(end>last)last=end}
+  var M=rh280M();if(!M)return null;var until=addM(last,M);if(TODAY<=until)return{why:"이 기업 "+md(last)+" 퇴사 · "+md(addD(until,1))+"부터 가능",until:until};return null}
+S.rh280H=S.rh280H||{};
+function rh280Split(L,r,getW,tag){var keep=[],H=S.rh280H[r.id]||(S.rh280H[r.id]={});L.forEach(function(o){var w=getW(o),b=rh280Block(w,r);if(b)H[tag+":"+(o.t?o.t.id:o.p?o.p.id:w)]={nm:(wk(w)||{}).name||(o.p&&o.p.name)||(o.t&&o.t.name)||"",why:b.why};else keep.push(o)});return keep}
+var _talRec280;talRec=layer("talRec",talRec,11999,"v280 재입사 제한",function(p){_talRec280=p;return function(r){var L=_talRec280.apply(this,arguments);try{return rh280Split(L,r,function(o){return o.t&&o.t.worker},"t")}catch(e){return L}}});
+var _pfRec280;pfRec=layer("pfRec",pfRec,11999,"v280 재입사 제한",function(p){_pfRec280=p;return function(r){var L=_pfRec280.apply(this,arguments);try{return rh280Split(L,r,function(o){return(o.p&&o.p.worker)||(o.tal&&o.tal.worker)},"p")}catch(e){return L}}});
+var _pfRecHtml280;pfRecHtml=layer("pfRecHtml",pfRecHtml,11999,"v280 재입사 제한",function(p){_pfRecHtml280=p;return function(r){S.rh280H[r.id]={};var h=_pfRecHtml280.apply(this,arguments);try{if(typeof talRec==="function")talRec(r);var H=S.rh280H[r.id]||{},K=Object.keys(H);if(!K.length)return h;
+  var d='<details class="rh280"><summary class="small">같은 기업 재입사 제한 '+K.length+'명 <span class="muted">· 추천에서 뺐어요 (퇴사 후 '+rh280M()+'개월)</span></summary>'+K.map(function(k){return'<div class="small">'+esc(H[k].nm)+' · <span class="muted">'+esc(H[k].why)+'</span></div>'}).join("")+'</details>';
+  return h?h+d:'<div class="ps wide">'+d+'</div>'}catch(e){return h}}});
+/* 불합격 연계: 재입사 제한 기업 요청은 추천에서 뺌 */
+var _lkMatches280;lkMatches=layer("lkMatches",lkMatches,11999,"v280 재입사 제한",function(p){_lkMatches280=p;return function(c,x){var L=_lkMatches280.apply(this,arguments);try{var t=c.tal&&(DB.talent||[]).find(function(y){return y.id===c.tal}),pf=c.pf&&pfOf(c.pf),w=c.worker||(t&&t.worker)||(pf&&pf.worker);if(!w)return L;return L.filter(function(o){return!rh280Block(w,o.r)})}catch(e){return L}}});
+/* 직접 넣을 때 경고 */
+S.rh280ok=0;
+function rh280Wrap(name,cur,getW){return layer(name,cur,11999,"v280 재입사 제한 경고",function(p){return function(rid,id){var self=this,a=arguments,x0=(DB.rrr||[]).find(function(y){return y.id===rid}),r=x0?rcOf(x0.req):rcOf(rid)/* rid = 차수 id */,w=getW(id),b=r&&w&&rh280Block(w,r);if(!b||S.rh280ok)return p.apply(self,a);
+  askConfirm("같은 기업 재입사 제한",((wk(w)||{}).name||"")+" · "+b.why+" · 그래도 후보로 넣을까요?","그래도 넣기",function(){S.rh280ok=1;try{p.apply(self,a)}finally{S.rh280ok=0}render()});return null}})}
+talRecAdd=rh280Wrap("talRecAdd",talRecAdd,function(id){var t=(DB.talent||[]).find(function(x){return x.id===id});return t&&t.worker});
+pfRecAdd=rh280Wrap("pfRecAdd",pfRecAdd,function(id){var p=pfOf(id);return p&&p.worker});
+/* 설정 › 채용 · 단가 */
+regAfter("v280 재입사 제한 설정",function(){if(S.view!=="set"||S.role!=="admin")return;var T=document.querySelector('#main .stp[data-tab="rec"]');if(!T||T.querySelector(".rh280set"))return;
+  T.insertAdjacentHTML("beforeend",'<div class="card dutycard rh280set"><b>같은 기업 재입사 제한</b> <span class="small muted">채용 요청 추천 · 불합격 연계 추천에서 빼요 · 대체 대상 본인과 재직 중인 사람은 항상 빼요</span><div class="obt" style="margin-top:6px"><span class="small">퇴사 후</span><input type="number" min="0" max="36" data-rh280 value="'+rh280M()+'" style="width:64px" aria-label="재입사 제한 개월"><span class="small">개월 동안 · 0이면 퇴사하면 바로 추천</span></div></div>')});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.rh280==null)return;var v=parseInt(t.value,10);if(isNaN(v)||v<0||v>36){toast("0~36 사이로 넣어 주세요");return}appSetPut("rehire_m",v);toast("저장했어요 · 퇴사 후 "+v+"개월");render()},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
