@@ -19156,8 +19156,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v280 — 같은 기업 재입사 제한 · 수급 요청 직무 상세 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v280";APP_VER_ON="11/17";APP_NOTE="같은 기업 재입사 제한(대체 대상 · 재직 중 · 퇴사 후 3개월은 추천에서 뺌 · 설정 › 채용 · 단가) · 인재 수급 요청 알림에 직무 상세";
+/* v281 — 같은 사람 합치기 남은 칸 · 연계 기록 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v281";APP_VER_ON="11/17";APP_NOTE="같은 사람 합치기: 추천인재의 남은 칸(악기 · 기존 근무시간 · 평가 점수 · 연계 · 거절 · 종료 사유 등)도 포트폴리오 메모로 · 인재 풀 창 연계 기록에 합친 추천인재의 등록 · 상태 변경 이력도 보임";
 
 /* ================================================================
    v208
@@ -23804,7 +23804,9 @@ function pt277Pairs(){var T={},used={},L=[];(DB.talent||[]).forEach(function(t){
     C.forEach(function(t){if(used[t.id]||!pt274Same(p,t))return;used[t.id]=1;L.push({p:p,t:t,why:pt277Why(p,t)})})});return L}
 function pt277Merge(p,t){var nm=p.name||t.name||((wk(t.worker||p.worker)||{}).name||""),L=talLinks(t),n=0,add=[];
   var jt=[].concat(t.jobs||[]).concat(t.job?[t.job]:[]).filter(Boolean);
-  [["경로",[t.origin,t.source].filter(Boolean).join(" · ")],["사유",t.reason],["평가",t.ev_note],["직무",jt.join(", ")],["희망 근무",t.hours_etc||(t.hrs||[]).join(", ")||t.hours],["지역",t.region],["상태",t.status],["등록",String(t.created||"").slice(0,10)+(t.by?" "+t.by:"")]].forEach(function(x){if(String(x[1]||"").trim())add.push(x[0]+" "+String(x[1]).trim())});
+  [["경로",[t.origin,t.source].filter(Boolean).join(" · ")],["사유",t.reason],["평가",t.ev_note],["직무",jt.join(", ")],["희망 근무",t.hours_etc||(t.hrs||[]).join(", ")||t.hours],["지역",t.region],["상태",t.status],["등록",String(t.created||"").slice(0,10)+(t.by?" "+t.by:"")],
+    /* v281 나머지 칸도 전부 */["기타 직무",t.job_etc],["악기",t.inst],["기존 근무시간",t.ps&&t.pe?t.ps+"~"+t.pe:""],["평가 점수",t.ev&&typeof t.ev==="object"?Object.keys(t.ev).filter(function(k){return t.ev[k]!==""&&t.ev[k]!=null}).map(function(k){return k+" "+t.ev[k]}).join(", "):""],
+    ["연계 기업",t.lcid?((comp(t.lcid)||{}).name||t.lcid)+(t.ldate?" "+t.ldate:""):""],["연계 메모",t.lnote],["거절 사유",t.rej],["종료",t.close_type||t.close_reason?[t.close_type,t.close_reason].filter(Boolean).join(" · "):""],["결정",t.dby?t.dby+(t.dat?" "+String(t.dat).slice(0,10):""):""]].forEach(function(x){if(String(x[1]||"").trim())add.push(x[0]+" "+String(x[1]).trim())});
   p.note=(p.note?p.note+"\n":"")+"[추천인재에서 합침 "+md(TODAY)+"] "+add.join(" · ");
   if(!p.worker&&t.worker)p.worker=t.worker;if(!p.src_org&&t.src_org)p.src_org=t.src_org;if(!p.phone&&t.phone)p.phone=t.phone;if(!p.birth&&t.birth)p.birth=t.birth;
   ["main_contact","guardian_rel","gphone","mc_name","mc_ct"].forEach(function(k){if(!p[k]&&t[k])p[k]=t[k]});
@@ -23814,7 +23816,7 @@ function pt277Merge(p,t){var nm=p.name||t.name||((wk(t.worker||p.worker)||{}).na
   L.O.forEach(function(o){o.k="pf";o.pid=p.id;n++});
   L.Q.forEach(function(q){var seen={};q.links=(q.links||[]).map(function(l){return l.k==="tl"&&l.id===t.id?{k:"pf",id:p.id}:l}).filter(function(l){var k=l.k+":"+l.id;if(seen[k])return false;seen[k]=1;return true});n++});
   (DB.memos||[]).forEach(function(m){if(m&&m.table==="talent_picks"&&m.tid===t.id){m.table="portfolios";m.tid=p.id;n++}});
-  p.notsame=(p.notsame||[]).filter(function(x){return["s:","x:","t:"].every(function(z){return x!==z+t.id})});
+  p.notsame=(p.notsame||[]).filter(function(x){return["s:","x:","t:"].every(function(z){return x!==z+t.id})});p.notsame.push("m:"+t.id);/* v281 합친 추천인재 기억 → 연계 기록에 그 상태 변경 이력도 */
   logChange("talent_picks",t.id,nm,"포트폴리오와 합침 (추천인재 지움)",JSON.stringify(t).slice(0,3800),"포트폴리오 "+p.id,"내부");
   logChange("portfolios",p.id,nm,"추천인재 합침","",t.id+" · 연결 "+n+"건 옮김","내부");
   DB.talent=(DB.talent||[]).filter(function(x){return x.id!==t.id});if(typeof SNAP!=="undefined"&&SNAP&&SNAP.talent)delete SNAP.talent[t.id];
@@ -23833,6 +23835,13 @@ regActs({"pt277-one":function(D0){if(S.role!=="admin")return;var p=pfOf(D0.p),t=
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="ot-save"]');if(!b)return;var nT=(DB.talent||[]).length,nP=(DB.pf||[]).length;setTimeout(function(){try{
   if((DB.talent||[]).length>nT){var t=DB.talent[DB.talent.length-1],p=(DB.pf||[]).find(function(x){return pt274Same(x,t)});if(p){pt277Merge(p,t);toast("이미 포트폴리오에 있는 사람이라 추천 기록을 포트폴리오에 붙였어요");render()}}
   else if((DB.pf||[]).length>nP){var p2=DB.pf[DB.pf.length-1],t2=(DB.talent||[]).find(function(x){return pt274Same(p2,x)});if(t2){pt277Merge(p2,t2);toast("같은 사람의 추천인재를 새 포트폴리오로 합쳤어요");render()}}}catch(e){console.warn("[v277 막기]",e)}},0)},true);
+
+/* v281 인재 풀 창 '연계 기록': 합친 추천인재의 등록 · 상태 변경 이력도 같이 (변경 이력은 DB에 그대로라 다시 보여 주기만) */
+var _u255Log281=u255Log;u255Log=function(t,p){var L=_u255Log281.apply(this,arguments);try{if(!p)return L;var M=(p.notsame||[]).filter(function(x){return String(x).indexOf("m:")===0}).map(function(x){return String(x).slice(2)});if(!M.length)return L;
+  (DB.logs||[]).forEach(function(l){if(l.table!=="talent_picks"||M.indexOf(l.row)<0)return;var f=String(l.field||"");
+    if(/포트폴리오와 합침/.test(f)){var o=null;try{o=JSON.parse(l.before||"")}catch(e){}if(o&&o.created)L.push({d:String(o.created).slice(0,16),t:"추천 등록"+(o.by?" · "+o.by:"")+(o.source?" ("+o.source+")":"")+" · 합친 추천인재",s:"🏢 운영페이지",k:""});L.push({d:String(l.at||"").slice(0,16),t:"추천인재를 포트폴리오로 합침",s:"🏢 운영페이지"+(l.by?" · "+l.by:""),k:""});return}
+    if(/상태|연계|종료/.test(f))L.push({d:String(l.at||"").slice(0,16),t:f+": "+(l.before||"—")+" → "+(l.after||"")+" · 합친 추천인재",s:"🏢 운영페이지"+(l.by?" · "+l.by:""),k:""})});
+  L.sort(function(a,b){return b.d.localeCompare(a.d)})}catch(e){console.warn("[v281 연계 기록]",e)}return L};
 
 /* ================================================================
    v278 계약만료 표 이름 옆 버튼 = 파트별
