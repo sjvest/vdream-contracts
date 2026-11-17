@@ -1911,9 +1911,8 @@ label.rr265tk{opacity:.6}
 .rh280{margin-top:6px}.rh280 summary{cursor:pointer}.rh280 div{padding:2px 0 2px 14px}
 
 /* v283 직무 상세 · 소속 근로자 나눠 보기 */
-input.jd282{width:9em;font-size:12px;padding:2px 4px;border:1px solid #D9D6E6;border-radius:5px;text-overflow:ellipsis}
-input.jd282:focus{width:16em}
-.jdc282{display:none;font-size:11px;color:var(--muted,#888)}
+input.jd282{width:11em;font-size:12px;padding:2px 3.2em 2px 4px;border:1px solid #D9D6E6;border-radius:5px;text-overflow:ellipsis}/* v285 누를 때 넓어지지 않음 (줄 밀림 방지) */
+.jdc282{display:none;margin-left:-3.1em;width:3em;font-size:11px;color:var(--muted,#888);pointer-events:none;text-align:right;position:relative}
 input[data-jd282]:focus+.jdc282{display:inline}
 .jdc282.over{color:#c0392b;display:inline}
 .jd282t{color:var(--muted,#777);cursor:help}
@@ -17509,7 +17508,8 @@ var WOS_K="";
 function wOrgSync(){if(!DB.workers||!DB.orgs||!DB.orgs.length)return 0;var T=DB.talent||[],P=DB.pf||[];
   var k=DB.workers.length+"|"+T.length+"|"+P.length+"|"+T.filter(function(t){return t.worker}).length+"|"+P.filter(function(p){return p.worker}).length+"|"+DB.workers.filter(function(w){return w.org_id}).length;
   if(k===WOS_K)return 0;WOS_K=k;var I=woIdx(),n=0;
-  DB.workers.forEach(function(w){if(!w||!w.id||w.org_id||w.merged_into)return;var L=woSrcs(w,I);if(!L.length)return;var it=L[0],p=it.p,o=oOf(p.src_org);if(!o)return;
+  DB.workers.forEach(function(w){if(!w||!w.id||w.org_id||w.merged_into||/^개인/.test(w.org||""))return;/* v285 개인으로 바꾼 사람은 다시 안 붙임 */var L=woSrcs(w,I);if(!L.length)return;var it=L[0],p=it.p,o=oOf(p.src_org);if(!o)return;
+    if(p.main_contact!=="기관")return;/* v285 주소통이 기관일 때만 자동 소속 (본인 · 보호자면 개인) */
     w.org_id=o.id;logChange("workers",w.id,w.name,"소속 기관","",o.short+" ("+it.k+"에서 자동)","내부");
     if(p.main_contact==="기관"&&(!w.main_contact||w.main_contact==="본인")){w.main_contact="기관";if(!w.org_ct)w.org_ct=p.mc_ct||o.mc||"";logChange("workers",w.id,w.name,"주 연락 대상","본인","기관 ("+it.k+"에서 자동)","내부")}
     n++});
@@ -19167,8 +19167,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v284 — 합치기 · 삭제 실패하면 그 추천인재만 다시 가져오기 · 합치기 실패 표시 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v284";APP_VER_ON="11/17";APP_NOTE="같은 사람 합치기 · 추천인재 삭제가 서버에서 안 되면 그 추천인재 한 줄만 다시 가져와 바로 다시 보임 (전체 다시 불러오기 없이) · 전에 합쳤는데 서버에 추천인재가 남아 있으면 합치기 카드에 '합치기 실패 · 다시 합치기'";
+/* v285 — 합치기 되돌리기 · [같은 사람] 확인 · 개인 전환 · 기관 연결 끊기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v285";APP_VER_ON="11/17";APP_NOTE="설정 › 데이터 정리 '최근 합친 기록'에서 [되돌리기] (추천인재 다시 만듦 · 합친 흔적 지움 · 다른 사람 표시 · 잘못 붙은 근로자 연결 · 소속 떼기) · 기관 창 [같은 사람]: 연락처 · 생년월일이 안 맞으면 두 기록을 나란히 보여 주고 한 번 더 확인 · 근로자 창 소속에 [개인으로 전환] · [기관 연결 끊기] · 자동 소속은 주소통이 기관일 때만 · 직무 상세 칸 누를 때 줄 밀림 없앰";
 
 /* ================================================================
    v208
@@ -24006,7 +24006,7 @@ function pt282Diff(p,t){var w=wk(p.worker||t.worker),D=[],E=pt282Emps(p,t);
 function pt282Def(p,t){var D=pt282Diff(p,t),ch={};D.forEach(function(d){if(d.o)ch[d.k]=d.o[0][0]});return ch}
 
 /* 합치기 (pt277Merge 를 이 판으로) · ch = {dis_type, dis_level, emp, phone, note} 없으면 기본값 */
-pt277Merge=function(p,t,ch){ch=ch||pt282Def(p,t);var nm=p.name||t.name||((wk(t.worker||p.worker)||{}).name||""),L=talLinks(t),n=0,E=pt282Emps(p,t),ex="";
+pt277Merge=function(p,t,ch){ch=ch||pt282Def(p,t);var snap285=JSON.stringify({worker:p.worker||"",phone:p.phone||"",birth:p.birth||"",dis_type:p.dis_type||"",dis_level:p.dis_level||"",hired_emp:p.hired_emp||"",hired_on:p.hired_on||"",status:p.status||"",note:p.note||"",jobs:p.jobs||[],src_org:p.src_org||""});/* v285 되돌리기용 합치기 전 값 */var nm=p.name||t.name||((wk(t.worker||p.worker)||{}).name||""),L=talLinks(t),n=0,E=pt282Emps(p,t),ex="";
   if(ch.emp&&E.length>1){var oth=E.filter(function(e){return e.id!==ch.emp}).map(function(e){return pt282Co(e.id)}).filter(Boolean);if(oth.length)ex="다른 기록의 기업: "+oth.join(", ")}
   p.note=ch.note!=null?String(ch.note):pt282Note(p,t,ex);
   if(ch.dis_type)p.dis_type=ch.dis_type;if(ch.dis_level)p.dis_level=ch.dis_level;if(ch.phone)p.phone=ch.phone;
@@ -24022,7 +24022,7 @@ pt277Merge=function(p,t,ch){ch=ch||pt282Def(p,t);var nm=p.name||t.name||((wk(t.w
   (DB.memos||[]).forEach(function(m){if(m&&m.table==="talent_picks"&&m.tid===t.id){m.table="portfolios";m.tid=p.id;n++}});
   p.notsame=(p.notsame||[]).filter(function(x){return["s:","x:","t:"].every(function(z){return x!==z+t.id})});p.notsame.push("m:"+t.id);
   logChange("talent_picks",t.id,nm,"포트폴리오와 합침 (추천인재 지움)",JSON.stringify(t).slice(0,3800),"포트폴리오 "+p.id,"내부");
-  logChange("portfolios",p.id,nm,"추천인재 합침","",t.id+" · 연결 "+n+"건 옮김"+(ex?" · "+ex:""),"내부");
+  logChange("portfolios",p.id,nm,"추천인재 합침",snap285,t.id+" · 연결 "+n+"건 옮김"+(ex?" · "+ex:""),"내부");
   DB.talent=(DB.talent||[]).filter(function(x){return x.id!==t.id});if(typeof SNAP!=="undefined"&&SNAP&&SNAP.talent)delete SNAP.talent[t.id];
   if(LIVE&&READY)schedulePersist();
   pt282Srv(p.id,t.id,nm,0);return n};
@@ -24160,6 +24160,86 @@ regSection("company",{id:"pComp283",order:3,transform:function(h,c){if(typeof h!
     (op.can?'<table class="mini ce282"><tbody>'+can.map(function(e){return'<tr><td>'+wlink(e.worker)+'</td><td class="small">'+(e.job?jdHtml(e):"")+'</td><td class="small muted">'+esc(e.cancel_reason||"")+'</td></tr>'}).join("")+'</tbody></table>':"");
   return h.slice(0,i)+t+h.slice(j+"</tbody></table>".length)}});
 regActs({"ce282-tog":function(D0){var o=S.ce282[D0.c]||(S.ce282[D0.c]={});o[D0.k]=!o[D0.k];render()}});
+
+/* ================================================================
+   v285 합치기 되돌리기 · 기관 창 [같은 사람] 확인 강화
+     · 설정 › 데이터 정리: 최근 30일 합친 기록 (변경 이력의 '포트폴리오와 합침 (추천인재 지움)') · 줄마다 [되돌리기] (관리자)
+       되돌리기 = 추천인재 다시 만들기 · 포트폴리오 메모의 [추천인재에서 합침] 줄 지우기 · 합친 표시 지우기
+                  (고르면) 다른 사람 표시 · 추천인재에서 온 근로자 연결 · 합격 기록 떼기 · 그 기관으로 자동으로 붙은 근로자 소속 지우기
+                  채용 요청 후보 연결은 추천인재 연계 기록(links)대로 되돌림
+     · 기관 창 '같은 사람?' [같은 사람]: 연락처 · 생년월일이 맞지 않으면 두 기록을 나란히 보여 주고 한 번 더 확인
+   ================================================================ */
+function pt285Logs(){var cut=addD(TODAY,-30);return(DB.logs||[]).filter(function(l){return l&&l.table==="talent_picks"&&l.field==="포트폴리오와 합침 (추천인재 지움)"&&String(l.before||"").slice(-1)==="}"&&String(l.at||"")>=cut})}
+function pt285Pid(l){return String(l.after||"").replace(/^포트폴리오\s*/,"").trim()}
+function pt285T(l){try{return JSON.parse(l.before)}catch(e){return null}}
+function pt285Card(){if(S.role!=="admin")return"";var L=pt285Logs();if(!L.length)return"";
+  return'<div class="card dutycard pt285card"><b>최근 합친 기록</b> <span class="small muted">30일 안 · 잘못 합쳤으면 [되돌리기] · 추천인재가 다시 생기고 포트폴리오에서 합친 흔적을 지워요</span><table class="t" style="margin-top:6px"><thead><tr><th>이름</th><th>합친 때</th><th>추천인재</th><th>포트폴리오</th><th></th></tr></thead><tbody>'+
+    L.map(function(l){var t=pt285T(l),p=pfOf(pt285Pid(l)),back=t&&(DB.talent||[]).some(function(x){return x.id===t.id}),po=t&&t.src_org&&typeof oOf==="function"&&oOf(t.src_org);
+      return'<tr><td><b>'+esc(l.label||"")+'</b></td><td class="small">'+esc(String(l.at||"").slice(5,16))+' · '+esc(l.by||"")+'</td><td class="small">'+esc(t?[(po&&po.short)||t.origin||"",t.status||""].filter(Boolean).join(" · "):"")+'</td><td class="small">'+(p?esc([p.name||"",p.status||""].filter(Boolean).join(" · ")):'<span class="muted">없음</span>')+'</td><td>'+(back?'<span class="b sm ok">되돌림</span>':'<button type="button" class="btn xs" data-act="pt285-undo" data-l="'+esc(l.id)+'">되돌리기</button>')+'</td></tr>'}).join("")+'</tbody></table></div>'}
+pt277Card=(function(o){return function(){return o.apply(this,arguments)+pt285Card()}})(pt277Card);
+function pt285Dlg(l){var t=pt285T(l),p=pfOf(pt285Pid(l));if(!t)return;var w=t.worker&&wk(t.worker),wl=!!(p&&t.worker&&p.worker===t.worker),wo=w&&p&&w.org_id&&w.org_id===p.src_org&&t.src_org!==p.src_org;
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="합치기 되돌리기" style="max-width:520px"><div class="ph"><div><h2>합치기 되돌리기 · '+esc(l.label||"")+'</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps">'+
+    '<p class="small" style="margin:0 0 8px">추천인재를 다시 만들고, 포트폴리오 메모의 [추천인재에서 합침] 줄과 합친 표시를 지워요</p>'+
+    '<label class="small" style="display:block"><input type="checkbox" id="pt285-x" checked> 다른 사람으로 표시 (다시 같은 사람 쌍으로 안 잡히게)</label>'+
+    (wl?'<label class="small" style="display:block"><input type="checkbox" id="pt285-w" checked> 포트폴리오의 근로자 DB 연결 떼기 ('+esc((w&&w.name)||"")+' · 추천인재에서 온 연결)</label>':'')+
+    (wo?'<label class="small" style="display:block"><input type="checkbox" id="pt285-o" checked> 근로자 '+esc(w.name)+'의 소속 기관('+esc((oOf(w.org_id)||{}).short||"")+') 지우기 · 개인으로</label>':'')+
+    '<p class="small muted" style="margin:8px 0 0">합칠 때 고른 장애유형 · 연락처 · 직무는 그대로예요 · 필요하면 포트폴리오에서 고쳐 주세요 · 서버 합치기(v282 이후)로 옮겨진 발굴 지원 기록은 포트폴리오에 남아요</p></div>'+
+    '<div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="pt285-go" data-l="'+esc(l.id)+'">되돌리기</button></div></div></div>'}
+function pt285Undo(l,opt){var t=pt285T(l);if(!t)return false;if((DB.talent||[]).some(function(x){return x.id===t.id})){toast("이미 되돌렸어요");return false}
+  var p=pfOf(pt285Pid(l)),nm=l.label||t.name||"";DB.talent.push(t);
+  var pl=p&&(DB.logs||[]).find(function(x){return x.table==="portfolios"&&x.row===p.id&&x.field==="추천인재 합침"&&String(x.after||"").indexOf(t.id)===0&&String(x.before||"").charAt(0)==="{"}),b0=null;try{b0=pl?JSON.parse(pl.before):null}catch(e){}
+  if(p&&b0){/* v285 이후 합친 쌍: 합치기 전 값으로 그대로 */["phone","birth","dis_type","dis_level","hired_emp","hired_on","status","note","jobs","src_org"].forEach(function(k){p[k]=b0[k]});if(opt.w||!b0.worker)p.worker=b0.worker;p._nmx=""}
+  else if(p&&opt.w){/* 예전에 합친 쌍: 추천인재에서 온 연락처 · 생일은 비움 (다른 사람 정보) */var tw=t.worker&&wk(t.worker),tp=normPhone(t.phone||(tw&&tw.phone)||""),tb=t.birth||(tw&&tw.birth)||"";
+    if(tp&&normPhone(p.phone||"")===tp){logChange("portfolios",p.id,p.name||nm,"연락처 (합치기 되돌림)",p.phone,"","내부");p.phone=""}if(tb&&p.birth===tb){logChange("portfolios",p.id,p.name||nm,"생년월일 (합치기 되돌림)",p.birth,"","내부");p.birth=""}}
+  if(p){p.note=String(p.note||"").split("\n").filter(function(s){return!/^\[추천인재에서 합침 /.test(s)&&!/^다른 기록의 기업: /.test(s)}).join("\n");
+    p.notsame=(p.notsame||[]).filter(function(x){return["m:","s:","t:","x:"].every(function(z){return x!==z+t.id})});if(opt.x)p.notsame.push("x:"+t.id);
+    if(opt.w&&t.worker&&p.worker===t.worker){var he=p.hired_emp&&emp(p.hired_emp);if(he&&he.worker===t.worker){p.hired_emp="";p.hired_on="";if(p.status==="취업완료")p.status="대기"}p.worker="";p._nmx="";logChange("portfolios",p.id,p.name||nm,"근로자 DB 연결 떼기 (합치기 되돌림)",(wk(t.worker)||{}).name||"","","내부")}
+    var oid=p.id;(t.links||[]).forEach(function(lk){(DB.rrr||[]).forEach(function(x){if(lk.rd&&x.id!==lk.rd)return;(x.cands||[]).forEach(function(c){if(c.id===lk.cid&&!c.tal){c.tal=t.id;if(opt.x&&c.pf===oid)delete c.pf}})})})}
+  var w=t.worker&&wk(t.worker);if(opt.o&&w&&w.org_id){var o0=oOf(w.org_id);logChange("workers",w.id,w.name,"소속 기관",(o0&&o0.short)||"","개인 (합치기 되돌림)","내부");w.org_id="";w.org="개인"}
+  logChange("talent_picks",t.id,nm,"합치기 되돌림 (추천인재 다시 만듦)","",p?"포트폴리오 "+p.id:"","내부");if(p)logChange("portfolios",p.id,p.name||nm,"합치기 되돌림",t.id,opt.x?"다른 사람":"","내부");
+  if(LIVE&&READY)schedulePersist();return true}
+regActs({"pt285-undo":function(D0){if(S.role!=="admin")return;var l=(DB.logs||[]).find(function(x){return x.id===D0.l});if(l)pt285Dlg(l)},
+  "pt285-go":function(D0){if(S.role!=="admin")return;var l=(DB.logs||[]).find(function(x){return x.id===D0.l});if(!l)return;var g=function(id){var c=document.getElementById(id);return!!(c&&c.checked)};
+    var uo={x:g("pt285-x"),w:g("pt285-w"),o:g("pt285-o")};$("#modal").innerHTML="";if(pt285Undo(l,uo))toast("되돌렸어요 · 추천인재가 다시 생겼어요");render()}});
+
+/* 기관 창 [같은 사람]: 연락처 · 생년월일이 안 맞으면 한 번 더 확인 */
+function pt285Cmp(p,t){var a=uniPfInfo(p),b=uniTalInfo(t),pa=normPhone(a.ph||""),pb=normPhone(b.ph||"");return{a:a,b:b,ph:pa&&pb?pa===pb:null,bi:a.birth&&b.birth?a.birth===b.birth:null}}
+(function(){var R=REG(),o=R.act["pt274-same"];if(!o)return;R.act["pt274-same"]=function(D0){var p=pfOf(D0.p),t=(DB.talent||[]).find(function(x){return x.id===D0.t});if(!p||!t||D0.ok285)return o.apply(this,arguments);
+  var c=pt285Cmp(p,t);if(c.ph===true||c.bi===true)return o.apply(this,arguments);
+  var row=function(l,x,y,s){return'<tr><th class="small">'+l+'</th><td>'+esc(x||"없음")+'</td><td>'+esc(y||"없음")+'</td><td>'+(s===false?'<span class="b sm warn">다름</span>':s===true?'<span class="b sm ok">같음</span>':'<span class="small muted">비교 못 함</span>')+'</td></tr>'};
+  var po=p.src_org&&oOf(p.src_org),to=t.src_org&&oOf(t.src_org),pw=p.worker&&wk(p.worker),tw=t.worker&&wk(t.worker);
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="같은 사람 확인" style="max-width:560px"><div class="ph"><div><h2>정말 같은 사람인가요?</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps">'+
+    '<p class="small pt285w" style="margin:0 0 8px;color:var(--bad,#c0392b)"><b>연락처 · 생년월일이 맞는 게 없어요 · 동명이인일 수 있어요</b></p>'+
+    '<table class="t"><thead><tr><th></th><th>포트폴리오</th><th>추천인재</th><th></th></tr></thead><tbody>'+row("이름",c.a.name,c.b.name,c.a.name.replace(/\s/g,"")===c.b.name.replace(/\s/g,""))+row("연락처",c.a.ph,c.b.ph,c.ph)+row("생년월일",c.a.birth,c.b.birth,c.bi)+
+    row("기관",(po&&po.short)||"",(to&&to.short)||"",null)+row("근로자 DB",(pw&&pw.name+" · "+(pw.phone||""))||"",(tw&&tw.name+" · "+(tw.phone||""))||"",pw&&tw?pw.id===tw.id:null)+'</tbody></table>'+
+    '<p class="small muted" style="margin:8px 0 0">같은 사람으로 하면 근로자 DB 연결이 서로 복사되고 포트폴리오 하나로 합쳐져요</p></div>'+
+    '<div class="ps foot"><button class="btn" data-act="pt285-no" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'">다른 사람</button><span class="grow"></span><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="pt285-same-ok" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'">그래도 같은 사람</button></div></div></div>'}})();
+regActs({"pt285-no":function(D0){$("#modal").innerHTML="";var f=REG().act["pt274-no"];if(f)f({p:D0.p,t:D0.t});render()},"pt285-same-ok":function(D0){$("#modal").innerHTML="";var f=REG().act["pt274-same"];f({p:D0.p,t:D0.t,ok285:1})}});
+
+/* ================================================================
+   v285 근로자 소속: [개인으로 전환] · [기관 연결 끊기]
+     · 기준: 주소통이 기관이면 기관 소속 · 본인 · 보호자면 개인 (자동 소속은 주소통이 기관일 때만 · 0210 wOrgSync)
+     · [개인으로 전환] 기관에서 나온 사람 → 소속 비움 · '개인 · 이전 A기관 (~11/17)' 기록 · 기관 추천 기록은 그대로
+     · [기관 연결 끊기] 잘못 붙은 경우 → 소속 비움 + 그 기관의 추천인재 · 포트폴리오에서 이 근로자 연결을 뗌
+     · 개인으로 바꾼 사람은 자동으로 다시 기관에 붙지 않음 (w.org 가 '개인…')
+   ================================================================ */
+regAfter("v285 소속 버튼",function(){if(!S.wm)return;var w=wk(S.wm),i=document.querySelector('aside.pnl input[data-wf="_org"]');if(!w||!i)return;var lab=i.closest("label");if(!lab||lab.nextElementSibling&&lab.nextElementSibling.classList.contains("wo285"))return;
+  var o=w.org_id&&oOf(w.org_id),h;
+  if(o)h='<div class="f wo285"><span>소속 바꾸기</span><div class="obt" style="padding:4px 0">'+(w.main_contact!=="기관"?'<span class="small" style="color:var(--bad,#c0392b)">주소통이 '+esc(w.main_contact||"본인")+'이에요 · 기관을 통하지 않으면 개인이에요</span> ':'')+
+    '<button type="button" class="btn xs" data-act="wo285-ind" data-w="'+esc(w.id)+'" title="기관에서 나와 개인이 된 경우 · 기관 추천 기록은 그대로">개인으로 전환</button><button type="button" class="btn xs" data-act="wo285-cut" data-w="'+esc(w.id)+'" title="다른 사람 기록에 잘못 붙은 경우 · 그 기관 추천인재 · 포트폴리오에서 이 근로자 연결을 뗌">기관 연결 끊기</button></div></div>';
+  else if(/^개인/.test(w.org||""))h='<div class="f wo285"><span>소속</span><span class="small muted" style="padding:6px 0">'+esc(w.org)+'</span></div>';
+  else return;lab.insertAdjacentHTML("afterend",h)});
+function wo285Recs(w,oid){return[].concat((DB.talent||[]).filter(function(t){return t.worker===w.id&&t.src_org===oid}).map(function(t){return{k:"talent_picks",p:t}}),(DB.pf||[]).filter(function(p){return p.worker===w.id&&p.src_org===oid}).map(function(p){return{k:"portfolios",p:p}}))}
+regActs({"wo285-ind":function(D0){var w=wk(D0.w),o=w&&w.org_id&&oOf(w.org_id);if(!o)return;
+    askConfirm("개인으로 전환",w.name+" 님을 "+o.short+" 소속에서 개인으로 바꿀까요? 기관 추천 기록은 그대로 남고 '이전 소속'으로 기록돼요","개인으로",function(){
+      w.org_id="";w.org="개인 · 이전 "+o.short+" (~"+md(TODAY)+")";if(w.main_contact==="기관"){logChange("workers",w.id,w.name,"주 연락 대상","기관","본인 (개인 전환)","내부");w.main_contact="본인"}
+      logChange("workers",w.id,w.name,"소속 기관",o.short,"개인 (전환)","내부");if(LIVE&&READY)schedulePersist();toast(w.name+" 님을 개인으로 바꿨어요");render()})},
+  "wo285-cut":function(D0){var w=wk(D0.w),o=w&&w.org_id&&oOf(w.org_id);if(!o)return;var R=wo285Recs(w,o.id);
+    askConfirm("기관 연결 끊기",w.name+" 님과 "+o.short+"의 연결을 끊을까요? 소속을 비우고"+(R.length?" 그 기관 기록 "+R.length+"건(추천인재 · 포트폴리오)에서 이 근로자 연결을 떼요 · 기록 자체는 남아요":"")+" · 변경 이력에 남아요","연결 끊기",function(){
+      R.forEach(function(x){x.p.worker="";if(x.k==="portfolios"){x.p._nmx="";var e=x.p.hired_emp&&emp(x.p.hired_emp);if(e&&e.worker===w.id){x.p.hired_emp="";x.p.hired_on="";if(x.p.status==="취업완료")x.p.status="대기"}}
+        x.p.notsame=x.p.notsame||[];logChange(x.k,x.p.id,x.p.name||w.name,"근로자 DB 연결 떼기 (기관 연결 끊기)",w.name,"","내부")});
+      w.org_id="";w.org="개인";if(w.main_contact==="기관")w.main_contact="본인";logChange("workers",w.id,w.name,"소속 기관",o.short,"개인 (연결 끊기 · 잘못 붙음)","내부");
+      if(LIVE&&READY)schedulePersist();toast("연결을 끊었어요"+(R.length?" · 기관 기록 "+R.length+"건에서 뗌":""));render()})}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
