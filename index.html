@@ -19186,8 +19186,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v287 — 희망 근무조건 창 다시 · 다른 사람 표시 다시 묻기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v287";APP_VER_ON="11/17";APP_NOTE="희망 근무조건: 근무 요일(주 5일 · 특정 요일 · 무관 중 하나) · 시간대(오전 · 오후 여러 개) · 하루 시간(3 · 4 · 8시간 여러 개) · 무관을 누르면 같은 줄 잠금 · 모두 필수 · 무관은 근무시간 맞춤에서 다 맞음 · 추천인재 · 포트폴리오 상세에서도 같은 창 · 기관 창 '다른 사람으로 표시한 쌍' [다시 묻기] · 합치기 되돌리기의 '다른 사람으로 표시'는 기본 체크 안 함";
+/* v288 — 포트폴리오 취업완료 맞추기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v288";APP_VER_ON="11/17";APP_NOTE="합칠 때 추천인재가 연계완료면(예전 앱 데이터 포함) 포트폴리오 취업완료 + 근로자 DB 입사 연결 · 이미 합쳐진 쌍은 설정 › 데이터 정리 [취업완료로 맞추기] · 근로자 DB에 연결된 포트폴리오가 등록 뒤 입사했으면 자동 취업완료 · 등록 전부터 재직 중이면 '재직 중 · 기업' 표시";
 
 /* ================================================================
    v208
@@ -24033,7 +24033,7 @@ pt277Merge=function(p,t,ch){ch=ch||pt282Def(p,t);var snap285=JSON.stringify({wor
   if(!p.worker&&t.worker)p.worker=t.worker;if(!p.src_org&&t.src_org)p.src_org=t.src_org;if(!p.phone&&t.phone)p.phone=t.phone;if(!p.birth&&t.birth)p.birth=t.birth;
   ["main_contact","guardian_rel","gphone","mc_name","mc_ct"].forEach(function(k){if(!p[k]&&t[k])p[k]=t[k]});
   var jt=[].concat(t.jobs||[]).concat(t.job?[t.job]:[]).filter(Boolean),J=(p.jobs||[]).slice();jt.forEach(function(j){if(J.indexOf(j)<0)J.push(j)});p.jobs=J;if(!p.wish_hours&&(t.hours_etc||t.hours))p.wish_hours=t.hours_etc||t.hours;
-  var he=ch.emp||(E[0]&&E[0].id)||"";
+  var he=ch.emp||(E[0]&&E[0].id)||"";if(!he&&t.status==="연계완료"){var e288=pt288Emp(p.worker||t.worker,pt288Co(t));he=e288?e288.id:"";if(!he&&p.status!=="취업완료"){p.status="취업완료";p.note=(p.note?p.note+"\n":"")+"[연계완료 · "+(pt288Co(t)||"기업 미상")+" · 입사 기록 없음]"}}/* v288 예전 앱 연계완료도 취업완료로 */
   if(he&&p.hired_emp!==he){p.hired_emp=he;p.hired_on=p.hired_on||empStart(emp(he))||t.ldate||"";p.status="취업완료"}else if(t.status==="연계중"&&(p.status==="대기"||!p.status))p.status="제안중";
   L.C.forEach(function(x){if(x.c.tal===t.id){if(!x.c.pf)x.c.pf=p.id;delete x.c.tal;n++}});
   L.O.forEach(function(o){o.k="pf";o.pid=p.id;n++});
@@ -24492,6 +24492,40 @@ regActs({"th287-no":function(D0){var A=JSON.parse(JSON.stringify(th287No())),L=A
   p.notsame=(p.notsame||[]).filter(function(v){return v!=="x:"+t.id&&v!=="t:"+t.id}).concat(["s:"+t.id]);
   logChange("portfolios",p.id,p.name||ti.name||"","같은 사람으로 묶기","","추천인재와 합침","내부");
   var n=typeof pt277Merge==="function"?pt277Merge(p,t):0;toast("같은 사람으로 합쳤어요 · 포트폴리오 하나로"+(n?" · 연결 "+n+"건 옮김":""));render();uni268Open()}})();
+
+/* ================================================================
+   v288 포트폴리오 취업완료 맞추기
+     · 합칠 때 추천인재가 '연계완료'면(예전 앱 데이터처럼 입사 연결이 없어도) 근로자 DB 입사 기록 중 기업명이 맞는 것(없으면 최근 재직 건)과 연결 → 취업완료 (9720 pt277Merge)
+     · 이미 합쳐진 쌍: 설정 › 데이터 정리 '최근 합친 기록'에 [취업완료로 맞추기 N건] (목록 확인 후)
+     · 자동: 근로자 DB에 연결된 포트폴리오에서 등록일 이후 시작한 재직 건이 있으면 취업완료 + 입사 연결 (직접 지정한 상태는 그대로)
+     · 등록 전부터 재직 중이면 상태는 그대로 · 포트폴리오 상태 줄과 채용 요청 추천에 '재직 중 · 기업'
+   ================================================================ */
+function pt288Co(t){return String((t.lcid&&comp(t.lcid)&&comp(t.lcid).name)||t.lnote||t.close_reason||"").trim()}
+function pt288Nm(s){return String(s||"").replace(/주식회사|\(주\)|㈜|\s/g,"")}
+function pt288Emp(wid,co){if(!wid)return null;var E=empsOfW(wid).filter(function(e){return!e.cancelled});if(!E.length)return null;var c=pt288Nm(co);
+  var hit=c&&E.find(function(e){var n=pt288Nm((comp(e.company)||{}).name);return n&&(n.indexOf(c)>=0||c.indexOf(n)>=0)});if(hit)return hit;
+  return E.slice().sort(function(a,b){return String(empStart(b)||"").localeCompare(String(empStart(a)||""))})[0]}
+/* 이미 합쳐진 쌍: 지운 추천인재가 연계완료였는데 포트폴리오가 아직 취업완료가 아닌 것 */
+function pt288Fix(){var seen={},L=[];pt285Logs().forEach(function(l){var t=pt285T(l),p=pfOf(pt285Pid(l));if(!t||!p||seen[p.id])return;if(t.status!=="연계완료"||p.status==="취업완료"||p.status==="기타"||p.st_manual)return;seen[p.id]=1;
+  var co=pt288Co(t),e=pt288Emp(p.worker||t.worker,co);L.push({p:p,t:t,co:co,e:e})});return L}
+pt277Card=(function(o){return function(){var h=o.apply(this,arguments);if(S.role!=="admin")return h;var L=pt288Fix();if(!L.length)return h;
+  var bar='<div class="card dutycard pt288card"><b>합친 뒤 취업완료가 안 된 포트폴리오 '+L.length+'명</b> <span class="small muted">합친 추천인재가 연계완료였어요 · 근로자 DB 입사 기록과 연결해 취업완료로 맞춰요</span><table class="t" style="margin-top:6px"><tbody>'+
+    L.map(function(x){return'<tr><td><b>'+esc(x.p.name||"")+'</b></td><td class="small">'+esc(x.co||"기업 미상")+'</td><td class="small">'+(x.e?esc(((comp(x.e.company)||{}).name||"")+" · "+(empStart(x.e)||"")+" 입사"):'<span class="b sm warn">입사 기록 없음 · 상태만 바꿔요</span>')+'</td><td class="small">지금 '+esc(x.p.status||"대기")+'</td></tr>'}).join("")+'</tbody></table><div class="obt" style="margin-top:6px"><button type="button" class="btn sm pri" data-act="pt288-fix">취업완료로 맞추기 ('+L.length+'건)</button></div></div>';
+  return h+bar}})(pt277Card);
+function pt288Apply(x,why){var p=x.p,before=p.status||"";if(x.e){p.hired_emp=x.e.id;p.hired_on=p.hired_on||empStart(x.e)||"";if(!p.worker)p.worker=x.e.worker}else if(!/입사 기록 없음/.test(p.note||""))p.note=(p.note?p.note+"\n":"")+"[연계완료 · "+(x.co||"기업 미상")+" · 입사 기록 없음]";
+  p.status="취업완료";logChange("portfolios",p.id,p.name||"","상태",before,"취업완료 ("+why+")","내부")}
+regActs({"pt288-fix":function(){if(S.role!=="admin")return;var L=pt288Fix();if(!L.length)return;askConfirm("취업완료로 맞추기",L.length+"명을 취업완료로 바꾸고 입사 기록과 연결할까요? (변경 이력에 남아요)","맞추기",function(){L.forEach(function(x){pt288Apply(x,"합친 추천인재 연계완료")});if(LIVE&&READY)schedulePersist();toast(L.length+"명 취업완료로 맞췄어요");render()})}});
+/* 자동: 등록일 이후 시작한 재직 건 → 취업완료 */
+function pt288After(p){if(!p||!p.worker||p.hired_emp||p.st_manual||p.status==="취업완료"||p.status==="기타")return null;var d=String(p.created||"").slice(0,10);if(!d)return null;
+  return empsOfW(p.worker).filter(function(e){return!e.cancelled&&activeEmp(e)&&String(empStart(e)||"")>=d}).sort(function(a,b){return String(empStart(b)).localeCompare(String(empStart(a)))})[0]||null}
+var PT288_K="";
+pfAutoSync=(function(o){return function(){try{var k=(DB.pf||[]).length+"|"+(DB.employments||[]).length+"|"+(DB.pf||[]).filter(function(p){return p.worker}).length;if(k!==PT288_K){PT288_K=k;var n=0;
+  (DB.pf||[]).forEach(function(p){var e=pt288After(p);if(!e)return;pt288Apply({p:p,e:e,co:(comp(e.company)||{}).name},"자동 · 근로자 DB 입사 확인");n++});if(n&&LIVE&&READY)schedulePersist()}}catch(e){console.warn("[v288 자동 취업완료]",e)}return o.apply(this,arguments)}})(pfAutoSync);
+/* 재직 중 표시 (등록 전부터 재직 · 취업완료 아님) */
+function pt288Now(p){if(!p||!p.worker||p.status==="취업완료")return null;return empsOfW(p.worker).filter(function(e){return!e.cancelled&&activeEmp(e)})[0]||null}
+function pt288Badge(p){var e=pt288Now(p);return e?' <span class="b sm warn pt288b" title="근로자 DB에 재직 중인 입사 기록이 있어요 (포트폴리오 등록 전부터) · 이직 · 추가 근무 희망인지 확인해 주세요">재직 중 · '+esc((comp(e.company)||{}).name||"")+'</span>':""}
+regAfter("v288 재직 중 표시",function(){if(!S.pfSel)return;var p=pfOf(S.pfSel),b=document.querySelector('.stbox[data-stk] .stt');if(!p||!b||b.querySelector(".pt288b"))return;var h=pt288Badge(p);if(h)b.insertAdjacentHTML("beforeend",h)});
+pfRecHtml=layer("pfRecHtml",pfRecHtml,12111,"v288 재직 중 표시",function(o){return function(r){var h=o.apply(this,arguments);if(!h)return h;try{return h.replace(/(<button class="linkbtn" data-act="pf-go" data-id="([^"]+)"><b>[^<]*<\/b><\/button>)/g,function(m,a,id){return a+pt288Badge(pfOf(id))})}catch(e){return h}}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
