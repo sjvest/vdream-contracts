@@ -127,7 +127,7 @@ VT.orgs={deps:["staff","organizations","org_contact_logs"],
 function logOld(l){var p=plOf(l);return Object.assign({},p.extra||{},{id:num("log",l.id),org_id:num("org",l.org_id),date:p.date||d10(kst(l.logged_at)),summary:p.summary!=null?p.summary:(l.summary||""),memo:p.memo!=null?p.memo:"",
   our_members:p.our_members!=null?p.our_members:stName(l.our_staff_id),their_members:l.their_name||"",contact_type:l.quick?(l.quick_kind||"기타"):(l.kind||""),status:l.status||"완료",threads:p.threads||[],is_quick:!!l.quick,
   channel:l.channel||"",recall_on:l.recall_on||null,logged_at:iso(kst(l.logged_at)),created_at:p.created_at||l.created_at||iso(kst(l.logged_at)),created_by:p.created_by||null,created_by_name:l.created_by_name||"",_vw:l.id})}
-var OLT=["통화","이메일","문자","미팅","기타"],OLS=["완료","진행중","재연락 필요"];
+var OLT=["통화","이메일","문자","미팅","기타"],OLS=["완료","진행중","재연락 필요","부재"];
 function logNew(p,cur){var x={},pl={},has=function(k){return k in p};
   if(has("org_id"))x.org_id=txt("org",p.org_id);if(has("logged_at")||has("date")){var at=has("logged_at")&&p.logged_at?kst(p.logged_at):(cur?kst(cur.logged_at):"");if(has("date")&&p.date&&d10(at)!==d10(p.date))at=d10(p.date)+" "+(at.slice(11)||"09:00");if(at)x.logged_at=at}
   var q=has("is_quick")?!!p.is_quick:(cur?!!cur.quick:false);if(has("is_quick"))x.quick=q;if(has("contact_type")){if(q){x.quick_kind=p.contact_type||"기타";x.kind="기타"}else x.kind=OLT.indexOf(p.contact_type)>=0?p.contact_type:"기타"}
@@ -9579,7 +9579,7 @@ async function openOrg(id){
         <option value="이메일"> 이메일</option><option value="문자"> 문자</option><option value="기타"> 기타</option>
       </select>
       <select id="log-status" onchange="toggleRecontactDate()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
-        <option value="완료"> 완료</option><option value="진행중"> 진행중</option><option value="재연락 필요"> 재연락 필요</option>
+        <option value="완료"> 완료</option><option value="진행중"> 진행중</option><option value="재연락 필요"> 재연락 필요</option><option value="부재"> 부재</option>
       </select>
       <input id="log-summary" placeholder="제목" style="flex:1;min-width:120px;font-size:13px;font-weight:500;color:var(--text);padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
       <input id="log-date" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
@@ -10015,6 +10015,7 @@ function renderContactLogItem(l,orgId){
   const typeIcon=TYPE_ICON[l.contact_type]||'';
   const isInProgress=l.status==='진행중';
   const statusBadge=isInProgress?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 완료</span>';
+  const statusBadge2=l.status==='부재'?'<span style="font-size:10px;font-weight:700;color:var(--text2,#667085);background:#f2f4f7;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 부재</span>':statusBadge;
   // 빠른 접촉(간편 접촉)은 통화·미팅 같은 직접 컨택과 구분되게 별도 배지로 표시한다 (2026-08-22).
   const quickBadge=l.is_quick?'<span style="font-size:10px;font-weight:700;color:var(--teal);background:var(--teal-bg);padding:1px 7px;border-radius:4px;flex-shrink:0;">간편 접촉</span>':'';
   const threads=l.threads||[];
@@ -10026,7 +10027,7 @@ function renderContactLogItem(l,orgId){
       <span style="font-size:11px;color:var(--accent);flex-shrink:0;background:var(--accent-bg);padding:1px 7px;border-radius:4px;font-weight:600;">${timeStr}</span>
       <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${l.summary}</span>
       ${quickBadge}
-      ${statusBadge}
+      ${statusBadge2}
       ${threads.length?`<span style="font-size:10px;font-weight:700;color:#b54708;background:#fffbeb;border:1px solid #fcd34d;padding:1px 7px;border-radius:10px;flex-shrink:0;">+${threads.length} 추가상담</span>`:''}
       ${l.created_by_name?`<span style="font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0;">${l.created_by_name}</span>`:''}
       ${hasMemo||threads.length?`<span style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}">펼치기</span>`:''}
