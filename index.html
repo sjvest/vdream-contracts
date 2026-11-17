@@ -15692,7 +15692,7 @@ pfImport=layer("pfImport",pfImport,8516,"v159 채용 요청 목록 (정리)",fun
     var src=col(row,"수급처").trim(),o=pfOrgOf(src)||(t&&t.src_org&&oOf(t.src_org))||null;if(src&&!pfOrgOf(src))noOrg[src]=(noOrg[src]||0)+1;
     var mc=o&&o.ban_direct?"기관":(t&&t.main_contact)||"본인",lv=col(row,"장애등급");
     var p={id:nid(),created:stamp(),by:col(row,"수급담당자")||"시트 이관",worker:w?w.id:"",name:nm,phone:ph0||(t&&t.phone)||(w?w.phone:""),birth:b||(t&&t.birth)||(w?w.birth:""),gender:/^남/.test(col(row,"성별"))?"남":/^여/.test(col(row,"성별"))?"여":"",
-      dis_type:(DIS_TYPES.find(function(x){return col(row,"장애유형").indexOf(x.replace(/장애$/,""))>=0})||(w&&w.dis_type)||""),dis_level:/중증|심한/.test(lv)?"중증":/경증|심하지/.test(lv)?"경증":(w&&w.dis_level?(/심하지|경/.test(w.dis_level)?"경증":"중증"):""),
+      dis_type:((w&&w.dis_type)||DIS_TYPES.find(function(x){return col(row,"장애유형").indexOf(x.replace(/장애$/,""))>=0})||""),dis_level:w&&w.dis_level?(/심하지|경/.test(w.dis_level)?"경증":"중증"):/중증|심한/.test(lv)?"중증":/경증|심하지/.test(lv)?"경증":"",/* v282 근로자 DB와 연결되면 근로자 DB 장애유형 · 정도 우선 */
       jobs:jobs.length?jobs:(t&&t.jobs)||[],job_detail:col(row,"직무상세"),wish_hours:col(row,"희망근무시간").split(/\s*[\/,]\s*/).filter(Boolean).join(" / "),wish_pay:col(row,"희망급여"),level:(col(row,"직무레벨").match(/[상중하]/)||[""])[0],
       files:url?[{kind:"link",name:"기존 포트폴리오 링크",url:url,by:"시트 이관",at:""}]:(link&&link.hyperlink&&col(row,"포트폴리오")?[{kind:"link",name:col(row,"포트폴리오"),url:"",broken:String(link.hyperlink),fname:pflBase(col(row,"포트폴리오")),by:"시트 이관",at:""}]:[]),
       note:col(row,"특이사항"),proposed:col(row,"제안기업"),status:s,source:src,source_mgr:col(row,"수급담당자"),consent:true,consent_on:TODAY,
@@ -19156,8 +19156,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v281 — 같은 사람 합치기 남은 칸 · 연계 기록 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v281";APP_VER_ON="11/17";APP_NOTE="같은 사람 합치기: 추천인재의 남은 칸(악기 · 기존 근무시간 · 평가 점수 · 연계 · 거절 · 종료 사유 등)도 포트폴리오 메모로 · 인재 풀 창 연계 기록에 합친 추천인재의 등록 · 상태 변경 이력도 보임";
+/* v282 — 같은 사람 합치기 서버 함수 · 추천인재 삭제 확인 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v282";APP_VER_ON="11/17";APP_NOTE="같은 사람 합치기: 발굴페이지 지원 기록 · 파일도 포트폴리오로 옮기고 추천인재는 서버에서 확실히 지움 · 값이 다른 쌍(합격 기업 · 장애유형 · 장애정도 · 연락처 · 메모)은 하나씩 골라 합치기 · 메모 중복 없이 합치고 미리보기 · 추천인재 삭제가 서버에서 안 되면 알림 · 발굴 지원 기록이 걸린 추천인재는 지우기 전에 알림 · 관리자 내 할 일에 같은 사람 쌍 · 포트폴리오 일괄 업로드 때 근로자 DB 장애유형 우선";
 
 /* ================================================================
    v208
@@ -23960,6 +23960,119 @@ pfRecAdd=rh280Wrap("pfRecAdd",pfRecAdd,function(id){var p=pfOf(id);return p&&p.w
 regAfter("v280 재입사 제한 설정",function(){if(S.view!=="set"||S.role!=="admin")return;var T=document.querySelector('#main .stp[data-tab="rec"]');if(!T||T.querySelector(".rh280set"))return;
   T.insertAdjacentHTML("beforeend",'<div class="card dutycard rh280set"><b>같은 기업 재입사 제한</b> <span class="small muted">채용 요청 추천 · 불합격 연계 추천에서 빼요 · 대체 대상 본인과 재직 중인 사람은 항상 빼요</span><div class="obt" style="margin-top:6px"><span class="small">퇴사 후</span><input type="number" min="0" max="36" data-rh280 value="'+rh280M()+'" style="width:64px" aria-label="재입사 제한 개월"><span class="small">개월 동안 · 0이면 퇴사하면 바로 추천</span></div></div>')});
 document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.rh280==null)return;var v=parseInt(t.value,10);if(isNaN(v)||v<0||v>36){toast("0~36 사이로 넣어 주세요");return}appSetPut("rehire_m",v);toast("저장했어요 · 퇴사 후 "+v+"개월");render()},true);
+
+/* ================================================================
+   v282 같은 사람 합치기 = 서버 함수 하나로 (발굴페이지 지원 기록 · 파일 연결까지) · 추천인재 삭제 확인
+     · 합치기: 앱이 포트폴리오 칸(장애유형 · 장애정도 · 합격 기업 · 연락처 · 메모)을 고른 값으로 저장하고
+       서버 vw_merge_talent 가 발굴 지원 기록(pl_applications) · 파일(pl_blobs) 'tl:' → 'pf:' · 발굴 정보(pl) 옮김 · 추천인재 줄 지움
+       실패하면 서버는 전부 되돌아감 → 앱은 다시 불러와서 추천인재가 다시 보임
+     · 값이 다른 쌍(기업 · 장애 · 연락처 · 메모)은 하나씩 확인 창에서 골라 합치기 · [모두 합치기]는 값이 같은 쌍만
+       장애유형 · 장애정도 기본값 = 근로자 DB · 합격 기업 기본값 = 취소 안 된 최근 입사 기록
+     · 메모: 포트폴리오 메모에 이미 들어 있는 내용은 다시 붙이지 않음 · 합친 뒤 메모 미리보기 · 고쳐서 합치기
+     · 추천인재 삭제: 서버에서 실제로 지워졌는지 건수 확인 · 발굴 지원 기록이 걸려 있으면 지우기 전에 알림
+     · 내 할 일(관리자): 같은 사람 쌍이 남아 있으면 '같은 사람 N쌍' (발굴페이지에서 새로 들어와도 여기서 보임)
+   ================================================================ */
+function pt282Lv(v){v=String(v||"");if(!v)return"";return/심하지|경/.test(v)?"경증":/심한|중/.test(v)?"중증":v}
+function pt282Ph(v){return String(v||"").replace(/\D/g,"")}
+function pt282Co(eid){var e=eid&&emp(eid);return e?((comp(e.company)||{}).name||""):""}
+function pt282Emps(p,t){var L=[];[p.hired_emp,t.hire_emp].forEach(function(id){var e=id&&emp(id);if(e&&L.indexOf(e)<0)L.push(e)});
+  return L.sort(function(a,b){return(a.cancelled?1:0)-(b.cancelled?1:0)||String(empStart(b)||"").localeCompare(String(empStart(a)||""))})}
+/* 추천인재 칸 → 메모 줄 (포트폴리오 메모에 이미 있는 값은 뺌) */
+function pt282Adds(p,t){var jt=[].concat(t.jobs||[]).concat(t.job?[t.job]:[]).filter(Boolean),base=String(p.note||""),add=[];
+  [["경로",[t.origin,t.source].filter(Boolean).join(" · ")],["사유",t.reason],["평가",t.ev_note],["직무",jt.join(", ")],["희망 근무",t.hours_etc||(t.hrs||[]).join(", ")||t.hours],["지역",t.region],["상태",t.status],["등록",String(t.created||"").slice(0,10)+(t.by?" "+t.by:"")],
+    ["기타 직무",t.job_etc],["악기",t.inst],["기존 근무시간",t.ps&&t.pe?t.ps+"~"+t.pe:""],["평가 점수",t.ev&&typeof t.ev==="object"?Object.keys(t.ev).filter(function(k){return t.ev[k]!==""&&t.ev[k]!=null}).map(function(k){return k+" "+t.ev[k]}).join(", "):""],
+    ["연계 기업",t.lcid?((comp(t.lcid)||{}).name||t.lcid)+(t.ldate?" "+t.ldate:""):""],["연계 메모",t.lnote],["거절 사유",t.rej],["종료",t.close_type||t.close_reason?[t.close_type,t.close_reason].filter(Boolean).join(" · "):""],["결정",t.dby?t.dby+(t.dat?" "+String(t.dat).slice(0,10):""):""]]
+    .forEach(function(x){var v=String(x[1]||"").trim();if(!v)return;if(/^(사유|평가|연계 메모)$/.test(x[0])&&base.indexOf(v)>=0)return;add.push(x[0]+" "+v)});return add}
+function pt282Note(p,t,extra){var add=pt282Adds(p,t),L=[];if(String(p.note||"").trim())L.push(p.note);if(add.length)L.push("[추천인재에서 합침 "+md(TODAY)+"] "+add.join(" · "));if(extra)L.push(extra);return L.join("\n")}
+/* 두 기록에서 값이 다른 칸 */
+function pt282Diff(p,t){var w=wk(p.worker||t.worker),D=[],E=pt282Emps(p,t);
+  if(w&&w.dis_type&&p.dis_type&&w.dis_type!==p.dis_type)D.push({k:"dis_type",l:"장애유형",o:[[w.dis_type,"근로자 DB"],[p.dis_type,"포트폴리오"]]});
+  if(w&&w.dis_level&&p.dis_level&&pt282Lv(w.dis_level)!==pt282Lv(p.dis_level))D.push({k:"dis_level",l:"장애정도",o:[[pt282Lv(w.dis_level),"근로자 DB"],[pt282Lv(p.dis_level),"포트폴리오"]]});
+  if(E.length>1&&pt282Co(E[0].id)!==pt282Co(E[1].id))D.push({k:"emp",l:"합격 기업",o:E.map(function(e){return[e.id,pt282Co(e.id)+(empStart(e)?" · "+empStart(e)+" 입사":"")+(e.cancelled?" · 취소":"")+(e.id===p.hired_emp?" (포트폴리오)":" (추천인재)")]})});
+  var tp=t.phone||(w&&w.phone)||"";if(tp&&p.phone&&pt282Ph(tp)!==pt282Ph(p.phone)){var tw=w&&pt282Ph(w.phone)===pt282Ph(tp);D.push({k:"phone",l:"연락처",o:tw?[[tp,"근로자 DB"],[p.phone,"포트폴리오"]]:[[p.phone,"포트폴리오"],[tp,"추천인재"]]})}
+  var own=[t.reason,t.ev_note,t.lnote].filter(function(v){v=String(v||"").trim();return v&&String(p.note||"").indexOf(v)<0});
+  if(own.length&&String(p.note||"").trim())D.push({k:"note",l:"메모"});return D}
+function pt282Def(p,t){var D=pt282Diff(p,t),ch={};D.forEach(function(d){if(d.o)ch[d.k]=d.o[0][0]});return ch}
+
+/* 합치기 (pt277Merge 를 이 판으로) · ch = {dis_type, dis_level, emp, phone, note} 없으면 기본값 */
+pt277Merge=function(p,t,ch){ch=ch||pt282Def(p,t);var nm=p.name||t.name||((wk(t.worker||p.worker)||{}).name||""),L=talLinks(t),n=0,E=pt282Emps(p,t),ex="";
+  if(ch.emp&&E.length>1){var oth=E.filter(function(e){return e.id!==ch.emp}).map(function(e){return pt282Co(e.id)}).filter(Boolean);if(oth.length)ex="다른 기록의 기업: "+oth.join(", ")}
+  p.note=ch.note!=null?String(ch.note):pt282Note(p,t,ex);
+  if(ch.dis_type)p.dis_type=ch.dis_type;if(ch.dis_level)p.dis_level=ch.dis_level;if(ch.phone)p.phone=ch.phone;
+  var w=wk(p.worker||t.worker);if(w){if(!p.dis_type&&w.dis_type)p.dis_type=w.dis_type;if(!p.dis_level&&w.dis_level)p.dis_level=pt282Lv(w.dis_level)}
+  if(!p.worker&&t.worker)p.worker=t.worker;if(!p.src_org&&t.src_org)p.src_org=t.src_org;if(!p.phone&&t.phone)p.phone=t.phone;if(!p.birth&&t.birth)p.birth=t.birth;
+  ["main_contact","guardian_rel","gphone","mc_name","mc_ct"].forEach(function(k){if(!p[k]&&t[k])p[k]=t[k]});
+  var jt=[].concat(t.jobs||[]).concat(t.job?[t.job]:[]).filter(Boolean),J=(p.jobs||[]).slice();jt.forEach(function(j){if(J.indexOf(j)<0)J.push(j)});p.jobs=J;if(!p.wish_hours&&(t.hours_etc||t.hours))p.wish_hours=t.hours_etc||t.hours;
+  var he=ch.emp||(E[0]&&E[0].id)||"";
+  if(he&&p.hired_emp!==he){p.hired_emp=he;p.hired_on=p.hired_on||empStart(emp(he))||t.ldate||"";p.status="취업완료"}else if(t.status==="연계중"&&(p.status==="대기"||!p.status))p.status="제안중";
+  L.C.forEach(function(x){if(x.c.tal===t.id){if(!x.c.pf)x.c.pf=p.id;delete x.c.tal;n++}});
+  L.O.forEach(function(o){o.k="pf";o.pid=p.id;n++});
+  L.Q.forEach(function(q){var seen={};q.links=(q.links||[]).map(function(l){return l.k==="tl"&&l.id===t.id?{k:"pf",id:p.id}:l}).filter(function(l){var k=l.k+":"+l.id;if(seen[k])return false;seen[k]=1;return true});n++});
+  (DB.memos||[]).forEach(function(m){if(m&&m.table==="talent_picks"&&m.tid===t.id){m.table="portfolios";m.tid=p.id;n++}});
+  p.notsame=(p.notsame||[]).filter(function(x){return["s:","x:","t:"].every(function(z){return x!==z+t.id})});p.notsame.push("m:"+t.id);
+  logChange("talent_picks",t.id,nm,"포트폴리오와 합침 (추천인재 지움)",JSON.stringify(t).slice(0,3800),"포트폴리오 "+p.id,"내부");
+  logChange("portfolios",p.id,nm,"추천인재 합침","",t.id+" · 연결 "+n+"건 옮김"+(ex?" · "+ex:""),"내부");
+  DB.talent=(DB.talent||[]).filter(function(x){return x.id!==t.id});if(typeof SNAP!=="undefined"&&SNAP&&SNAP.talent)delete SNAP.talent[t.id];
+  if(LIVE&&READY)schedulePersist();
+  pt282Srv(p.id,t.id,nm,0);return n};
+/* 서버 합치기: 포트폴리오가 아직 저장 전이면 저장된 뒤에 */
+function pt282Srv(pid,tid,nm,k){if(!LIVE||typeof sb==="undefined"||!sb)return;
+  if(typeof SNAP!=="undefined"&&SNAP&&SNAP.pf&&SNAP.pf[pid]===undefined&&k<20){schedulePersist();setTimeout(function(){pt282Srv(pid,tid,nm,k+1)},500);return}
+  sb.rpc("vw_merge_talent",{p_tid:tid,p_pid:pid}).then(function(r){var d=r&&r.data;
+    if(r&&r.error||!d||d.ok===false){toast("서버에서 "+nm+" 합치기를 못 했어요"+(r&&r.error?": "+r.error.message:d&&d.why?" ("+d.why+")":"")+" · 관리자에게 v282 SQL 실행을 확인해 주세요 · 다시 불러올게요");loadAll().then(render);return}
+    var p=pfOf(pid),add=[d.memo_t,d.memo_p].filter(function(m){return m&&p&&String(p.note||"").indexOf(m)<0});
+    if(p&&add.length){p.note=(p.note?p.note+"\n":"")+"[발굴 메모] "+add.join(" · ");schedulePersist()}
+    if(d.pl_t)logChange("talent_picks",tid,nm,"발굴 정보 (합칠 때)",JSON.stringify(d.pl_t).slice(0,3800),"포트폴리오 "+pid,"내부");
+    if(d.apps_skip||d.blob_skip)toast(nm+" · 발굴 지원 기록 "+(d.apps_skip||0)+"건 · 파일 "+(d.blob_skip||0)+"묶음은 포트폴리오에 이미 있어 옮기지 않았어요")},
+    function(e){toast("서버에서 합치기를 못 했어요 · 다시 불러올게요");loadAll().then(render)})}
+
+/* 합치기 카드 (설정 › 데이터 정리) */
+pt277Card=function(){if(S.role!=="admin")return"";var A=pt277Pairs().map(function(x){x.d=pt282Diff(x.p,x.t);return x}),nd=A.filter(function(x){return x.d.length}).length,L=S.pt282f?A.filter(function(x){return x.d.length}):A,ok=A.length-nd;
+  return'<div class="card dutycard pt277card"><b>추천인재 · 포트폴리오 같은 사람 합치기</b> <span class="small muted">DB에서 포트폴리오 하나로 합쳐요 · 발굴페이지 지원 기록 · 파일도 포트폴리오로 옮겨요 · 추천인재 기록은 변경 이력에 남아요</span>'+
+    (A.length?'<div class="obt" style="margin:6px 0"><span class="small"><b>'+A.length+'쌍</b>'+(nd?' · 값이 다른 쌍 <b>'+nd+'</b>':'')+'</span><label class="small"><input type="checkbox" data-pt282f'+(S.pt282f?" checked":"")+'> 값이 다른 쌍만</label><span class="grow"></span>'+(ok?'<button type="button" class="btn sm pri" data-act="pt282-all">값이 같은 쌍 모두 합치기 ('+ok+'쌍)</button>':'')+'</div><table class="t"><thead><tr><th>이름</th><th>포트폴리오</th><th>추천인재</th><th>같은 이유</th><th>다른 값</th><th></th></tr></thead><tbody>'+
+      L.map(function(x){var p=x.p,t=x.t,lk=talLinks(t),ln=lk.C.length+lk.O.length+lk.Q.length,po=p.src_org&&typeof oOf==="function"&&oOf(p.src_org),to=t.src_org&&typeof oOf==="function"&&oOf(t.src_org);
+        return'<tr><td><b>'+esc(p.name||t.name||((wk(t.worker)||{}).name||""))+'</b></td><td class="small">'+esc((po&&po.short)||p.source||"")+' · '+esc(p.status||"")+'</td><td class="small">'+esc((to&&to.short)||t.origin||"")+' · '+esc(t.status||"")+(ln?' · 연결 '+ln+'건':"")+'</td><td class="small">'+esc(x.why)+'</td><td>'+(x.d.length?x.d.map(function(d){return'<span class="b sm warn">'+esc(d.l)+'</span>'}).join(" "):'<span class="small muted">없음</span>')+'</td><td><button type="button" class="btn xs'+(x.d.length?' pri':'')+'" data-act="pt282-open" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'">'+(x.d.length?'확인 · 합치기':'합치기')+'</button></td></tr>'}).join("")+'</tbody></table>':'<p class="small muted" style="margin:6px 0 0">합칠 쌍이 없어요</p>')+'</div>'};
+document.addEventListener("change",function(ev){var c=ev.target;if(!c||!c.hasAttribute||!c.hasAttribute("data-pt282f"))return;S.pt282f=c.checked;render()});
+function pt282Dlg(p,t){var D=pt282Diff(p,t),E=pt282Emps(p,t),ex="",nm=p.name||t.name||((wk(t.worker)||{}).name||"");
+  if(E.length>1)ex="다른 기록의 기업: "+pt282Co(E[1].id);
+  var rows=D.filter(function(d){return d.o}).map(function(d){return'<div class="pt282f"><span class="small"><b>'+esc(d.l)+'</b></span>'+d.o.map(function(o,i){return'<label class="small"><input type="radio" name="pt282-'+d.k+'" value="'+esc(o[0])+'"'+(i?"":" checked")+'> '+esc(d.k==="emp"?o[1]:o[0]+" · "+o[1])+'</label>'}).join("")+'</div>'}).join("");
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="같은 사람 합치기" style="max-width:560px"><div class="ph"><div><h2>같은 사람 합치기 · '+esc(nm)+'</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps">'+
+    (rows?'<p class="small" style="margin:0 0 6px">두 기록의 값이 달라요 · 남길 값을 골라 주세요 (기본: 근로자 DB · 최근 입사 기록)</p>'+rows:'<p class="small muted" style="margin:0 0 6px">다른 값이 없어요</p>')+
+    '<label class="f full" style="margin-top:8px"><span>합친 뒤 메모 (고칠 수 있어요)</span><textarea id="pt282-note" rows="6">'+esc(pt282Note(p,t,ex))+'</textarea></label>'+
+    '<p class="small muted" style="margin:6px 0 0">추천인재 줄은 지워지고 기록은 변경 이력에 남아요 · 발굴페이지 지원 기록 · 파일은 포트폴리오로 옮겨요</p></div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="pt282-go" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'">이 쌍 합치기</button></div></div></div>';
+}
+regActs({"pt282-open":function(D0){if(S.role!=="admin")return;var p=pfOf(D0.p),t=(DB.talent||[]).find(function(x){return x.id===D0.t});if(!p||!t)return;pt282Dlg(p,t)},
+  "pt282-go":function(D0){if(S.role!=="admin")return;var p=pfOf(D0.p),t=(DB.talent||[]).find(function(x){return x.id===D0.t});if(!p||!t)return;var ch={};
+    pt282Diff(p,t).forEach(function(d){if(!d.o)return;var r=document.querySelector('#modal input[name="pt282-'+d.k+'"]:checked');ch[d.k]=r?r.value:d.o[0][0]});
+    var ta=document.getElementById("pt282-note");if(ta)ch.note=ta.value;
+    $("#modal").innerHTML="";var n=pt277Merge(p,t,ch);toast("합쳤어요"+(n?" · 연결 "+n+"건 옮김":""));render()},
+  "pt282-all":function(){if(S.role!=="admin")return;var L=pt277Pairs().filter(function(x){return!pt282Diff(x.p,x.t).length});if(!L.length)return;
+    askConfirm("값이 같은 쌍 모두 합치기",L.length+"쌍을 포트폴리오 하나로 합치고 추천인재 기록은 지울까요? (변경 이력에 남아요 · 값이 다른 쌍은 하나씩 확인해 주세요)","모두 합치기",function(){var n=0;L.forEach(function(x){n+=pt277Merge(x.p,x.t)});toast(L.length+"쌍 합쳤어요"+(n?" · 연결 "+n+"건 옮김":""));render()})}});
+
+/* 추천인재 삭제: 서버에서 정말 지워졌는지 확인 */
+talDel=function(t,why){var id=t.id,nm=talNm(t),L=talLinks(t),saved=!!(typeof SNAP!=="undefined"&&SNAP&&SNAP.talent&&SNAP.talent[id]!==undefined);
+  L.C.forEach(function(x){if(x.c.tal===id)delete x.c.tal});
+  if(L.O.length){var oid={};L.O.forEach(function(x){oid[x.id]=1});DB.orec=DB.orec.filter(function(x){return!oid[x.id]})}
+  L.Q.forEach(function(q){q.links=q.links.filter(function(l){return!(l.k==="tl"&&l.id===id)})});
+  DB.talent=DB.talent.filter(function(x){return x.id!==id});if(SNAP&&SNAP.talent)delete SNAP.talent[id];
+  logChange("talent_picks",id,nm,"추천인재 삭제",t.status||"",why,"내부");
+  S.talSel=null;S.talE=null;
+  if(LIVE&&sb)sb.from("talent_picks").delete().eq("id",id).select("id").then(function(r){
+    if(r&&r.error){toast("서버에서 지우지 못했어요: "+r.error.message+" · 다시 불러올게요");loadAll().then(render);return}
+    if(saved&&(!r||!r.data||!r.data.length)){toast("서버에서 "+nm+" 추천인재가 지워지지 않았어요 · 관리자에게 v282 SQL 실행을 요청해 주세요 · 다시 불러올게요");loadAll().then(render)}});
+  toast(nm+" 추천인재를 지웠어요"+(L.C.length+L.O.length+L.Q.length?" · 연결 "+(L.C.length+L.O.length+L.Q.length)+"건 정리":""));if(LIVE&&READY)schedulePersist();render()};
+/* 지우기 전: 발굴페이지 지원 기록이 이 사람을 가리키면 알림 */
+var _talDelAsk282=talDelAsk;talDelAsk=function(t){var r=_talDelAsk282.apply(this,arguments);
+  if(LIVE&&typeof sb!=="undefined"&&sb)sb.rpc("vw_pl_refs",{p_key:"tl:"+t.id}).then(function(x){var n=x&&!x.error?+x.data||0:0;if(!n)return;var ps=document.querySelector("#modal .dlg .ps");if(!ps||ps.querySelector(".pt282w"))return;
+    var same=(DB.pf||[]).some(function(p){return pt274Same(p,t)});
+    ps.insertAdjacentHTML("afterbegin",'<p class="small pt282w" style="margin:0 0 8px;color:var(--bad,#c0392b)"><b>발굴페이지 지원 기록 '+n+'건</b>이 이 사람을 가리켜요 · 지우면 발굴페이지에서 \'(지워진 인재)\'로 보여요'+(same?' · 같은 사람 포트폴리오가 있으니 지우지 말고 설정 › 데이터 정리 [같은 사람 합치기]를 써 주세요':'')+'</p>')},function(){});return r};
+
+/* 내 할 일(관리자): 같은 사람 쌍 */
+regTodo("v282 같은 사람 합치기",function(L){try{if(S.role!=="admin")return;var A=pt277Pairs();if(!A.length)return;var nd=A.filter(function(x){return pt282Diff(x.p,x.t).length}).length;
+  tdPush(L,{key:"pt282dup",type:"pt282dup",cat:"데이터 정리",task:"[같은 사람 합치기] 추천인재 · 포트폴리오에 같은 사람 "+A.length+"쌍"+(nd?" (값이 다른 쌍 "+nd+")":"")+" · 발굴페이지에서 두 줄로 보여요",worker:"",emp:"",company:"",base:TODAY,auto:true,fixedDue:TODAY,n:A.length});var x=L[L.length-1];if(x&&S.me){x.assignee=S.me;x.proxy=false}}catch(e){console.warn("[v282 할 일]",e)}});
+regSection("todo",{id:"pt282dup",order:10,at:"top",when:function(t){return t&&t.type==="pt282dup"},html:function(t){
+  return'<div class="ps wide"><h3>같은 사람 합치기</h3><p class="small" style="margin:0 0 8px">추천인재와 포트폴리오에 같은 사람이 '+esc(String(t.n||""))+'쌍 있어요. 발굴페이지에서 두 줄로 보여요. 합치면 하나로 보이고 발굴 지원 기록도 옮겨져요</p><div class="obt"><button class="btn pri" data-act="pt282-goset">설정 › 데이터 정리 열기</button></div></div>'}});
+regActs({"pt282-goset":function(){S.setTab="clean";try{localStorage.setItem("vw_settab","clean")}catch(e){}$("#modal").innerHTML="";go("set")}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
