@@ -19186,8 +19186,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v289 — 계약만료 완료 조회 오류 수정 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v289";APP_VER_ON="11/18";APP_NOTE="계약만료 › 완료 조회를 누르면 화면이 멈추던 오류 수정";
+/* v290 — 계약만료 처리 기록을 차수마다 따로 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v290";APP_VER_ON="11/18";APP_NOTE="연장 처리가 끝나고 새 차수가 생기면 그 차수의 만료는 새 건으로 진행 중에 떠요 (1개월씩 연장하는 기업 대응) · 예전 처리 기록은 완료 조회에 그대로 · 완료 조회 차수 · 만료일을 그 기록이 다룬 차수로 · 진행 중에 '직전 연장 N개월' 표시";
 
 /* ================================================================
    v208
@@ -24526,6 +24526,33 @@ function pt288Now(p){if(!p||!p.worker||p.status==="취업완료")return null;ret
 function pt288Badge(p){var e=pt288Now(p);return e?' <span class="b sm warn pt288b" title="근로자 DB에 재직 중인 입사 기록이 있어요 (포트폴리오 등록 전부터) · 이직 · 추가 근무 희망인지 확인해 주세요">재직 중 · '+esc((comp(e.company)||{}).name||"")+'</span>':""}
 regAfter("v288 재직 중 표시",function(){if(!S.pfSel)return;var p=pfOf(S.pfSel),b=document.querySelector('.stbox[data-stk] .stt');if(!p||!b||b.querySelector(".pt288b"))return;var h=pt288Badge(p);if(h)b.insertAdjacentHTML("beforeend",h)});
 pfRecHtml=layer("pfRecHtml",pfRecHtml,12111,"v288 재직 중 표시",function(o){return function(r){var h=o.apply(this,arguments);if(!h)return h;try{return h.replace(/(<button class="linkbtn" data-act="pf-go" data-id="([^"]+)"><b>[^<]*<\/b><\/button>)/g,function(m,a,id){return a+pt288Badge(pfOf(id))})}catch(e){return h}}});
+
+/* ================================================================
+   v290 계약만료 처리 기록 = 차수마다 따로 (1개월씩 연장하는 기업 대응)
+     · 예전: 고용 건 하나에 처리 기록 한 줄 → 2차를 '연장'으로 끝내면 3차 만료가 와도 그 줄이 '완료'라 진행 중에서 계속 빠졌음
+     · 이제: 연장 처리가 끝나고 그 연장 차수가 생겼으면(= 지금 차수가 연장으로 생긴 차수 이상) 그 기록은 '지난 차수 것'
+       → xOf 는 지금 차수 기록을 돌려줌 (없으면 없음 · 처음 손댈 때 ensureX 가 새 줄을 만듦)
+     · 예전 기록은 지우거나 바꾸지 않음 · 완료 조회에 그대로 남음 (그 기록이 다룬 차수 = 연장 차수 바로 앞 차수로 표시)
+     · 연장 차수 추가가 남은 연장 건 · 종료 · 무기계약 전환은 예전 그대로
+     · 진행 중 목록: 바로 전 차수가 연장이었으면 '직전 연장 1개월' 표시
+   ================================================================ */
+function x290Rows(eid){return(DB.expiry||[]).filter(function(x){return x&&x.emp===eid})}
+function x290Done(x){return!!(x&&x.decision&&caseDone(x))}
+/* 지난 차수 기록: 연장으로 끝났고 · 그 연장 차수가 있고 · 지금 차수가 그 차수 이상 */
+function x290Past(x,eid){if(!x290Done(x)||x.decision!=="연장"||!x.newSeq)return false;var ts=termsOf(eid),n=+x.newSeq;if(!ts.some(function(t){return+t.seq===n}))return false;var c=curTerm(eid);return!!(c&&+c.seq>=n)}
+xOf=function(eid){var L=x290Rows(eid);if(!L.length)return undefined;
+  var open=L.filter(function(x){return!x290Done(x)});if(open.length)return open[open.length-1];
+  var last=L.slice().sort(function(a,b){return String(a.created||"").localeCompare(String(b.created||""))}).pop();return x290Past(last,eid)?undefined:last};
+/* 그 기록이 다룬 차수: 연장이면 연장 차수 바로 앞 · 아니면 마지막 */
+function x290Term(x,e){var ts=termsOf(e.id);if(x.newSeq){var n=+x.newSeq;return ts.find(function(t){return+t.seq===n-1})||ts[ts.length-2]||ts[ts.length-1]}return ts[ts.length-1]}
+expDoneRows=function(){return DB.expiry.filter(function(x){if(!x.created||!x.decision||!caseDone(x))return false;var e=emp(x.emp);if(!e||e.cancelled)return false;
+    if(x===xOf(e.id)&&xFollowLeft(e.id).length)return false;/* 후속 항목은 지금 차수 기록에만 */return scopeOK(e.company)&&qcOK(e.company)&&qwOK(e.worker)})
+  .map(function(x){var e=emp(x.emp),t=x290Term(x,e);return{id:e.id,e:e,x:x,t:t||{},doneOn:expDoneOn(x)}}).filter(function(r){return expInPer(r.t&&r.t.end)||S.sel==="exp:"+r.id})};
+/* 직전 연장 표시 */
+function x290Prev(eid){var c=curTerm(eid);if(!c)return null;var L=x290Rows(eid).filter(function(x){return x290Done(x)&&x.decision==="연장"&&+x.newSeq===+c.seq});if(!L.length)return null;
+  var m=c.start&&c.end?Math.max(1,Math.round(dd(c.start,c.end)/30.4)):0;return{m:m,seq:c.seq}}
+regAfter("v290 직전 연장",function(){if(S.view!=="exp"||(S.expTab&&S.expTab!=="open"))return;[].forEach.call(document.querySelectorAll('#main tr[data-act="exp-open"][data-e]'),function(tr){if(tr.querySelector(".x290"))return;var p=x290Prev(tr.dataset.e);if(!p)return;
+  var nm=tr.querySelector('[data-act="go-w"]');if(nm)nm.insertAdjacentHTML("afterend",' <span class="b sm x290" title="바로 전 차수를 연장해서 생긴 '+esc(String(p.seq))+'차예요 · 이번 만료는 새 건이에요">직전 연장'+(p.m?" "+p.m+"개월":"")+'</span>')})});
 
 /* ============ 렌더 ============ */
 function renderMain(){
