@@ -1961,6 +1961,8 @@ input[data-jd282]:focus+.jdc282{display:inline}
 .rm9pl{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,#eee)}
 /* v294 */
 .rm9mv{color:#3b3f8f;margin:2px 0}.rm9c.nmo{border-style:dotted}.av294 input[type=date]{width:150px}
+/* v296 퇴사자 명단 */
+.cf296 .wpick-l .ckl b{color:var(--muted,#666)}.cf296t td{vertical-align:top}
 </style>
 </head>
 <body>
@@ -19209,8 +19211,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v295 — 대체 매칭판 저장 형식 오류 수정 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v295";APP_VER_ON="11/18";APP_NOTE="데이터를 불러오지 못하던 오류 수정 · 대체 매칭판 저장값(상태 · 배수 · 묶음 · 메모 외 판 설정)이 서버에 제대로 저장되게 고침";
+/* v296 — 퇴사자도 고객사 요청 · 근로자 요청 대상으로 (기업 퇴사자 명단) (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v296";APP_VER_ON="11/18";APP_NOTE="고객사 요청 등록: 퇴사자도 보기 · DB에 없는 퇴사자 이름만 입력 · 근로자 요청 직접 입력은 이름만 · 기업 창 소속 근로자에 퇴사자 명단(근로자 DB 없음) · 같은 이름이 근로자 DB에 생기면 연결 후보 → 눌러서 연결 · 연결 풀기";
 
 /* ================================================================
    v208
@@ -25023,6 +25025,78 @@ rep264Text=function(part,L){var tot=L.reduce(function(a,x){return a+(x.n||0)},0)
 regAfter("v292 업무보고 미리보기",function(){var b=document.querySelector('[data-act="rep264-now"]');if(!b||document.querySelector('[data-act="rep292-pv"]'))return;b.insertAdjacentHTML("beforebegin",'<button class="btn sm" data-act="rep292-pv">미리보기</button> ')});
 regActs({"rep292-pv":function(){var P=rep264Data(),h="";Object.keys(P).forEach(function(part){var L=P[part];if(!L||!L.length)return;var T=rep264Text(part,L);h+='<h3 style="margin:10px 0 4px">'+esc(part)+'</h3><pre class="rep292pv">'+esc(T.title)+'</pre>'+T.th.map(function(t){return'<pre class="rep292pv">'+esc(t)+'</pre>'}).join("")});
   $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" style="max-width:640px"><div class="ph"><div><h2>업무보고 미리보기</h2><div class="small muted">지금 기준 · 채널톡에 이렇게 가요 (첫 칸 = 원글 · 나머지 = 사람마다 스레드)</div></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div><div class="ps" style="max-height:70vh;overflow:auto">'+(h||'<p class="muted">보낼 파트 · 기록이 없어요</p>')+'</div></div></div>'}});
+
+/* ================================================================
+   v296 퇴사자도 고객사 요청 · 근로자 요청 대상으로
+     · 고객사 요청 등록: [☐ 퇴사자도 보기] = 근로자 DB에 있는 그 기업 퇴사자 (최근 1년) · [+ DB에 없는 퇴사자] = 이름만 → 기업 퇴사자 명단
+     · 근로자 요청 직접 입력: 이름만 (연락처 · 생년월일 칸 뺌) · 저장하면 그 기업 퇴사자 명단에도 등록 (같은 기업 · 같은 이름이면 한 사람)
+     · 퇴사자 명단(company_former) = 근로자 DB에 넣지 않음 → 근로자 목록 · 재직자 수 · 계약만료에 안 나옴
+       고객사 요청 대상은 worker 칸에 'fm:<id>' (서버엔 worker_id 비움 · former_id) · 이름 뒤 '(퇴사자)'
+     · 기업 창 › 소속 근로자 › '퇴사자 (근로자 DB 없음)': 이름 · 요청 수 · 연결 후보 · [연결] · [연결 풀기] · [+ 이름 추가]
+       연결 후보 = 같은 이름 + 그 기업 근무 이력이 있는 근로자 DB 사람 (추천인재 · 포트폴리오에 연결된 근로자 포함) · 자동으로 합치지 않음
+       연결하면 고객사 요청 · 근로자 요청 건이 그 근로자로 옮겨짐 · 풀면 되돌림
+     · 할 일: 연결 후보가 생긴 퇴사자 명단 (기업 담당자)
+     · SQL: sql/v296_company_former.sql (명단 표 · former_id · 기존 근로자 요청 직접 입력분 옮겨 담기)
+   ================================================================ */
+var CF_TB={k:"cfm",t:"company_former",del:true,cols:[["id"],["company","company_id"],["name"],["worker","worker_id"],["linked","linked_at","tsm"],["by","by_name"],["at","created_at","tsm"]]};DB.cfm=DB.cfm||[];var CF_OK=!LIVE;
+function cfTb(){if(typeof TB==="undefined"||!CF_OK)return;if(!TB.some(function(d){return d.k==="cfm"}))TB.push(CF_TB);colxAdd("reqw",[["former","former_id"]]);colxAdd("wreq",[["former","former_id"]])}cfTb();
+loadAll=layer("loadAll",loadAll,12151,"v296 퇴사자 명단",function(p){return function(){var a=arguments,self=this;var pr=(!LIVE||S._cf296||typeof sb==="undefined"||!sb)?Promise.resolve():(S._cf296=true,Promise.resolve(sb.from("company_former").select("id").limit(1)).then(function(r){CF_OK=!(r&&r.error);cfTb()},function(){}));
+  return pr.then(function(){return p.apply(self,a)}).then(function(x){DB.cfm=DB.cfm||[];cfNorm();return x})}});
+function cfNorm(){(DB.reqw||[]).forEach(function(c){if(c.former&&!c.worker){c.worker="fm:"+c.former;c.emp="fm:"+c.former}})}
+function cfOf(id){id=String(id||"");if(id.indexOf("fm:")===0)id=id.slice(3);return(DB.cfm||[]).find(function(x){return x.id===id})}
+function cfNm(f){return String((f&&f.name)||"").trim()}
+function cfFind(cid,nm){nm=String(nm||"").trim();return(DB.cfm||[]).find(function(x){return x.company===cid&&cfNm(x)===nm})}
+function cfGet(cid,nm){var f=cfFind(cid,nm);if(f)return f;f={id:nid(),company:cid,name:String(nm).trim(),worker:"",linked:"",by:(st(S.me)||{}).name||"",at:stamp()};DB.cfm.push(f);logChange("companies",cid,(comp(cid)||{}).name||"","퇴사자 명단 추가","",f.name,"내부");return f}
+function cfSave(){if(LIVE&&READY)schedulePersist()}
+/* 'fm:' 을 근로자 · 고용처럼 (이름 뒤 (퇴사자)) */
+wk=layer("wk",wk,12151,"v296 퇴사자 명단",function(p){return function(id){if(typeof id==="string"&&id.indexOf("fm:")===0){var f=cfOf(id);return{id:id,name:(f?cfNm(f):"(퇴사자)")+" (퇴사자)",raw:f?cfNm(f):"",phone:"",birth:"",former:true,cf:f||null}}return p.apply(this,arguments)}});
+emp=layer("emp",emp,12151,"v296 퇴사자 명단",function(p){return function(id){if(typeof id==="string"&&id.indexOf("fm:")===0){var f=cfOf(id);return{id:id,worker:id,company:f?f.company:"",status:"퇴사",former:true}}return p.apply(this,arguments)}});
+/* 서버엔 worker_id · employment_id 비우고 former_id */
+toRow=layer("toRow",toRow,12151,"v296 퇴사자 명단",function(p){return function(d,o){var r=p.apply(this,arguments);if(d&&(d.k==="reqw"||d.k==="wreq")&&r){var w=String(r.worker_id||"");if(w.indexOf("fm:")===0){r.former_id=w.slice(3);r.worker_id=null}if(String(r.employment_id||"").indexOf("fm:")===0)r.employment_id=null}return r}});
+/* 근로자 창을 열려고 하면 → 기업 창 퇴사자 명단으로 */
+regBefore("v296 퇴사자 근로자 창",function(){if(typeof S.wm==="string"&&S.wm.indexOf("fm:")===0){var f=cfOf(S.wm);S.wm=null;toast((f?cfNm(f):"")+" · 근로자 DB에 없는 퇴사자예요 · 기업 창 › 소속 근로자에서 연결할 수 있어요")}});
+/* ---------- 연결 후보 · 연결 · 풀기 ---------- */
+function cfCands(f){if(!f||f.worker)return[];var nm=cfNm(f),W={};(DB.employments||[]).forEach(function(e){if(e.company!==f.company)return;var w=wk(e.worker);if(w&&!w.former&&String(w.name||"").trim()===nm)W[w.id]=w});
+  (DB.talent||[]).concat(DB.pf||[]).forEach(function(t){if(!t.worker||W[t.worker])return;var w=wk(t.worker);if(w&&String(w.name||"").trim()===nm&&(DB.employments||[]).some(function(e){return e.worker===w.id&&e.company===f.company}))W[w.id]=w});return Object.keys(W).map(function(k){return W[k]})}
+function cfEmpOf(wid,cid){var L=(DB.employments||[]).filter(function(e){return e.worker===wid&&e.company===cid&&!e.cancelled});return L.find(function(e){return activeEmp(e)})||L.sort(function(a,b){return String(b.end_date||"").localeCompare(String(a.end_date||""))})[0]||null}
+function cfReqN(f){var n=0;(DB.reqw||[]).forEach(function(c){if(c.former===f.id||c.worker==="fm:"+f.id)n++});(DB.wreq||[]).forEach(function(r){if(r.former===f.id)n++});return n}
+function cfLink(f,wid){var w=wk(wid);if(!f||!w)return;var e=cfEmpOf(wid,f.company);f.worker=wid;f.linked=stamp();
+  (DB.reqw||[]).forEach(function(c){if(c.worker==="fm:"+f.id||c.former===f.id){c.former=f.id;c.worker=wid;c.emp=e?e.id:"";logChange("workers",wid,w.name,"고객사 요청 연결 (퇴사자 명단)","",cfNm(f),"내부")}});
+  (DB.wreq||[]).forEach(function(r){if(r.former===f.id&&(!r.worker||String(r.worker).indexOf("wrx_")===0||String(r.worker).indexOf("fm:")===0)){r.worker=wid;r.emp=e?e.id:null;logChange("workers",wid,w.name,"근로자 요청 연결 (퇴사자 명단)","",cfNm(f),"내부")}});
+  logChange("companies",f.company,(comp(f.company)||{}).name||"","퇴사자 명단 연결",cfNm(f),w.name+(w.birth?" · "+w.birth:""),"내부");cfSave()}
+function cfUnlink(f){if(!f||!f.worker)return;var wid=f.worker,w=wk(wid)||{};(DB.reqw||[]).forEach(function(c){if(c.former===f.id&&c.worker===wid){c.worker="fm:"+f.id;c.emp="fm:"+f.id}});
+  (DB.wreq||[]).forEach(function(r){if(r.former===f.id&&r.worker===wid){r.worker=r.wname?"wrx_"+r.id:"fm:"+f.id;r.emp=null}});f.worker="";f.linked="";logChange("companies",f.company,(comp(f.company)||{}).name||"","퇴사자 명단 연결 풀기",w.name||"",cfNm(f),"내부");cfSave()}
+/* ---------- 고객사 요청 등록 창 ---------- */
+function cfRetired(cid){var lim=addD(TODAY,-365),act={};(DB.employments||[]).forEach(function(e){if(e.company===cid&&activeEmp(e))act[e.worker]=1});var seen={};
+  return(DB.employments||[]).filter(function(e){if(e.company!==cid||activeEmp(e)||act[e.worker]||seen[e.worker])return false;var d=e.end_date||((curTerm(e.id)||{}).end)||"";if(d&&d<lim)return false;seen[e.worker]=1;return true}).sort(function(a,b){return String(b.end_date||"").localeCompare(String(a.end_date||""))})}
+function cfPick(F){var cid=F.cid;if(!cid)return"";if(!CF_OK)return'<div class="f full cf296"><p class="hint">퇴사자 명단을 쓰려면 v296 SQL 실행이 필요해요</p></div>';var R=F.ret296?cfRetired(cid):[],M=(DB.cfm||[]).filter(function(x){return x.company===cid&&!x.worker}).sort(function(a,b){return cfNm(a).localeCompare(cfNm(b),"ko")}),sel=Object.keys(F.ws).filter(function(k){return F.ws[k]&&(k.indexOf("fm:")===0||R.some(function(e){return e.id===k}))}).length;
+  var ck=function(id,lab,sub){return'<label class="ckl"><input type="checkbox" data-ch="rq-w" value="'+esc(id)+'"'+(F.ws[id]?" checked":"")+'> <b>'+esc(lab)+'</b>'+(sub?'<span class="small muted">'+sub+'</span>':'')+'</label>'};
+  return'<div class="f full cf296"><span>퇴사자 <span class="small muted" style="font-weight:400">'+(sel?sel+"명 선택 · ":"")+'근로자 DB에 넣지 않아요</span></span><div class="wpick"><div class="wpick-h"><label class="ckl"><input type="checkbox" data-cf296ret'+(F.ret296?" checked":"")+'> 퇴사자도 보기 (근로자 DB · 최근 1년)</label></div>'+
+    (F.ret296?'<div class="wpick-l">'+(R.length?R.map(function(e){var w=wk(e.worker)||{};return ck(e.id,w.name||"",(e.cancelled?"입사취소":esc(e.end_type||"퇴사"))+(e.end_date?" "+md(e.end_date):"")+(w.phone?" · ****"+normPhone(w.phone).slice(-4):""))}).join(""):'<p class="hint">최근 1년 안에 퇴사한 사람이 근로자 DB에 없어요</p>')+'</div>':'')+
+    (M.length?'<div class="small muted" style="margin:6px 0 2px">퇴사자 명단 (근로자 DB 없음)</div><div class="wpick-l">'+M.map(function(f){return ck("fm:"+f.id,cfNm(f),"명단")}).join("")+'</div>':'')+
+    '<div class="obt" style="margin-top:6px"><input id="cf296-nm" placeholder="DB에 없는 퇴사자 이름" maxlength="20" style="width:180px"><button class="btn xs" data-act="cf296-add">+ 추가</button><span class="small muted">이름만 · 이 기업 퇴사자 명단에 등록돼요</span></div></div></div>'}
+reqNewPanel=layer("reqNewPanel",reqNewPanel,12151,"v296 퇴사자",function(p){return function(){var h=p.apply(this,arguments),F=S.reqF;if(typeof h!=="string"||!F||!F.cid)return h;var a=h.indexOf('<label class="f req"><span>구분</span>');var box=cfPick(F);return a>=0?h.slice(0,a)+box+h.slice(a):h}});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.hasAttribute||!t.hasAttribute("data-cf296ret")||!S.reqF)return;S.reqF.ret296=t.checked;render()});
+regActs({"cf296-add":function(){var F=S.reqF,i=document.getElementById("cf296-nm"),nm=i?String(i.value||"").trim():"";if(!F||!F.cid)return;if(!nm){toast("이름을 넣어 주세요");return}
+    var dbw=cfRetired(F.cid).concat((DB.employments||[]).filter(function(e){return e.company===F.cid&&activeEmp(e)})).find(function(e){return String((wk(e.worker)||{}).name||"").trim()===nm});if(dbw&&!F._cf296ok){F._cf296ok=nm;F.ret296=true;toast("근로자 DB에 이 기업 '"+nm+"' 님이 있어요 · 같은 사람이면 위 목록에서 골라 주세요 · 다른 사람이면 [+ 추가]를 한 번 더");render();return}
+    var f=cfGet(F.cid,nm);F.ws["fm:"+f.id]=true;F._cf296ok="";cfSave();toast(nm+" 님을 퇴사자 명단에 넣고 대상으로 골랐어요");render()}});
+/* ---------- 근로자 요청 직접 입력: 이름만 · 명단에도 ---------- */
+pWreq=layer("pWreq",pWreq,12151,"v296 퇴사자",function(p){return function(){var h=p.apply(this,arguments);if(typeof h!=="string")return h;var F=S.wreqF;if(S.wreqSel!=="new"||!F||!F.manual)return h;
+  h=h.replace(/<label class="f"><span>연락처<\/span><input data-wrm="mphone"[^>]*><\/label>/,"").replace(/<label class="f"><span>생년월일<\/span><input type="date" data-wrm="mbirth"[^>]*><\/label>/,"");return h.replace("근로자 (직접 입력 · 근로자 DB에 없음)","퇴사자 · DB에 없는 사람 (이름만 · 기업 퇴사자 명단에 등록)")}});
+wrSave=layer("wrSave",wrSave,12151,"v296 퇴사자",function(p){return function(){var F=S.wreqF,man=S.wreqSel==="new"&&F&&F.manual,nm=man?String(F.mname||"").trim():"",cid=man&&S.cid?S.cid.wrc:"",n0=(DB.wreq||[]).length;if(man){F.mphone="";F.mbirth=""}var r=p.apply(this,arguments);
+  if(man&&nm&&cid&&CF_OK&&(DB.wreq||[]).length>n0){var f=cfGet(cid,nm);(DB.wreq||[]).slice(n0).forEach(function(x){if(x.wname===nm&&!x.former){x.former=f.id;if(f.worker){x.worker=f.worker;var e=cfEmpOf(f.worker,cid);x.emp=e?e.id:null}}});cfSave()}return r}});
+/* ---------- 기업 창 › 소속 근로자 › 퇴사자 명단 ---------- */
+regSection("company",{id:"cf296",order:5,transform:function(h,c){if(typeof h!=="string"||!c||S.compPTab!=="emp"||!CF_OK)return h;try{var L=(DB.cfm||[]).filter(function(x){return x.company===c.id}).sort(function(a,b){return(a.worker?1:0)-(b.worker?1:0)||cfNm(a).localeCompare(cfNm(b),"ko")});
+  var rows=L.map(function(f){var w=f.worker?wk(f.worker):null,C=cfCands(f);return'<tr><td><b>'+esc(cfNm(f))+'</b></td><td class="num">'+cfReqN(f)+'</td><td>'+(w?'<span class="b sm ok">연결됨</span> <button class="linkbtn" data-act="wk-open" data-id="'+esc(w.id)+'">'+esc(w.name)+'</button> <button class="btn xs" data-act="cf296-unlink" data-id="'+esc(f.id)+'">연결 풀기</button>':
+    (C.length?C.map(function(x){var e=cfEmpOf(x.id,c.id);return'<span class="b sm warn">연결 후보</span> '+esc(x.name)+'<span class="small muted"> '+esc(x.birth||"")+(e?" · "+(activeEmp(e)?"재직":"퇴사 "+md(e.end_date||"")):"")+'</span> <button class="btn xs pri" data-act="cf296-link" data-id="'+esc(f.id)+'" data-w="'+esc(x.id)+'">이 사람과 연결</button>'}).join("<br>"):'<span class="small muted">근로자 DB에 같은 이름 · 이 기업 이력이 생기면 연결 후보로 떠요</span>'))+'</td></tr>'}).join("");
+  var box='<h4 class="ce282h">퇴사자 (근로자 DB 없음) <span class="small muted" style="font-weight:400">'+L.length+'명 · 근로자 목록 · 재직자 수에는 안 들어가요</span></h4>'+(L.length?'<table class="t cf296t"><thead><tr><th>이름</th><th class="num">요청</th><th>근로자 DB 연결</th></tr></thead><tbody>'+rows+'</tbody></table>':'')+
+    '<div class="obt" style="margin:6px 0"><input id="cf296-cnm" placeholder="퇴사자 이름" maxlength="20" style="width:160px"><button class="btn xs" data-act="cf296-cadd" data-co="'+esc(c.id)+'">+ 이름 추가</button></div>';return h+box}catch(e){return h}}});
+regActs({"cf296-link":function(D0){var f=cfOf(D0.id),w=wk(D0.w);if(!f||!w)return;askConfirm("퇴사자 명단 연결","'"+cfNm(f)+"' (명단) 을(를) 근로자 DB의 "+w.name+(w.birth?" ("+w.birth+")":"")+" 님과 연결할까요? 요청 "+cfReqN(f)+"건이 이 근로자로 옮겨져요 · 이름만 같은 다른 사람이면 연결하지 마세요","연결",function(){cfLink(f,w.id);toast("연결했어요");render()})},
+  "cf296-unlink":function(D0){var f=cfOf(D0.id);if(!f)return;askConfirm("연결 풀기","'"+cfNm(f)+"' 연결을 풀까요? 옮겨졌던 요청 건이 다시 명단 이름으로 돌아가요","연결 풀기",function(){cfUnlink(f);toast("연결을 풀었어요");render()})},
+  "cf296-cadd":function(D0){var i=document.getElementById("cf296-cnm"),nm=i?String(i.value||"").trim():"";if(!nm){toast("이름을 넣어 주세요");return}if(cfFind(D0.co,nm)){toast("이미 명단에 있어요");return}cfGet(D0.co,nm);cfSave();toast(nm+" 님을 퇴사자 명단에 넣었어요");render()}});
+/* ---------- 할 일: 연결 후보 ---------- */
+regTodo("v296 퇴사자 명단 연결 후보",function(L){try{if(!CF_OK)return;var G={};(DB.cfm||[]).forEach(function(f){if(f.worker||!cfCands(f).length)return;(G[f.company]=G[f.company]||[]).push(f)});
+  Object.keys(G).forEach(function(cid){var c=comp(cid)||{},A=G[cid];tdPush(L,{key:"cf296:"+cid,type:"cf296",cat:"데이터 정리",task:"[퇴사자 명단 연결] ["+(c.name||"")+"] "+A.map(cfNm).slice(0,3).join(" · ")+(A.length>3?" 외 "+(A.length-3)+"명":"")+" · 근로자 DB에 같은 이름이 생겼어요 · 기업 창 › 소속 근로자에서 확인",worker:"",emp:"",company:cid,base:TODAY,auto:true,fixedDue:TODAY,n:A.length})})}catch(e){console.warn("[v296 할 일]",e)}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
