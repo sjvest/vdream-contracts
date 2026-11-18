@@ -8742,7 +8742,7 @@ var _vExp31;vExp=layer("vExp",vExp,2901,"v31 계약만료 중도퇴사 장애 00
   h=insBeforeFbar(h,tabsHtml("exp-tab",tab,[["open","진행 중",expRows().length],["done","완료 조회"]])+"");if(tab!=="done")return h;
   /* 완료 조회: 진행 표 · 일괄 체크 자리를 완료 표로 */
   h=hp(h,/<div class="bulk[^"]*" data-spec="6">[\s\S]*?<\/div>(?=<div data-spec="1">)/,"","0084-v31-계약만료-중도퇴사-장애-00#1");
-  var a=h.indexOf('<div data-spec="1">'),hp=h.indexOf('<p class="hint">',a),b=hp>=0?h.indexOf("</p>",hp)+4:-1;if(a<0||b<4)return h;
+  var a=h.indexOf('<div data-spec="1">'),hpI=h.indexOf('<p class="hint">',a),b=hpI>=0?h.indexOf("</p>",hpI)+4:-1;/* v289 지역 변수 이름이 hp(함수)를 가려 완료 조회가 멈추던 것 */if(a<0||b<4)return h;
   var cols=[{k:"w",h:"근로자",t:"text",f:function(r){return wk(r.e.worker).name}},{k:"c",h:"기업",t:"text",f:function(r){return comp(r.e.company).name}},{k:"seq",h:"차수",t:"num",v:function(r){return r.t.seq}},{k:"en",h:"계약만료일",t:"date",v:function(r){return r.t.end}},
     {k:"dc",h:"최종 결정",t:"text",f:function(r){return r.x.decision}},{k:"dn",h:"완료일",t:"date",v:function(r){return r.doneOn}},{k:"m",h:"담당자",t:"text",f:function(r){return st(assignee(r.e.company).who).name}}];
   var R=expDoneRows().sort(function(p,q){return q.doneOn.localeCompare(p.doneOn)});
@@ -19186,8 +19186,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v288 — 포트폴리오 취업완료 맞추기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v288";APP_VER_ON="11/17";APP_NOTE="합칠 때 추천인재가 연계완료면(예전 앱 데이터 포함) 포트폴리오 취업완료 + 근로자 DB 입사 연결 · 이미 합쳐진 쌍은 설정 › 데이터 정리 [취업완료로 맞추기] · 근로자 DB에 연결된 포트폴리오가 등록 뒤 입사했으면 자동 취업완료 · 등록 전부터 재직 중이면 '재직 중 · 기업' 표시";
+/* v289 — 계약만료 완료 조회 오류 수정 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v289";APP_VER_ON="11/18";APP_NOTE="계약만료 › 완료 조회를 누르면 화면이 멈추던 오류 수정";
 
 /* ================================================================
    v208
