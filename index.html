@@ -19209,8 +19209,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v294 — 입사 가능일 · 이동 현황 · 요청 직접 입력 후보 · 채용 확정 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v294";APP_VER_ON="11/18";APP_NOTE="대체 매칭판: 입사 가능일(희망 조건 창 · 7일 안 늦으면 입사일 협의) · 이동 현황 탭(트레이드 · 담당자 이동) · 채용 요청에 이름만 넣은 후보도 표시 · 자리 수만큼 합격하면 채용 확정 · 요청 직무와 자리 직무가 다르면 경고";
+/* v295 — 대체 매칭판 저장 형식 오류 수정 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v295";APP_VER_ON="11/18";APP_NOTE="데이터를 불러오지 못하던 오류 수정 · 대체 매칭판 저장값(상태 · 배수 · 묶음 · 메모 외 판 설정)이 서버에 제대로 저장되게 고침";
 
 /* ================================================================
    v208
@@ -24604,7 +24604,7 @@ regAfter("v290 직전 연장",function(){if(S.view!=="exp"||(S.expTab&&S.expTab!
      ③ 채용 요청에 이름만 입력한 후보도 그 자리에 '요청 직접 입력'으로 보임 (상태는 요청에서) · 요청에서 지운 후보는 판에서도 빠짐
      ④ 자리 수만큼 합격 → '채용 확정' · 빈칸 · 추가 배분 막음 / ⑤ 요청 직무 ≠ 자리 직무 경고 · [조건 수정]에서 맞추기
    ================================================================ */
-var RMI_TB={k:"rmi",t:"repl_items",del:true,cols:[["id"],["kind"],["ref"],["data",null,"json"],["by","by_name"],["at","created_at","tsm"]]};DB.rmi=DB.rmi||[];var RMI_OK=!LIVE;
+var RMI_TB={k:"rmi",t:"repl_items",del:true,cols:[["id"],["kind"],["ref"],["data",null,"obj"]/* v295 json 형식은 배열만 받아서 객체가 [] 로 저장됐음 → obj */,["by","by_name"],["at","created_at","tsm"]]};DB.rmi=DB.rmi||[];var RMI_OK=!LIVE;
 function rmiTbAdd(){if(typeof TB!=="undefined"&&RMI_OK&&!TB.some(function(d){return d.k==="rmi"}))TB.push(RMI_TB)}rmiTbAdd();
 loadAll=layer("loadAll",loadAll,12121,"v291 대체 매칭판",function(p){return function(){var a=arguments,self=this;var pr=(!LIVE||S._rmiProbed||typeof sb==="undefined"||!sb)?Promise.resolve():(S._rmiProbed=true,Promise.resolve(sb.from("repl_items").select("id").limit(1)).then(function(r){RMI_OK=!(r&&r.error);rmiTbAdd()},function(){}));return pr.then(function(){return p.apply(self,a)}).then(function(x){DB.rmi=DB.rmi||[];return x})}});
 VIEW_CAT.rmatch=["hire"];if(!MP_VIEWS.some(function(y){return y[0]==="rmatch"}))MP_VIEWS.push(["rmatch","대체 매칭판","h"]);
@@ -24613,10 +24613,11 @@ renderNav=layer("renderNav",renderNav,12121,"v291 대체 매칭판",function(p){
 vDbmap=layer("vDbmap",vDbmap,12121,"v291 대체 매칭판",function(p){return function(){if(S.view==="rmatch")return vRm9();return p.apply(this,arguments)}});
 /* ---------- 저장 ---------- */
 function rmMe(){return(st(S.me)||{}).name||""}
-function rmG(k,ref){var r=(DB.rmi||[]).find(function(x){return x.id===k+":"+ref});return(r&&r.data)||{}}
-function rmP(k,ref,patch){var id=k+":"+ref,r=DB.rmi.find(function(x){return x.id===id});if(!r){r={id:id,kind:k,ref:String(ref),data:{},by:rmMe(),at:stamp()};DB.rmi.push(r)}r.data=Object.assign({},r.data,patch);rmSave();return r}
+function rmOk9(d){return!!d&&typeof d==="object"&&!Array.isArray(d)}
+function rmG(k,ref){var r=(DB.rmi||[]).find(function(x){return x.id===k+":"+ref});return r&&rmOk9(r.data)?r.data:{}}
+function rmP(k,ref,patch){var id=k+":"+ref,r=DB.rmi.find(function(x){return x.id===id});if(!r){r={id:id,kind:k,ref:String(ref),data:{},by:rmMe(),at:stamp()};DB.rmi.push(r)}r.data=Object.assign({},rmOk9(r.data)?r.data:{},patch);rmSave();return r}
 function rmSave(){if(LIVE&&READY)schedulePersist()}
-function rmMs(){return(DB.rmi||[]).filter(function(x){return x.kind==="m"&&x.data})}
+function rmMs(){return(DB.rmi||[]).filter(function(x){return x.kind==="m"&&rmOk9(x.data)&&typeof x.data.c==="string"&&x.data.s})}
 function rmLive(){return rmMs().filter(function(x){return x.data.st!=="불합격"})}
 function rmAddM(s,c,st0,fixed,auto){var r={id:"m:"+nid(),kind:"m",ref:s,data:{s:s,c:c,st:st0||"묶임",fixed:!!fixed,auto:!!auto,by:rmMe(),at:stamp()},by:rmMe(),at:stamp()};DB.rmi.push(r);return r}
 function rmDelM(r){DB.rmi=DB.rmi.filter(function(x){return x!==r})}
