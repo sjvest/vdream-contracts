@@ -1984,6 +1984,8 @@ tr.am298lock td:not(:nth-child(2)){opacity:.55}.am298b{margin-left:4px}
 .rm9co.fo{outline:2px solid var(--pri,#4a6cf7);outline-offset:1px}
 .rm9vip{border:2px solid #f2c94c;background:#fffdf3}.rm9vip .rm9h{cursor:default}.rm9c.vip{border-color:#f2c94c}.rm9c.vip .vipm{width:100%;margin-top:4px;font-size:12px;resize:vertical}.rm9c.empty.vipe{min-height:48px}
 .trf301r{max-height:180px;overflow:auto;margin-top:4px}.trf301 select[data-trf301per]{min-width:140px}
+/* v302 저장 오류 기록 · 원래 오류 문구 */
+#save-errs .se302{margin-top:3px;font-size:11px;color:var(--muted,#6b7280);word-break:break-all;white-space:normal}
 </style>
 </head>
 <body>
@@ -2689,7 +2691,7 @@ function vDis(){
 /* ============ 화면 6: 기업 DB ============ */
 function compStats(cid){
   var es=DB.employments.filter(function(e){return e.company===cid&&activeEmp(e)});
-  var exp=es.filter(function(e){var t=curTerm(e.id);return t.end&&dd(TODAY,t.end)<=60&&dd(TODAY,t.end)>=0}).length;
+  var exp=es.filter(function(e){var t=curTerm(e.id);return t&&t.end&&/* v302 계약 차수 없는 고용이면 건너뜀 (기업 DB 화면 오류) */dd(TODAY,t.end)<=60&&dd(TODAY,t.end)>=0}).length;
   return{n:es.length,exp:exp};
 }
 function compTabOf(c){var on=c.service_end&&c.service_end>=TODAY;if(!on)return"end";return compStats(c.id).n?"on1":"on0"}
@@ -19232,8 +19234,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v301 — 담당 일괄 변경 개선 · 대체 매칭판 특이 근로자 · 빈칸 선택 · 빨라짐 · 의사 확인 칸 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v301";APP_VER_ON="11/19";APP_NOTE="담당 일괄 변경: 기업 직접 고르기 · 기업마다 다른 담당자 · 담당 수 · 레벨 · 합계 · 대체 매칭판: 맨 위 특이 근로자 칸 · 빈칸을 누르면 그 기업 선택 · 선택 테두리 한 겹 · 기업 클릭이 빨라짐 · 채용 요청 창 의사 확인 칸이 안 붙던 것 고침";
+/* v302 — 기업 DB 화면 오류 수정 · 추천 순위 이름표 · 저장 오류 기록 원래 문구 · 화면 오류에 기업 · 탭 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v302";APP_VER_ON="11/19";APP_NOTE="기업 DB: 계약 차수가 없는 고용이 있으면 화면이 멈추던 오류 수정 · 대체 매칭판: 기관 추천인재 2순위 · 포트폴리오 3순위로 표시 · 저장 오류 기록: 이유 칸에 원래 오류 문구도 표시 · 화면 오류 기록에 기업 · 탭 이름 · 저장 실패 알림 위치 문구 (설정 › 기본 설정)";
 
 /* ================================================================
    v208
@@ -19301,7 +19303,7 @@ function saveErrHtml(){if(S.role!=="admin")return"";var L=SAVE_ERR.rows||[],loc=
   var kindT={ins:"새로 저장",upd:"수정",del:"삭제",perm:"권한(0줄)",net:"네트워크",auth:"로그인 만료"};
   var rows=(L.length?L:loc).slice(0,100);
   return'<div class="box setbox" style="margin-top:14px" id="save-errs"><div class="dcard-h" style="display:flex;gap:8px;align-items:center"><b>저장 오류 기록</b><span class="small muted">저장이 안 돼서 되돌린 내용 · '+(LIVE?(SAVE_ERR.ok===false?"서버 기록 표 없음(v209 SQL 실행 필요) · 이 브라우저 기록만":"모든 담당자 · 최근 300건"):"예시")+'</span><span class="grow"></span>'+(LIVE&&SAVE_ERR.ok!==false?'<button class="btn sm" data-act="save-err-reload">새로 보기</button>':"")+'</div>'+
-    (rows.length?'<table class="t mini"><thead><tr><th>시각</th><th>담당자</th><th>표</th><th>대상</th><th>칸</th><th>종류</th><th>이유</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td class="num nowrap">'+esc(String(r.at||"").replace("T"," ").slice(0,16))+'</td><td>'+esc(r.by_name||"")+'</td><td>'+esc(SAVE_TNAME[r.tbl]||r.tbl||"")+'</td><td>'+esc(r.row_label||String(r.row_id||"").slice(0,8))+'</td><td class="small">'+esc(r.cols||"")+'</td><td>'+esc(kindT[r.kind]||r.kind||"")+'</td><td class="small" title="'+esc(r.message||"")+'">'+esc(saveErrText({code:r.code,message:r.message}))+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint" style="margin:6px 0 0">저장 오류가 없어요.</p>')+'</div>'}
+    (rows.length?'<table class="t mini"><thead><tr><th>시각</th><th>담당자</th><th>표</th><th>대상</th><th>칸</th><th>종류</th><th>이유</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td class="num nowrap">'+esc(String(r.at||"").replace("T"," ").slice(0,16))+'</td><td>'+esc(r.by_name||"")+'</td><td>'+esc(SAVE_TNAME[r.tbl]||r.tbl||"")+'</td><td>'+esc(r.row_label||String(r.row_id||"").slice(0,8))+'</td><td class="small">'+esc(r.cols||"")+'</td><td>'+esc(kindT[r.kind]||r.kind||"")+'</td><td class="small" title="'+esc(r.message||"")+'">'+esc(saveErrText({code:r.code,message:r.message}))+(r.message&&saveErrText({code:r.code,message:r.message})!==String(r.message)?'<div class="se302">'+esc(r.message)+'</div>':'')/* v302 원래 오류 문구도 보이게 */+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint" style="margin:6px 0 0">저장 오류가 없어요.</p>')+'</div>'}
 var _vSet209;vSet=layer("vSet",vSet,11381,"v209",function(p){_vSet209=p;return function(){return _vSet209.apply(this,arguments)+saveErrHtml()}});
 regAct("save-err-reload",function(){SAVE_ERR.rows=null;SAVE_ERR.ok=null;saveErrLoad()});
 
@@ -21254,8 +21256,8 @@ document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.datase
 /* ---------- ① 화면 오류 기록 ---------- */
 var SCR_SEEN242={};
 function scrErr242(msg,src,line,col,stack){try{msg=String(msg||"");if(!msg||/^Script error\.?$/i.test(msg)||/ResizeObserver loop|extension:\/\/|chrome-extension/i.test(msg+" "+(src||"")))return;
-  var where=(S&&S.view||"")+(S&&S.rrSel?" · 채용 요청":"")+(S&&S.wm?" · 근로자 창":"")+(S&&S.sel?" · "+String(S.sel).split(":")[0]:"");var k=msg+"|"+where,now=Date.now();if(SCR_SEEN242[k]&&now-SCR_SEEN242[k]<600000)return;SCR_SEEN242[k]=now;
-  var st=String(stack||"").split("\n").slice(0,3).join(" | ").slice(0,300);saveErrLog("screen",where,[],{code:"JS",message:msg+(st?" @ "+st:line?" @ "+line+":"+col:"")},"screen",where)}catch(_){}}
+  var where=(S&&S.view||"")+(S&&S.rrSel?" · 채용 요청":"")+(S&&S.wm?" · 근로자 창":"")+(S&&S.sel?" · "+String(S.sel).split(":")[0]:"")+(S&&S.view==="comp"&&S.compSel?" · 기업 "+(((DB.companies||[]).find(function(c){return c.id===S.compSel})||{}).name||String(S.compSel).slice(0,8))+(S.compPTab?" · 탭 "+S.compPTab:"")+(S.compTab?" · "+S.compTab:""):"")+(S&&S.cm?" · 기업 창":"");/* v302 기업 · 탭 */var k=msg+"|"+where,now=Date.now();if(SCR_SEEN242[k]&&now-SCR_SEEN242[k]<600000)return;SCR_SEEN242[k]=now;
+  var st=String(stack||"").split("\n").slice(0,5).join(" | ").slice(0,420);/* v302 위치 5줄 */saveErrLog("screen",where,[],{code:"JS",message:msg+(st?" @ "+st:line?" @ "+line+":"+col:"")},"screen",where)}catch(_){}}
 window.addEventListener("error",function(ev){if(ev&&ev.target&&ev.target!==window&&ev.target.tagName)return;scrErr242(ev.message,ev.filename,ev.lineno,ev.colno,ev.error&&ev.error.stack)});
 window.addEventListener("unhandledrejection",function(ev){var r=ev&&ev.reason;scrErr242("처리 안 된 오류: "+String(r&&r.message||r||""),"",0,0,r&&r.stack)});
 S.seK242=S.seK242||"";
@@ -24603,7 +24605,7 @@ regAfter("v290 직전 연장",function(){if(S.view!=="exp"||(S.expTab&&S.expTab!
 /* ================================================================
    v291 대체 매칭판 (채용 요청 아래 메뉴 · 기존 DB · 채용 요청과 실시간 연동)
      · 빈자리 = 기간(기본 12/1~1/31) 안에 만료되는 고용 건 · 연장 · 무기계약 전환 · 대체 '아니오' · 중도퇴사는 뺌
-     · 후보 = 1순위 만료자 · 최근 불합격 · 3순위 추천인재(대기) · 포트폴리오(대기)
+     · 후보 = 1순위 만료자(추천인재 등록 만료자 포함) · 최근 불합격 · 2순위 추천인재(대기) · 3순위 포트폴리오(대기)
      · 기준: 같은 기업 · 같은 그룹 · 희망 직무 아님 · 이 기업 불합격 · 연계 미진행 → 안 됨 / 사무행정 상 · 중 / 시간 변경 안내 / 만료일 조정(계약 1년이면 불가)
      · 배분은 누를 때만 (기업별 추가 배분 · 전체 일괄 재배분 · 고정 제외 · 되돌리기)
      · 저장 = repl_items (kind m 묶음 · s 자리 · co 기업 · w 만료자 · r 요청 배수 · x 연계 미진행)
@@ -24796,7 +24798,7 @@ function rm9Tags(c){var T=[];if(c.org)T.push('<span class="b sm rm9org" title="�
 function rm9Wish(c){if(c.nmOnly)return'';var A=[];A.push(esc(c.jobs.join("·")||"희망 직무 미입력"));if(c.lv)A.push(c.lv);var hs=c.hrs.length?"희망 "+c.hrs.join("·")+"시간":"";
   var miss=[];if(!c.jobs.length)miss.push("직무");if(!c.hrs.length)miss.push("시간");return'<div class="small muted">'+A.join(" · ")+(hs?" · "+hs:"")+(miss.length?' <button class="linkbtn small rm9miss" data-act="rm9-wish" data-c="'+esc(c.key)+'">희망 '+miss.join(" · ")+' 미입력 ✎</button>':"")+(c.avail?" · "+md(c.avail)+" 가능":"")+(c.availP?' · <b>'+md(c.availP)+' 이후 가능</b>'+(c.availN?" ("+esc(c.availN)+")":""):"")+(c.oneYear?" · 계약 1년":"")+'</div>'}
 function rm9Rej(c){if(!c.rejL.length)return"";var r=c.rej30||c.rejL[0];return'<div class="small '+(c.rej30?"":"muted")+'">'+(c.rej30?"최근 불합격":"이전 불합격")+' · ['+esc(rmCoNm(r.co))+'] '+(r.d?md(r.d)+" ":"")+esc(r.w)+(r.sent?" · 이력서 있음":"")+(c.rejL.length>1?" 외 "+(c.rejL.length-1)+"건":"")+'</div>'}
-function rm9SrcB(c){if(c.nmOnly)return'<span class="b sm" title="채용 요청에 이름만 입력한 후보 · 요청 화면 [연계]로 DB에 연결하면 일반 후보가 돼요">요청 직접 입력</span>';return c.rej30?'<span class="b sm warn">최근 불합격 · 우선</span>':c.src==="만료자"?'<span class="b sm">1순위 만료자'+(c.from?" · ["+esc(rmCoNm(c.from))+"]":"")+'</span>':'<span class="b sm">3순위 '+c.src+'</span>'}
+function rm9SrcB(c){if(c.nmOnly)return'<span class="b sm" title="채용 요청에 이름만 입력한 후보 · 요청 화면 [연계]로 DB에 연결하면 일반 후보가 돼요">요청 직접 입력</span>';return c.rej30?'<span class="b sm warn">최근 불합격 · 우선</span>':c.src==="만료자"?'<span class="b sm">1순위 만료자'+(c.from?" · ["+esc(rmCoNm(c.from))+"]":"")+'</span>':'<span class="b sm">'+(c.src==="추천인재"?"2순위 ":"3순위 ")+c.src+'</span>'/* v302 기관 추천인재 2순위 · 포트폴리오 3순위 */}
 function rmMgr(cid){return(st((comp(cid)||{}).manager)||{}).name||"담당 없음"}
 function rmPartner(m,ctx){var c=ctx.cbk[m.data.c],s=ctx.sbi[m.data.s];if(!c||!s||!c.from)return null;var o=rmLive().find(function(x){var oc=ctx.cbk[x.data.c],os=ctx.sbi[x.data.s];return x!==m&&oc&&os&&oc.from===s.co&&os.co===c.from});return o?ctx.cbk[o.data.c]:null}
 function rm9Move(m,ctx){var c=ctx.cbk[m.data.c],s=ctx.sbi[m.data.s];if(!c||!s||!c.from)return"";var pt=rmPartner(m,ctx);return'<div class="small rm9mv">['+esc(rmCoNm(c.from))+'] → ['+esc(rmCoNm(s.co))+'] · 담당 '+esc(rmMgr(c.from))+' → '+esc(rmMgr(s.co))+(pt?' <span class="b sm p">트레이드 ↔ ['+esc(rmCoNm(s.co))+'] '+esc(pt.nm)+'</span>':'')+'</div>'}
@@ -26016,7 +26018,7 @@ function saveFailHandle(F){var msgs=[];
       saveErrLog(d.t,id,f.cols,f.e,f.kind,nm)});
     msgs.push((SAVE_TNAME[d.t]||d.t)+(f.cols.length?" · "+f.cols.slice(0,3).join(", "):"")+" → "+saveErrText(f.e))});
   var u=msgs.filter(function(x,i){return msgs.indexOf(x)===i});
-  toastLong("저장 안 됨 · 되돌렸어요: "+u.slice(0,2).join(" / ")+(u.length>2?" 외 "+(u.length-2)+"건":"")+" · 관리자 › 설정 › 저장 오류 기록");
+  toastLong("저장 안 됨 · 되돌렸어요: "+u.slice(0,2).join(" / ")+(u.length>2?" 외 "+(u.length-2)+"건":"")+" · 설정 › 기본 설정 › 저장 오류 기록");/* v302 메뉴 위치 문구 */
   try{render()}catch(e){}}
 function snapSet0(k,id,j){if(!SNAP[k])SNAP[k]={};SNAP[k][id]=j}
 /* 다른 담당자가 바꾼 내용: 탭으로 돌아오거나 3분마다 다시 읽음(입력 중이거나 저장 대기 중이면 건너뜀) */
