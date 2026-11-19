@@ -294,7 +294,14 @@ function candFind(rid,k,pid){var R0=roundsOf(rid);for(var i=0;i<R0.length;i++){v
 function candStatus(c){var all=[c.doc,c.iv,c.final].join(" ");if(c.hired||c.final==="합격")return"최종합격";if(/취소|포기/.test(all))return"지원취소";if(c.final==="불합격"||/불합격/.test(c.iv||""))return"최종불합격";if(c.doc==="불합격")return"서류불합격";if(c.doc==="합격")return"서류합격";return"채용지원"}
 function candStep(f){if(!f)return"";var c=f.c,L=[(f.x.seq||1)+"차"];L.push("서류 "+(c.doc||"대기"));if(c.iv)L.push("면접 "+c.iv+(c.iv_on?" "+String(c.iv_on).slice(5).replace("-","/"):""));if(c.final)L.push("최종 "+c.final);if(c.hired)L.push("입사 연결");return L.join(" · ")}
 function appOld(a){var d=a.data||{};var tk=S(a.talent_key);return Object.assign({},d,{id:num("app",a.id),talent_id:tk?num("tal",tk):null,job_id:a.job_id?num("rr",a.job_id):null,org_id:a.org_id?num("org",a.org_id):null,created_at:a.created_at||null,_vw:a.id})}
-function appOldVw(a){var o=appOld(a);var tk=S(a.talent_key),k=tk.split(":")[0],pid=tk.slice(k.length+1);if(a.job_id&&(k==="tl"||k==="pf")){var f=candFind(a.job_id,k,pid);if(f){o.status_pl=o.status;var cs=candStatus(f.c),sp=o.status_pl;/* 인재영입 페이지에서 합격·계약종료로 처리했는데 채용 건 쪽 진행은 아직 '채용지원/서류합격'이면 합격 처리한 값을 따른다 */o.status=(sp==="최종합격"||sp==="계약종료")&&(cs==="채용지원"||cs==="서류합격")?sp:cs;o.vw_step=candStep(f)}}return o}
+function appOldVw(a){var o=appOld(a);var tk=S(a.talent_key),k=tk.split(":")[0],pid=tk.slice(k.length+1);if(a.job_id&&(k==="tl"||k==="pf")){var f=candFind(a.job_id,k,pid);if(f){o.status_pl=o.status;var cs=candStatus(f.c),sp=o.status_pl,sat=(a.data||{}).status_at,rat=f.x&&f.x.updated_at;
+    /* 상태 기준: 인재영입 페이지에서 바꾼 값(status_at)이 채용 건 진행의 마지막 변경보다 나중이면 인재영입 값을 쓰고, 아니면 채용 건 진행 값을 쓴다 (나중에 바꾼 쪽이 이김).
+       status_at이 없던 예전 기록은 합격·계약종료로 처리된 것만 인재영입 값을 따른다 */
+    var okSt=OFFICIAL_ST_VW.indexOf(sp)>=0;
+    if(okSt&&sat&&(!rat||new Date(sat)>=new Date(rat)))o.status=sp;
+    else o.status=(sp==="최종합격"||sp==="계약종료")&&(cs==="채용지원"||cs==="서류합격")?sp:cs;
+    o.vw_step=candStep(f)}}return o}
+var OFFICIAL_ST_VW=["인재등록","채용지원","서류합격","서류불합격","최종합격","최종불합격","지원취소","계약종료"];
 function appSyncRec(a){/* 채용 건이 붙은 지원 → 운영페이지 채용 요청 '발굴 추천'과 수급 요청 연결 인재 */
   if(!a.job_id||!a.talent_key)return Promise.resolve();var k=a.talent_key.split(":")[0],pid=a.talent_key.slice(k.length+1);
   var ex=(raw.org_recommends||[]).find(function(x){return x.request_id===a.job_id&&x.person_id===pid});var P=[];
@@ -311,7 +318,7 @@ VT.candidate_applications={deps:["staff","organizations","talent_picks","portfol
   ins:function(p){var tk=txt("tal",p.talent_id),row={id:uid(),talent_key:tk,job_id:txt("rr",p.job_id),org_id:txt("org",p.org_id),data:omit(p,["id","talent_id","job_id","org_id"]),created_at:new Date().toISOString()};
     return rIns("pl_applications",row).then(function(a){return appSyncRec(a).then(function(){return appOld(a)})})},
   upd:function(old,p){if(old._virt){return VT.candidate_applications.ins(Object.assign(omit(old,["id","_vw","_virt"]),p))}
-    var a=rFind("pl_applications",old._vw),patch={data:Object.assign({},a.data||{},omit(p,["id","talent_id","job_id","org_id"]))};if("job_id" in p)patch.job_id=txt("rr",p.job_id);if("org_id" in p)patch.org_id=txt("org",p.org_id);if("talent_id" in p)patch.talent_key=txt("tal",p.talent_id);
+    var a=rFind("pl_applications",old._vw),patch={data:Object.assign({},a.data||{},omit(p,["id","talent_id","job_id","org_id"]))};if("status" in p)patch.data.status_at=new Date().toISOString();if("job_id" in p)patch.job_id=txt("rr",p.job_id);if("org_id" in p)patch.org_id=txt("org",p.org_id);if("talent_id" in p)patch.talent_key=txt("tal",p.talent_id);
     return rUpd("pl_applications",a.id,patch).then(function(x){return appSyncRec(x).then(function(){return appOld(x)})})},
   del:function(old){return old._virt?Promise.resolve():rDel("pl_applications",old._vw)}};
 /* ---------- 서칭 배정 · 서칭 후보 → 수급 요청 ---------- */
