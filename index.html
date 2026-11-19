@@ -1965,6 +1965,14 @@ input[data-jd282]:focus+.jdc282{display:inline}
 .cf296 .wpick-l .ckl b{color:var(--muted,#666)}.cf296t td{vertical-align:top}
 /* v297 퇴사자 목록 5명 높이 · 찾은 사람 */
 .cf296 .cf297l{display:flex;flex-direction:column;gap:0;max-height:172px;overflow:auto;grid-template-columns:none}.cf296 .cf297l .ckl{height:34px;min-height:34px;flex:0 0 34px;box-sizing:border-box;align-items:center;gap:6px}.cf296 .cf297l .ckl.hit{background:#fff3c4;border-radius:6px}
+/* v298 화면 유지 · 머리줄 고정 · 미리보기 · 자동 매칭 */
+#main .tabs{position:sticky;top:0;z-index:6;background:var(--bg)}#modal .tabs{position:sticky;top:0;z-index:6;background:var(--surface)}
+.t thead.st298 th{box-shadow:0 2px 4px rgba(0,0,0,.08);z-index:3}
+.pvbody{max-height:58vh;overflow:auto;margin-top:4px}.pvco{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px}.pvh{margin-bottom:4px}.pvu{margin:4px 0 6px 6px}
+.pvl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:3px 0}.pvl.off{opacity:.45;text-decoration:line-through}.pvck{width:18px;display:inline-flex}
+.pv-a,.b.pv-a{color:#16704c}.pv-d,.b.pv-d{color:#b42318}.pv-k{color:#667}.b.pv-a{background:#dcf3e8}.b.pv-d{background:#fde7e5}
+.rm9h{cursor:pointer;border-radius:8px;padding:4px 6px}.rm9h:hover{background:#f4f6ff}.rm9h.fo{outline:2px solid var(--pri,#4a6cf7);background:#eef2ff}
+tr.am298lock td:not(:nth-child(2)){opacity:.55}.am298b{margin-left:4px}
 </style>
 </head>
 <body>
@@ -19213,8 +19221,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v297 — 고객사 요청 퇴사자 목록 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v297";APP_VER_ON="11/19";APP_NOTE="고객사 요청 등록 퇴사자 목록: 기간 제한 없이 전체 · 근로자 DB 퇴사자와 명단을 한 목록으로 (최근 퇴사 먼저 → 이름만 등록은 가나다) · 5명 높이 스크롤 · 이름 찾기 = 그 사람으로 이동 (Enter = 선택)";
+/* v298 — 화면 유지 (펼침 · 스크롤 · 머리줄 고정) · 대체 매칭판 미리보기 · 기업 맞춤 후보 · 자동 매칭 지원 동의 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v298";APP_VER_ON="11/19";APP_NOTE="다시 그려도 펼친 칸 · 스크롤 위치가 그대로 · 목록 머리줄 · 탭 줄 고정 · 대체 매칭판: 일괄 재배분 미리보기(받는 기업별 · 어디서 오는지 · 이전 담당 · 줄별 체크 해제) · 기업 머리줄을 누르면 그 기업에 맞는 후보 · 채용 요청 창에 자동 매칭 · 지원 동의 전 진행 잠금";
 
 /* ================================================================
    v208
@@ -24602,6 +24610,10 @@ regAfter("v290 직전 연장",function(){if(S.view!=="exp"||(S.expTab&&S.expTab!
         자동 배분은 '묶임'으로 두고 기업 머리줄 [묶인 후보 모두 등록]
      ⑪ 희망 조건 수정 (추천인재 · 포트폴리오 = v287 창 · 만료자 = 판에 저장) · [자리에 넣기]
      ⑫ 후보 사이드바 필터 (출처 · 직무 · 수준 · 시간 · 소속 · 재연계 · 입사 가능 · 표시 · 정렬 · 이 자리에 맞는 사람만)
+   v298
+     ① 일괄 재배분 미리보기 = 받는 기업별 · 들어옴(+ 어디서 · 이전 담당) · 그대로(=) · 빠짐(−) · 줄별 체크 해제 후 적용 · 트레이드 · 담당자 요약 · 찾기
+     ② 기업 머리줄을 누르면 후보 사이드바가 그 기업 빈자리에 맞는 사람만 (다시 누르면 원래대로) · [이 기업에 넣기]
+     ③ 판에서 넣은 후보 = 채용 요청 후보에 '자동 매칭'(cd.am) · 지원 동의(cd.agree) 전 진행 잠금 · [지원 동의] ↔ 판 [근로자 수락] 양쪽 반영
    v294
      ① 입사 가능일 (추천인재 · 포트폴리오 avail_from · avail_note · 만료자는 판에) · 희망 조건 창에서 입력 · 자리 입사일보다 7일 안 늦으면 '입사일 협의' · 7일 넘으면 안 묶음
      ② 트레이드 · 담당자 이동 보기 (카드 한 줄 · '이동 현황' 탭 · 쌍별 · 기존 기업별 · 담당자별 · 확정만)
@@ -24715,7 +24727,7 @@ function rmApply(plan){var keep=rmMs().filter(function(m){return m.data.st==="�
 var RM_UNDO=null;function rmSnap(){RM_UNDO=JSON.stringify(rmMs())}
 /* ---------- 채용 요청에서 읽은 상태 ---------- */
 function rmCdOf(m,ctx){var u=ctx.sbi[m.data.s],c=ctx.cbk[m.data.c];if(!u||!u.rr||!c)return null;var hit=null;rrRounds(u.rr.id).forEach(function(x){(x.cands||[]).forEach(function(cd){if(rmCdMatch(cd,c,x))hit={cd:cd,x:x}})});return hit}
-function rmDer(m,ctx){var st0=m.data.st,h=rmCdOf(m,ctx);if(!h)return st0;var cd=h.cd;if(cd.final==="합격")return"확정";if(PF_DEAD.test([cd.doc,cd.iv,cd.final].join(" ")))return"불합격";if(st0==="수락")return"수락";if(cd.iv||/합격/.test(cd.doc||""))return"면접";if(cd.sent)return"이력서 전달";return"후보 등록"}
+function rmDer(m,ctx){var st0=m.data.st,h=rmCdOf(m,ctx);if(!h)return st0;var cd=h.cd;if(cd.final==="합격")return"확정";if(PF_DEAD.test([cd.doc,cd.iv,cd.final].join(" ")))return"불합격";if(st0==="수락"||(cd.agree&&!cd.sent))return cd.sent?"이력서 전달":"수락";if(cd.iv||/합격/.test(cd.doc||""))return"면접";if(cd.sent)return"이력서 전달";return"후보 등록"}
 function rmBadge(st0){var k={"문의 중":"warn","후보 등록":"p","이력서 전달":"p",면접:"t",수락:"t",확정:"ok",불합격:"bad"}[st0]||"";return'<span class="b sm '+k+'">'+st0+'</span>'}
 /* ---------- 화면 상태 ---------- */
 S.rm9=S.rm9||(function(){try{return JSON.parse(localStorage.getItem("vw_rm9f")||"null")}catch(e){return null}})()||{};
@@ -24779,8 +24791,8 @@ function rm9Slot(s,ctx){var L=rmIn(s,ctx),D=rmIn(s,ctx,true).filter(function(m){
     '<button class="btn xs" data-act="rm9-cond" data-s="'+esc(s.id)+'">조건 수정</button>'+(s.ex?'<button class="btn xs" data-act="rm9-unex" data-s="'+esc(s.id)+'">제외 풀기</button>':'<button class="btn xs" data-act="rm9-ex" data-s="'+esc(s.id)+'">제외</button>')+'<button class="btn xs" data-act="rm9-close" data-s="'+esc(s.id)+'">'+(s.closed?"다시 열기":"자리 닫기")+'</button></div><div class="rm9pos">'+pos+'</div></div>'}
 function rm9StSel(attr,id,v){return'<select '+attr+'="'+esc(id)+'" title="자리 상태 (비우면 자동)"><option value="">상태 자동</option>'+["확정","유력","미결정"].map(function(x){return'<option'+(v===x?" selected":"")+'>'+x+'</option>'}).join("")+'</select>'}
 function rm9MuSel(attr,id,v){return'<select '+attr+'="'+esc(id)+'" title="이력서 배수">'+[["","배수 확인 필요"],["1","1배수"],["2","2배수"]].map(function(x){return'<option value="'+x[0]+'"'+(String(v||"")===x[0]?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select>'}
-function rm9CoHead(cid,L,ctx){var c=comp(cid)||{},cd=rmG("co",cid),on=L.filter(function(s){return!rmOff(s)}),need=on.reduce(function(n,s){return n+s.k},0),got=on.reduce(function(n,s){return n+rmIn(s,ctx).length},0),wait=on.some(function(s){return s.rr&&rmIn(s,ctx).some(function(m){return/묶임|문의 중/.test(rmDer(m,ctx))})});
-  return'<div class="rm9h"><b>['+esc(c.name||"")+']</b>'+(rm9Grp(cid)?'<span class="b sm">'+esc(rm9Grp(cid))+'</span>':'')+'<span class="small muted">'+esc((st(c.manager)||{}).name||"담당 없음")+' · 후보 '+got+'/'+need+'</span>'+
+function rm9CoHead(cid,L,ctx){var c=comp(cid)||{},fo=S.rm9.p.fitCo===cid,cd=rmG("co",cid),on=L.filter(function(s){return!rmOff(s)}),need=on.reduce(function(n,s){return n+s.k},0),got=on.reduce(function(n,s){return n+rmIn(s,ctx).length},0),wait=on.some(function(s){return s.rr&&rmIn(s,ctx).some(function(m){return/묶임|문의 중/.test(rmDer(m,ctx))})});
+  return'<div class="rm9h'+(fo?" fo":"")+'" title="누르면 오른쪽 후보가 이 기업 빈자리에 맞는 사람만 보여요"><b>['+esc(c.name||"")+']</b>'+(rm9Grp(cid)?'<span class="b sm">'+esc(rm9Grp(cid))+'</span>':'')+'<span class="small muted">'+esc((st(c.manager)||{}).name||"담당 없음")+' · 후보 '+got+'/'+need+'</span>'+
     '<span class="small rm9coct">기업 담당 '+esc(c.contact_name||"미입력")+(c.phone?" "+telHtml(c.phone):"")+'</span><span class="grow"></span>'+(wait?'<button class="btn xs pri" data-act="rm9-regall" data-co="'+esc(cid)+'" title="채용 요청이 있는 자리의 묶임 · 문의 중 후보를 지금 차수에 한 번에">묶인 후보 모두 등록</button>':'')+
     rm9StSel("data-rm9co-state",cid,cd.state||"")+rm9MuSel("data-rm9co-mult",cid,cd.mult)+'<button class="btn xs" data-act="rm9-more" data-co="'+esc(cid)+'">추가 배분 받기</button></div>'}
 function rm9GrpHead(g,cos,ctx){var L=ctx.slots.filter(function(s){return cos.indexOf(s.co)>=0&&!rmOff(s)}),need=L.reduce(function(n,s){return n+s.k},0),got=L.reduce(function(n,s){return n+rmIn(s,ctx).length},0),c={};RM_ST.forEach(function(k){c[k]=0});L.forEach(function(s){c[s.stage]+=s.n});
@@ -24807,18 +24819,18 @@ function rmPOk(c,ctx){var P=S.rm9.p,q=String(S.rm9.q||"").trim();if(q){var hay=[
   if(!any("h",function(v){return v==="미입력"?!c.hrs.length:v==="무관"?[3,4,8].every(function(x){return c.hrs.indexOf(x)>=0}):c.hrs.indexOf(+v)>=0}))return false;
   if(!any("org",function(v){return v==="개인"?!c.org:v==="기관 소속"?!!c.org:c.ban}))return false;if(!any("wst",function(v){return c.src==="만료자"&&c.st===v}))return false;if(!any("av",function(v){return v==="즉시"?!c.avail&&!c.availP:v==="날짜 지정"?!!(c.avail||c.availP):(c.src!=="만료자"&&!c.availP)}))return false;
   if(!any("flag",function(v){return v==="연락처 없음"?!(c.ct&&c.ct.p):v==="계약 1년"?c.oneYear:v==="메모 있음"?!!c.memo:(!c.jobs.length||!c.hrs.length)}))return false;
-  if(P.fit){var u=ctx.sbi[P.fit];if(u&&!rmOk(c,u,ctx))return false}return true}
+  if(P.fit){var u=ctx.sbi[P.fit];if(u&&!rmOk(c,u,ctx))return false}if(P.fitCo&&!P.fit&&!rmCoFit(c,P.fitCo,ctx).length)return false;return true}
 function rm9Pool(ctx){var P=S.rm9.p,base=ctx.cands.filter(function(c){return!c.nmOnly&&!c.nop&&!rmLive().some(function(m){return m.data.c===c.key})}),L=base.filter(function(c){return rmPOk(c,ctx)}),nop=ctx.cands.filter(function(c){return c.nop});
   var so={pri:function(a,b){var p=function(c){return c.rej30?0:c.src==="만료자"?1:c.src==="추천인재"?2:3};return p(a)-p(b)||String(b.created).localeCompare(String(a.created))},new:function(a,b){return String(b.created).localeCompare(String(a.created))},nm:function(a,b){return a.nm.localeCompare(b.nm,"ko")},av:function(a,b){return String(a.availP||a.avail||"0").localeCompare(String(b.availP||b.avail||"0"))}};L.sort(so[P.sort]||so.pri);
-  var fu=P.fit?ctx.sbi[P.fit]:null,chips=[];if(fu)chips.push('<span class="chip on">이 자리: ['+esc(rmCoNm(fu.co))+'] '+esc(fu.job)+' <button class="x" data-act="rm9-pfx" data-g="fit" aria-label="끄기">×</button></span>');
+  if(P.fitCo&&!P.fit)L.sort(function(a,b){return rmCoFit(a,P.fitCo,ctx)[0].f.length-rmCoFit(b,P.fitCo,ctx)[0].f.length});var fu=P.fit?ctx.sbi[P.fit]:null,chips=[];if(P.fitCo&&!fu)chips.push('<span class="chip on">이 기업: ['+esc(rmCoNm(P.fitCo))+'] <button class="x" data-act="rm9-pfx" data-g="fitCo" aria-label="끄기">×</button></span>');if(fu)chips.push('<span class="chip on">이 자리: ['+esc(rmCoNm(fu.co))+'] '+esc(fu.job)+' <button class="x" data-act="rm9-pfx" data-g="fit" aria-label="끄기">×</button></span>');
   RM_PF.forEach(function(g){(P[g[0]]||[]).forEach(function(v){chips.push('<span class="chip on">'+esc(v)+' <button class="x" data-act="rm9-pfx" data-g="'+g[0]+'" data-v="'+esc(v)+'" aria-label="끄기">×</button></span>')})});
   var fl='<details class="rm9pf"'+(S.rm9.pOpen?" open":"")+'><summary class="small">필터</summary>'+RM_PF.map(function(g){var V=g[2]||TAL_JOBS;return'<div class="rm9pfr"><span class="small muted">'+g[1]+'</span>'+V.map(function(v){return'<button class="chip sm'+(rmPHas(g[0],v)?" on":"")+'" data-act="rm9-pf" data-g="'+g[0]+'" data-v="'+esc(v)+'">'+esc(v==="3"||v==="4"||v==="8"?v+"시간":v)+'</button>'}).join("")+'</div>'}).join("")+
     '<div class="rm9pfr"><span class="small muted">정렬</span><select data-rm9ps="sort">'+[["pri","우선순위"],["new","최근 등록"],["nm","이름"],["av","입사 가능일"]].map(function(x){return'<option value="'+x[0]+'"'+((P.sort||"pri")===x[0]?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></div></details>';
   return'<div class="obt"><b>후보</b><span class="small muted">'+(L.length===base.length?"미배정 "+base.length+"명":base.length+"명 중 "+L.length+"명")+'</span>'+(chips.length?'<button class="btn xs" data-act="rm9-pfclear">모두 지우기</button>':'')+'</div><div class="obt" style="margin:6px 0"><input data-rm9q placeholder="이름 · 직무 · 기관 · 번호 뒷자리" value="'+esc(S.rm9.q||"")+'" style="flex:1"></div>'+fl+
     (chips.length?'<div class="obt rm9chips">'+chips.join("")+'</div>':'')+'<p class="small muted" style="margin:4px 0 6px">카드를 누른 뒤 빈칸을 누르거나, 끌어다 놓거나, [자리에 넣기] · 자리에서 여기로 끌어 놓으면 빠져요</p>'+
     L.map(function(c){var fx=fu?rmFlags(c,fu).filter(function(f){return f.k}):[];return'<div class="rm9c'+(S.rm9sel===c.key?" sel":"")+'" draggable="true" data-rm9drag="'+esc(c.key)+'" data-rm9pick="'+esc(c.key)+'"><div class="obt"><b>'+esc(c.nm)+'</b>'+rm9SrcB(c)+(c.st==="유력"?'<span class="b sm t">유력</span>':'')+rm9Tags(c)+'</div>'+rm9Ct(c)+rm9Wish(c)+rm9Rej(c)+
-      (c.from?'<div class="small muted">['+esc(rmCoNm(c.from))+'] '+md(addD(c.avail,-1))+' 만료</div>':'')+(fx.length?'<div class="obt" style="gap:4px">'+fx.map(function(f){return'<span class="b sm '+f.k+'">'+esc(f.t)+'</span>'}).join("")+'</div>':'')+(c.memo?'<div class="small muted">메모 · '+esc(c.memo)+'</div>':'')+
-      '<div class="obt rm9a">'+(fu?'<button class="btn xs pri" data-act="rm9-put" data-c="'+esc(c.key)+'" data-s="'+esc(fu.id)+'">이 자리에 넣기</button>':'<button class="btn xs" data-act="rm9-putl" data-c="'+esc(c.key)+'">자리에 넣기</button>')+'<button class="btn xs" data-act="rm9-wish" data-c="'+esc(c.key)+'">희망 조건</button><button class="btn xs" data-act="rm9-memo" data-c="'+esc(c.key)+'">메모</button><button class="btn xs" data-act="rm9-nop" data-c="'+esc(c.key)+'">연계 미진행</button></div></div>'}).join("")+
+      (c.from?'<div class="small muted">['+esc(rmCoNm(c.from))+'] '+md(addD(c.avail,-1))+' 만료</div>':'')+(P.fitCo&&!fu?(function(){var z=rmCoFit(c,P.fitCo,ctx)[0];return z?'<div class="obt" style="gap:4px"><span class="small">'+esc(z.u.job)+(z.u.lv?" "+z.u.lv:"")+' '+(z.u.h?z.u.h+"시간":"")+' 자리</span>'+(z.f.length?z.f.map(function(f){return'<span class="b sm '+f.k+'">'+esc(f.t)+'</span>'}).join(""):'<span class="b sm ok">바로 가능</span>')+'</div>':''})():'')+(fx.length?'<div class="obt" style="gap:4px">'+fx.map(function(f){return'<span class="b sm '+f.k+'">'+esc(f.t)+'</span>'}).join("")+'</div>':'')+(c.memo?'<div class="small muted">메모 · '+esc(c.memo)+'</div>':'')+
+      '<div class="obt rm9a">'+(P.fitCo&&!fu?'<button class="btn xs pri" data-act="rm9-putco" data-c="'+esc(c.key)+'" data-co="'+esc(P.fitCo)+'">이 기업에 넣기</button>':'')+(fu?'<button class="btn xs pri" data-act="rm9-put" data-c="'+esc(c.key)+'" data-s="'+esc(fu.id)+'">이 자리에 넣기</button>':'<button class="btn xs" data-act="rm9-putl" data-c="'+esc(c.key)+'">자리에 넣기</button>')+'<button class="btn xs" data-act="rm9-wish" data-c="'+esc(c.key)+'">희망 조건</button><button class="btn xs" data-act="rm9-memo" data-c="'+esc(c.key)+'">메모</button><button class="btn xs" data-act="rm9-nop" data-c="'+esc(c.key)+'">연계 미진행</button></div></div>'}).join("")+
     (nop.length?'<details style="margin-top:6px"><summary class="small">연계 미진행 '+nop.length+'명</summary>'+nop.map(function(c){return'<div class="small">'+esc(c.nm)+' · <span class="muted">'+esc(c.nop)+'</span> <button class="btn xs" data-act="rm9-unnop" data-c="'+esc(c.key)+'">되돌리기</button></div>'}).join("")+'</details>':'')}
 /* ---------- 기업 · 근로자 탭 ---------- */
 function rm9GrpNames(){var A=[];(DB.companies||[]).forEach(function(c){var g=String(c.group_name||"").trim();if(g&&A.indexOf(g)<0)A.push(g)});return A.sort(function(a,b){return a.localeCompare(b,"ko")})}
@@ -24844,7 +24856,8 @@ function rm9Place(ckey,sid,from){var ctx=rm9X(),c=ctx.cbk[ckey],s=ctx.sbi[sid];i
   var sent=old.filter(function(m){var hh=rmCdOf(m,ctx);return hh&&hh.cd.sent&&!PF_DEAD.test([hh.cd.doc,hh.cd.iv,hh.cd.final].join(" "))});if(sent.length){askConfirm("이미 이력서가 전달된 후보예요","["+rmCoNm(ctx.sbi[sent[0].data.s].co)+"] 요청에 이미 전달됐어요. 그 요청에서 빼고 옮길까요?","옮기기",go2);return}go2()}
 function rm9Round(r){var R=rrRounds(r.id);if(!R.length){DB.rrr.push({id:nid(),req:r.id,seq:1,channel:RR_CH[0],notice:"",docs:"",comm:[],cands:[],raw:"",due:r.due_date||""});R=rrRounds(r.id)}return R[R.length-1]}
 function rm9Reg(m,ctx){ctx=ctx||rm9X();var s=ctx.sbi[m.data.s],c=ctx.cbk[m.data.c];if(!s||!c||!s.rr)return false;var x=rm9Round(s.rr);if(!x)return false;if(!(x.cands||[]).some(function(cd){return rmCdMatch(cd,c)})){if(c.kind==="tl")talRecAdd(x.id,c.id);else if(c.kind==="pf")pfRecAdd(x.id,c.id);else rlAdd(x.id,c.wid)}
-  m.data=Object.assign({},m.data,{st:"후보 등록",fixed:true});rmSave();return true}
+  var cd0=(x.cands||[]).find(function(cd){return rmCdMatch(cd,c)});if(cd0&&!m.data.sync){cd0.am=1;if(m.data.st==="수락"&&!cd0.agree)cd0.agree=TODAY}/* v298 자동 매칭 · 지원 동의 */
+  m.data=Object.assign({},m.data,{st:m.data.st==="수락"?"수락":"후보 등록",fixed:true});rmSave();return true}
 /* 판에서 뺄 때 요청에서도 (전달 전이면 그냥 · 전달 후면 force 일 때만) */
 function rm9Unreg(m,ctx,force){var h=rmCdOf(m,ctx);if(!h)return true;if(h.cd.sent&&!force)return false;var c=ctx.cbk[m.data.c],u=ctx.sbi[m.data.s];h.x.cands=(h.x.cands||[]).filter(function(cd){return cd!==h.cd});
   logChange("recruit_requests",u.rr.id,rmCoNm(u.co),"후보 뺌",(c&&c.nm)||h.cd.name||"","대체 매칭판에서 뺌 ("+h.x.seq+"차)","내부");if(LIVE&&READY)schedulePersist();return true}
@@ -24853,7 +24866,7 @@ function rm9Out(m,after){var ctx=rm9X(),h=rmCdOf(m,ctx);var done=function(){rm9U
 /* 채용 요청 만들기 (묶인 자리 모두 대체 대상 · 마감일 = 요청 권장일 · 판 제외값 옮김 · 묶인 후보 1차 등록) */
 function rm9Mk(u){if(u.rr)return u.rr;var r=null;RX293=true;var sk=S._rr265skip;S._rr265skip=true;try{u.ids.forEach(function(id){var q=rrFromExp(id);if(q&&!r)r=q})}finally{RX293=false;S._rr265skip=sk}if(!r)return null;
   if(!r.due_date||r.due_date<TODAY||(u.rec>=TODAY&&r.due_date>u.rec&&r.auto))r.due_date=u.rec<TODAY?addD(TODAY,7):u.rec;if(u.ex&&typeof rrExSet234==="function"){rrExSet234(r,u.ex);u.ids.forEach(function(id){rmP("s",id,{ex:""})})}
-  u.rr=r;var x=rm9Round(r),ctx=rm9X();rmIn(u,ctx).forEach(function(m){var c=ctx.cbk[m.data.c];if(!c)return;if(!(x.cands||[]).some(function(cd){return rmCdMatch(cd,c)})){if(c.kind==="tl")talRecAdd(x.id,c.id);else if(c.kind==="pf")pfRecAdd(x.id,c.id);else rlAdd(x.id,c.wid)}m.data=Object.assign({},m.data,{st:"후보 등록",fixed:true})});rmSave();return r}
+  u.rr=r;var x=rm9Round(r),ctx=rm9X();rmLive().filter(function(m){return u.ids.indexOf(m.data.s)>=0}).forEach(function(m){var c=ctx.cbk[m.data.c]||(rmCtx().cbk[m.data.c]);if(!c)return;/* v298 묶음 자리 id 로 (다른 계산본이어도) */if(!(x.cands||[]).some(function(cd){return rmCdMatch(cd,c)})){if(c.kind==="tl")talRecAdd(x.id,c.id);else if(c.kind==="pf")pfRecAdd(x.id,c.id);else rlAdd(x.id,c.wid)}var cd0=(x.cands||[]).find(function(cd){return rmCdMatch(cd,c)});if(cd0){cd0.am=1;if(m.data.st==="수락"&&!cd0.agree)cd0.agree=TODAY}m.data=Object.assign({},m.data,{st:m.data.st==="수락"?"수락":"후보 등록",fixed:true})});rmSave();return r}
 function rm9OpenRr(id){var b=document.createElement("button");b.dataset.act="rr-go";b.dataset.id=id;b.style.display="none";document.body.appendChild(b);b.click();b.remove()}
 function rm9Dlg(h,w){$("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" style="max-width:'+(w||600)+'px">'+h+'</div></div>'}
 function rm9Head(t){return'<div class="ph"><div><h2>'+t+'</h2></div><button class="close" data-act="modal-close" aria-label="닫기">×</button></div>'}
@@ -24867,12 +24880,12 @@ function rm9PutList(c){var ctx=rm9X(),L=ctx.slots.filter(function(s){return!rmOf
 regActs({"rm9-tab":function(D0){S.rm9.tab=D0.v;rmF();render()},"rm9-stage":function(D0){S.rm9.stage=D0.v;rmF();render()},
   "rm9-fclear":function(){var F=S.rm9;["job","lv","h","state","prog","mult","flag","fixed"].forEach(function(k){F[k]=""});rmF();render()},
   "rm9-pf":function(D0){var P=S.rm9.p,A=(P[D0.g]||[]).slice(),i=A.indexOf(D0.v);if(i>=0)A.splice(i,1);else A.push(D0.v);P[D0.g]=A;S.rm9.pOpen=true;rmF();render()},
-  "rm9-pfx":function(D0){var P=S.rm9.p;if(D0.g==="fit")P.fit="";else P[D0.g]=(P[D0.g]||[]).filter(function(v){return v!==D0.v});rmF();render()},
+  "rm9-pfx":function(D0){var P=S.rm9.p;if(D0.g==="fit")P.fit="";else if(D0.g==="fitCo")P.fitCo="";else P[D0.g]=(P[D0.g]||[]).filter(function(v){return v!==D0.v});rmF();render()},
   "rm9-pfclear":function(){S.rm9.p={sort:S.rm9.p.sort||"pri"};S.rm9.q="";rmF();render()},
   "rm9-ask":function(D0){var m=rm9M(D0.m);if(!m)return;m.data=Object.assign({},m.data,{st:"문의 중",fixed:true});rmSave();render();var c=rm9X().cbk[m.data.c];if(c)setTimeout(function(){REG().act["rm9-memo"]({c:c.key,wid:c.wid})},0)},
   "rm9-reg":function(D0){var m=rm9M(D0.m),ctx=rm9X();if(!m)return;var s=ctx.sbi[m.data.s];if(!s)return;if(!s.rr){if(!rm9Mk(s)){toast("채용 요청을 만들지 못했어요");return}toast("채용 요청을 만들고 묶인 후보를 1차 후보로 넣었어요");render();return}rm9Reg(m,ctx);toast("채용 요청 "+rrRounds(s.rr.id).slice(-1)[0].seq+"차 후보로 등록했어요");render()},
   "rm9-regall":function(D0){var ctx=rm9X(),n=0;ctx.slots.filter(function(s){return s.co===D0.co&&s.rr&&!rmOff(s)}).forEach(function(s){rmIn(s,ctx).forEach(function(m){if(/묶임|문의 중/.test(rmDer(m,ctx))&&rm9Reg(m,ctx))n++})});rm9Log("["+rmCoNm(D0.co)+"] 묶인 후보 모두 등록 "+n+"명");toast(n?n+"명을 채용 요청 지금 차수 후보로 넣었어요":"등록할 후보가 없어요");render()},
-  "rm9-yes":function(D0){var m=rm9M(D0.m);if(!m)return;m.data=Object.assign({},m.data,{st:"수락",fixed:true});rmSave();rm9Log("근로자 수락 · "+m.data.c);toast("수락 · 채용 요청에서 합격 처리하면 확정으로 바뀌어요");render()},
+  "rm9-yes":function(D0){var m=rm9M(D0.m);if(!m)return;m.data=Object.assign({},m.data,{st:"수락",fixed:true});var h9=rmCdOf(m,rm9X());if(h9&&!h9.cd.agree){h9.cd.agree=TODAY;h9.cd.am=1}rmSave();rm9Log("근로자 수락 · "+m.data.c);toast("수락 · 채용 요청에서 합격 처리하면 확정으로 바뀌어요");render()},
   "rm9-done":function(D0){var m=rm9M(D0.m);if(!m)return;m.data=Object.assign({},m.data,{st:"확정",fixed:true});rmSave();render()},
   "rm9-fail":function(D0){var m=rm9M(D0.m),ctx=rm9X();if(!m)return;var s=ctx.sbi[m.data.s];m.data=Object.assign({},m.data,{st:"불합격",rejCo:s?s.co:""});rmSave();toast("불합격 · 후보 목록으로 돌아갔어요 · 이 기업에는 다시 안 묶여요");render()},
   "rm9-fix":function(D0){var m=rm9M(D0.m);if(!m)return;m.data=Object.assign({},m.data,{fixed:!m.data.fixed});rmSave();render()},
@@ -24904,10 +24917,9 @@ regActs({"rm9-tab":function(D0){S.rm9.tab=D0.v;rmF();render()},"rm9-stage":funct
   "rm9-rr":function(D0){var s=rm9X().sbi[D0.s];if(s&&s.rr)rm9OpenRr(s.rr.id)},
   "rm9-more":function(D0){var nm=D0.g?D0.g+" (계열사)":"["+esc(rmCoNm(D0.co))+"]";rm9Dlg(rm9Head("추가 배분 받기 · "+esc(nm))+'<div class="ps"><p class="small muted">'+(D0.g?"이 계열사 기업들":"이 기업")+' 빈칸에만 · 아무 데도 안 묶인 후보 중에서 기준대로 묶어요 (묶임 상태 · 채용 요청엔 아직 안 넣음)</p><label>몇 명 <input id="rm9-mn" type="number" min="1" value="1" style="width:70px"></label></div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="rm9-morego" data-co="'+esc(D0.co||"")+'" data-g="'+esc(D0.g||"")+'">배분 받기</button></div>')},
   "rm9-morego":function(D0){var n=Math.max(1,+((document.getElementById("rm9-mn")||{}).value)||1),ctx=rmCtx(),CO=D0.g?(DB.companies||[]).filter(function(c){return String(c.group_name||"").trim()===D0.g}).map(function(c){return c.id}):D0.co;rmSnap();var base=rmLive().map(function(m){return m.data}),r=rmAlloc(ctx,base,CO,n);rmApply(r.plan);rm9Log((D0.g?D0.g+" 계열사":"["+rmCoNm(D0.co)+"]")+" 추가 배분 "+r.added+"명");$("#modal").innerHTML="";toast(r.added?r.added+"명 묶었어요":"조건에 맞는 미배정 후보가 없어요 · 수급표를 확인해 주세요");render()},
-  "rm9-all":function(){if(!rmCanAll())return;var ctx=rmCtx(),keep=rmLive().map(function(m){return m.data}).filter(function(d){return d.fixed||d.st!=="묶임"}),r=rmAlloc(ctx,keep,null,null),A={},B={};rmLive().forEach(function(m){A[m.data.s+"|"+m.data.c]=1});r.plan.forEach(function(p){B[p.s+"|"+p.c]=1});
-    var add=Object.keys(B).filter(function(k){return!A[k]}).length,rem=Object.keys(A).filter(function(k){return!B[k]}).length;S._rm9plan=r.plan;
-    rm9Dlg(rm9Head("전체 일괄 재배분 · 미리보기")+'<div class="ps"><p class="small">고정(🔒) · 진행 중인 조합은 그대로 두고 나머지를 기준대로 다시 묶어요 · 새로 묶인 후보는 채용 요청에 아직 안 들어가요</p><div class="obt"><span class="b">새로 묶임 '+add+'</span><span class="b">빠짐 '+rem+'</span><span class="b">그대로 '+keep.length+'</span></div><p class="small muted">적용하면 변경 이력에 남고, [되돌리기]로 직전 배분으로 돌아갈 수 있어요</p></div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="rm9-allgo">적용</button></div>')},
-  "rm9-allgo":function(){if(!S._rm9plan)return;rmSnap();rmApply(S._rm9plan);S._rm9plan=null;rm9Log("전체 일괄 재배분 (고정 제외) · "+rmMe());$("#modal").innerHTML="";toast("일괄 재배분을 적용했어요 · [되돌리기]로 돌아갈 수 있어요");render()},
+  "rm9-all":function(){if(!rmCanAll())return;var ctx=rmCtx(),keep=rmLive().map(function(m){return m.data}).filter(function(d){return d.fixed||d.st!=="묶임"}),r=rmAlloc(ctx,keep,null,null);
+    S._rm9pv={plan:r.plan,A:rmLive().map(function(m){return{s:m.data.s,c:m.data.c,st:m.data.st,fixed:m.data.fixed,auto:m.data.auto}}),off:{},q:"",chg:true};S._rm9plan=r.plan;rm9PvShow()},
+  "rm9-allgo":function(){var V=S._rm9pv;if(!V)return;var plan=rm9PvFinal(V);rmSnap();rmApply(plan);var n=Object.keys(V.off).filter(function(k){return V.off[k]}).length;S._rm9pv=null;S._rm9plan=null;rm9Log("전체 일괄 재배분 (고정 제외"+(n?" · 뺀 줄 "+n:"")+") · "+rmMe());$("#modal").innerHTML="";toast("일괄 재배분을 적용했어요"+(n?" (뺀 "+n+"줄은 그대로)":"")+" · [되돌리기]로 돌아갈 수 있어요");render()},
   "rm9-undo":function(){if(!RM_UNDO){toast("되돌릴 배분이 없어요");return}var L=JSON.parse(RM_UNDO);RM_UNDO=null;DB.rmi=DB.rmi.filter(function(x){return x.kind!=="m"}).concat(L);rmSave();rm9Log("배분 되돌리기");toast("직전 배분으로 돌아갔어요");render()},
   "rm9-wbulk":function(){var v=(document.getElementById("rm9-wbulk")||{}).value;if(!v)return;var n=0;[].forEach.call(document.querySelectorAll("[data-rm9wck]:checked"),function(c){rmP("w",c.dataset.rm9wck,{st:v});n++});if(n){rm9Log("만료자 재연계 "+n+"명 → "+v);toast(n+"명을 '"+v+"'(으)로 바꿨어요");render()}}});
 /* 그룹명 저장 (띄어쓰기만 다른 기존 이름이면 물어봄) */
@@ -24973,6 +24985,49 @@ wh286Get=(function(o){return function(){var v=o.apply(this,arguments);v.av=av294
 wh286Save=(function(o){return function(k,x,v){var r=o.apply(this,arguments);try{if(v&&v.av&&AV294_OK){var b=(x.avail_from||"")+" "+(x.avail_note||"");x.avail_from=v.av.d||null;x.avail_note=v.av.n||null;var a=(x.avail_from||"")+" "+(x.avail_note||"");if(a!==b){logChange(k==="t"?"talent_picks":"portfolios",x.id,rc286Nm(k,x),"입사 가능일",b.trim()||"즉시",a.trim()||"즉시","내부");if(LIVE&&READY)schedulePersist()}}}catch(e){}return r}})(wh286Save);
 /* 만료자 희망 조건 창에도 */
 rm9WishW=(function(o){return function(c){o.apply(this,arguments);var ws=rmG("w",c.eid||c.id),f=document.querySelector("#modal .ps.foot"),box=f&&f.previousElementSibling;if(box&&!document.getElementById("av294-d"))box.insertAdjacentHTML("beforeend",av294Row({avail_from:ws.avail,avail_note:ws.avail_note}).replace(/<p class="small muted">입사 가능일 칸이 아직 없어요[^<]*<\/p>/,""))}})(rm9WishW);
+
+/* ---------- v298 일괄 재배분 미리보기 (받는 기업 기준 · 줄별 체크 해제) ---------- */
+function rm9PvLines(V,ctx){var A={},B={},L=[];V.A.forEach(function(d){var u=ctx.sbi[d.s];if(u)A[d.c]={u:u,d:d}});V.plan.forEach(function(d){var u=ctx.sbi[d.s];if(u)B[d.c]={u:u,d:d}});
+  var K={};Object.keys(A).concat(Object.keys(B)).forEach(function(k){K[k]=1});Object.keys(K).forEach(function(k){var c=ctx.cbk[k];if(!c)return;var a=A[k],b=B[k];
+    if(a&&b&&a.u===b.u)L.push({k:k,c:c,t:"=",u:b.u,fixed:!!b.d.fixed,st:b.d.st});else{if(b)L.push({k:k,c:c,t:"+",u:b.u,from:a?a.u:null});if(a)L.push({k:k,c:c,t:"-",u:a.u,to:b?b.u:null})}});return L}
+function rm9PvFinal(V){var off=V.off,P=V.plan.filter(function(d){return!off[d.c]});V.A.forEach(function(d){if(off[d.c])P.push(d)});return P}
+function rm9PvShow(){var V=S._rm9pv;if(!V)return;var ctx=rmCtx(),L=rm9PvLines(V,ctx),q=String(V.q||"").trim(),G={},on=function(x){return!V.off[x.k]};
+  L.forEach(function(x){(G[x.u.co]=G[x.u.co]||[]).push(x)});var n={"+":0,"-":0,"=":0},mv=0;L.forEach(function(x){if(on(x)){n[x.t]++;if(x.t==="+"&&x.from)mv++}});
+  /* 트레이드 · 담당자 (적용될 결과 기준) */var fin=rm9PvFinal(V),pair={},M={};fin.forEach(function(d){var c=ctx.cbk[d.c],u=ctx.sbi[d.s];if(!c||!u||!c.from)return;var a=c.from,b=u.co;pair[a+"|"+b]=(pair[a+"|"+b]||0)+1;var g=rmMgr(a),r=rmMgr(b);(M[g]=M[g]||{o:0,i:0}).o++;(M[r]=M[r]||{o:0,i:0}).i++});
+  var tr=0;Object.keys(pair).forEach(function(k){var p2=k.split("|");if(p2[0]<p2[1]&&pair[p2[1]+"|"+p2[0]])tr++});
+  var line=function(x){var c=x.c,src=c.from?'← ['+esc(rmCoNm(c.from))+'] 만료'+(c.avail?" "+md(addD(c.avail,-1)):"")+' · 이전 담당 '+esc(rmMgr(c.from)):'← '+esc(c.src),fl=x.t==="+"?rmFlags(c,x.u).filter(function(f){return f.k}).map(function(f){return'<span class="b sm '+f.k+'">'+esc(f.t)+'</span>'}).join(""):"";
+    var sign={"+":'<b class="pv-a">+</b>',"=":'<b class="pv-k">=</b>',"-":'<b class="pv-d">−</b>'}[x.t],note=x.t==="+"&&x.from?' <span class="small muted">(['+esc(rmCoNm(x.from.co))+'] 에서 옮겨 옴)</span>':x.t==="-"?' <span class="small muted">'+(x.to?"→ ["+esc(rmCoNm(x.to.co))+"] 으로":"→ 빠짐 (미배정)")+'</span>':x.t==="="?' <span class="small muted">그대로'+(x.fixed?" · 고정 🔒":" · "+esc(x.st||""))+'</span>':"";
+    return'<div class="pvl pv'+({"+":"a","-":"d","=":"k"})[x.t]+(on(x)?"":" off")+'">'+(x.t==="="?'<span class="pvck"></span>':'<label class="pvck"><input type="checkbox" data-rm9pv="'+esc(x.k)+'"'+(on(x)?" checked":"")+'></label>')+sign+' <b>'+esc(c.nm)+'</b> <span class="small">'+src+'</span>'+note+(fl?' '+fl:'')+'</div>'};
+  var cos=Object.keys(G).sort(function(a,b){return rmCoNm(a).localeCompare(rmCoNm(b),"ko")}),body=cos.map(function(cid){var X=G[cid],chg=X.some(function(x){return x.t!=="="});if(V.chg&&!chg)return"";
+    var hay=[rmCoNm(cid),rmMgr(cid)].concat(X.map(function(x){return x.c.nm+" "+(x.c.from?rmCoNm(x.c.from)+" "+rmMgr(x.c.from):"")})).join(" ");if(q&&hay.indexOf(q)<0)return"";
+    var U={};X.forEach(function(x){(U[x.u.id]=U[x.u.id]||{u:x.u,L:[]}).L.push(x)});
+    return'<div class="pvco"><div class="pvh"><b>['+esc(rmCoNm(cid))+']</b> <span class="small muted">담당 '+esc(rmMgr(cid))+'</span></div>'+Object.keys(U).map(function(id){var u=U[id].u,ord={"+":0,"=":1,"-":2};return'<div class="pvu"><div class="small"><b>'+esc(u.job)+(u.lv?" "+u.lv:"")+'</b> · '+(u.h?u.h+"시간":"시간 미입력")+(u.n>1?" · "+u.n+"자리":"")+' · 입사 '+md(u.start)+'</div>'+U[id].L.sort(function(a,b){return ord[a.t]-ord[b.t]}).map(line).join("")+'</div>'}).join("")+'</div>'}).join("");
+  rm9Dlg(rm9Head("전체 일괄 재배분 · 미리보기")+'<div class="ps"><p class="small" style="margin:0 0 6px">고정(🔒) · 진행 중인 조합은 그대로 · 받는 기업 기준 · 체크를 빼면 그 줄은 지금 상태로 둬요 · 새로 묶인 후보는 채용 요청에 아직 안 들어가요</p>'+
+    '<div class="obt" style="flex-wrap:wrap;gap:6px"><span class="b pv-a">새로 · 옮김 '+n["+"]+'</span><span class="b pv-d">빠짐 · 옮겨 감 '+n["-"]+'</span><span class="b">그대로 '+n["="]+'</span><span class="b p">트레이드 '+tr+'쌍</span></div>'+
+    (Object.keys(M).length?'<div class="obt small" style="flex-wrap:wrap;gap:6px;margin-top:4px">'+Object.keys(M).sort(function(a,b){return a.localeCompare(b,"ko")}).map(function(k){return'<span class="b sm">'+esc(k)+' · 넘겨줌 '+M[k].o+' · 받음 '+M[k].i+'</span>'}).join("")+'</div>':'')+
+    '<div class="obt" style="margin:8px 0 4px;gap:8px"><input data-rm9pvq value="'+esc(V.q||"")+'" placeholder="기업 · 담당자 · 이름 찾기" style="flex:1"><label class="small"><input type="checkbox" data-rm9pvchg'+(V.chg?" checked":"")+'> 바뀐 기업만</label></div>'+
+    '<div class="pvbody">'+(body||'<p class="muted">보여 줄 기업이 없어요</p>')+'</div></div><div class="ps foot"><button class="btn" data-act="modal-close">취소</button><button class="btn pri" data-act="rm9-allgo">체크한 대로 적용</button></div>',760)}
+document.addEventListener("change",function(ev){var t=ev.target,V=S._rm9pv;if(!V||!t)return;if(t.dataset&&t.dataset.rm9pv!=null){V.off[t.dataset.rm9pv]=!t.checked;var sc=(document.querySelector("#modal .pvbody")||{}).scrollTop||0;rm9PvShow();var b=document.querySelector("#modal .pvbody");if(b)b.scrollTop=sc;return}
+  if(t.hasAttribute&&t.hasAttribute("data-rm9pvchg")){V.chg=t.checked;rm9PvShow()}});
+document.addEventListener("input",function(ev){var t=ev.target,V=S._rm9pv;if(!V||!t||!t.hasAttribute||!t.hasAttribute("data-rm9pvq"))return;V.q=t.value;clearTimeout(S._rm9pvt);S._rm9pvt=setTimeout(function(){rm9PvShow();var i=document.querySelector("[data-rm9pvq]");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250)});
+/* ---------- v298 기업 머리줄 → 후보 사이드바 그 기업 맞춤 ---------- */
+function rmCoUnits(cid,ctx){return ctx.slots.filter(function(u){return u.co===cid&&!rmOff(u)&&!u.full&&rmIn(u,ctx).length<u.k})}
+function rmCoFit(c,cid,ctx){return rmCoUnits(cid,ctx).filter(function(u){return rmOk(c,u,ctx)}).map(function(u){return{u:u,f:rmFlags(c,u).filter(function(x){return x.k})}}).sort(function(a,b){return a.f.length-b.f.length})}
+document.addEventListener("click",function(ev){if(S.view!=="rmatch")return;var h=ev.target.closest&&ev.target.closest(".rm9h");if(!h||ev.target.closest("button,select,input,a,label"))return;var sel=h.querySelector("[data-rm9co-state]");if(!sel)return;var cid=sel.getAttribute("data-rm9co-state"),P=S.rm9.p;P.fitCo=P.fitCo===cid?"":cid;P.fit="";rmF();render();if(P.fitCo)toast("["+rmCoNm(cid)+"] 빈자리에 맞는 후보만 보여요 · 기업 머리줄을 다시 누르면 원래대로")});
+regActs({"rm9-putco":function(D0){var ctx=rm9X(),c=ctx.cbk[D0.c];if(!c)return;var F2=rmCoFit(c,D0.co,ctx);if(!F2.length){toast("이 기업에 넣을 수 있는 빈자리가 없어요");return}if(F2.length===1){rm9Place(c.key,F2[0].u.id);return}
+  rm9Dlg(rm9Head("이 기업에 넣기 · "+esc(c.nm)+" → ["+esc(rmCoNm(D0.co))+"]")+'<div class="ps">'+F2.map(function(x){var s=x.u;return'<div class="rm9pl"><div><b>'+esc(s.job)+(s.lv?" "+s.lv:"")+(s.n>1?" · "+s.n+"자리":"")+'</b> <span class="small muted">'+(s.h?s.h+"시간":"시간 미입력")+' · 입사 '+md(s.start)+' · '+rmIn(s,ctx).length+'/'+s.k+'</span><div class="obt" style="gap:4px">'+(x.f.length?x.f.map(function(f){return'<span class="b sm '+f.k+'">'+esc(f.t)+'</span>'}).join(""):'<span class="b sm ok">바로 가능</span>')+'</div></div><button class="btn sm pri" data-act="rm9-put" data-c="'+esc(c.key)+'" data-s="'+esc(s.id)+'">넣기</button></div>'}).join("")+'</div>',600)}});
+/* ---------- v298 채용 요청 창: 자동 매칭 후보 · 지원 동의 전 진행 잠금 ---------- */
+function am298Lock(cd){return!!(cd&&cd.am&&!cd.agree&&!cd.sent&&!cd.doc&&!cd.iv&&!cd.final)}
+function am298Row(rid,i){var x=(DB.rrr||[]).find(function(y){return y.id===rid});return x&&(x.cands||[])[+i]?{x:x,cd:x.cands[+i]}:null}
+regAfter("v298 자동 매칭 표시",function(){if(S.view!=="rreq"&&!document.querySelector("#modal .rrc"))return;[].forEach.call(document.querySelectorAll('table.rrc input[data-cd$="|name"]'),function(inp){var a=String(inp.getAttribute("data-cd")).split("|"),R=am298Row(a[0],a[1]);if(!R||!R.cd.am)return;var tr=inp.closest("tr"),td=inp.closest("td");if(!tr||tr.querySelector(".am298"))return;var cd=R.cd,lock=am298Lock(cd);
+  td.insertAdjacentHTML("beforeend",'<span class="b sm am298 '+(cd.agree?"ok":"warn")+'" title="대체 매칭판에서 넣은 후보예요">자동 매칭 · '+(cd.agree?"지원 동의 "+md(cd.agree):"지원 동의 전")+'</span>'+(cd.agree?(!cd.sent?'<button class="btn xs am298b" data-act="am298-undo" data-r="'+esc(a[0])+'" data-i="'+esc(a[1])+'">동의 취소</button>':''):'<button class="btn xs pri am298b" data-act="am298-ok" data-r="'+esc(a[0])+'" data-i="'+esc(a[1])+'">지원 동의</button>'));
+  if(lock){tr.classList.add("am298lock");[].forEach.call(tr.querySelectorAll('[data-cd]'),function(el){var f=String(el.getAttribute("data-cd")).split("|")[2];if(/^(sent|doc|iv|final|why)$/.test(f)){el.disabled=true;el.title="지원 동의 후 진행할 수 있어요"}});
+    [].forEach.call(tr.querySelectorAll("td:nth-last-child(2) button, td:nth-last-child(2) select"),function(el){el.disabled=true;el.title="지원 동의 후 진행할 수 있어요"});var k=tr.querySelector("input.cdk");if(k){k.disabled=true;k.title="지원 동의 전이라 일괄 처리에서 빠져요"}}})});
+/* 잠긴 줄은 바뀌지 않게 (혹시 남은 입력 경로) */
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.getAttribute)return;var v=t.getAttribute("data-cd");if(!v)return;var a=v.split("|");if(!/^(sent|doc|iv|final|why)$/.test(a[2]))return;var R=am298Row(a[0],a[1]);if(R&&am298Lock(R.cd)){ev.stopImmediatePropagation();t.value=R.cd[a[2]]||"";toast("자동 매칭 후보예요 · [지원 동의]를 받은 뒤 진행할 수 있어요")}},true);
+function am298Board(rid,cd,st0){var x=(DB.rrr||[]).find(function(y){return y.id===rid});if(!x)return;var ctx=rmCtx();rmLive().forEach(function(m){var u=ctx.sbi[m.data.s],c=ctx.cbk[m.data.c];if(u&&u.rr&&u.rr.id===x.req&&c&&rmCdMatch(cd,c,x)){m.data=Object.assign({},m.data,{st:st0,fixed:true})}});rmSave()}
+regActs({"am298-ok":function(D0){var R=am298Row(D0.r,D0.i);if(!R)return;R.cd.agree=TODAY;am298Board(D0.r,R.cd,"수락");var q=rcOf(R.x.req);logChange("recruit_requests",R.x.req,(q&&rmCoNm(q.company))||"","지원 동의 (자동 매칭)","",R.cd.name||"","내부");if(LIVE&&READY)schedulePersist();toast((R.cd.name||"")+" 님 지원 동의 · 이제 진행할 수 있어요");render()},
+  "am298-undo":function(D0){var R=am298Row(D0.r,D0.i);if(!R||R.cd.sent)return;R.cd.agree="";am298Board(D0.r,R.cd,"후보 등록");var q=rcOf(R.x.req);logChange("recruit_requests",R.x.req,(q&&rmCoNm(q.company))||"","지원 동의 취소 (자동 매칭)",R.cd.name||"","","내부");if(LIVE&&READY)schedulePersist();render()}});
 
 /* ================================================================
    v292 채용 요청 근무시간: 휴게를 바꾸면 하루 · 주 시간 · 충족 계산이 바로 바뀜
@@ -25107,6 +25162,37 @@ regActs({"cf296-link":function(D0){var f=cfOf(D0.id),w=wk(D0.w);if(!f||!w)return
 /* ---------- 할 일: 연결 후보 ---------- */
 regTodo("v296 퇴사자 명단 연결 후보",function(L){try{if(!CF_OK)return;var G={};(DB.cfm||[]).forEach(function(f){if(f.worker||!cfCands(f).length)return;(G[f.company]=G[f.company]||[]).push(f)});
   Object.keys(G).forEach(function(cid){var c=comp(cid)||{},A=G[cid];tdPush(L,{key:"cf296:"+cid,type:"cf296",cat:"데이터 정리",task:"[퇴사자 명단 연결] ["+(c.name||"")+"] "+A.map(cfNm).slice(0,3).join(" · ")+(A.length>3?" 외 "+(A.length-3)+"명":"")+" · 근로자 DB에 같은 이름이 생겼어요 · 기업 창 › 소속 근로자에서 확인",worker:"",emp:"",company:cid,base:TODAY,auto:true,fixedDue:TODAY,n:A.length})})}catch(e){console.warn("[v296 할 일]",e)}});
+
+/* ================================================================
+   v298 다시 그려도 화면 그대로
+     ① 접었다 펴는 칸(<details> · 고객사 원문 등) 펼친 상태 기억 — 창 · 칸마다 구분 · 새로고침하면 처음 상태
+     ② 스크롤 위치 유지 — 뒤 화면 · 열린 창 안 · 목록 상자 안 (메뉴를 바꾸면 맨 위)
+     ③ 목록 머리줄 고정 — 페이지째 스크롤해도 표 머리줄이 화면 위(탭 줄 아래)에 붙어 있음 · 탭 줄도 위에 붙음
+   ================================================================ */
+var UI298={view:null,det:{},pin:{}};
+function ui298Root(el){return el.closest("#modal")?"M:"+(((document.querySelector("#modal h2")||{}).textContent||"").replace(/\d+/g,"#").slice(0,40)):"V:"+S.view}
+function ui298Sig(el){var P=[],e=el,stop=null;while(e&&e!==document.body){if(e.id==="main"||e.id==="modal"){stop=e;break}var t=e.id?"#"+e.id:(e.getAttribute("data-tk")?"[tk="+e.getAttribute("data-tk")+"]":e.getAttribute("data-nk")?"[nk="+e.getAttribute("data-nk")+"]":e.tagName.toLowerCase()+(e.classList[0]?"."+e.classList[0]:""));
+    if(!e.id&&e.parentElement){var same=[].filter.call(e.parentElement.children,function(x){return x.tagName===e.tagName&&x.classList[0]===e.classList[0]});if(same.length>1)t+=":"+same.indexOf(e)}P.unshift(t);e=e.parentElement}return ui298Root(el)+"|"+P.join(">")}
+function ui298DetKey(d){var s=d.querySelector("summary");return ui298Sig(d)+"|"+String(s?s.textContent:"").replace(/\d+/g,"#").trim().slice(0,40)}
+function ui298Grab(){var O={win:window.scrollY,view:S.view,sc:{}};[].forEach.call(document.querySelectorAll("#main details,#modal details"),function(d){UI298.det[ui298DetKey(d)]=d.open});
+  [].forEach.call(document.querySelectorAll("#main .rr2rawpin,#modal .rr2rawpin"),function(p){UI298.pin[ui298Sig(p)]=p.classList.contains("open")});
+  [].forEach.call(document.querySelectorAll("#main *,#modal *"),function(el){if(el.scrollTop>0&&el.scrollHeight>el.clientHeight+2){var cs=getComputedStyle(el);if(/auto|scroll/.test(cs.overflowY))O.sc[ui298Sig(el)]=el.scrollTop}});return O}
+function ui298Put(O){[].forEach.call(document.querySelectorAll("#main details,#modal details"),function(d){var k=ui298DetKey(d);if(UI298.det[k]!=null&&d.open!==UI298.det[k])d.open=UI298.det[k]});
+  [].forEach.call(document.querySelectorAll("#main .rr2rawpin,#modal .rr2rawpin"),function(p){var k=ui298Sig(p);if(UI298.pin[k])p.classList.add("open")});
+  if(O){Object.keys(O.sc).forEach(function(k){var hit=null;[].some.call(document.querySelectorAll("#main *,#modal *"),function(el){if(el.scrollHeight>el.clientHeight+2&&ui298Sig(el)===k){hit=el;return true}return false});if(hit)hit.scrollTop=O.sc[k]});
+    if(O.view===S.view&&O.win>0&&Math.abs(window.scrollY-O.win)>2)window.scrollTo(0,O.win)}ui298Stick()}
+render=layer("render",render,12161,"v298 화면 유지",function(p){return function(){var O=null;try{O=ui298Grab();if(O.view!==S.view||window.scrollY===0&&O.win>0&&S._go298)O=null}catch(e){O=null}S._go298=false;var r=p.apply(this,arguments);try{ui298Put(O)}catch(e){}return r}});
+/* 메뉴를 바꾸면 맨 위 (go 는 scrollTo(0,0) 뒤 render) */
+go=layer("go",go,12161,"v298 화면 유지",function(p){return function(){S._go298=true;UI298.det={};return p.apply(this,arguments)}});
+/* 펼침 · 접기를 누르면 바로 기억 */
+document.addEventListener("toggle",function(ev){var d=ev.target;if(d&&d.tagName==="DETAILS"&&d.closest&&d.closest("#main,#modal"))UI298.det[ui298DetKey(d)]=d.open},true);
+document.addEventListener("click",function(ev){var p=ev.target.closest&&ev.target.closest(".rr2rawpin");if(p)setTimeout(function(){UI298.pin[ui298Sig(p)]=p.classList.contains("open")},0)});
+/* ---------- 머리줄 고정 (페이지째 스크롤할 때) ---------- */
+function ui298Top(){var t=0;[].forEach.call(document.querySelectorAll("#main .tabs"),function(x){var r=x.getBoundingClientRect();if(r.top<=1&&r.bottom>0)t=Math.max(t,r.bottom)});return t}
+function ui298Stick(){var top=ui298Top();[].forEach.call(document.querySelectorAll("#main table.t"),function(tb){var th=tb.tHead;if(!th)return;var box=tb.closest(".box")||tb.parentElement,r=box.getBoundingClientRect(),hh=th.getBoundingClientRect().height,off=0;
+  if(r.top<top&&r.bottom>top+hh*2)off=Math.min(top-r.top,r.height-hh*2);var v=off>0?"translateY("+Math.round(off)+"px)":"";[].forEach.call(th.querySelectorAll("th"),function(c){if(c.style.transform!==v)c.style.transform=v});th.classList.toggle("st298",off>0)})}
+var UI298_RAF=0;window.addEventListener("scroll",function(){if(UI298_RAF)return;UI298_RAF=requestAnimationFrame(function(){UI298_RAF=0;try{ui298Stick()}catch(e){}})},{passive:true});
+window.addEventListener("resize",function(){try{ui298Stick()}catch(e){}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
