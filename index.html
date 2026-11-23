@@ -1986,6 +1986,23 @@ tr.am298lock td:not(:nth-child(2)){opacity:.55}.am298b{margin-left:4px}
 .trf301r{max-height:180px;overflow:auto;margin-top:4px}.trf301 select[data-trf301per]{min-width:140px}
 /* v302 저장 오류 기록 · 원래 오류 문구 */
 #save-errs .se302{margin-top:3px;font-size:11px;color:var(--muted,#6b7280);word-break:break-all;white-space:normal}
+/* v303 중증확인서 · 전달 칩 · 직무별 집계 */
+.sv3ok{background:#e7f6ec;color:#1a7f37;border:1px solid #b7e1c4;cursor:default;white-space:nowrap}
+.sv3no{background:#fff4e0;color:#9a5b00;border:1px solid #f4d39a;white-space:nowrap}
+.sv3na{background:#f2f2f2;color:#888;border:1px solid #e2e2e2;white-space:nowrap}
+.sv3req{background:#fde8e8;color:#b42318;border:1px solid #f5b5b5;font-weight:600;white-space:nowrap}
+[data-sv303]{user-select:none}
+.sv3h,.sv3jt{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:4px}
+.sv3once{display:inline-flex;gap:4px;align-items:center;margin-left:4px}
+.sv3in{width:140px;font-size:12px;padding:2px 6px}
+.sv3bc{gap:4px;margin-top:2px;align-items:center}
+.sv3job{font-size:12px}
+/* v304 중도퇴사 미등록 */
+.lq304b{border:1px solid #f5b5b5;background:#fff5f5;border-radius:10px;margin:8px 0 12px;overflow:hidden}
+.lq304h{display:flex;gap:10px;align-items:center;padding:10px 14px;cursor:pointer;color:#b42318}
+.lq304h .small{color:#7a271a}
+.lq304t{margin:0;background:#fff}.lq304b .hint{margin:6px 14px 10px}
+.notebox.lq304r{border-color:#f5b5b5;background:#fff5f5}.notebox.lq304r b{color:#b42318}
 </style>
 </head>
 <body>
@@ -19234,8 +19251,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v302 — 기업 DB 화면 오류 수정 · 추천 순위 이름표 · 저장 오류 기록 원래 문구 · 화면 오류에 기업 · 탭 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v302";APP_VER_ON="11/19";APP_NOTE="기업 DB: 계약 차수가 없는 고용이 있으면 화면이 멈추던 오류 수정 · 대체 매칭판: 기관 추천인재 2순위 · 포트폴리오 3순위로 표시 · 저장 오류 기록: 이유 칸에 원래 오류 문구도 표시 · 화면 오류 기록에 기업 · 탭 이름 · 저장 실패 알림 위치 문구 (설정 › 기본 설정)";
+/* v304 — 근로자 요청사항 중도퇴사 → 중도퇴사 등록 이어서 · 미등록 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v304";APP_VER_ON="11/23";APP_NOTE="근로자 요청사항: '중도퇴사 · 사직 의사' 저장하면 중도퇴사 등록 창이 바로 열림(마지막 근무일 입력) · [아직 확정 아님]이면 미등록으로 남김 · 근로자 요청사항 위에 '중도퇴사 미등록' 띠 · [중도퇴사 등록] · [퇴사 안 함] · 담당자 내 할 일";
 
 /* ================================================================
    v208
@@ -25400,6 +25417,203 @@ document.addEventListener("change",function(ev){var t=ev.target,F=S.trf;if(!F||!
   if(per!=null){F.per[per]=t.value;render();return}if(ck!=null){F.chk[ck]=t.checked;return}if(t.hasAttribute("data-trf301all")){trfPlan().forEach(function(p){F.chk[p.c.id]=t.checked});render();return}
   if(t.hasAttribute("data-trf301none")){F.none=t.checked;render();return}if(t.id==="trf301-to")F.put=t.value});
 document.addEventListener("input",function(ev){var t=ev.target,F=S.trf;if(!F||!t||t.id!=="trf301-q")return;F.q=t.value;var r=document.getElementById("trf301-r");if(r)r.innerHTML=trfFind()});
+
+/* ==========================================================
+   v303 ① 중증장애인확인서 필수 기업 · 이번 건만 요청 · 수취 (근로자 기준)
+        - 기업 DB 입구서 칸 [중증장애인확인서 필수] (companies.sev_cert_req)
+        - 채용 요청 머리 배지 · [이번 건만 중증확인서 요청] (recruit_requests.sev_once)
+        - 후보 표 '중증확인서' 칸 · 대체 매칭판 자리 배지 · 후보 칩 · 필터
+        - 수취 기록 = 앱 설정 sev303:<w|t|p>:<id> (사람마다 한 줄 · 다른 기업 연계 때도 이어짐)
+          연결 안 된 이름만 후보는 후보 줄 c.sev
+      ② 이력서 전달: [운영파트에게 이력서 전달] → 날짜 빈 후보에 전달일 자동 · '✓ 전달완료 mm/dd' 칩
+      ③ 전달완료 · 수취완료 칩 더블클릭 → 날짜 바꾸기 (Enter 저장 · Esc 취소 · 비우면 되돌림)
+      ④ 여러 직무: 같은 직무도 여러 줄(상세로 구분) · 후보 직무 선택(+ 직무 줄 추가) · 직무별 합격 집계 · 초과 경고
+        대체 매칭판 자리를 직무 + 상세로 나눔 (기타 · 같은 직무 여러 줄일 때)
+   SQL: v303_sev_cert.sql (칸 2개 추가 · 실행 전에는 체크만 저장 안 됨)
+   ========================================================== */
+var SV303={co:!LIVE,rr:!LIVE,probed:false};
+function sv303Tb(){if(SV303.co)colxAdd("companies",[["sev_req","sev_cert_req","yn"]]);if(SV303.rr)colxAdd("rr",[["sev_once",null,"bool"]])}sv303Tb();
+loadAll=layer("loadAll",loadAll,12301,"v303 중증확인서 칸",function(p){return function(){var a=arguments,self=this;var pr=(!LIVE||SV303.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(SV303.probed=true,Promise.all([sb.from("companies").select("sev_cert_req").limit(1),sb.from("recruit_requests").select("sev_once").limit(1)]).then(function(R){SV303.co=!R[0].error;SV303.rr=!R[1].error;sv303Tb()},function(){}));return pr.then(function(){return p.apply(self,a)})}});
+CFIELDS.intake.push(["sev_req","중증장애인확인서 필수 · 켜면 채용 요청 · 대체 매칭판에 '필수' 표시 · 후보마다 수취 확인","sel",0,["불필요","필요"]]);
+if(!LIVE);
+
+/* ---------- 공통 ---------- */
+function sv3Me(){return(st(S.me)||{}).name||""}
+function sv3Save(){if(typeof RM_DIRTY!=="undefined")RM_DIRTY++;if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}
+function sv3Md(d){return d?String(d).slice(5,10).replace("-","/"):""}
+function sv3CoNeed(cid){var c=comp(cid);return!!(c&&(c.sev_req===true||c.sev_req==="필요"))}
+function sv3Need(r){return!!(r&&(sv3CoNeed(r.company)||r.sev_once===true))}
+function sv3Why(r){return!r?"":sv3CoNeed(r.company)?"중증장애인확인서 필수 기업":r.sev_once?"이번 건 중증확인서 요청":""}
+/* 사람 키: 근로자 → w · 추천인재 → t · 포트폴리오 → p (근로자 연결이 있으면 w 먼저) */
+function sv3KeysCd(c){var K=[],add=function(k){if(k&&K.indexOf(k)<0)K.push(k)};if(!c)return K;if(c.worker)add("w:"+c.worker);
+  var t=c.tal&&(DB.talent||[]).find(function(x){return x.id===c.tal}),p=c.pf&&(DB.pf||[]).find(function(x){return x.id===c.pf});if(t&&t.worker)add("w:"+t.worker);if(p&&p.worker)add("w:"+p.worker);if(c.tal)add("t:"+c.tal);if(c.pf)add("p:"+c.pf);return K}
+function sv3KeysB(c){var K=[],add=function(k){if(k&&K.indexOf(k)<0)K.push(k)};if(!c)return K;if(c.wid)add("w:"+c.wid);if(c.kind==="tl")add("t:"+c.id);if(c.kind==="pf")add("p:"+c.id);return K}
+function sv3Get(K,row){for(var i=0;i<K.length;i++){var v=appSet("sev303:"+K[i],null);if(v&&v.d)return v}return row&&row.sev?{d:row.sev}:null}
+function sv3Put(K,ref,d,nm){var before=(sv3Get(K,ref&&ref.row)||{}).d||"";if(before===(d||""))return;
+  if(K.length){appSetPut("sev303:"+K[0],d?{d:d,by:sv3Me(),at:TODAY}:null);/* 다른 키에 남은 옛 기록도 같이 */K.slice(1).forEach(function(k){if(appSet("sev303:"+k,null))appSetPut("sev303:"+k,d?{d:d,by:sv3Me(),at:TODAY}:null)})}
+  else if(ref&&ref.x)cdPut(ref.x,ref.i,function(c){c.sev=d||""});
+  logChange("app_settings","sev303:"+(K[0]||"cand"),nm||"","중증장애인확인서 수취",before||"미수취",d||"미수취","내부");sv3Save()}
+function sv3Chip(st,key,d,nobtn){if(st==="na")return'<span class="b sm sv3na" data-sv303="'+esc(key)+'" title="이 요청은 중증장애인확인서 대상이 아니에요">대상 아님</span>'+(d?' <small class="muted">(보유 '+sv3Md(d)+')</small>':'');
+  if(d)return'<span class="b sm sv3ok" data-sv303="'+esc(key)+'" title="더블클릭해서 날짜 바꾸기">✓ 수취완료 '+sv3Md(d)+'</span>';
+  return'<span class="b sm sv3no" data-sv303="'+esc(key)+'" title="더블클릭해서 날짜 넣기">미수취</span>'+(nobtn?'':' <button type="button" class="btn xs" data-sv303get="'+esc(key)+'">수취 체크</button>')}
+function sv3EditIn(key,v){return'<input type="date" class="sv3in" data-sv303in="'+esc(key)+'" value="'+esc(v||"")+'" title="Enter 저장 · Esc 취소 · 비우고 저장하면 되돌림">'}
+
+/* ---------- 직무 줄 ---------- */
+function rrJobLines(r){var G=[],by={};((r&&r.jobs)||[]).forEach(function(j){if(!j||!String(j.job||"").trim())return;var job=String(j.job).trim(),det=String(j.detail||"").trim(),k=job+"\u0001"+det;if(!by[k]){by[k]={job:job,det:det,n:0,lab:job+(det?"("+det+")":""),k:k};G.push(by[k])}by[k].n+=(+j.n||1)});return G}
+function rrLineOf(G,c){if(!c||!c.job)return null;var det=String(c.jdet||"").trim(),ex=G.find(function(g){return g.job===c.job&&g.det===det});if(ex)return ex;if(!det){var L=G.filter(function(g){return g.job===c.job});if(L.length===1)return L[0]}return null}
+function rrAllCands(rid){var out=[];(DB.rrr||[]).forEach(function(x){if(x.req!==rid)return;(x.cands||[]).forEach(function(c,i){if(c)out.push({x:x,i:i,c:c})})});return out}
+function rrPassed(c){return c&&(c.final==="합격"||!!c.hired)}
+function rrJobTally(r){var G=rrJobLines(r);if(G.length<2)return null;var T=G.map(function(g){return{g:g,p:0,a:0}}),none=0;
+  rrAllCands(r.id).forEach(function(o){var g=rrLineOf(G,o.c),t=g&&T.find(function(y){return y.g===g});if(t){t.a++;if(rrPassed(o.c))t.p++}else if(o.c.name)none++});return{T:T,none:none}}
+
+/* ---------- 채용 요청 창: 머리 배지 · 이번 건만 · 직무별 집계 ---------- */
+function sv3Head(){var rid=S.rrSel;if(!rid)return;var r=(DB.rr||[]).find(function(y){return y.id===rid});if(!r)return;
+  var tg=[].find.call(document.querySelectorAll(".tags"),function(el){return[].some.call(el.children,function(s){return/^채용수/.test(s.textContent)})});if(!tg||tg.querySelector(".sv3h"))return;
+  var w=sv3Why(r),h='<span class="sv3h">'+(w?'<span class="b sm sv3req">'+esc(w)+'</span>':'')+(sv3CoNeed(r.company)?'':'<label class="sv3once small" title="'+(SV303.rr?"이번 채용 건만 중증장애인확인서를 받아요 · 계속 받는 기업이면 기업 DB에서 체크":"SQL(v303) 실행 후 저장돼요")+'"><input type="checkbox" data-sv303once="'+esc(r.id)+'"'+(r.sev_once?" checked":"")+(SV303.rr?"":" disabled")+'> 이번 건만 중증확인서 요청</label>')+'</span>';
+  var J=rrJobTally(r);if(J)h+='<span class="sv3jt">'+J.T.map(function(t){var over=t.p-t.g.n;return'<span class="b sm'+(over>0?" bad":t.p>=t.g.n?" ok":"")+'" title="합격 '+t.p+' / 모집 '+t.g.n+' · 후보 '+t.a+'명">'+esc(t.g.lab)+' '+t.p+'/'+t.g.n+(over>0?' · 초과 '+over:'')+'</span>'}).join("")+(J.none?'<span class="b sm warn" title="직무 줄을 고르지 않은 후보">직무 미지정 '+J.none+'</span>':'')+'</span>';
+  tg.insertAdjacentHTML("beforeend",h)}
+
+/* ---------- 후보 표: 직무 선택 · 이력서 전달 칩 · 중증확인서 칸 ---------- */
+function sv3Tables(){document.querySelectorAll("table.rrc").forEach(function(t){if(t.dataset.sv303)return;t.dataset.sv303="1";
+  var any=t.querySelector('[data-cd$="|name"]');if(!any)return;var xid=any.dataset.cd.split("|")[0],x=(DB.rrr||[]).find(function(y){return y.id===xid});if(!x)return;var r=(DB.rr||[]).find(function(y){return y.id===x.req});if(!r)return;
+  var need=sv3Need(r),G=rrJobLines(r);
+  /* 머리줄 */
+  var ths=[].slice.call(t.querySelectorAll("thead th")),hi=ths.findIndex(function(th){return/이력서 전달/.test(th.textContent)});
+  if(hi>=0){var nth=document.createElement("th");nth.textContent="중증확인서";nth.className="nowrap";ths[hi].after(nth)}
+  t.querySelectorAll("tbody tr").forEach(function(tr){var nmI=tr.querySelector('[data-cd$="|name"]');
+    if(!nmI){var one=tr.children.length===1&&tr.children[0];if(one&&one.colSpan>1&&hi>=0)one.colSpan=one.colSpan+1;return}
+    var i=+nmI.dataset.cd.split("|")[1],c=(x.cands||[])[i]||{},k=xid+"|"+i;
+    /* 직무 */
+    var jI=tr.querySelector('[data-cd="'+k+'|job"]');if(jI&&G.length){var td=jI.closest("td"),cur=rrLineOf(G,c),O=G.map(function(g,gi){return'<option value="'+gi+'"'+(cur===g?" selected":"")+'>'+esc(g.lab)+'</option>'}).join("");
+      if(!cur)O='<option value="" selected>'+(c.job?"(기존) "+esc(c.job):"직무 선택")+'</option>'+O;O+='<option value="__add">+ 직무 줄 추가…</option>';
+      td.innerHTML='<select class="sv3job" data-sv303job="'+esc(k)+'" aria-label="직무" style="max-width:180px;min-width:110px">'+O+'</select><input type="hidden" data-cd="'+esc(k)+'|job" value="'+esc(c.job||"")+'"><input type="hidden" data-cd="'+esc(k)+'|jdet" value="'+esc(c.jdet||"")+'">'}
+    /* 이력서 전달 */
+    var sI=tr.querySelector('input[type="date"][data-cd="'+k+'|sent"]'),sTd=sI&&sI.closest("td");
+    if(sTd){var v=sI.value||"",ed=S.sv303e===k+"|sent";
+      sTd.innerHTML=(ed?sv3EditIn(k+"|sent",v):v?'<span class="b sm sv3ok" data-sv303="'+esc(k)+'|sent" title="더블클릭해서 날짜 바꾸기">✓ 전달완료 '+sv3Md(v)+'</span>':'<span class="b sm sv3na" data-sv303="'+esc(k)+'|sent" title="[운영파트에게 이력서 전달]을 누르면 오늘 날짜가 들어가요 · 더블클릭해서 직접 넣기">미전달</span>')+'<input type="hidden" data-cd="'+esc(k)+'|sent" value="'+esc(v)+'">'}
+    /* 중증확인서 */
+    var td2=document.createElement("td");td2.className="nowrap sv3c";var K=sv3KeysCd(c),got=sv3Get(K,c),d=got&&got.d||"";
+    td2.innerHTML=S.sv303e===k+"|sev"?sv3EditIn(k+"|sev",d):(!need?sv3Chip("na",k+"|sev",d):sv3Chip(d?"ok":"no",k+"|sev",d));
+    if(sTd)sTd.after(td2);else{var tds=tr.children;if(hi>=0&&tds[hi])tds[hi].after(td2)}});
+  var f=t.querySelector(".sv3in");if(f)setTimeout(function(){try{f.focus()}catch(e){}},0)})}
+
+/* ---------- 등록 창: 같은 직무도 여러 줄 ---------- */
+function sv3Chips(){var box=document.querySelector(".rr2chips");if(!box||box.dataset.sv303)return;box.dataset.sv303="1";
+  (typeof JOBS!=="undefined"?JOBS:[]).forEach(function(v){if(!box.querySelector('[data-v="'+CSS.escape(v)+'"]'))box.insertAdjacentHTML("beforeend",'<button type="button" class="chip" data-act="rr-jadd" data-v="'+esc(v)+'" title="같은 직무를 한 줄 더 · 상세로 구분해요">+ '+esc(v)+'</button>')})}
+
+function sv3CoHead(){if(!S.cm||!sv3CoNeed(S.cm))return;var tab=document.querySelector('[data-act="comp-ptab"]'),dlg=tab&&tab.closest(".dlg,.pnl");if(!dlg)return;var tg=dlg.querySelector(".tags");if(!tg||tg.querySelector(".sv3req"))return;tg.insertAdjacentHTML("beforeend",'<span class="b sv3req" title="입구서 발송 탭에서 바꿔요">중증확인서 필수</span>')}
+render=layer("render",render,12301,"v303 중증확인서 · 전달 칩 · 직무",function(p){return function(){var r=p.apply(this,arguments);try{sv3Head();sv3Tables();sv3Chips();sv3CoHead()}catch(e){if(window.console)console.warn("v303",e)}return r}});
+
+/* ---------- 동작 ---------- */
+function sv3Commit(key,v){var P=key.split("|");S.sv303e=null;
+  if(P[0]==="b"){var ctx=typeof rmCtx==="function"?rmCtx():null,c=ctx&&ctx.cbk[P.slice(1).join("|")];if(c)sv3PutB(c,v);render();return}
+  var xid=P[0],i=+P[1],f=P[2],x=(DB.rrr||[]).find(function(y){return y.id===xid});if(!x||!x.cands||!x.cands[i]){render();return}var c0=x.cands[i],r=(DB.rr||[]).find(function(y){return y.id===x.req})||{};
+  if(f==="sent"){var b=c0.sent||"";if(b!==(v||"")){cdPut(xid,i,function(c){c.sent=v||""});logChange("recruit_requests",r.id||"",cdCoName(r),x.seq+"차 이력서 전달일 · "+(c0.name||""),b||"미전달",v||"미전달","내부");sv3Save()}}
+  if(f==="sev")sv3Put(sv3KeysCd(c0),{x:xid,i:i,row:c0},v,c0.name||"");
+  render()}
+function sv3BRow(c){if(!c||c.kind!=="nm")return null;var x=(DB.rrr||[]).find(function(y){return y.id===c.rid});if(!x)return null;var i=(x.cands||[]).findIndex(function(z){return z&&z.name===c.nm&&!z.tal&&!z.pf&&!z.worker});return i<0?null:{x:x.id,i:i,row:x.cands[i]}}
+function sv3GetB(c){var ref=sv3BRow(c);return sv3Get(sv3KeysB(c),ref&&ref.row)}
+function sv3PutB(c,d){sv3Put(sv3KeysB(c),sv3BRow(c),d,c.nm||"")}
+document.addEventListener("dblclick",function(ev){var el=ev.target.closest&&ev.target.closest("[data-sv303]");if(!el)return;ev.preventDefault();S.sv303e=el.dataset.sv303;render()},true);
+document.addEventListener("click",function(ev){var g=ev.target.closest&&ev.target.closest("[data-sv303get]");if(!g)return;ev.preventDefault();ev.stopPropagation();sv3Commit(g.dataset.sv303get,TODAY);toast("중증장애인확인서 수취 · "+sv3Md(TODAY))},true);
+window.addEventListener("keydown",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.sv303in)return;if(ev.key==="Enter"){ev.preventDefault();ev.stopImmediatePropagation();sv3Commit(t.dataset.sv303in,t.value)}else if(ev.key==="Escape"){ev.preventDefault();ev.stopImmediatePropagation();S.sv303e=null;render()}},true);/* 창 닫기(Esc)보다 먼저 */
+document.addEventListener("focusout",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.sv303in)return;var k=t.dataset.sv303in,v=t.value;setTimeout(function(){if(S.sv303e===k)sv3Commit(k,v)},120)},true);
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset)return;
+  if(t.dataset.sv303once){var r=(DB.rr||[]).find(function(y){return y.id===t.dataset.sv303once});if(!r)return;if(!SV303.rr){t.checked=!!r.sev_once;toast("SQL(v303) 실행 후 저장돼요");return}r.sev_once=t.checked;logChange("recruit_requests",r.id,cdCoName(r),"이번 건만 중증확인서 요청",t.checked?"아니오":"예",t.checked?"예":"아니오","내부");sv3Save();render();return}
+  if(t.dataset.sv303job){var P=t.dataset.sv303job.split("|"),xid=P[0],i=+P[1],x=(DB.rrr||[]).find(function(y){return y.id===xid});if(!x)return;var r2=(DB.rr||[]).find(function(y){return y.id===x.req});if(!r2)return;
+    if(t.value==="__add"){sv3AddDlg(r2,xid,i);return}if(t.value==="")return;var g=rrJobLines(r2)[+t.value];if(!g)return;var c0=x.cands[i]||{},b=rrLineOf(rrJobLines(r2),c0);
+    var row=t.closest("tr"),hj=row&&row.querySelector('[data-cd="'+xid+"|"+i+'|job"]'),hd=row&&row.querySelector('[data-cd="'+xid+"|"+i+'|jdet"]');if(hj)hj.value=g.job;if(hd)hd.value=g.det;
+    cdPut(xid,i,function(c){c.job=g.job;c.jdet=g.det});logChange("recruit_requests",r2.id,cdCoName(r2),x.seq+"차 후보 직무 · "+(c0.name||""),b?b.lab:(c0.job||"-"),g.lab,"내부");sv3Save();sv3Over(r2,g);render()}},true);
+function sv3Over(r,g){var J=rrJobTally(r);if(!J)return;var t=J.T.find(function(y){return y.g.k===g.k});if(t&&t.p>t.g.n)toast(g.lab+" 모집 "+t.g.n+"명 · 합격 "+t.p+"명 → 초과 "+(t.p-t.g.n)+" (집계에 표시)")}
+function sv3AddDlg(r,xid,i){S.sv303add={rid:r.id,x:xid,i:i};var J=typeof JOBS!=="undefined"?JOBS:[];
+  $("#modal").innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="직무 줄 추가" style="max-width:440px"><div class="ph"><div><h2>직무 줄 추가</h2><div class="small muted">'+esc(cdCoName(r))+' 채용 요청에 직무를 한 줄 더해요 · 같은 직무도 상세로 나눠요</div></div><button class="close" data-act="sv303-addx" aria-label="닫기">×</button></div>'+
+  '<div class="ps"><div class="fg"><label class="f"><span>직무</span><select id="sv303-aj">'+J.map(function(v){return'<option>'+esc(v)+'</option>'}).join("")+'</select></label><label class="f"><span>상세</span><input id="sv303-ad" placeholder="예: 번역 · 데이터 라벨링"></label><label class="f"><span>인원</span><input id="sv303-an" type="number" min="1" value="1" style="width:80px"></label></div></div>'+
+  '<div class="ps foot"><button class="btn" data-act="sv303-addx">취소</button><button class="btn pri" data-act="sv303-addok">추가하고 이 후보에 지정</button></div></div></div>'}
+regActs({"sv303-addx":function(){S.sv303add=null;$("#modal").innerHTML="";render()},
+  "sv303-addok":function(){var A=S.sv303add;if(!A)return;var r=(DB.rr||[]).find(function(y){return y.id===A.rid});if(!r)return;var job=($("#sv303-aj")||{}).value||"",det=((($("#sv303-ad")||{}).value)||"").trim(),n=Math.max(1,+(($("#sv303-an")||{}).value||1));if(!job){toast("직무를 골라 주세요");return}
+    var L=(r.jobs||[]).slice();L.push({job:job,n:n,detail:det,repl:""});r.jobs=L;var lab=job+(det?"("+det+")":"");logChange("recruit_requests",r.id,cdCoName(r),"직무 줄 추가","",lab+" "+n+"명","내부");
+    var x=(DB.rrr||[]).find(function(y){return y.id===A.x}),c0=x&&x.cands[A.i];if(c0){cdPut(A.x,A.i,function(c){c.job=job;c.jdet=det});logChange("recruit_requests",r.id,cdCoName(r),x.seq+"차 후보 직무 · "+(c0.name||""),c0.job||"-",lab,"내부")}
+    S.sv303add=null;$("#modal").innerHTML="";sv3Save();toast(lab+" 줄을 추가했어요");render()}});
+/* 등록 · 수정 창: [+ 직무]는 늘 한 줄 추가 · 후보가 있는 줄은 빼기 막기 */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="rr-jadd"],[data-act="rr-jrm"]');if(!b||!b.closest(".rr2chips,.rrjl"))return;var F=S.rrF;if(!F||!F.jobs)return;
+  if(b.dataset.act==="rr-jadd"){ev.preventDefault();ev.stopImmediatePropagation();rrFormRead(F);F.jobs.push({job:b.dataset.v,n:1,detail:"",repl:""});render();return}
+  var j=F.jobs[+b.dataset.i];if(!j||!F.id)return;var det=String(j.detail||"").trim(),same=F.jobs.filter(function(y){return y!==j&&y.job===j.job&&String(y.detail||"").trim()===det}).length;if(same)return;
+  var used=rrAllCands(F.id).filter(function(o){return o.c.job===j.job&&String(o.c.jdet||"").trim()===det}).length;if(used){ev.preventDefault();ev.stopImmediatePropagation();toast("이 직무 줄에 후보 "+used+"명이 있어서 뺄 수 없어요 · 후보 직무를 먼저 바꿔 주세요")}},true);
+
+/* ---------- [운영파트에게 이력서 전달] → 전달일 자동 ---------- */
+hoOk=layer("hoOk",hoOk,12301,"v303 전달일 자동",function(p){return function(){var F=S.hoF,x=F&&DB.rrr.find(function(y){return y.id===F.id}),pre=x?(x.cands||[]).map(function(c){return!!(c&&c.ho_on)}):[];var r=p.apply(this,arguments);if(!x||S.hoF)return r;
+  var day=TODAY,n=0;x.cands=(x.cands||[]).map(function(c,i){if(c&&c.ho_on&&!pre[i]&&!c.sent){n++;return Object.assign({},c,{sent:day})}return c});if(n){var rq=(DB.rr||[]).find(function(y){return y.id===x.req})||{};logChange("recruit_requests",rq.id||"",cdCoName(rq),x.seq+"차 이력서 전달일 자동","",sv3Md(day)+" · "+n+"명","내부");sv3Save();render()}return r}});
+
+/* ---------- 대체 매칭판 ---------- */
+function sv3SlotNeed(s){return s&&(s.rr?sv3Need(s.rr):sv3CoNeed(s.co))}
+rmHash=(function(o){return function(){var h=o.apply(this,arguments),f=function(v){v=String(v||"");for(var i=0;i<v.length;i++)h=(h*31+v.charCodeAt(i))|0};(DB.rr||[]).forEach(function(r){f((r.sev_once?"1":"0")+rrJobLines(r).map(function(g){return g.k+g.n}).join(","))});(DB.companies||[]).forEach(function(c){if(c.sev_req)f(c.id+c.sev_req)});return h}})(rmHash);
+rmSlot=(function(o){return function(e,t,x){var s=o.apply(this,arguments);if(s.rr){var j=(s.rr.jobs||[]).find(function(y){return y&&y.repl===e.id});if(j&&String(j.detail||"").trim())s.jd=String(j.detail).trim()}return s}})(rmSlot);
+function sv3Split(s){if(s.job==="기타")return true;if(!s.rr)return false;var G=rrJobLines(s.rr).filter(function(g){return g.job===s.job});return G.length>1}
+rmUnits=(function(o){return function(slots){slots.forEach(function(s){if(sv3Split(s)&&s.jd){s._lv0=s.lv;s.lv=(s.lv||"")+"\u0002"+s.jd}});var U=o.call(this,slots);
+  slots.forEach(function(s){if(s._lv0!=null){s.lv=s._lv0;delete s._lv0}});U.forEach(function(u){if(String(u.lv||"").indexOf("\u0002")>=0)u.lv=u.lv.split("\u0002")[0]});return U}})(rmUnits);/* 자리 묶음 키에만 상세를 넣음 */
+rm9Slot=(function(o){return function(s,ctx){var h=o.apply(this,arguments);if(!sv3SlotNeed(s))return h;var w=s.rr?sv3Why(s.rr):"중증장애인확인서 필수 기업",i=h.indexOf('<span class="grow"></span>');return i<0?h:h.slice(0,i)+'<span class="b sm sv3req" title="'+esc(w)+'">중증확인서 필수</span>'+h.slice(i)}})(rm9Slot);
+rm9Card=(function(o){return function(m,ctx){var h=o.apply(this,arguments);var c=ctx.cbk[m.data.c],s=ctx.sbi[m.data.s];if(!h||!c||!s||!sv3SlotNeed(s))return h;var got=sv3GetB(c),d=got&&got.d||"",key="b|"+c.key;
+  var chip=S.sv303e===key?sv3EditIn(key,d):sv3Chip(d?"ok":"no",key,d);var i=h.lastIndexOf('<div class="obt rm9a">');if(i<0)return h;return h.slice(0,i)+'<div class="obt sv3bc"><span class="small muted">중증확인서</span>'+chip+'</div>'+h.slice(i)}})(rm9Card);
+rm9Filt=(function(o){return function(){var h=o.apply(this,arguments),F=S.rm9,sel='<label class="small">중증확인서 <select data-rm9f="sev"><option value="">전체</option>'+["필수","필수 · 미수취"].map(function(v){return'<option'+(F.sev===v?" selected":"")+'>'+v+'</option>'}).join("")+'</select></label>',k=' <button class="btn xs" data-act="rm9-fclear">';return h.indexOf(k)<0?h:h.replace(k,sel+k)}})(rm9Filt);
+rm9Vis=(function(o){return function(s,ctx){if(!o.apply(this,arguments))return false;var F=S.rm9;if(!F.sev)return true;if(!sv3SlotNeed(s))return false;if(F.sev==="필수 · 미수취")return rmIn(s,ctx).some(function(m){var c=ctx.cbk[m.data.c];return c&&!((sv3GetB(c)||{}).d)});return true}})(rm9Vis);
+REG().act["rm9-fclear"]=(function(o){return function(){if(S.rm9)S.rm9.sev="";return o.apply(this,arguments)}})(REG().act["rm9-fclear"]);
+
+/* ==========================================================
+   v304 근로자 요청사항 '중도퇴사 · 사직 의사' → 중도퇴사 등록이 빠지던 문제
+     ① 요청을 저장하면 중도퇴사 등록 창(근로자 DB와 같은 창)이 바로 열림 · 퇴사일은 그 창에서
+     ② 등록 창에 [아직 확정 아님] → 요청에 '[퇴사 확정 전]' 기록 · 미등록으로 남음
+     ③ 미등록 = 그 요청의 고용 건이 아직 재직 · 퇴사 처리 없음 · [퇴사 안 함] 기록 없음
+        근로자 요청사항 화면 위 띠 · 요청 창 빨간 안내 · 담당자 내 할 일
+     ④ [퇴사 안 함] = 철회 · 요청에 '[퇴사 안 함]' 기록 · 띠에서 빠짐
+     기존 데이터는 자동으로 바꾸지 않음 (퇴사일은 사람이 넣음) · SQL 없음
+   ========================================================== */
+var LQ_SUB="중도퇴사 · 사직 의사";
+function lqMarks(r){return(typeof progsOf==="function"?progsOf("worker_requests",r.id):[]).map(function(m){return String(m.body||"")})}
+function lqNo(r){return lqMarks(r).some(function(b){return b.indexOf("[퇴사 안 함]")===0})}
+function lqWait(r){return lqMarks(r).some(function(b){return b.indexOf("[퇴사 확정 전]")===0})}
+function lqOpen(r){if(!r||r.sub!==LQ_SUB)return false;var e=emp(r.emp);if(!e||e.cancelled||e.end_type||!activeEmp(e))return false;return!lqNo(r)}
+function lqList(){var by={};(DB.wreq||[]).forEach(function(r){if(!lqOpen(r))return;var o=by[r.emp];if(!o||String(r.recv||"")>String(o.recv||""))by[r.emp]=r});return Object.keys(by).map(function(k){return by[k]}).sort(function(a,b){return String(a.recv||"").localeCompare(String(b.recv||""))})}
+function lqLea(r){var e=emp(r.emp);if(!e)return;S.lq304=r.id;S.wreqSel=null;S.wreqF=null;S.leaF={eid:e.id,date:TODAY,type:"중도퇴사",reason:"",ins:"",detail:"",rehire:"",note:""};S.cid.le=e.id;S.cq.le="";S.leaBackW=null;S.wm=null;if(S.view==="lea")S.leaSel="new";else S.leaPop=true;render()}
+function lqSave(){if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}
+
+/* ① 저장 → 등록 창 */
+wrSave=layer("wrSave",wrSave,12311,"v304 중도퇴사 등록 이어서",function(p){return function(){var isNew=S.wreqSel==="new",id0=S.wreqSel,n0=(DB.wreq||[]).length,F=S.wreqF;var r=p.apply(this,arguments);
+  var rec=isNew?(DB.wreq.length>n0?DB.wreq[DB.wreq.length-1]:null):(S.wreqF!==F?(DB.wreq||[]).find(function(x){return x.id===id0}):null);/* 입력 오류면 그대로 */
+  if(rec&&lqOpen(rec)&&!lqWait(rec)){toast("중도퇴사 · 사직 의사 → 중도퇴사 등록 창을 열었어요 · 마지막 근무일을 넣어 주세요");lqLea(rec)}return r}});
+
+/* ② 등록 창: [아직 확정 아님] · 등록되면 요청에 기록 */
+function lqLeaDom(){if(!S.lq304||!S.leaF)return;var sv=document.querySelector('[data-act="lea-save"]');if(!sv||sv.parentElement.querySelector('[data-act="lq304-later"]'))return;
+  sv.insertAdjacentHTML("beforebegin",'<button type="button" class="btn" data-act="lq304-later" title="사직 의사만 들은 상태 · 확정되면 근로자 요청사항 위 띠에서 등록해요">아직 확정 아님</button>');
+  var pn=sv.closest(".pnl");if(pn&&!pn.querySelector(".lq304n")){var ps=pn.querySelector(".ps");if(ps)ps.insertAdjacentHTML("beforebegin",'<div class="ps wide lq304n"><div class="notebox"><b>근로자 요청사항에서 이어진 중도퇴사</b> 마지막 근무일을 넣고 등록해 주세요. 아직 확정이 아니면 [아직 확정 아님] → 미등록으로 남고 담당자 할 일에 떠요.</div></div>')}}
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="lea-save"]');if(!b||!S.lq304)return;var rid=S.lq304,eid=S.leaF&&S.leaF.eid;
+  setTimeout(function(){var e=eid&&emp(eid),r=(DB.wreq||[]).find(function(x){return x.id===rid});if(e&&e.end_type&&r){progAdd("worker_requests",r.id,"[중도퇴사 등록] 마지막 근무일 "+(e.end_date||"")+" · 근로자 요청사항에서 이어서 등록","");logChange("worker_requests",r.id,(wk(r.worker)||{}).name,"중도퇴사 등록","미등록",e.end_date||"","내부");S.lq304=null;lqSave();render()}},60)},true);
+regActs({"lq304-later":function(){var r=(DB.wreq||[]).find(function(x){return x.id===S.lq304});if(r&&!lqWait(r)){progAdd("worker_requests",r.id,"[퇴사 확정 전] 사직 의사 접수 · 확정되면 중도퇴사 등록","");logChange("worker_requests",r.id,(wk(r.worker)||{}).name,"중도퇴사","","확정 전 (미등록)","내부")}
+    S.lq304=null;S.leaPop=false;S.leaSel=null;S.leaF=null;lqSave();toast("미등록으로 남겼어요 · 근로자 요청사항 위 띠 · 담당자 할 일에서 이어서 처리");render()},
+  "lq304-reg":function(D0){var r=(DB.wreq||[]).find(function(x){return x.id===D0.id});if(!r)return;lqLea(r)},
+  "lq304-no":function(D0){var r=(DB.wreq||[]).find(function(x){return x.id===D0.id});if(!r)return;var nm=(wk(r.worker)||{}).name||"";
+    askConfirm("퇴사 안 함",nm+" 님 중도퇴사 · 사직 의사를 '퇴사 안 함(철회)'으로 기록할까요? 미등록 목록에서 빠져요.","퇴사 안 함",function(){progAdd("worker_requests",r.id,"[퇴사 안 함] 사직 의사 철회 · 계속 근무","");logChange("worker_requests",r.id,nm,"중도퇴사","미등록","퇴사 안 함(철회)","내부");lqSave();toast("퇴사 안 함으로 기록했어요");render()})},
+  "lq304-fold":function(){S.lq304o=!S.lq304o;render()}});
+
+/* ③ 근로자 요청사항 화면 위 띠 */
+function lqBand(){var L=lqList();if(!L.length)return"";var open=!!S.lq304o;
+  var h='<div class="lq304b"><div class="lq304h" data-act="lq304-fold" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'"><b>⚠ 중도퇴사 미등록 '+L.length+'건</b><span class="small">근로자 요청사항에 사직 의사가 있는데 퇴사 처리가 안 된 고용 건 · 재직으로 잡혀 대체 채용 · 인원 집계에서 빠져 있어요</span><span class="grow"></span><span class="small">'+(open?"접기 ▴":"펼치기 ▾")+'</span></div>';
+  if(open)h+='<table class="t lq304t"><thead><tr><th>근로자</th><th>기업</th><th>요청 접수</th><th>상태</th><th>원래 만료</th><th></th></tr></thead><tbody>'+L.map(function(r){var e=emp(r.emp)||{},w=wk(r.worker)||{},t=curTerm(e.id)||{};
+    return'<tr><td><button class="linkbtn" data-act="go-w" data-id="'+esc(w.id||"")+'">'+esc(w.name||"")+'</button></td><td>'+esc((comp(e.company)||{}).name||"")+'</td><td class="num">'+esc(md(r.recv||""))+' <span class="small muted">'+esc(r.by||"")+'</span></td><td>'+(lqWait(r)?'<span class="b sm warn">퇴사 확정 전</span>':'<span class="b sm bad">등록 안 됨</span>')+'</td><td class="num">'+esc(t.end||"무기")+'</td>'+
+      '<td class="nowrap"><button class="btn xs pri" data-act="lq304-reg" data-id="'+esc(r.id)+'">중도퇴사 등록</button> <button class="btn xs" data-act="lq304-no" data-id="'+esc(r.id)+'">퇴사 안 함</button> <button class="btn xs" data-act="wr-open" data-id="'+esc(r.id)+'">요청 보기</button></td></tr>'}).join("")+'</tbody></table><p class="hint">이미 그만둔 사람이면 등록 창에서 실제 마지막 근무일(지난 날짜)을 넣어 주세요 · 철회됐으면 [퇴사 안 함]</p>';
+  return h+'</div>'}
+vWreq=layer("vWreq",vWreq,12311,"v304 중도퇴사 미등록 띠",function(p){return function(){var h=p.apply(this,arguments);try{var b=lqBand();if(!b)return h;var i=h.indexOf('<div class="tabs"');return i<0?b+h:h.slice(0,i)+b+h.slice(i)}catch(e){return h}}});
+
+/* 요청 창: 미등록이면 빨간 안내 + [퇴사 안 함] */
+function lqWrDom(){if(!S.wreqSel||S.wreqSel==="new")return;var r=(DB.wreq||[]).find(function(x){return x.id===S.wreqSel});if(!r||!lqOpen(r))return;var nb=[].find.call(document.querySelectorAll(".notebox"),function(x){return/중도퇴사로 이어서 처리/.test(x.textContent)});if(!nb||nb.classList.contains("lq304r"))return;
+  nb.classList.add("lq304r");var b=nb.querySelector("b");if(b)b.textContent="중도퇴사 미등록"+(lqWait(r)?" · 퇴사 확정 전":"");nb.insertAdjacentHTML("beforeend",' <button class="btn sm" data-act="lq304-no" data-id="'+esc(r.id)+'">퇴사 안 함</button>');
+  var lf=nb.querySelector('[data-act="lea-from"]');if(lf){lf.dataset.act="lq304-reg";lf.dataset.id=r.id;lf.classList.add("pri")}}
+render=layer("render",render,12311,"v304 중도퇴사 미등록",function(p){return function(){var r=p.apply(this,arguments);try{lqLeaDom();lqWrDom()}catch(e){}return r}});
+
+/* 담당자 내 할 일 */
+regTodo("v304 중도퇴사 미등록",function(L){try{lqList().forEach(function(r){var e=emp(r.emp)||{},w=wk(r.worker)||{};tdPush(L,{key:"lq304:"+r.id,type:"lq304",cat:"근로자 관리",task:"[중도퇴사 미등록] "+(w.name||"")+" · "+((comp(e.company)||{}).name||"")+" · 요청 "+md(r.recv||"")+(lqWait(r)?" · 퇴사 확정 전":"")+" · 근로자 요청사항 위 띠에서 [중도퇴사 등록] 또는 [퇴사 안 함]",worker:r.worker,emp:r.emp,company:e.company,base:r.recv||TODAY,auto:true,fixedDue:TODAY,n:1})})}catch(e){console.warn("[v304 할 일]",e)}});
+
+/* 예시 화면: 사직 의사만 접수된 요청 하나 */
+if(!LIVE);
 
 /* ============ 렌더 ============ */
 function renderMain(){
