@@ -19251,8 +19251,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v304 — 근로자 요청사항 중도퇴사 → 중도퇴사 등록 이어서 · 미등록 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v304";APP_VER_ON="11/23";APP_NOTE="근로자 요청사항: '중도퇴사 · 사직 의사' 저장하면 중도퇴사 등록 창이 바로 열림(마지막 근무일 입력) · [아직 확정 아님]이면 미등록으로 남김 · 근로자 요청사항 위에 '중도퇴사 미등록' 띠 · [중도퇴사 등록] · [퇴사 안 함] · 담당자 내 할 일";
+/* v305 — 계약만료 예정인 사람의 중도퇴사(퇴사일 앞당김) (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v305";APP_VER_ON="11/23";APP_NOTE="계약만료 확정(만료 예정)인 사람도 중도퇴사 등록 가능: 근로자 창 [중도퇴사 등록] · 등록 창 검색 목록 · 근로자 요청사항 안내 · 미등록 띠 · 마지막 근무일은 원래 만료일 이전만 · 대체 채용 진행 중이면 입사일 확인 안내";
 
 /* ================================================================
    v208
@@ -25586,7 +25586,7 @@ function lqLeaDom(){if(!S.lq304||!S.leaF)return;var sv=document.querySelector('[
   sv.insertAdjacentHTML("beforebegin",'<button type="button" class="btn" data-act="lq304-later" title="사직 의사만 들은 상태 · 확정되면 근로자 요청사항 위 띠에서 등록해요">아직 확정 아님</button>');
   var pn=sv.closest(".pnl");if(pn&&!pn.querySelector(".lq304n")){var ps=pn.querySelector(".ps");if(ps)ps.insertAdjacentHTML("beforebegin",'<div class="ps wide lq304n"><div class="notebox"><b>근로자 요청사항에서 이어진 중도퇴사</b> 마지막 근무일을 넣고 등록해 주세요. 아직 확정이 아니면 [아직 확정 아님] → 미등록으로 남고 담당자 할 일에 떠요.</div></div>')}}
 document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="lea-save"]');if(!b||!S.lq304)return;var rid=S.lq304,eid=S.leaF&&S.leaF.eid;
-  setTimeout(function(){var e=eid&&emp(eid),r=(DB.wreq||[]).find(function(x){return x.id===rid});if(e&&e.end_type&&r){progAdd("worker_requests",r.id,"[중도퇴사 등록] 마지막 근무일 "+(e.end_date||"")+" · 근로자 요청사항에서 이어서 등록","");logChange("worker_requests",r.id,(wk(r.worker)||{}).name,"중도퇴사 등록","미등록",e.end_date||"","내부");S.lq304=null;lqSave();render()}},60)},true);
+  setTimeout(function(){var e=eid&&emp(eid),r=(DB.wreq||[]).find(function(x){return x.id===rid});if(e&&e.end_type==="중도퇴사"&&r){progAdd("worker_requests",r.id,"[중도퇴사 등록] 마지막 근무일 "+(e.end_date||"")+" · 근로자 요청사항에서 이어서 등록","");logChange("worker_requests",r.id,(wk(r.worker)||{}).name,"중도퇴사 등록","미등록",e.end_date||"","내부");S.lq304=null;lqSave();render()}},60)},true);
 regActs({"lq304-later":function(){var r=(DB.wreq||[]).find(function(x){return x.id===S.lq304});if(r&&!lqWait(r)){progAdd("worker_requests",r.id,"[퇴사 확정 전] 사직 의사 접수 · 확정되면 중도퇴사 등록","");logChange("worker_requests",r.id,(wk(r.worker)||{}).name,"중도퇴사","","확정 전 (미등록)","내부")}
     S.lq304=null;S.leaPop=false;S.leaSel=null;S.leaF=null;lqSave();toast("미등록으로 남겼어요 · 근로자 요청사항 위 띠 · 담당자 할 일에서 이어서 처리");render()},
   "lq304-reg":function(D0){var r=(DB.wreq||[]).find(function(x){return x.id===D0.id});if(!r)return;lqLea(r)},
@@ -25614,6 +25614,38 @@ regTodo("v304 중도퇴사 미등록",function(L){try{lqList().forEach(function(
 
 /* 예시 화면: 사직 의사만 접수된 요청 하나 */
 if(!LIVE);
+
+/* ==========================================================
+   v305 계약만료 확정(계약만료 예정)인 사람이 퇴사일을 앞당겨 중도퇴사하는 경우
+     - 만료 확정 = 고용 건에 종료 유형 '계약만료' + 종료일(미래)이 미리 들어감 → 중도퇴사 쪽에서 모두 빠지던 문제
+     ① 계약만료 예정(종료일이 오늘 이후)도 중도퇴사 대상: 근로자 창 [중도퇴사 등록] · 등록 창 검색 목록 · 근로자 요청사항 안내 · v304 미등록 띠 · 할 일
+     ② 등록 창: '계약만료 예정 → 중도퇴사로 앞당김' 안내 · 마지막 근무일이 원래 만료일보다 늦으면 저장 막음
+     ③ 저장 → 종료 유형 계약만료 → 중도퇴사 · 종료일 앞당김 (기존 중도퇴사 등록 그대로) · 대체 채용 진행 중이면 입사일 확인 안내
+     ④ 계약만료 결정 기록은 지우지 않음 · 고용 건 변경 이력에 '계약만료 예정 → 중도퇴사로 앞당김' 남김
+   ========================================================== */
+function lvExpPlan(e){return!!(e&&!e.cancelled&&e.end_type==="계약만료"&&e.end_date&&e.end_date>=TODAY)}
+/* ① 등록 창 검색 목록 */
+wItems=layer("wItems",wItems,12321,"v305 만료 예정도 중도퇴사 목록",function(p){return function(key,q){var L=p.apply(this,arguments);if(key!=="le")return L;try{var have={};(L||[]).forEach(function(x){have[x.id]=1});
+  DB.employments.forEach(function(e){if(have[e.id]||!lvExpPlan(e))return;var w=wk(e.worker);if(!w||!wMatch(w,(q||"").trim()))return;L.push({id:e.id,label:w.name,sub:(w.birth||"")+" · ****"+normPhone(w.phone).slice(-4)+" · "+comp(e.company).name+" · 만료 예정 "+md(e.end_date),k:w.name})});
+  L.sort(function(a,b){return String(a.k||"").localeCompare(String(b.k||""),"ko")})}catch(err){}return L.slice(0,30)}});
+/* v304 미등록 기준에 만료 예정 포함 */
+lqOpen=function(r){if(!r||r.sub!==LQ_SUB)return false;var e=emp(r.emp);if(!e||e.cancelled||!activeEmp(e))return false;if(e.end_type&&!lvExpPlan(e))return false;return!lqNo(r)};
+function lv305Dom(){
+  /* 근로자 창: 만료 예정 고용 건에 [중도퇴사 등록] */
+  if(S.wm)[].forEach.call(document.querySelectorAll('[data-act="ce-open"][data-e]'),function(b){var e=emp(b.dataset.e);if(!lvExpPlan(e))return;var box=b.parentElement;if(!box||box.querySelector('[data-act="lea-from"]'))return;b.insertAdjacentHTML("afterend",' <button class="btn xs danger" data-act="lea-from" data-e="'+esc(e.id)+'" title="계약만료 예정('+esc(md(e.end_date))+')보다 먼저 그만두는 경우">중도퇴사 등록</button>')});
+  /* 근로자 요청사항: 안내 박스가 빠진 경우 넣기 */
+  if(S.wreqSel&&S.wreqSel!=="new"){var r=(DB.wreq||[]).find(function(x){return x.id===S.wreqSel}),e=r&&emp(r.emp);
+    if(r&&r.sub===LQ_SUB&&lvExpPlan(e)&&![].some.call(document.querySelectorAll(".notebox"),function(x){return/중도퇴사로 이어서 처리|중도퇴사 미등록/.test(x.textContent)})){var ft=[].find.call(document.querySelectorAll(".ps.foot"),function(f){return f.querySelector('[data-act="wr-save"]')});
+      if(ft)ft.insertAdjacentHTML("beforebegin",'<div class="ps wide"><div class="notebox"><b>중도퇴사로 이어서 처리</b>계약만료 예정('+esc(md(e.end_date))+')인데 먼저 그만두는 경우예요. 중도퇴사 등록으로 퇴사일을 앞당겨 주세요. <button class="btn sm" data-act="lea-from" data-e="'+esc(e.id)+'" data-back="0">중도퇴사 등록 열기</button></div></div>')}}
+  /* 등록 창 안내 */
+  var F=S.leaF,le=F&&F.eid&&emp(F.eid);if(le&&lvExpPlan(le)){var sv=document.querySelector('[data-act="lea-save"]'),pn=sv&&sv.closest(".pnl");if(pn&&!pn.querySelector(".lv305n")){var ps=pn.querySelector(".ps.wide .fg")||pn.querySelector(".ps");if(ps)ps.insertAdjacentHTML("beforebegin",'<div class="notebox lv305n"><b>계약만료 예정('+esc(le.end_date)+') → 중도퇴사로 앞당김</b>마지막 근무일은 '+esc(md(le.end_date))+' 이전으로 넣어 주세요. 저장하면 종료 유형이 중도퇴사로 바뀌어요. 계약만료 결정 기록은 그대로 남아요.</div>')}}}
+render=layer("render",render,12305,"v305 만료 예정 중도퇴사",function(p){return function(){var r=p.apply(this,arguments);try{lv305Dom()}catch(e){}return r}});
+/* ② · ③ 저장 */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="lea-save"]');if(!b)return;var F=S.leaF,e=F&&F.eid&&emp(F.eid);if(!lvExpPlan(e))return;
+  var orig=e.end_date;if(F.date&&F.date>orig){ev.preventDefault();ev.stopImmediatePropagation();toast("마지막 근무일("+md(F.date)+")이 원래 계약만료일("+md(orig)+")보다 늦어요 · 만료일 연장은 [계약 정보 수정]에서");return}
+  var eid=e.id,rr=(DB.rr||[]).filter(function(r){return(r.replaced||[]).indexOf(eid)>=0&&r.status!=="취소"&&(typeof rrState!=="function"||rrState(r)!=="완료")});
+  setTimeout(function(){var e2=emp(eid);if(!e2||e2.end_type!=="중도퇴사")return;logChange("employments",eid,(wk(e2.worker)||{}).name||"","종료 유형","계약만료 예정 "+orig,"중도퇴사 "+(e2.end_date||"")+" (앞당김)","내부");if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();
+    if(rr.length)setTimeout(function(){askConfirm("대체 채용 진행 중","이 자리 대체 채용이 진행 중이에요 ("+rr.map(function(r){return(comp(r.company)||{}).name||""}).join(", ")+"). 퇴사가 "+md(orig)+" → "+md(e2.end_date)+"로 앞당겨졌으니 대체 입사일을 앞당길지 기업과 확인해 주세요.","채용 요청 열기",function(){S.rrSel=rr[0].id;go("rr");render()})},80)},60)},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
