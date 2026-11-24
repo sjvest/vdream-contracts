@@ -2003,6 +2003,8 @@ tr.am298lock td:not(:nth-child(2)){opacity:.55}.am298b{margin-left:4px}
 .lq304h .small{color:#7a271a}
 .lq304t{margin:0;background:#fff}.lq304b .hint{margin:6px 14px 10px}
 .notebox.lq304r{border-color:#f5b5b5;background:#fff5f5}.notebox.lq304r b{color:#b42318}
+/* v307 필수 별은 칸 이름에만 */
+.f.req>span:not(:first-child)::after{content:none}
 </style>
 </head>
 <body>
@@ -2816,7 +2818,7 @@ function compNewForm(){
     '<label class="f req"><span>기업코드</span><span style="display:flex;gap:6px"><input id="nc-code" placeholder="CO-000" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="nc-code-gen" title="기존 CO-번호 중 가장 큰 번호 + 1">자동 생성</button></span></label><label class="f req"><span>기업명</span><input id="nc-name"></label>'+
     '<label class="f req"><span>담당자</span><select id="nc-mgr">'+staffOpts(S.role==="staff"?S.me:"","선택")+'</select></label><label class="f"><span>대무자 (나중에 배정 가능)</span><select id="nc-bk">'+staffOpts("","선택")+'</select></label>'+
     '<label class="f"><span>서비스 계약 종료일</span><input id="nc-end" type="date"></label><label class="f"><span>기업레벨</span><select id="nc-high">'+opt(CO.lvl,"일반기업")+'</select></label>'+
-    '<label class="f"><span>근로계약서 제출 방식</span><select id="nc-m">'+opt(METHODS,"","선택")+'</select></label><label class="f"><span>담당 파트</span><select id="nc-part">'+opt(PARTS,"운영파트")+'</select></label></div>'+
+    '<label class="f"><span>근로계약서 제출 방식</span><select id="nc-m">'+opt(METHODS,"","선택")+'</select></label><label class="f"><span>담당 파트</span><select id="nc-part">'+opt(PARTS,"영업파트")/* v307 신규 기업 기본 = 영업팀 */+'</select></label></div>'+
     '<p class="hint" style="margin-top:8px">나머지 항목은 저장 후 상세 창에서 입력하거나 시트로 일괄 업로드합니다.</p></div><div class="ps foot"><button class="btn" data-act="close">취소</button><button class="btn pri" data-act="comp-create">저장</button></div></aside>';
 }
 
@@ -7985,7 +7987,7 @@ var MP_VIEWS=[["dash","재직자 대시보드","c"],["rdash","채용 대시보�
 var MP_ASG={exp:1,lea:1,att:1,req:1,wreq:1,dis:1,rreq:1,pf:1,intake:1,onb:1,talent:1,comp:1};
 var MP_G={c:"공통",w:"근로자 관리 (재직)",h:"채용 관리",d:"DB 관리"};
 function mpGrp(v){var f=MP_VIEWS.find(function(x){return x[0]===v});return f?f[2]:""}
-function mpDefAsg(v){if(!MP_ASG[v])return null;var g=mpGrp(v);return g==="h"?["채용파트","발굴파트"]:["운영파트"]}
+function mpDefAsg(v){if(!MP_ASG[v])return null;var g=mpGrp(v);return g==="h"?["채용파트","발굴파트"]:v==="comp"?["운영파트","영업파트"]/* v307 */:["운영파트"]}
 function mpRec(){var see={},asg={};MP_VIEWS.forEach(function(x){var v=x[0],g=x[2];see[v]=v==="dash"?["인재경영파트","운영파트"]:v==="rdash"?["인재경영파트","채용파트","발굴파트"]:g==="w"?["인재경영파트","운영파트"]:g==="h"?["인재경영파트","채용파트","발굴파트"]:PARTS.slice();if(MP_ASG[v])asg[v]=mpDefAsg(v)});return{see:see,asg:asg}}
 function mpGet(){var M=appSet("menu_parts",null);return M&&typeof M==="object"?M:null}
 function mpSee(v){if(S.role==="admin"||v==="todo")return true;var M=mpGet();if(!M||!M.see||!M.see[v])return true;return M.see[v].indexOf(partOf())>=0}
@@ -19251,8 +19253,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v306 — 중증장애인확인서 원칙 '모두 받음' · 관리자 설정 중증서류 스킵 협의 기간 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v306";APP_VER_ON="11/24";APP_NOTE="중증장애인확인서: 원칙은 모든 채용 요청에서 받음 · 설정 › 채용 · 단가 '중증서류 스킵 협의' 기간(등록일 / 채용 예정일 기준) · 그 기간의 추가 · 대체 요청에서 기존 고객사 → 타 고객사 연계 근로자만 '스킵 협의' · 신규 채용 · 신규 후보 · 필수 기업은 받음 · 요청에서 [중증서류 스킵 협의] 끄면 그 건은 받음";
+/* v307 — 기업 담당자 목록이 담당 파트를 따라감 · 신규 기업 기본 영업파트 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v307";APP_VER_ON="11/24";APP_NOTE="기업 추가 · 기업 창 관리 탭: 담당 파트를 고르면 담당자 · 대무자 목록이 그 파트 사람 → 관리자 → 다른 파트 순으로 바뀜(영업파트 고르면 영업팀 전원) · 신규 기업 담당 파트 기본 영업파트 · 필수 표시 별 중복 수정";
 
 /* ================================================================
    v208
@@ -25667,6 +25669,26 @@ document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.targe
   var eid=e.id,rr=(DB.rr||[]).filter(function(r){return(r.replaced||[]).indexOf(eid)>=0&&r.status!=="취소"&&(typeof rrState!=="function"||rrState(r)!=="완료")});
   setTimeout(function(){var e2=emp(eid);if(!e2||e2.end_type!=="중도퇴사")return;logChange("employments",eid,(wk(e2.worker)||{}).name||"","종료 유형","계약만료 예정 "+orig,"중도퇴사 "+(e2.end_date||"")+" (앞당김)","내부");if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();
     if(rr.length)setTimeout(function(){askConfirm("대체 채용 진행 중","이 자리 대체 채용이 진행 중이에요 ("+rr.map(function(r){return(comp(r.company)||{}).name||""}).join(", ")+"). 퇴사가 "+md(orig)+" → "+md(e2.end_date)+"로 앞당겨졌으니 대체 입사일을 앞당길지 기업과 확인해 주세요.","채용 요청 열기",function(){S.rrSel=rr[0].id;go("rr");render()})},80)},60)},true);
+
+/* ==========================================================
+   v307 기업 담당자 · 대무자 목록이 '담당 파트'를 따라감
+     - 기업 추가 창(#nc-part → #nc-mgr · #nc-bk) · 기업 창 관리 탭(data-cf part → manager · backup)
+     - 목록 순서: 그 파트 사람 → 관리자 → 다른 파트 · 파트 미지정(이름 옆에 파트) · 메뉴 권한 설정과 상관없이 고를 수 있음
+     - 신규 기업 담당 파트 기본 = 영업파트 (0017-04) · 기업 DB 담당 가능 파트 기본에 영업파트 (0077-02)
+   ========================================================== */
+function sp7Opts(part,val,blank){var A=DB.staff.filter(function(s){return s.active!==false}),isA=function(s){return typeof isAdminSt==="function"&&isAdminSt(s)};
+  var P=A.filter(function(s){return part&&s.part===part}),Ad=A.filter(function(s){return P.indexOf(s)<0&&isA(s)}),O=A.filter(function(s){return P.indexOf(s)<0&&Ad.indexOf(s)<0});
+  var by=function(a,b){return String(a.name||"").localeCompare(String(b.name||""),"ko")},o=function(s,tail){return'<option value="'+esc(s.id)+'"'+(s.id===val?" selected":"")+'>'+esc(s.name)+(tail?" ("+esc(tail)+")":"")+'</option>'};
+  var h='<option value="">'+esc(blank||"선택")+'</option>';if(P.length)h+='<optgroup label="'+esc(part)+'">'+P.sort(by).map(function(s){return o(s)}).join("")+'</optgroup>';
+  if(Ad.length)h+='<optgroup label="관리자">'+Ad.sort(by).map(function(s){return o(s,"관리자")}).join("")+'</optgroup>';
+  if(O.length)h+='<optgroup label="다른 파트 · 파트 미지정">'+O.sort(by).map(function(s){return o(s,s.part||"파트 미지정")}).join("")+'</optgroup>';
+  if(val&&!A.some(function(s){return s.id===val})){var s0=DB.staff.find(function(x){return x.id===val});if(s0)h+='<option value="'+esc(val)+'" selected>(비활성) '+esc(s0.name)+'</option>'}return h}
+function sp7Fill(sel,part){if(!sel)return;var v=sel.value,bl=(sel.options[0]&&!sel.options[0].value&&sel.options[0].textContent)||"선택",key=part+"|"+v+"|"+DB.staff.length;if(sel.dataset.sp7===key)return;sel.innerHTML=sp7Opts(part,v,bl);sel.dataset.sp7=key;
+  var w=sel.closest(".sbx"),inp=w&&w.querySelector(".sbx-in");if(inp&&document.activeElement!==inp){var c=sel.options[sel.selectedIndex];inp.value=c&&c.value?c.textContent:""}}
+function sp7Dom(){var np=document.getElementById("nc-part");if(np){sp7Fill(document.getElementById("nc-mgr"),np.value);sp7Fill(document.getElementById("nc-bk"),np.value)}
+  var cp=document.querySelector('select[data-cf="part"]');if(cp){sp7Fill(document.querySelector('select[data-cf="manager"]'),cp.value);sp7Fill(document.querySelector('select[data-cf="backup"]'),cp.value)}}
+render=layer("render",render,12331,"v307 담당자 목록 파트별",function(p){return function(){var r=p.apply(this,arguments);try{sp7Dom()}catch(e){}return r}});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t)return;if(t.id==="nc-part"||(t.dataset&&t.dataset.cf==="part"))setTimeout(sp7Dom,0)},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
