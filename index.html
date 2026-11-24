@@ -19253,8 +19253,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v307 — 기업 담당자 목록이 담당 파트를 따라감 · 신규 기업 기본 영업파트 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v307";APP_VER_ON="11/24";APP_NOTE="기업 추가 · 기업 창 관리 탭: 담당 파트를 고르면 담당자 · 대무자 목록이 그 파트 사람 → 관리자 → 다른 파트 순으로 바뀜(영업파트 고르면 영업팀 전원) · 신규 기업 담당 파트 기본 영업파트 · 필수 표시 별 중복 수정";
+/* v308 — 입구서 서류그룹 파일을 드라이브 링크 · 파일 ID로 바꾸기 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v308";APP_VER_ON="11/24";APP_NOTE="입구서 › 서류그룹 서류 상세: 파일 칸에 드라이브 링크 · 파일 ID를 붙여 넣으면 저장할 때 그 파일로 바뀜 · 지금 파일 열기 링크";
 
 /* ================================================================
    v208
@@ -25689,6 +25689,29 @@ function sp7Dom(){var np=document.getElementById("nc-part");if(np){sp7Fill(docum
   var cp=document.querySelector('select[data-cf="part"]');if(cp){sp7Fill(document.querySelector('select[data-cf="manager"]'),cp.value);sp7Fill(document.querySelector('select[data-cf="backup"]'),cp.value)}}
 render=layer("render",render,12331,"v307 담당자 목록 파트별",function(p){return function(){var r=p.apply(this,arguments);try{sp7Dom()}catch(e){}return r}});
 document.addEventListener("change",function(ev){var t=ev.target;if(!t)return;if(t.id==="nc-part"||(t.dataset&&t.dataset.cf==="part"))setTimeout(sp7Dom,0)},true);
+
+/* ==========================================================
+   v308 입구서 서류그룹: 파일을 드라이브 링크 · 파일 ID로도 바꾸기
+     - 서류 상세 표 '파일' 칸에 [드라이브 링크 · 파일 ID] 입력 · 지금 파일 열기 링크
+     - 저장하면 그 줄 file_id를 링크의 ID로 바꿈 (올리기 작업 없음) · 파일을 함께 고르면 올리기가 먼저
+     - 변경 이력: intake_docs · 서류그룹 파일 바꿈 (전 ID → 새 ID)
+   ========================================================== */
+function dg8Id(v){v=String(v||"").trim();if(!v)return"";var m=v.match(/\/d\/([a-zA-Z0-9_-]{15,})/)||v.match(/[?&]id=([a-zA-Z0-9_-]{15,})/)||v.match(/^([a-zA-Z0-9_-]{15,})$/);return m?m[1]:null}
+function dg8Url(id){return"https://drive.google.com/file/d/"+encodeURIComponent(id)+"/view"}
+function dg8Dom(){if(!S.grpRows||!S.grpSel)return;[].forEach.call(document.querySelectorAll('input[data-ch="gr-file"]'),function(f){var td=f.closest("td");if(!td||td.querySelector(".dg8"))return;var i=+f.dataset.i,r=S.grpRows[i];if(!r)return;
+  var cur=r.file_id&&!/^DEMO-/.test(r.file_id)?'<a class="small" href="'+esc(dg8Url(r.file_id))+'" target="_blank" rel="noopener">지금 파일 열기 ↗</a>':'';
+  var bad=r.link&&dg8Id(r.link)===null;
+  td.insertAdjacentHTML("beforeend",'<div class="dg8"><input data-gr="'+i+':link" value="'+esc(r.link||"")+'" placeholder="또는 드라이브 링크 · 파일 ID 붙여 넣기" aria-label="'+(i+1)+'행 드라이브 링크 · 파일 ID" style="width:100%;font-size:12px;margin-top:4px">'+(bad?'<div class="small" style="color:var(--bad)">링크에서 파일 ID를 못 찾았어요</div>':r.link?'<div class="small" style="color:var(--p)">저장하면 이 파일로 바꿔요 · ID '+esc(String(dg8Id(r.link)).slice(0,12))+'…</div>':'')+(cur?'<div>'+cur+'</div>':'')+'</div>')})}
+render=layer("render",render,12341,"v308 서류그룹 링크",function(p){return function(){var r=p.apply(this,arguments);try{dg8Dom()}catch(e){}return r}});
+document.addEventListener("input",function(ev){var t=ev.target;if(!t||!t.dataset||!/^\d+:link$/.test(t.dataset.gr||""))return;var td=t.closest("td"),r=S.grpRows&&S.grpRows[+t.dataset.gr.split(":")[0]];if(!td||!r)return;r.link=t.value;var hint=td.querySelector(".dg8 .small");var id=dg8Id(t.value);
+  if(hint&&hint.tagName==="DIV")hint.remove();if(t.value.trim())t.insertAdjacentHTML("afterend",id===null?'<div class="small" style="color:var(--bad)">링크에서 파일 ID를 못 찾았어요</div>':'<div class="small" style="color:var(--p)">저장하면 이 파일로 바꿔요 · ID '+esc(id.slice(0,12))+'…</div>')},true);
+/* 저장: 링크가 있는 줄의 file_id 바꾸기 (원래 저장 앞뒤) */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="grp-save"]');if(!b||!S.grpRows)return;var code=S.grpSel,R=S.grpRows,bad=R.filter(function(r){return r.link&&String(r.name).trim()&&dg8Id(r.link)===null});
+  if(bad.length){ev.preventDefault();ev.stopImmediatePropagation();toast("드라이브 링크에서 파일 ID를 못 찾은 줄이 있어요 · "+bad.map(function(r){return r.name}).join(", "));return}
+  var L=R.filter(function(r){return r.link&&String(r.name).trim()&&!r.file}).map(function(r){return{id:r.id,name:String(r.name).trim(),fid:dg8Id(r.link)}});if(!L.length)return;var done=[];
+  L.forEach(function(x){if(!x.id)return;var d=DB.idocs.find(function(z){return z.id===x.id});if(d&&d.file_id!==x.fid){done.push([d.name,d.file_id||"",x.fid]);d.file_id=x.fid}});
+  setTimeout(function(){L.forEach(function(x){if(x.id)return;var d=DB.idocs.find(function(z){return z.group===code&&z.name===x.name&&!z.file_id});if(d){d.file_id=x.fid;done.push([d.name,"",x.fid])}});
+    done.forEach(function(a){logChange("intake_docs",code,code,"서류그룹 파일 바꿈 · "+a[0],a[1]?String(a[1]).slice(0,12)+"…":"없음",String(a[2]).slice(0,12)+"… (링크)","내부")});if(done.length){if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();toast("파일 "+done.length+"개를 링크로 바꿨어요")}render()},250)},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
