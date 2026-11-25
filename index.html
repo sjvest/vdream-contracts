@@ -2044,6 +2044,8 @@ tr.jl312nl td{opacity:.72}
 .jl309cg table.t td:nth-child(2){white-space:normal;word-break:keep-all;max-width:420px}
 /* v320 계약서만 메일로 보내기 버튼 숨김 */
 .ctrmi{display:none!important}
+/* v324 계약 차수 */
+.x324all{margin:2px 0 8px;font-size:14px}.x324seg{margin-bottom:8px}.x324past{background:#F1F0F5;color:#6B6880}.x324rec{margin-top:8px;padding:8px 10px;border-radius:8px;background:#F7F7FB;border:1px dashed var(--line,#E3E1EE)}
 </style>
 </head>
 <body>
@@ -19296,8 +19298,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v323 — 중증장애인확인서 필수 칸을 계약 · 행정 탭으로 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v323";APP_VER_ON="11/25";APP_NOTE="기업 창 '중증장애인확인서 필수' 칸을 입구서 발송 탭에서 계약 · 행정 탭으로 옮김";
+/* v324 — 계약만료 창 전체 계약 기간 · 차수 선택 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v324";APP_VER_ON="11/25";APP_NOTE="계약만료 창 계약 정보: 위에 전체 계약 기간(최초 시작 ~ 현재 만료 · 총 개월) · 아래 차수 버튼으로 그 차수 계약일 · 지난 차수는 처리 기록 보기 전용";
 
 /* ================================================================
    v208
@@ -26595,6 +26597,27 @@ window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.
   if(n)appSetPut("jl309_base",B)},true);
 regActs({"jl320-m":function(D0){S.jl320m=D0.v==="m"?"m":D0.v==="h"?"h":"p";render()}});
 document.addEventListener("change",function(ev){var t=ev.target;if(t&&t.dataset&&t.dataset.jl320h){S.jl320h=Math.max(1,Math.min(8,+t.value||4));render()}},true);
+
+/* ==========================================================
+   v324 계약만료 창 '계약 정보'
+     · 위: 전체 계약 기간 (최초 계약시작일 ~ 현재 계약만료일 · 총 n개월 · 1~n차)
+     · 아래: 차수 버튼 [1차] [2차] [3차 · 현재] → 고른 차수의 시작일 · 만료일 · 기간 · 구분(최초 · 연장)
+       지난 차수: '지난 계약' 표시 + 그 차수 처리 기록(보기 전용) · 진행 단계(오른쪽)는 지금 차수 기준 그대로
+   ========================================================== */
+function x324Mon(a,b){if(!a||!b)return 0;return Math.max(1,Math.round(dd(a,b)/30.4))}
+function x324Sel(eid,ts){var S0=S.x324||(S.x324={}),c=curTerm(eid)||ts[ts.length-1]||{},v=S0[eid];return ts.find(function(t){return+t.seq===+v})||c}
+function x324Recs(eid,seq){var e=emp(eid);if(!e||typeof x290Rows!=="function")return[];return x290Rows(eid).filter(function(x){var t=typeof x290Term==="function"?x290Term(x,e):null;return t&&+t.seq===+seq&&x.decision})}
+function x324Html(eid){var e=emp(eid);if(!e)return"";var ts=termsOf(eid);if(!ts.length)return"";var cur=curTerm(eid)||ts[ts.length-1],sel=x324Sel(eid,ts),isCur=+sel.seq===+cur.seq,first=ts[0],last=ts[ts.length-1];
+  var tot=x324Mon(first.start,last.end),d=sel.end?dd(TODAY,sel.end):null,typ=function(t,i){return i===0?"최초":t.type||"연장"};
+  var h='<div class="ps x324"><h3>계약 정보 <button class="linkbtn small" data-act="ce-open" data-e="'+eid+'" style="font-weight:500">계약 정보 수정</button></h3>'+
+    '<div class="x324all"><span class="small muted">전체 계약</span> <b class="num">'+esc(first.start||"?")+' ~ '+esc(last.end||"무기")+'</b>'+(last.end?' <span class="b sm">총 '+tot+'개월</span>':'')+' <span class="small muted">'+(ts.length>1?"1~"+ts.length+"차":"1차")+'</span></div>'+
+    '<div class="x324seg seg sm" role="tablist" aria-label="차수">'+ts.map(function(t){var on=+t.seq===+sel.seq,c=+t.seq===+cur.seq;return'<button class="'+(on?"on":"")+'" data-act="x324-seq" data-e="'+esc(eid)+'" data-v="'+esc(String(t.seq))+'">'+esc(String(t.seq))+'차'+(c?" · 현재":"")+'</button>'}).join("")+'</div>'+
+    '<div class="kv"><div><span>'+(isCur?"현재 차수":"고른 차수")+'</span><b>'+seqBadge(sel.seq)+' <span class="small muted">'+esc(typ(sel,ts.indexOf(sel)))+'</span>'+(isCur?"":' <span class="b sm x324past">지난 계약</span>')+'</b></div><div><span>계약시작일</span><b class="num">'+esc(sel.start||"—")+'</b></div><div><span>계약만료일</span><b class="num">'+esc(sel.end||"무기")+'</b></div>'+
+    '<div><span>'+(isCur?"만료까지":"기간")+'</span><b class="num">'+(isCur?(sel.end?dlabel(d):"—"):(sel.end?x324Mon(sel.start,sel.end)+"개월":"—"))+'</b></div><div><span>직무</span><b>'+(e.job?(typeof jdHtml==="function"?jdHtml(e):esc(e.job)):'<span class="muted">미입력</span>')+'</b></div><div><span>근로자 연락처</span><b>'+mtel(wk(e.worker))+'</b></div></div>';
+  if(!isCur){var R=x324Recs(eid,sel.seq);h+='<div class="x324rec"><b class="small">'+esc(String(sel.seq))+'차 처리 기록</b> <span class="small muted">보기 전용 · 진행 단계(오른쪽)는 지금 차수 기준</span>'+(R.length?R.map(function(x){var don=typeof expDoneOn==="function"?expDoneOn(x):"";return'<div class="small">· 고객사 결정 '+esc(typeof expDecTxt==="function"?expDecTxt(x):(x.corp||""))+' · 최종 '+esc(x.decision||"-")+(x.newSeq?' ('+esc(String(x.newSeq))+'차 생성)':'')+(don?' · 완료 '+esc(md(don)):'')+'</div>'}).join(""):'<div class="small muted">이 차수의 계약만료 처리 기록이 없어요</div>')+'</div>'}
+  return h+'</div>'}
+expBody=layer("expBody",expBody,12391,"v324 계약 차수",function(p){return function(eid){var h=p.apply(this,arguments);if(typeof h!=="string")return h;var a=h.indexOf('<div class="ps"><h3>계약 정보');if(a<0)return h;var b=h.indexOf('<div class="ps"',a+10);if(b<0)return h;var nw="";try{nw=x324Html(eid)}catch(e){if(window.console)console.warn("v324",e);return h}return nw?h.slice(0,a)+nw+h.slice(b):h}});
+regActs({"x324-seq":function(D0){S.x324=S.x324||{};S.x324[D0.e]=+D0.v;render()}});
 
 /* ============ 렌더 ============ */
 function renderMain(){
