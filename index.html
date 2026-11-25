@@ -19290,8 +19290,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v315 — 분류 대분류 · 최저시급 대비 · 100원 단위 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v315";APP_VER_ON="11/25";APP_NOTE="상세 직무 분류에서 문구마다 대분류(사무행정 · 뉴스스크랩 · 디자인 · 미술 · 음악 · 체육 · 기타)를 고르고 사무행정일 때만 상세 · 단가표 [최저시급 대비] 보기(+700원) · 금액은 100원 단위(최저시급 아래로는 안 내림)";
+/* v316 — 인재 등록 창 겹친 칸 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v316";APP_VER_ON="11/25";APP_NOTE="인재 등록 창에서 v312에 덧붙인 링크 · 파일 · 소개 기관 칸이 원래 칸과 겹치던 것 정리 (파일 · 링크는 원래 칸 · 수급처 칸에서 기관 DB 기관을 고르면 기관과 연결)";
 
 /* ================================================================
    v208
@@ -26101,7 +26101,7 @@ regActs({"ds311-fill":function(){var P=ds311Plan();if(!P.fill.length)return;askC
         직무 줄 '제시 시급' 칸은 숨김 · 직무가 2줄 이상일 때만 [이 직무만 다른 시급] · 이미 적은 줄 시급은 그대로 씀
         월급은 (주 근무일 × 하루 시간 + 주휴) × 4.345 로 나눠 시급 환산
      ② 인재 등록 창 하나로: '+ 포트폴리오 등록' → '+ 인재 등록'
-        등록 창에서 포트폴리오 링크 · 파일을 바로 · 소개 기관(등록 경로) · 근로자 DB 같은 사람 안내 → [이 사람으로 연결]
+        근로자 DB 같은 사람 안내 → [이 사람으로 연결] · (v316) 수급처 칸에 기관 목록 · 파일 · 링크는 원래 칸 사용
         포트폴리오로 등록되면 추천인재 목록에 바로 나옴 (통합 목록) · 기존 근로자 재연계는 '+ 근로자 추천'
    ========================================================== */
 /* ---------- ① 급여 조건 ---------- */
@@ -26121,22 +26121,15 @@ function rg312Dom(){if(S.pfSel!=="new")return;var sv=document.querySelector('[da
   var h=pn.querySelector(".ph h2");if(h&&/포트폴리오/.test(h.textContent))h.textContent="인재 등록";
   var orgs=(DB.orgs||[]).filter(function(o){return o.stage!=null}).map(function(o){return o.short||o.full}).filter(Boolean),cur=F.src_org&&typeof oOf==="function"&&oOf(F.src_org);
   var D=rg312Dup(F),dupH=D.length&&!F.worker?'<div class="notebox rg312d"><b>근로자 DB에 같은 사람이 있어요</b> '+D.map(function(w){return'<span class="b sm">'+esc(w.name)+(w.birth?" · "+esc(String(w.birth).slice(0,10)):"")+(w.phone?" · ****"+esc(normPhone(w.phone).slice(-4)):"")+'</span> <button type="button" class="btn xs" data-act="rg312-link" data-w="'+esc(w.id)+'">이 사람으로 연결</button>'}).join(" ")+'<div class="small muted">연결하면 근로자 DB의 이름 · 연락처 · 장애정보를 가져오고, 같은 사람이 두 번 생기지 않아요</div></div>':F.worker?'<div class="small" style="margin:6px 0">근로자 DB <b>'+esc((wk(F.worker)||{}).name||"")+'</b>와 연결해서 등록해요 <button type="button" class="linkbtn" data-act="rg312-unlink">연결 풀기</button></div>':'';
-  sv.parentElement.insertAdjacentHTML("beforebegin",'<div class="rg312">'+dupH+'<div class="fg" style="margin-top:8px"><label class="f"><span>소개 기관 (등록 경로)</span><input data-pff="org_name" list="rg312-orgs" value="'+esc(F.org_name||(cur?(cur.short||cur.full):""))+'" placeholder="기관 이름 · 없으면 비워 두기"><datalist id="rg312-orgs">'+orgs.map(function(n){return'<option value="'+esc(n)+'">'}).join("")+'</datalist></label>'+
-    '<div class="f full"><span>포트폴리오 링크 (여러 개면 줄 바꿔서)</span><textarea id="rg312-links" rows="2" placeholder="https://drive.google.com/… 또는 https://youtu.be/…">'+esc(S.rg312links||"")+'</textarea></div><div class="f full"><span>포트폴리오 파일 (50MB 이하 · 여러 개)</span><input type="file" id="rg312-files" multiple><small>[등록]을 누르면 등록과 함께 올라가요</small></div></div></div>')}
+  /* v316: 파일 · 링크 칸은 원래 등록 창에 있어서 겹치던 것 뺌 · 소개 기관은 '수급처' 칸에 기관 목록을 붙임 */
+  sv.parentElement.insertAdjacentHTML("beforebegin",'<div class="rg312">'+dupH+'</div>');
+  var src=pn.querySelector('[data-pff="source"]');if(src&&!src.getAttribute("list")){src.setAttribute("list","rg312-orgs");src.insertAdjacentHTML("afterend",'<datalist id="rg312-orgs">'+orgs.map(function(n){return'<option value="'+esc(n)+'">'}).join("")+'</datalist>');src.title="기관 DB에 있는 기관을 고르면 기관과 연결돼요"}}
 render=layer("render",render,12371,"v312 인재 등록 창",function(p){return function(){var r=p.apply(this,arguments);try{rg312Dom();pw312Dom()}catch(e){if(window.console)console.warn("v312",e)}return r}});
 regAfter("v312 등록 버튼 이름",function(){[].forEach.call(document.querySelectorAll('#main [data-act="pf-new"]'),function(b){if(/포트폴리오 등록|신규 등록/.test(b.textContent)){b.textContent="+ 인재 등록";b.title="새 사람 · 포트폴리오 링크 · 파일까지 한 번에"}});[].forEach.call(document.querySelectorAll('#main [data-act="tal-new"]'),function(b){if(/추천인재 등록|인재 풀 등록/.test(b.textContent)){b.textContent="+ 근로자 DB에서 추가";b.title="이미 근로자 DB에 있는 사람(재연계 등)을 인재 풀에 넣어요 · 새 사람은 '+ 인재 등록'"}})});
-document.addEventListener("input",function(ev){var t=ev.target;if(t&&t.id==="rg312-links")S.rg312links=t.value},true);
 regActs({"rg312-link":function(D0){var F=S.pfF;if(!F)return;if(typeof pfRead==="function")pfRead(F);var w=wk(D0.w);if(!w)return;F.worker=w.id;F.name=w.name||F.name;F.phone=w.phone||F.phone;F.birth=w.birth||F.birth;if(w.dis_type&&!F.dis_type)F.dis_type=w.dis_type;if(w.dis_level&&!F.dis_level)F.dis_level=w.dis_level;toast("근로자 DB "+(w.name||"")+"와 연결했어요");render()},
   "rg312-unlink":function(){var F=S.pfF;if(!F)return;if(typeof pfRead==="function")pfRead(F);F.worker="";render()}});
-/* 저장: 기관 · 링크 · 파일 */
-document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="pf-save"]');if(!b||S.pfSel!=="new")return;var F=S.pfF;if(!F)return;
-  var on=(document.querySelector('[data-pff="org_name"]')||{}).value||"";on=on.trim();if(on){var o=typeof pfOrgOf==="function"?pfOrgOf(on):null;if(o){F.src_org=o.id;if(!F.source)F.source=o.short||o.full}else if(!F.source)F.source=on}
-  var links=String((document.getElementById("rg312-links")||{}).value||"").split(/\n/).map(function(s){return typeof linkNorm==="function"?linkNorm(s):s.trim()}).filter(function(s){return/^https?:\/\//.test(s)}),bad=String((document.getElementById("rg312-links")||{}).value||"").split(/\n/).map(function(s){return s.trim()}).filter(function(s){return s&&!/^(https?:\/\/|www\.)/i.test(s)});
-  if(bad.length){ev.preventDefault();ev.stopImmediatePropagation();toast("링크는 https:// 로 시작해야 해요: "+bad[0].slice(0,40));return}
-  var fi=document.getElementById("rg312-files"),files=fi&&fi.files?[].slice.call(fi.files):[],big=files.filter(function(f){return typeof PF_MAX!=="undefined"&&f.size>PF_MAX});if(big.length){ev.preventDefault();ev.stopImmediatePropagation();toast("50MB가 넘는 파일은 링크로 넣어 주세요: "+big.map(function(f){return f.name}).join(", "));return}
-  var n0=(DB.pf||[]).length;setTimeout(function(){var p=(DB.pf||[]).length>n0?DB.pf[DB.pf.length-1]:null;if(!p||S.pfSel!==p.id)return;S.rg312links="";
-    if(links.length){p.files=(p.files||[]).concat(links.map(function(u){return{kind:"link",name:u.replace(/^https?:\/\//,"").slice(0,60),url:u,by:(st(S.me)||{}).name||"",at:stamp()}}));logChange("portfolios",p.id,p.name||"","포트폴리오 링크","",links.length+"개 (등록과 함께)","내부");if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}
-    if(files.length){render();setTimeout(function(){var inp=document.getElementById("pf-file");if(!inp){toast("파일은 상세 창에서 다시 올려 주세요");return}try{var dt=new DataTransfer();files.forEach(function(f){dt.items.add(f)});inp.files=dt.files;pfUpload(p.id)}catch(e){toast("파일은 상세 창 [파일 올리기]로 다시 올려 주세요")}},80)}else render()},60)},true);
+/* 저장: 수급처가 기관 DB 기관이면 연결 (v316 · 파일 · 링크는 원래 등록 창이 올림) */
+document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="pf-save"]');if(!b||S.pfSel!=="new")return;var F=S.pfF;if(!F)return;var i=document.querySelector('[data-pff="source"]'),on=String(i?i.value:(F.source||"")).trim();if(!on)return;var o=typeof pfOrgOf==="function"?pfOrgOf(on):null;if(o)F.src_org=o.id},true);
 
 /* ==========================================================
    v312 (2)
@@ -26298,8 +26291,9 @@ function jl312Rejudge(){var H=jl312H(),n=0;H.rows.forEach(function(x){if(x.man)r
 regActs({"jl312-lvdef":function(){askConfirm("기본 기준으로","직무별 레벨 기준 단어 · 설명을 처음 값으로 되돌릴까요?","되돌리기",function(){appSetPut("jl312_lvr",{});appSetPut("jl312_jd",{});logChange("app_settings","jl312_lvr","직무별 레벨 기준","기본 기준으로","","되돌림","내부");jlSave();render()})},
   "jl312-rejudge":function(){var n=jl312Rejudge();logChange("app_settings","jl312_hist","과거 채용 기록","레벨 다시 판단","",n+"줄 바뀜","내부");toast("다시 판단했어요 · "+n+"줄 바뀜");render()}});
 /* 요청서 직무 줄 레벨 설명 · 기업 근로자 레벨 고르기: 직무별 설명 */
-regAfter("v312 직무별 레벨 설명",function(){[].forEach.call(document.querySelectorAll(".jl309d"),function(d){var row=d.previousElementSibling&&d.previousElementSibling.closest?d.parentElement:null;var sel=row&&row.querySelector('[data-rrj="lv"]');if(!sel)return;var i=+sel.dataset.i,j=S.rrF&&S.rrF.jobs&&S.rrF.jobs[i];if(!j||!j.lv)return;var t=j.lv+" · "+(jl312Jd(j.job)[j.lv]||"");if(d.textContent!==t)d.textContent=t});
-  [].forEach.call(document.querySelectorAll('select[data-rrj="lv"]'),function(sel){var j=S.rrF&&S.rrF.jobs&&S.rrF.jobs[+sel.dataset.i];if(!j)return;var D=jl312Jd(j.job);[].forEach.call(sel.options,function(op){if(D[op.value])op.title=D[op.value]})})});
+function jl312LvDesc(){[].forEach.call(document.querySelectorAll(".jl309d"),function(d){var sel=d.parentElement&&d.parentElement.querySelector('[data-rrj="lv"]');/* v316 줄 설명을 직무별 설명으로 (예전엔 칸을 못 찾아 공통 설명이 남음) */if(!sel)return;var i=+sel.dataset.i,j=S.rrF&&S.rrF.jobs&&S.rrF.jobs[i];if(!j||!j.lv)return;var t=j.lv+" · "+(jl312Jd(j.job)[j.lv]||"");if(d.textContent!==t)d.textContent=t});
+  [].forEach.call(document.querySelectorAll('select[data-rrj="lv"]'),function(sel){var j=S.rrF&&S.rrF.jobs&&S.rrF.jobs[+sel.dataset.i];if(!j)return;var D=jl312Jd(j.job);[].forEach.call(sel.options,function(op){if(D[op.value])op.title=D[op.value]})})}
+jlFormDom=(function(o){return function(){var r=o.apply(this,arguments);try{jl312LvDesc()}catch(e){}return r}})(jlFormDom);/* v316 줄 칸이 그려진 뒤에 설명을 바꿈 */
 
 /* ---------- ④ 과거 채용 기록 관리 ---------- */
 function jl312HS(){return S.jl312h||(S.jl312h={job:"",lv:"",q:"",sel:{},lim:200})}
