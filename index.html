@@ -19290,8 +19290,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v317 — 퇴사자 집계용 업로드 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v317";APP_VER_ON="11/25";APP_NOTE="관리자 › 데이터 업로드 ⑤ 퇴사자(집계용): 근로자 DB 양식 그대로 · 연락처 없이 기업 · 이름 · 입사일 · 퇴사일만으로 재직자 대시보드 입사 · 퇴사 집계에 넣음 (근로자 DB는 안 만듦 · SQL v317)";
+/* v318 — 대시보드 명단 · 복사에 집계용 퇴사자 포함 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v318";APP_VER_ON="11/25";APP_NOTE="재직자 대시보드 숫자를 눌러 보는 명단과 [엑셀로 복사]에 집계용 퇴사자도 포함 (숫자와 명단 인원이 같게)";
 
 /* ================================================================
    v208
@@ -26546,8 +26546,13 @@ vDash=(function(o){return function(){var Y=ehxSyn();if(!Y.E.length)return o.appl
 /* 업무 목록 · 처리 현황은 실제 데이터만 */
 buildTodos=(function(o){return function(){if(!EHX_SW)return o.apply(this,arguments);var e1=DB.employments,t1=DB.terms,r1=RC;DB.employments=EHX_SW.e;DB.terms=EHX_SW.t;if(r1)RC={};try{return o.apply(this,arguments)}finally{DB.employments=e1;DB.terms=t1;RC=r1}}})(buildTodos);
 if(typeof dashDone==="function")dashDone=(function(o){return function(){if(!EHX_SW)return o.apply(this,arguments);var e1=DB.employments,t1=DB.terms,r1=RC;DB.employments=EHX_SW.e;DB.terms=EHX_SW.t;if(r1)RC={};try{return o.apply(this,arguments)}finally{DB.employments=e1;DB.terms=t1;RC=r1}}})(dashDone);
-/* 숫자 누르면 나오는 명단(v245)은 실제 고용 건만 · 집계용은 숫자에만 들어간다고 안내 */
-if(typeof dlShow245==="function")dlShow245=(function(o){return function(k){var r=o.apply(this,arguments);try{if((DB.ehx||[]).length&&!/^io:/.test(String(k||""))){var m=document.querySelector("#modal .dlg .ps")||document.querySelector("#modal .dlg");if(m&&!m.querySelector(".ehxn"))m.insertAdjacentHTML("afterbegin",'<p class="hint ehxn">데이터 업로드 ⑤로 넣은 집계용 퇴사자는 명단 없이 대시보드 숫자에만 들어가요</p>')}}catch(e){}return r}})(dlShow245);
+/* v318 숫자 누르면 나오는 명단(v245) · 엑셀로 복사에도 집계용 퇴사자 포함 (숫자와 같게) */
+var EHX_DLN=0;
+function ehxDl(k){var Y=ehxSyn();if(!Y.E.length||/^io:/.test(String(k||"")))return[];var e0=DB.employments,t0=DB.terms,rc0=RC,L=[];DB.employments=e0.concat(Y.E);DB.terms=t0.concat(Y.T);if(rc0)RC={};
+  try{L=(dashLists245()[k]||[]).filter(function(e){return e&&e._ehx})}finally{DB.employments=e0;DB.terms=t0;RC=rc0}
+  var M={};(DB.ehx||[]).forEach(function(x){M["ehx:"+x.id]=x});return L.map(function(e){var x=M[e.id]||{},c=x.company?comp(x.company):null;return[(c&&c.name)||x.cname||"",x.name||""]})}
+if(typeof dlRows245==="function")dlRows245=(function(o){return function(k){var R=o.apply(this,arguments),X=ehxDl(k);EHX_DLN=X.length;if(!X.length)return R;return R.concat(X).sort(function(x,y){return x[0].localeCompare(y[0])||x[1].localeCompare(y[1])})}})(dlRows245);
+if(typeof dlShow245==="function")dlShow245=(function(o){return function(k){var r=o.apply(this,arguments);try{if(EHX_DLN){var m=document.querySelector("#modal .dlg .ps")||document.querySelector("#modal .dlg");if(m&&!m.querySelector(".ehxn"))m.insertAdjacentHTML("afterbegin",'<p class="hint ehxn">데이터 업로드 ⑤로 넣은 집계용 퇴사자 '+EHX_DLN+'명 포함</p>')}}catch(e){}return r}})(dlShow245);
 
 /* ============ 렌더 ============ */
 function renderMain(){
