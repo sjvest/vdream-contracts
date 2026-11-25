@@ -2042,6 +2042,8 @@ tr.jl312nl td{opacity:.72}
 .jl313bad{margin-top:10px}
 /* v314 분류 화면 긴 문구 줄바꿈 */
 .jl309cg table.t td:nth-child(2){white-space:normal;word-break:keep-all;max-width:420px}
+/* v320 계약서만 메일로 보내기 버튼 숨김 */
+.ctrmi{display:none!important}
 </style>
 </head>
 <body>
@@ -19294,8 +19296,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v319 — 업로드 파일 종류를 확장자로 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v319";APP_VER_ON="11/25";APP_NOTE="파일을 올릴 때 종류를 확장자로 정함 · 한글(.hwp · .hwpx)이 드라이브에 워드로 표시되던 것 · 교체해 올릴 때도 같은 규칙 (Apps Script v246 같이 배포)";
+/* v321 — 근로계약서는 운영페이지 목록에 그대로 · 메일 첨부만 뺌 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v321";APP_VER_ON="11/25";APP_NOTE="v320에서 입구서 추가 첨부 목록에서 근로계약서를 빼던 것을 되돌림 (운영페이지 목록은 그대로) · 메일 발송 때만 Apps Script(v247)가 근로계약서를 빼고 보냄";
 
 /* ================================================================
    v208
@@ -19957,7 +19959,7 @@ var _hoOpen217;hoOpen=layer("hoOpen",hoOpen,11461,"v217",function(p){_hoOpen217=
 
 /* ---------- ⑤ 합격자 근로계약서(미서명본) ---------- */
 function coCtr(r){var c=r&&comp(r.company);return!!(c&&(c.ctr_recv===true||c.ctr_recv==="필요"))}
-CFIELDS.intake.push(["ctr_recv","합격자별 근로계약서(미서명본) 받기 · 켜면 합격자마다 계약서 칸 · 입구서 메일에 자동 첨부","sel",0,["불필요","필요"]]);
+CFIELDS.intake.push(["ctr_recv","합격자별 근로계약서(미서명본) 받기 · 켜면 합격자마다 계약서 칸 · 드라이브에만 저장 (메일로 안 보냄)","sel",0,["불필요","필요"]]);
 function ctrOf(c){return c&&c.ci&&c.ci.ctr||null}
 function ctrJob(t){return t&&t.job?(DB.jobs||[]).find(function(j){return j.id===t.job}):null}
 function ctrUrl(t){if(!t)return"";if(t.url)return t.url;var j=ctrJob(t);return j&&j.status==="done"&&j.result&&j.result.url||""}
@@ -19991,7 +19993,7 @@ function ctrFileSync(force){if(LIVE&&(typeof READY==="undefined"||!READY))return
       (c.ci.ctr_prev||[]).forEach(function(p){if(p.ren&&ctrFid(p))need=true});
       if(need){var r=rcOf(x.req),co=cdCoName(r)||"기업 미지정";cdPut(x.id,i,function(c2){var t2=c2.ci.ctr;if(t2){var u2=ctrUrl(t2),f2=ctrFid(t2);c2.ci.ctr=Object.assign({},t2,{url:u2||t2.url||"",id:f2||t2.id||""})}
         c2.ci.ctr_prev=(c2.ci.ctr_prev||[]).map(function(p){if(p.ren){var f3=ctrFid(p);if(f3){addJob("move_file",x.id+":"+i,{file_id:f3,company:co,new_name:p.name});return Object.assign({},p,{id:f3,url:ctrUrl(p),ren:0})}}return p})},true);ch=true}
-      var a=ctrIntake(x.id,i);if(a){var t3=(x.cands[i].ci||{}).ctr,want=t3?[{kind:"ctr",name:t3.tname?"근로계약서("+t3.tname+")":"근로계약서(미서명본)"/* v265 공용 양식 이름 */,file_id:t3.id||"",job:t3.job||"",url:t3.url||""}]:[];
+      var a=ctrIntake(x.id,i);if(a){var t3=(x.cands[i].ci||{}).ctr,want=t3?[{kind:"ctr",name:t3.tname?"근로계약서("+t3.tname+")":"근로계약서(미서명본)"/* v265 공용 양식 이름 */,file_id:t3.id||"",job:t3.job||"",url:t3.url||""}]:[];/* v321 운영페이지 목록에는 그대로 · 메일 첨부는 Apps Script(v247)에서 뺌 */
         var cur=(a.extra||[]).filter(function(e){return e&&e.kind!=="ctr"}).concat(want);if(JSON.stringify(cur)!==JSON.stringify(a.extra||[])){a.extra=cur;ch=true}}})});
   if(ch&&LIVE&&typeof schedulePersist==="function")schedulePersist();return ch}
 regAfter("v217 근로계약서 맞추기",function(){ctrFileSync()});
@@ -19999,7 +20001,7 @@ regAfter("v217 근로계약서 맞추기",function(){ctrFileSync()});
 var _rrLoadOk217;rrLoadOk=layer("rrLoadOk",rrLoadOk,11461,"v217",function(p){_rrLoadOk217=p;return function(){var r=_rrLoadOk217.apply(this,arguments);ctrFileSync(true);return r}});
 /* 메뉴 */
 function ctrPopHtml(){var P=S.ctrPop;if(!P)return"";var o=cdGet(P.x,P.i);if(!o||!o.c)return"";var t=ctrOf(o.c),u=ctrUrl(t),prev=(o.c.ci&&o.c.ci.ctr_prev)||[],mailed=ctrMailed(P.x,P.i),a=ctrIntake(P.x,P.i),can=ctrCan(o.r);
-  var warn=mailed?'<div class="ctrwarn">'+esc(o.c.name||"")+'님에게 이미 메일로 보낸 파일이에요 · 고친 뒤 [계약서만 메일로 보내기]로 다시 보내 주세요</div>':"";
+  var warn="";/* v320 메일 발송 없음 */
   var h='<div class="ctrph"><b>'+esc(o.c.name||"")+'</b> <span class="small muted">근로계약서(미서명본)</span><span class="grow"></span><button class="x" data-act="ctr-close" aria-label="닫기">×</button></div>';
   if(!t)h+='<div class="small muted" style="padding:4px 2px 8px">아직 올리지 않았어요</div><button class="ctrmi" data-act="ctr-pick" data-x="'+esc(P.x)+'" data-i="'+P.i+'">파일 올리기</button>';
   else{h+='<div class="small" style="padding:2px 2px 8px;word-break:break-all">'+esc(t.name||"")+'<br><span class="muted">'+esc((t.by||"")+" · "+String(t.at||"").slice(0,16))+(u?"":ctrFail(t)?" · 드라이브 저장 실패":" · 드라이브 저장 중")+'</span></div>';
@@ -20050,7 +20052,7 @@ if(typeof JOB_KIND!=="undefined"){JOB_KIND.send_extra="근로계약서 메일";}
 if(typeof simJob==="function"){var _simJob217;simJob=layer("simJob",simJob,7361,"v217 2 (정리)",function(p){_simJob217=p;return function(j){if(j.kind==="send_extra"){j.result={sent:["근로계약서(미서명본)"]};return}if(j.kind==="move_file"){var p=j.payload||{};j.result={file_id:p.file_id,url:"https://drive.google.com/file/d/"+p.file_id,file_name:p.new_name||""};return}if(j.kind==="trash_file"){j.result={trashed:true};return}return _simJob217.apply(this,arguments)}})}
 /* 합격자 계약 정보(한 명) 창: 계약서 칸 */
 function ctrSecPaint(xid,i){var md=document.querySelector("#modal .dlg");if(!md)return;var o=cdGet(xid,i);if(!o||!o.c||!o.r)return;var t=ctrOf(o.c),need=coCtr(o.r);if(!t&&!need&&!S.ctrShow)return;
-  var h='<div class="f full ctrsec"><span>근로계약서 (미서명본)'+(need?' <small class="muted">이 기업은 합격자별로 받아요</small>':"")+'</span><div class="ctrrow">'+(t?ctrChip(xid,i):'<span class="small muted">아직 없어요</span>')+'<span class="grow"></span><button type="button" class="btn xs" data-act="ctr-pick" data-x="'+esc(xid)+'" data-i="'+i+'">'+(t?"교체":"파일 올리기")+'</button></div><div class="small muted" style="margin-top:4px">올리면 드라이브(근로자 제출 서류 › 기업)에 저장되고 입구서 메일에 자동으로 첨부돼요</div></div>';
+  var h='<div class="f full ctrsec"><span>근로계약서 (미서명본)'+(need?' <small class="muted">이 기업은 합격자별로 받아요</small>':"")+'</span><div class="ctrrow">'+(t?ctrChip(xid,i):'<span class="small muted">아직 없어요</span>')+'<span class="grow"></span><button type="button" class="btn xs" data-act="ctr-pick" data-x="'+esc(xid)+'" data-i="'+i+'">'+(t?"교체":"파일 올리기")+'</button></div><div class="small muted" style="margin-top:4px">올리면 드라이브(근로자 제출 서류 › 기업)에만 저장돼요 · 메일로 보내지 않아요</div></div>';
   var ex=md.querySelector(".ctrsec");if(ex){ex.outerHTML=h;return}var fg=md.querySelector(".ps .fg");if(fg)fg.insertAdjacentHTML("beforeend",h)}
 /* 합격자 계약 정보 한 번에: 계약서 한꺼번에 올리기 */
 function ctrNm(s){return String(s||"").replace(/\.[^.]*$/,"").replace(/[\s_\-().\[\]]/g,"")}
@@ -20415,7 +20417,7 @@ regTable("onb",{id:"v221wh",hide:["wh"],hideKey:"vw_colh221_onb",
         (panels/contract-info/0247-…-03.js 칸 제목 · 0247-…-05.js cibSave)
    ================================================================ */
 function ciCtrHtml224(xid,i){var o=cdGet(xid,i);if(!o||!o.c)return"";var c=o.c,t=ctrOf(c),u=ctrUrl(t),job=t&&!u&&!ctrFail(t);
-  var h='<div class="ps ci-ctr" data-x="'+esc(xid)+'" data-i="'+i+'"><h3>근로계약서 <small class="muted" style="font-weight:400">미서명본 · 드라이브에 저장되고 입구서 메일에 자동 첨부</small></h3>';
+  var h='<div class="ps ci-ctr" data-x="'+esc(xid)+'" data-i="'+i+'"><h3>근로계약서 <small class="muted" style="font-weight:400">미서명본 · 드라이브에만 저장 (메일로 안 보냄)</small></h3>';
   if(c.final!=="합격")return h+'<p class="small muted" style="margin:0">최종 합격 뒤에 올릴 수 있어요</p></div>';
   if(!coCtr(o.r))h+='<p class="small muted" style="margin:0 0 6px">이 기업은 보통 계약서를 따로 받지 않아요 (기업 설정 \'합격자별 근로계약서 받기\' · 불필요)</p>';
   if(!t)return h+'<button type="button" class="btn sm" data-act="ctr-pick" data-x="'+esc(xid)+'" data-i="'+i+'">파일 올리기</button> <span class="small muted">PDF · 한글 · 워드 · 이미지</span></div>';
@@ -26557,6 +26559,42 @@ function ehxDl(k){var Y=ehxSyn();if(!Y.E.length||/^io:/.test(String(k||"")))retu
   var M={};(DB.ehx||[]).forEach(function(x){M["ehx:"+x.id]=x});return L.map(function(e){var x=M[e.id]||{},c=x.company?comp(x.company):null;return[(c&&c.name)||x.cname||"",x.name||""]})}
 if(typeof dlRows245==="function")dlRows245=(function(o){return function(k){var R=o.apply(this,arguments),X=ehxDl(k);EHX_DLN=X.length;if(!X.length)return R;return R.concat(X).sort(function(x,y){return x[0].localeCompare(y[0])||x[1].localeCompare(y[1])})}})(dlRows245);
 if(typeof dlShow245==="function")dlShow245=(function(o){return function(k){var r=o.apply(this,arguments);try{if(EHX_DLN){var m=document.querySelector("#modal .dlg .ps")||document.querySelector("#modal .dlg");if(m&&!m.querySelector(".ehxn"))m.insertAdjacentHTML("afterbegin",'<p class="hint ehxn">데이터 업로드 ⑤로 넣은 집계용 퇴사자 '+EHX_DLN+'명 포함</p>')}}catch(e){}return r}})(dlShow245);
+
+/* ==========================================================
+   v320
+     ① 근로계약서(미서명본)는 메일로 보내지 않음: [계약서만 메일로 보내기] 막음 · (v321) 입구서 추가 첨부 목록은 그대로 두고 메일 첨부만 Apps Script v247 에서 뺌
+     ② 단가표 설정(jl309_*)이 DB에 저장되지 않던 것: 바꾸면 바로 저장(schedulePersist)
+     ③ 단가표 기본값 입력 방식: 최저시급 + 얼마(최저시급을 따라감) · 금액(시급) · 금액(월급 → 시급으로 저장)
+   ========================================================== */
+/* ① */
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="ctr-mail"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();toast("근로계약서는 메일로 보내지 않아요")},true);
+if(typeof JOB_KIND!=="undefined")JOB_KIND.send_extra="근로계약서 메일 (v320부터 안 씀)";
+/* ② */
+appSetPut=(function(o){return function(k,v){var r=o.apply(this,arguments);if(/^jl3/.test(String(k||""))){if(typeof RM_DIRTY!=="undefined")RM_DIRTY++;if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}return r}})(appSetPut);
+/* ③ 기본값 입력 방식 3가지: 최저시급 + 얼마(p · 최저시급이 바뀌면 같이 움직임) · 시급(w) · 월급(→ 시급으로 저장) */
+jlBase=(function(o){return function(job,std,lv){var r=o.apply(this,arguments),B=jlBaseAll(),v=B[job+"|"+(std||"")+"|"+(lv||"")]||B[job+"||"+(lv||"")]||{};if(!+v.w&&v.p!=null&&v.p!==""){r.w=+jlOpt().minWage+(+v.p||0);r.plus=+v.p||0}return r}})(jlBase);
+function jl320H(){return+(S.jl320h||4)}
+function jl320Div(){var o=jlOpt(),wk=(+o.days||5)*jl320H(),jh=o.juhyu&&wk>=15?wk/5:0;return(wk+jh)*4.345}
+function jl320Mode(){return S.jl320m==="m"?"m":S.jl320m==="h"?"h":"p"}
+function jl320Dec(k){return String(k).replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&")}
+jlBaseHtml=(function(o){return function(){var h=o.apply(this,arguments),M=jl320Mode(),B=jlBaseAll(),mw=+jlOpt().minWage,d=jl320Div();
+  var bar='<div class="obt jl320" style="gap:8px;margin-top:10px;flex-wrap:wrap"><span class="small muted">기본 시급 정하는 방법</span><div class="seg sm">'+[["p","최저시급 + 얼마"],["h","금액 · 시급"],["m","금액 · 월급"]].map(function(x){return'<button class="'+(M===x[0]?"on":"")+'" data-act="jl320-m" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div>'+
+    (M==="m"?'<label class="small">하루 <input type="number" min="1" max="8" step="0.5" data-jl320h="1" value="'+jl320H()+'" style="width:56px">시간 기준</label>':'')+
+    '<span class="small muted">'+(M==="p"?"올해 최저시급("+jlWon(mw)+")에 더할 금액 · 최저시급이 바뀌면 같이 따라가요":M==="h"?"이 직무 · 레벨의 시급을 금액으로 · 최저시급이 바뀌어도 그대로":"월급으로 넣으면 시급으로 바꿔 저장해요 (주휴 "+(jlOpt().juhyu?"포함":"빼고")+")")+' · 고친 칸만 이 방법으로 저장돼요</span></div>';
+  h=h.replace('<table class="t jl309b"',bar+'<table class="t jl309b"');
+  if(M==="p")h=h.replace(/<th class="num">(상|중|하) · 시급<\/th>/g,'<th class="num">$1 · 최저시급 +</th>');else if(M==="m")h=h.replace(/<th class="num">(상|중|하) · 시급<\/th>/g,'<th class="num">$1 · 월급</th>');
+  h=h.replace(/<input type="number" step="10" data-jlb="([^"]*)" data-f="w" value="([^"]*)" placeholder="([^"]*)" style="width:84px">/g,function(m0,key,v,ph){var k=jl320Dec(key),st=B[k]||{},hw=+st.w||(st.p!=null&&st.p!==""?mw+(+st.p||0):0),pw=+ph||0,val,pl,tip=st.w?"저장: 시급 "+jlWon(st.w):(st.p!=null&&st.p!=="")?"저장: 최저시급 + "+jlWon(+st.p):"기본값";
+    if(M==="p"){val=hw?String(st.p!=null&&st.p!==""&&!st.w?+st.p:hw-mw):"";pl=pw?String(pw-mw):""}else if(M==="m"){val=hw?String(Math.round(hw*d/1000)*1000):"";pl=pw?String(Math.round(pw*d/1000)*1000):""}else{val=hw?String(hw):"";pl=pw?String(pw):""}
+    return(M==="p"?'<span class="small muted">+</span>':'')+'<input type="number" step="'+(M==="m"?1000:10)+'" data-jlb="'+key+'" data-f="w" data-jl320="1" data-o="'+esc(val)+'" value="'+esc(val)+'" placeholder="'+esc(pl)+'" title="'+esc(tip)+'" style="width:'+(M==="m"?110:84)+'px">'+(st.p!=null&&st.p!==""&&!st.w?'<span class="jl309s" title="최저시급 따라감">최저+</span>':'')});
+  return h}})(jlBaseHtml);
+/* 저장: 시급 칸은 여기서 (고친 칸만 · 고른 방법으로) · 나머지는 원래 저장이 함 */
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="jl309-bsave"]');if(!b||S.role!=="admin")return;var M=jl320Mode(),d=jl320Div(),B=JSON.parse(JSON.stringify(jlBaseAll())),n=0;
+  [].forEach.call(document.querySelectorAll('[data-jlb][data-f="w"][data-jl320]'),function(i){var k=i.dataset.jlb,raw=String(i.value).trim();if(raw!==String(i.dataset.o||"")){var c=Object.assign({},B[k]||{});delete c.w;delete c.p;
+      if(raw!==""){var v=+raw||0;if(M==="p")c.p=v;else if(M==="h"){if(v)c.w=v}else{if(v)c.w=Math.round(v/d/10)*10}}if(Object.keys(c).length)B[k]=c;else delete B[k];n++}
+    i.removeAttribute("data-jlb")});
+  if(n)appSetPut("jl309_base",B)},true);
+regActs({"jl320-m":function(D0){S.jl320m=D0.v==="m"?"m":D0.v==="h"?"h":"p";render()}});
+document.addEventListener("change",function(ev){var t=ev.target;if(t&&t.dataset&&t.dataset.jl320h){S.jl320h=Math.max(1,Math.min(8,+t.value||4));render()}},true);
 
 /* ============ 렌더 ============ */
 function renderMain(){
