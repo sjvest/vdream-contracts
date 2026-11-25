@@ -2046,6 +2046,12 @@ tr.jl312nl td{opacity:.72}
 .ctrmi{display:none!important}
 /* v324 계약 차수 */
 .x324all{margin:2px 0 8px;font-size:14px}.x324seg{margin-bottom:8px}.x324past{background:#F1F0F5;color:#6B6880}.x324rec{margin-top:8px;padding:8px 10px;border-radius:8px;background:#F7F7FB;border:1px dashed var(--line,#E3E1EE)}
+/* v326 돌아가기 띠 · 칩 줄바꿈 */
+.v326back{display:flex;align-items:center;gap:8px;background:#EFEDF7;border:1px solid #DCD7F0;border-radius:10px;padding:6px 12px;margin-bottom:10px;font-size:13px;color:#4b3f99}
+button.chip{white-space:nowrap}
+/* v326 채용 요청 창: 차수 머리줄이 창 머리를 덮지 않게 · 긴 직무 집계는 한 줄 */
+.rrround.rd243-ing>.rrrh,.rrround.rd243-done>.rrrh{top:var(--phh,0px)}
+.sv3jt .b{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -19298,8 +19304,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v324 — 계약만료 창 전체 계약 기간 · 차수 선택 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v324";APP_VER_ON="11/25";APP_NOTE="계약만료 창 계약 정보: 위에 전체 계약 기간(최초 시작 ~ 현재 만료 · 총 개월) · 아래 차수 버튼으로 그 차수 계약일 · 지난 차수는 처리 기록 보기 전용";
+/* v326 — 창 Esc · 겹침 · 다른 메뉴 이동 띠 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v326";APP_VER_ON="11/25";APP_NOTE="Esc로 맨 위 창 하나씩 닫힘(장애 재판정 · 사전 공유 · 작은 확인 창 등 안 닫히던 것) · 작은 창 위에서 오른쪽 창을 열면 작은 창 닫힘 · 창 안 버튼으로 다른 메뉴로 가면 [← 돌아가기] 띠 · 휴대폰 칩 줄바꿈";
 
 /* ================================================================
    v208
@@ -26619,6 +26625,117 @@ function x324Html(eid){var e=emp(eid);if(!e)return"";var ts=termsOf(eid);if(!ts.
 expBody=layer("expBody",expBody,12391,"v324 계약 차수",function(p){return function(eid){var h=p.apply(this,arguments);if(typeof h!=="string")return h;var a=h.indexOf('<div class="ps"><h3>계약 정보');if(a<0)return h;var b=h.indexOf('<div class="ps"',a+10);if(b<0)return h;var nw="";try{nw=x324Html(eid)}catch(e){if(window.console)console.warn("v324",e);return h}return nw?h.slice(0,a)+nw+h.slice(b):h}});
 regActs({"x324-seq":function(D0){S.x324=S.x324||{};S.x324[D0.e]=+D0.v;render()}});
 
+/* ==========================================================
+   v325 계약만료 · 중도퇴사 번복 → 연결된 대체 채용 요청 정리
+     · '나가는 사람'(입사취소 · 퇴사 처리 · 계약만료 종료 결정 · 대체 '예' · 중도퇴사 근로자 요청 진행 중)이
+       내 동작으로 다시 재직(나가지 않음)으로 바뀌면 → 확인 창 [취소하기] / [그대로 두기]
+       취소하기: 대체 대상이 이 사람뿐 = 요청 '취소' · 여러 명 = 이 사람만 빼고 채용수 −1 · 입사한 대체 인원 있으면 자동 취소 안 함
+       (v263 퇴사 의사 철회와 같은 규칙 · 메모 · 변경 이력 · 채용 담당 알림 · 진행 중 후보 수)
+       그대로 두기: app_settings repl325:<요청>:<고용> 에 기록 · 요청 머리에 '대체 대상 번복 · 그대로 둠'
+     · 관리자: 채용 요청 화면 위 '대체 대상이 다시 재직 중인 대체 요청 n건' → 목록에서 한 번에 정리
+       (분명히 번복된 사람만: 계약만료 결정 연장 · 무기 전환 · 대체 '아니오' · 중도퇴사 요청 '퇴사 안 함')
+   ========================================================== */
+function r325Leaving(e){if(!e)return false;if(e.cancelled||e.end_type)return true;var x=typeof xOf==="function"?xOf(e.id):null;if(x&&(x.corp==="종료"||x.decision==="종료"||x.repl==="예"))return true;
+  if(typeof lqOpen==="function"&&(DB.wreq||[]).some(function(r){return r&&r.emp===e.id&&lqOpen(r)}))return true;return false}
+function r325RRs(e){return(DB.rr||[]).filter(function(r){if(!r||r.status==="완료"||r.status==="취소")return false;return(r.replaced||[]).indexOf(e.id)>=0||(r.jobs||[]).some(function(j){return j&&j.repl===e.id})})}
+function r325Keep(r,e){return!!appSet("repl325:"+r.id+":"+e.id,null)}
+function r325Plan(r,e){var C=[];rrRounds(r.id).forEach(function(x){(x.cands||[]).forEach(function(c){C.push(c)})});var who=[].concat(r.replaced||[]);(r.jobs||[]).forEach(function(j){if(j&&j.repl&&who.indexOf(j.repl)<0)who.push(j.repl)});
+  return{r:r,e:e,hired:C.filter(function(c){return c.final==="합격"&&c.hired}).length,prog:C.filter(function(c){return c&&c.name&&!cdClosed(c)}).length,multi:who.length>1}}
+/* 남아 있는 건 · 머리 표시는 '분명히 번복된' 사람만 (결정 전에 미리 낸 대체 요청은 빼려고) */
+function r325Rev(e){if(!e||r325Leaving(e))return false;var x=typeof xOf==="function"?xOf(e.id):null;if(x&&(x.corp==="연장"||x.decision==="연장"||/무기/.test(String(x.decision||x.corp||""))||x.repl==="아니오"))return true;
+  if(typeof lqNo==="function"&&(DB.wreq||[]).some(function(r){return r&&r.emp===e.id&&r.sub===(typeof LQ_SUB!=="undefined"?LQ_SUB:"")&&lqNo(r)}))return true;return false}
+function r325Why(e){var x=typeof xOf==="function"?xOf(e.id):null;return x&&(x.corp||x.decision)?"계약만료 결정 "+(x.decision||x.corp):"재직 중"}
+function r325Note(r,e,txt){if(typeof lea263Notify==="function"){try{lea263Notify(r,e,txt)}catch(x){}}}
+function r325Cancel(r,e,src){var P=r325Plan(r,e),c=coR(r)||{},w=wk(e.worker)||{},nm=w.name||"",tag=src||"대체 대상 번복";
+  if(P.hired){logChange("recruit_requests",r.id,c.name||"","대체 채용 · "+tag,"","자동 취소 안 함 (입사한 대체 인원 있음) · "+nm,"내부");r325Note(r,e,"대체 채용 확인 필요 ("+tag+" · 입사한 대체 인원 있음)");return"입사한 대체 인원이 있어 대체 채용은 그대로 뒀어요 · 채용 담당과 확인해 주세요"}
+  if(P.multi){var b=rrHead(r);r.replaced=(r.replaced||[]).filter(function(x){return x!==e.id});if(r.jobs&&r.jobs.length){var J=r.jobs.map(function(j){return Object.assign({},j)}),k=J.findIndex(function(j){return j.repl===e.id});if(k>=0){if((+J[k].n||1)>1){J[k].n=(+J[k].n||1)-1;J[k].repl=""}else J.splice(k,1)}else{var j2=J.slice().reverse().find(function(x){return+x.n>1})||J[J.length-1];j2.n=Math.max(0,(+j2.n||1)-1)}r.jobs=J}else r.headcount=Math.max(0,(+r.headcount||1)-1);
+    logChange("recruit_requests",r.id,c.name||"","채용수",String(b),rrHead(r)+" ("+tag+" · "+nm+" 빠짐)","내부");DB.memos.push({id:nid(),table:"recruit_requests",tid:r.id,body:"[대체 1명 줄임] "+nm+" "+tag+(P.prog?" · 진행 중 후보 "+P.prog+"명":""),author:(st(S.me)||{}).name||"",at:stamp()});r325Note(r,e,"대체 채용 1명 줄임 ("+tag+(P.prog?" · 진행 중 후보 "+P.prog+"명":"")+")");return"대체 채용 요청에서 "+nm+"님을 빼고 채용수를 1명 줄였어요"}
+  var b2=r.status||"";r.status="취소";logChange("recruit_requests",r.id,c.name||"","상태",b2,"취소 ("+tag+" · "+nm+")","내부");
+  DB.memos.push({id:nid(),table:"recruit_requests",tid:r.id,body:"[대체 채용 취소] "+nm+" "+tag+(P.prog?" · 진행 중 후보 "+P.prog+"명 안내 필요":""),author:(st(S.me)||{}).name||"",at:stamp()});r325Note(r,e,"대체 채용 취소 ("+tag+(P.prog?" · 진행 중 후보 "+P.prog+"명":"")+")");return"연결된 대체 채용 요청을 취소했어요"}
+function r325KeepSet(r,e){appSetPut("repl325:"+r.id+":"+e.id,{at:stamp(),by:(st(S.me)||{}).name||""});var c=coR(r)||{},w=wk(e.worker)||{};logChange("recruit_requests",r.id,c.name||"","대체 대상 번복","",(w.name||"")+" · 요청 그대로 둠","내부")}
+function r325Save(){if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist();if(typeof RM_DIRTY!=="undefined")RM_DIRTY++}
+/* ---------- 내 동작 앞뒤 비교 ---------- */
+var R325_SNAP=null,R325_T=0,R325_Q=[];
+function r325Snap(){var M={};(DB.rr||[]).forEach(function(r){if(!r||r.status==="완료"||r.status==="취소")return;var ids=[].concat(r.replaced||[]);(r.jobs||[]).forEach(function(j){if(j&&j.repl)ids.push(j.repl)});ids.forEach(function(id){var e=emp(id);if(e&&!M[id])M[id]=r325Leaving(e)})});return M}
+function r325Check(){if(!R325_SNAP)return;var B=R325_SNAP;R325_SNAP=null;Object.keys(B).forEach(function(id){if(!B[id])return;var e=emp(id);if(!e||r325Leaving(e))return;r325RRs(e).forEach(function(r){if(!r325Keep(r,e)&&!R325_Q.some(function(q){return q.r===r.id&&q.e===e.id}))R325_Q.push({r:r.id,e:e.id})})});r325Ask()}
+function r325Ask(){if(!R325_Q.length||document.getElementById("r325dlg"))return;var q=R325_Q[0],r=(DB.rr||[]).find(function(x){return x.id===q.r}),e=emp(q.e);if(!r||!e||r.status==="취소"||r.status==="완료"){R325_Q.shift();return r325Ask()}
+  var P=r325Plan(r,e),c=coR(r)||{},w=wk(e.worker)||{},job=typeof rrJobsShort==="function"?rrJobsShort(r):"채용";
+  var head=P.hired?"이미 입사한 대체 인원이 있어요 · [취소하기]를 눌러도 요청은 그대로 두고 채용 담당에게 알려요":P.multi?"이 요청은 여러 명의 대체예요 · [취소하기]는 "+esc(w.name||"")+"님만 빼고 채용수를 1명 줄여요":"[취소하기]를 누르면 이 대체 채용 요청이 '취소'로 바뀌어요";
+  document.body.insertAdjacentHTML("beforeend",'<div class="ov" id="r325dlg"><div class="dlg" role="alertdialog" aria-modal="true"><div class="ph"><div><h2>연결된 대체 채용 요청도 정리할까요?</h2></div></div><div class="ps"><p style="margin:0 0 8px">'+esc(w.name||"")+'님이 다시 재직(나가지 않음)으로 바뀌었어요 · '+esc(r325Why(e))+'</p>'+
+    '<div class="notebox"><b>['+esc(c.name||"")+'] '+esc(job)+' '+rrHead(r)+'명 · 대체 · '+esc(r.status||"진행 중")+'</b>'+(P.prog?' · 진행 중 후보 '+P.prog+'명 (채용 담당이 후보에게 안내해야 해요)':'')+'<div class="small">'+head+'</div></div>'+
+    '<div class="acts" style="margin-top:10px;justify-content:flex-end"><button class="btn" data-act="r325-keep">그대로 두기</button> <button class="btn pri" data-act="r325-cancel">취소하기</button></div></div></div></div>');
+  var b=document.querySelector('#r325dlg [data-act="r325-cancel"]');if(b)b.focus()}
+function r325Close(){var d=document.getElementById("r325dlg");if(d)d.remove();R325_Q.shift();setTimeout(r325Ask,50)}
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-act]");if(!b||b.closest("#r325dlg")||b.closest("#r325list"))return;R325_SNAP=r325Snap();clearTimeout(R325_T);R325_T=setTimeout(r325Check,700)},true);
+window.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.closest||t.closest("#r325dlg"))return;if(!R325_SNAP)R325_SNAP=r325Snap();clearTimeout(R325_T);R325_T=setTimeout(r325Check,700)},true);
+regActs({"r325-cancel":function(){var q=R325_Q[0];if(!q)return;var r=(DB.rr||[]).find(function(x){return x.id===q.r}),e=emp(q.e);if(r&&e){var m=r325Cancel(r,e);r325Save();toast(m)}r325Close();render()},
+  "r325-keep":function(){var q=R325_Q[0];if(!q)return;var r=(DB.rr||[]).find(function(x){return x.id===q.r}),e=emp(q.e);if(r&&e){r325KeepSet(r,e);r325Save();toast("대체 채용 요청은 그대로 뒀어요")}r325Close();render()}});
+window.addEventListener("keydown",function(ev){if(ev.key==="Escape"&&document.getElementById("r325dlg")){ev.stopImmediatePropagation();var d=document.getElementById("r325dlg");d.remove();R325_Q.shift()}},true);
+/* ---------- 요청 머리 표시 ---------- */
+regAfter("v325 대체 번복 표시",function(){var rid=S.rrSel;if(!rid||rid==="new")return;var r=(DB.rr||[]).find(function(x){return x.id===rid});if(!r)return;var tg=document.querySelector("aside.pnl .ph .tags");if(!tg||tg.querySelector(".r325b"))return;
+  var L=[].concat(r.replaced||[]);(r.jobs||[]).forEach(function(j){if(j&&j.repl&&L.indexOf(j.repl)<0)L.push(j.repl)});var bad=L.map(emp).filter(function(e){return e&&r325Rev(e)});if(!bad.length||r.status==="완료"||r.status==="취소")return;
+  tg.insertAdjacentHTML("beforeend",'<span class="b sm warn r325b" title="대체 대상이 다시 재직 중이에요 · '+esc(bad.map(function(e){return(wk(e.worker)||{}).name||""}).join(", "))+'">대체 대상 번복'+(bad.every(function(e){return r325Keep(r,e)})?" · 그대로 둠":"")+'</span>')});
+/* ---------- 관리자: 남아 있는 번복 건 ---------- */
+function r325All(){var L=[];(DB.rr||[]).forEach(function(r){if(!r||r.status==="완료"||r.status==="취소"||r.kind==="신규")return;var ids=[].concat(r.replaced||[]);(r.jobs||[]).forEach(function(j){if(j&&j.repl&&ids.indexOf(j.repl)<0)ids.push(j.repl)});
+  ids.forEach(function(id){var e=emp(id);if(e&&activeEmp(e)&&r325Rev(e)&&!r325Keep(r,e))L.push({r:r,e:e})})});return L}
+regAfter("v325 관리자 번복 목록",function(){if(S.view!=="rr"||S.role!=="admin")return;var m=document.getElementById("main");if(!m)return;var L=r325All(),ex=m.querySelector(".r325band");if(!L.length){if(ex)ex.remove();return}if(ex)return;var hd=m.querySelector(".hd");if(!hd)return;
+  hd.insertAdjacentHTML("afterend",'<div class="notebox r325band"><b>대체 대상이 다시 재직 중인 대체 요청 '+L.length+'건</b> <span class="small muted">번복됐는데 요청이 남아 있을 수 있어요</span> <button class="linkbtn" data-act="r325-list">정리하기</button></div>')});
+regActs({"r325-list":function(){var L=r325All();var ex=document.getElementById("r325list");if(ex)ex.remove();document.body.insertAdjacentHTML("beforeend",'<div class="ov" id="r325list"><div class="dlg" style="max-width:820px"><div class="ph"><div><h2>대체 대상이 다시 재직 중인 대체 요청</h2></div><button class="close" data-act="r325-lclose" aria-label="닫기">×</button></div><div class="ps">'+
+    (L.length?'<table class="t"><thead><tr><th>기업 · 요청</th><th>대체 대상</th><th>지금</th><th class="num">후보</th><th></th></tr></thead><tbody>'+L.map(function(o,i){var P=r325Plan(o.r,o.e),c=coR(o.r)||{};return'<tr><td>'+esc(c.name||"")+' · '+esc(typeof rrJobsShort==="function"?rrJobsShort(o.r):"")+' '+rrHead(o.r)+'명<div class="small muted">'+esc(String(o.r.created||"").slice(0,10))+(P.multi?" · 여러 명 대체":"")+(P.hired?" · 입사 인원 있음":"")+'</div></td><td>'+esc((wk(o.e.worker)||{}).name||"")+'</td><td class="small">'+esc(r325Why(o.e))+'</td><td class="num">'+P.prog+'</td><td class="nowrap"><button class="btn xs" data-act="r325-lopen" data-r="'+esc(o.r.id)+'">열기</button> <button class="btn xs" data-act="r325-lkeep" data-i="'+i+'">그대로 두기</button> <button class="btn xs pri" data-act="r325-lcancel" data-i="'+i+'">취소하기</button></td></tr>'}).join("")+'</tbody></table>':'<p class="muted">남은 건이 없어요</p>')+'</div></div></div>');window.__r325L=L},
+  "r325-lclose":function(){var ex=document.getElementById("r325list");if(ex)ex.remove();render()},
+  "r325-lopen":function(D0){var ex=document.getElementById("r325list");if(ex)ex.remove();go("rr");S.rrSel=D0.r;render()},
+  "r325-lcancel":function(D0){var o=(window.__r325L||[])[+D0.i];if(!o)return;var m=r325Cancel(o.r,o.e);r325Save();toast(m);REG().act["r325-list"]()},
+  "r325-lkeep":function(D0){var o=(window.__r325L||[])[+D0.i];if(!o)return;r325KeepSet(o.r,o.e);r325Save();REG().act["r325-list"]()}});
+
+/* ==========================================================
+   v326 창(모달 · 오른쪽 창) 공통 정리
+     ① Esc = 맨 위 창 하나만 닫기 · 원래 처리로 안 닫힌 창은 그 창의 [×] · [닫기] · [취소]를 대신 누름
+        닫기 버튼이 없는 작은 확인 창(휴일 확인 · 모두싸인 확인 등)은 '아무것도 안 하고 닫기'
+        저장 안 한 변경 확인처럼 원래 있던 확인 창이 새로 뜨면 그대로 둠
+     ② 작은 창 안에서 근로자 · 기업 등 오른쪽 창을 열면 작은 창을 닫아 새 창이 뒤에 깔리지 않게
+     ③ 창 안 버튼으로 다른 메뉴로 가면 위에 'OO에서 왔어요 [← 돌아가기]' · 그런 버튼에 ↗ 표시
+     ④ 휴대폰 폭에서 필터 칩 글자 꺾임
+   ========================================================== */
+function v326Vis(el){if(!el||!el.isConnected)return false;var cs=getComputedStyle(el);if(cs.display==="none"||cs.visibility==="hidden")return false;var r=el.getBoundingClientRect();return r.width>20&&r.height>20}
+function v326Stack(){var L=[];[].forEach.call(document.querySelectorAll("#modal .ov, #modal > aside.pnl, body > .ov, body > .holov, body > .jl312pm, body > [role=dialog], #main aside.pnl"),function(el){if(v326Vis(el)&&L.indexOf(el)<0)L.push(el)});
+  var z=function(el){var v=parseInt(getComputedStyle(el).zIndex,10);if(isNaN(v)){var p=el.parentElement;while(p&&p!==document.body){var w=parseInt(getComputedStyle(p).zIndex,10);if(!isNaN(w))return w;p=p.parentElement}return 0}return v};
+  return L.map(function(el,i){return{el:el,z:z(el),i:i}}).sort(function(a,b){return a.z-b.z||a.i-b.i}).map(function(o){return o.el})}
+function v326Top(){var L=v326Stack();return L.length?L[L.length-1]:null}
+function v326Sig(el){if(!el)return"";return(el.id||el.className)+"|"+((el.querySelector("h2")||{}).textContent||"").trim().slice(0,40)}
+function v326Closer(el){var C=[].filter.call(el.querySelectorAll("button,[data-act]"),function(b){if(!v326Vis(b)&&!(b.offsetParent))return false;var a=(b.dataset&&b.dataset.act)||"",t=(b.textContent||"").trim(),al=b.getAttribute("aria-label")||"";
+    if(b.closest(".ps")&&!/close|newx|-x$|^x$/.test(a)&&!/^(닫기|×|✕)$/.test(t))return false;/* 본문 버튼은 닫기 이름만 */
+    return/close|newx|-x$|^x$/.test(a)||b.classList.contains("close")||b.classList.contains("x")||al==="닫기"||/^(닫기|×|✕)$/.test(t)});
+  if(C.length)return C[0];var K=[].filter.call(el.querySelectorAll("button"),function(b){return/^(취소|닫기)$/.test((b.textContent||"").trim())});return K[0]||null}
+var V326_BEFORE=null;
+window.addEventListener("keydown",function(ev){if(ev.key!=="Escape"||ev.isComposing)return;var t=v326Top();V326_BEFORE=t?{el:t,sig:v326Sig(t),n:v326Stack().length,combo:!!S.combo,pop:!!S.pop}:null;
+  /* 맨 위가 body 에 붙은 작은 창이면 여기서 그것만 닫고 끝 (뒤의 오른쪽 창까지 닫히지 않게) */
+  if(t&&t.parentElement===document.body&&!S.combo&&!S.pop&&t.id!=="r325dlg"&&!t.classList.contains("jl312pm")){ev.stopImmediatePropagation();ev.preventDefault();V326_BEFORE=null;var c=v326Closer(t);if(c)c.click();else t.remove()}},true);
+window.addEventListener("keydown",function(ev){if(ev.key!=="Escape"||ev.isComposing)return;var B=V326_BEFORE;V326_BEFORE=null;if(!B||B.combo||B.pop)return;
+  setTimeout(function(){var L=v326Stack();if(L.length>B.n)return;/* 확인 창이 새로 뜸 */var top=v326Top();if(!top||v326Sig(top)!==B.sig||L.length<B.n)return;/* 맨 위가 닫혔거나 바뀜 (다시 그려지면 요소는 새것이라 이름으로 비교) */
+    var c=v326Closer(top);if(c){c.click();return}
+    if(top.parentElement===document.body){top.remove();return}
+    if(top.closest("#modal")){$("#modal").innerHTML="";return}},60)});
+/* ② 작은 창 위에 오른쪽 창 */
+var V326_PNL="";
+regAfter("v326 창 겹침",function(){var p=document.querySelector("#main aside.pnl"),sig=p?v326Sig(p)+"|"+(p.getAttribute("aria-label")||""):"";var m=$("#modal"),mo=m&&m.querySelector(".ov")&&v326Vis(m.querySelector(".ov"));
+  if(sig&&sig!==V326_PNL&&mo&&V326_PNL!==null&&!S.forcePw){if(window.__v326ModalAt&&Date.now()-window.__v326ModalAt>150)m.innerHTML=""}V326_PNL=sig});
+new MutationObserver(function(){var m=$("#modal");if(m&&m.innerHTML)window.__v326ModalAt=window.__v326ModalAt||Date.now();else window.__v326ModalAt=0}).observe(document.getElementById("modal")||document.body,{childList:true});
+/* ③ 창 안 버튼으로 다른 메뉴로 */
+var V326_NAV=["lea-rr","pf-from-wid","ov-menu","dis-todo"];
+var V326_PRE=null;
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-act]");if(!b)return;var inOv=b.closest("#modal, body > .ov, #main aside.pnl");if(!inOv){V326_PRE=null;return}
+  var keep={};["sel","cm","wm","disOpen","leaSel","rrSel","ldSel","onbSel","reqSel","wreqSel","talSel","pfSel","isSel","compPTab"].forEach(function(k){if(S[k]!=null)keep[k]=S[k]});
+  V326_PRE={view:S.view,keep:keep,lab:typeof vLabel==="function"?vLabel(S.view):S.view};setTimeout(function(){var P=V326_PRE;V326_PRE=null;if(!P||S.view===P.view)return;S.v326back=P;render()},30)},true);
+regAfter("v326 돌아가기 띠",function(){var B=S.v326back,m=document.getElementById("main");if(!m)return;var ex=m.querySelector(".v326back");if(!B){if(ex)ex.remove();return}
+  if(ex)return;var hd=m.querySelector(".hd");if(!hd)return;hd.insertAdjacentHTML("beforebegin",'<div class="v326back"><span>'+esc(B.lab||"")+'에서 왔어요</span> <button class="btn xs" data-act="v326-back">← 돌아가기</button> <button class="linkbtn small" data-act="v326-backx" aria-label="띠 닫기">닫기</button></div>')});
+regActs({"v326-back":function(){var B=S.v326back;S.v326back=null;if(!B)return;go(B.view);Object.keys(B.keep).forEach(function(k){S[k]=B.keep[k]});render()},"v326-backx":function(){S.v326back=null;render()}});
+/* 메뉴를 직접 바꾸면 띠 없앰 */
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('#nav [data-act="view"], [data-act="view"]');if(b&&!b.closest("#modal, body > .ov, #main aside.pnl"))S.v326back=null},true);
+regAfter("v326 이동 버튼 표시",function(){V326_NAV.forEach(function(a){[].forEach.call(document.querySelectorAll('#modal [data-act="'+a+'"], #main aside.pnl [data-act="'+a+'"]'),function(b){if(b.dataset.v326)return;b.dataset.v326="1";if(!/↗/.test(b.textContent))b.insertAdjacentHTML("beforeend",' <span aria-hidden="true">↗</span>');b.title=(b.title?b.title+" · ":"")+"다른 메뉴로 이동해요"})})});
+/* ⑤ 오른쪽 창 머리 높이 → 차수 머리줄 고정 위치 (긴 직무 집계로 머리가 높아져도 덮지 않게) */
+regAfter("v326 창 머리 높이",function(){[].forEach.call(document.querySelectorAll("aside.pnl"),function(a){var ph=a.querySelector(":scope > .ph");if(!ph)return;var h=ph.offsetHeight;if(h&&a.style.getPropertyValue("--phh")!==h+"px")a.style.setProperty("--phh",h+"px")});
+  [].forEach.call(document.querySelectorAll(".sv3jt .b"),function(b){if(!b.dataset.v326t){b.dataset.v326t="1";b.title=(b.textContent||"")+(b.title?" · "+b.title:"")}})});
+
 /* ============ 렌더 ============ */
 function renderMain(){
   var v=S.view,h;
@@ -27151,6 +27268,11 @@ function loadAll(){
 function reloadStaff(){return fetchAll("staff").then(function(rows){DB.staff=rows.map(staffFrom)})}
 function setSaving(t){SAVEST=t;var el=document.getElementById("savest");if(el)el.textContent=t}
 function schedulePersist(){if(!LIVE||!READY)return;pending=true;clearTimeout(pT);pT=setTimeout(persist,300)}
+/* v326 테스트용 예시 데이터를 가명으로 (배포용 빌드에는 들어가지 않음)
+   기업명 → 가기업 · 나기업 … · 그룹 → 가그룹 … · 근로자 · 후보 이름 → 성 + OO (겹치면 숫자) · 연락처 → 010-0000-NNNN · 이메일 → userN@example.com
+   직원(김담당 등)과 이미 가명인 이름(홍OO 등)은 그대로 */
+if(!LIVE);
+
 /* v209 저장: 표마다 · 줄마다 따로 처리
    - 성공한 것은 바로 저장본(SNAP)에 반영 · 실패한 줄만 따로 처리 (예전: 하나만 실패해도 전체를 버리고 다시 불러옴)
    - 수정은 실제로 바뀐 줄 수를 확인 (권한에 막혀 0줄이면 실패로 봄)
