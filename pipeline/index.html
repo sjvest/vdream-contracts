@@ -10281,10 +10281,15 @@ async function addContactLog(orgId){
 }
 async function deleteContactLog(logId,orgId){
   const myName=currentProfile?.name||'';
-  if(myName!=='임세진'){toast('삭제 권한이 없어요. (관리자만 가능)');return;}
-  if(!confirm('이 히스토리를 삭제하시겠어요?'))return;
+  if(!['임세진','이슬민'].includes(myName)){toast('삭제 권한이 없어요. (임세진·이슬민만 가능)');return;}
+  if(!confirm('이 히스토리를 삭제하시겠어요?\n삭제하면 복구할 수 없고, 누가 지웠는지는 "수정·삭제 로그"에 남아요.'))return;
+  const delLog=cache.logs.find(l=>l.id===logId);const delOrg=cache.orgs.find(o=>o.id===orgId);
   const{error}=await sb.from('contact_logs').delete().eq('id',logId);
   if(error){toast('오류: '+error.message);return;}
+  try{
+    const esc=v=>String(v==null?'':v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    await writeAuditLog('삭제','컨택 히스토리',delOrg?.name||'—',{reason:'컨택 히스토리 삭제',changes:esc([delLog?.date||delLog?.contact_date||'',delLog?.contact_type||'',delLog?.summary||''].filter(Boolean).join(' · '))});
+  }catch(e){console.error('[삭제 로그 기록 실패]',e);}
   cache.logs=cache.logs.filter(l=>l.id!==logId);
   cgAfterLogChange();
   toast('삭제됨');openOrg(orgId);
