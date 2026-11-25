@@ -2040,6 +2040,8 @@ tr.jl312nl td{opacity:.72}
 /* v313 직무별 레벨 · 이상 금액 */
 .pl313r{display:flex;align-items:center;gap:6px;margin:2px 0}.pl313j{min-width:64px;font-size:12.5px}.pl313d{font-size:11.5px}
 .jl313bad{margin-top:10px}
+/* v314 분류 화면 긴 문구 줄바꿈 */
+.jl309cg table.t td:nth-child(2){white-space:normal;word-break:keep-all;max-width:420px}
 </style>
 </head>
 <body>
@@ -19288,8 +19290,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v313 — 단가표 엑셀 내보내기 · 채용 구분 필터 없앰 · 과거 채용 기록 DB 표 · 시급 이상값 정리 · 인재풀 직무별 레벨 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v313";APP_VER_ON="11/25";APP_NOTE="단가표 [엑셀 내보내기](단가표 · 레벨 기준 · 설명) · 채용 구분은 항상 전체 · 시급 칸에 월급이 적힌 건은 환산 · 이상한 금액은 빼고 관리자에게 목록 · 과거 채용 기록은 DB 표로(SQL v313) · 인재풀 직무 레벨을 희망 직무마다 · 상세 직무 분류에서 고른 줄이 바로 사라지지 않게";
+/* v314 — 스크랩 문구는 뉴스스크랩으로 · 분류 화면 줄 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v314";APP_VER_ON="11/25";APP_NOTE="사무행정 상세에 '스크랩'이 있으면 단가표에서 뉴스스크랩으로 셈(분류 목록에서도 뺌) · 분류 화면에서 상세와 기본 레벨을 둘 다 고르면 줄이 정리됨 · 긴 문구 줄바꿈";
 
 /* ================================================================
    v208
@@ -25900,14 +25902,14 @@ function jlBaseHtml(){var o=jlOpt(),D=jlDesc(),B=jlBaseAll(),jobs=(typeof JOBS!=
     '<table class="t jl309b" style="margin-top:10px"><thead><tr><th>직무</th>'+JL_LV.map(function(l){return'<th class="num">'+l+' · 시급</th><th class="num">'+l+' · 채용까지</th>'}).join("")+'</tr></thead><tbody>'+rows.map(function(r){var key=r[0]+"|"+r[1];return'<tr><td>'+esc(r[0]+(r[1]?" · "+r[1]:""))+'</td>'+JL_LV.map(function(l){var v=B[key+"|"+l]||{},b=jlBase(r[0],r[1],l);return'<td class="num"><input type="number" step="10" data-jlb="'+esc(key+"|"+l)+'" data-f="w" value="'+esc(v.w||"")+'" placeholder="'+b.w+'" style="width:84px"></td><td class="num"><input type="number" data-jlb="'+esc(key+"|"+l)+'" data-f="d" value="'+esc(v.d||"")+'" placeholder="'+b.d+'" style="width:56px">일</td>'}).join("")+'</tr>'}).join("")+'</tbody></table>'+
     '<p class="hint">비워 두면 회색 값(최저시급 + 레벨 가산 · 하 10일 · 중 15일 · 상 25일)을 써요 · 관리자만 고칠 수 있어요</p><div class="obt" style="justify-content:flex-end"><button class="btn pri" data-act="jl309-bsave">기본값 · 기준 저장</button></div>';
   return h}
-function jlTexts(){var C={};var add=function(t,n){t=jlNorm(t);if(!t)return;C[t]=C[t]||{t:t,n:0,last:""};C[t].n+=n||1};
+function jlTexts(){var C={};var add=function(t,n){t=jlNorm(t);if(!t)return;if(typeof jlEffJob==="function"&&jlEffJob("사무행정",t)!=="사무행정")return;/* v314 스크랩 문구는 뉴스스크랩으로 셈 */C[t]=C[t]||{t:t,n:0,last:""};C[t].n+=n||1};
   DB.employments.forEach(function(e){if(e.job==="사무행정"&&e.job_detail&&!e.cancelled){add(e.job_detail,1);var s=jlEmpStart(e),o=C[jlNorm(e.job_detail)];if(o&&s>o.last)o.last=s}});
   (DB.rr||[]).forEach(function(r){(r.jobs||[]).forEach(function(j){if(j&&j.job==="사무행정"&&j.detail){add(j.detail,+j.n||1);var o=C[jlNorm(j.detail)],d=String(r.created||"").slice(0,10);if(o&&d>o.last)o.last=d}})});
   return Object.keys(C).map(function(k){return C[k]}).sort(function(a,b){return b.n-a.n||a.t.localeCompare(b.t,"ko")})}
 function jlClsHtml(){var T=jlTexts(),M=jlMap(),F=jlF(),q=(F.q||"").trim(),fl=F.cf||"all",std=jlStdList(),sel=S.jl309sel||(S.jl309sel={});
   T.forEach(function(x){x.c=jlClass("사무행정",x.t,"")});var tot=T.reduce(function(s,x){return s+x.n},0),done=T.filter(function(x){return x.c.std}).reduce(function(s,x){return s+x.n},0),left=T.filter(function(x){return!x.c.std});
   var cnt={};std.forEach(function(s){cnt[s]=0});T.forEach(function(x){if(x.c.std)cnt[x.c.std]=(cnt[x.c.std]||0)+x.n});
-  var V=T.filter(function(x){if(q&&x.t.indexOf(q)<0)return false;var kp=S.jl313keep&&S.jl313keep[x.t];/* v313 방금 고친 문구는 필터가 바뀔 때까지 남김 */if(fl==="none")return!x.c.std||kp;if(fl==="auto")return x.c.how==="자동"||kp;if(fl==="ok")return x.c.how==="확인"||kp;return true});
+  var V=T.filter(function(x){if(q&&x.t.indexOf(q)<0)return false;var kp=S.jl313keep&&S.jl313keep[x.t]&&!(x.c.std&&typeof jlMapLv==="function"&&jlMapLv()[x.t]);/* v314 방금 고친 문구는 상세 · 기본 레벨을 둘 다 정할 때까지만 남김 */if(fl==="none")return!x.c.std||kp;if(fl==="auto")return x.c.how==="자동"||kp;if(fl==="ok")return x.c.how==="확인"||kp;return true});
   var nSel=Object.keys(sel).filter(function(k){return sel[k]}).length;
   var h='<div class="jl309cg"><div class="jl309side"><b>표준 상세</b>'+std.map(function(s){return'<div class="obt" style="justify-content:space-between"><span>'+esc(s)+'</span><span class="small muted">'+(cnt[s]||0)+'건</span></div>'}).join("")+'<div class="obt jl309mis" style="justify-content:space-between"><span>미분류</span><span class="small">'+(tot-done)+'건</span></div>'+
     '<div class="jl309bar"><i style="width:'+(tot?Math.round(done*100/tot):0)+'%"></i></div><div class="small"><b>'+tot+'건 중 '+done+'건 분류</b> ('+(tot?Math.round(done*100/tot):0)+'%)</div><div class="small muted">남은 문구 '+left.length+'개 · 그중 1건짜리 '+left.filter(function(x){return x.n===1}).length+'개</div></div><div style="flex:1;min-width:0">'+
@@ -26210,7 +26212,7 @@ jlStats=function(f){f=f||{};var rg=jl312Range(f),from=rg.from,to=rg.to,K=f.kinds
   var key=JSON.stringify([f,(DB.rr||[]).length,(DB.rrr||[]).length,(DB.employments||[]).length,(DB.terms||[]).length,typeof RM_DIRTY!=="undefined"?RM_DIRTY:0,JSON.stringify(jlMap()).length,JSON.stringify(jlMapLv()).length,JL312_HV,HH.rows.length,HH.at,TODAY]);
   if(JL312_ST&&JL312_STK===key)return JL312_ST;var R={},CO={},row=function(job,std,lv,c){var ck=split?jlCondKey(c):"",k=job+"|"+(std||"")+"|"+(lv||"")+"|"+ck;return R[k]||(R[k]={key:k,job:job,std:std||"",lv:lv||"",cond:split?jlCondLab(c):"",req:0,hire:0,cand:0,early:0,days:[],late:[],real:[],wages:[],mixed:0,merged:0,hist:0})};
   (DB.rr||[]).forEach(function(r){if(r.status==="취소")return;var c0=jlFirstCreated(r),rq=jlRq(r);if(from&&c0&&c0<from)return;if(to&&c0&&String(c0).slice(0,10)>to)return;var cond=jlCondR(r);if(!jlCondOk(cond,f))return;var J=(r.jobs||[]).filter(function(j){return j&&j.job});if(!J.length)return;var mixed=jlMixed(r),merged=jlMerged(r).length>0,fs=null;
-    var G={};J.forEach(function(j){var kind=jlLineKind(r,j);if(!K[kind])return;var std=j.job==="사무행정"?(j.std||jlClass("사무행정",j.detail,"").std):"",o=row(j.job,std,jlLineLv(j),cond);var gk=j.job+"|"+jlNorm(j.detail);if(!G[gk])G[gk]={o:o};o.req+=(+j.n||1);if(mixed)o.mixed++;if(merged)o.merged++;
+    var G={};J.forEach(function(j){var kind=jlLineKind(r,j);if(!K[kind])return;var ej=jlEffJob(j.job,j.detail),std=ej==="사무행정"?(j.std||jlClass("사무행정",j.detail,"").std):"",o=row(ej,std,jlLineLv(j),cond);/* v314 스크랩 문구 → 뉴스스크랩 */var gk=j.job+"|"+jlNorm(j.detail);if(!G[gk])G[gk]={o:o};o.req+=(+j.n||1);if(mixed)o.mixed++;if(merged)o.merged++;
       if(!f.noReqW){var w=jlLineWage(r,j);if(w&&!j.__x)o.rqw=(o.rqw||[]).concat([{w:w,h:parseFloat(r.day_hours)||0}])}});
     (DB.rrr||[]).forEach(function(x){if(x.req!==r.id)return;(x.cands||[]).forEach(function(c){if(!c||!c.name)return;var ln=jlLineOfCand(r,c);if(!ln)return;var g=G[ln.job+"|"+jlNorm(ln.detail)];if(!g)return;g.o.cand++;if(!(c.final==="합격"||c.hired))return;var e=c.hired&&emp(c.hired),s=e?jlEmpStart(e):"",done=s||c.final_on||"",isE=!!(s&&rq&&s<rq);
       var cn=(comp(r.company)||{}).name||"";CO[r.company]=CO[r.company]||{n:cn,hire:0,early:0};CO[r.company].hire++;if(isE)CO[r.company].early++;
@@ -26220,10 +26222,10 @@ jlStats=function(f){f=f||{};var rg=jl312Range(f),from=rg.from,to=rg.to,K=f.kinds
       if(done&&c0){var dd=Math.round((new Date(done)-new Date(c0))/864e5);if(dd>=0&&dd<400)g.o.days.push(dd)}})})});
   (DB.employments||[]).forEach(function(e){if(e.cancelled||!e.job)return;var s=jlEmpStart(e);if(from&&s&&s<from&&!activeEmp(e))return;if(to&&s&&s>to)return;var w=jlEmpWage(e);if(!w.v)return;var hh=jlHireIdx()[e.id],cond=jlCondE(e);if(!jlCondOk(cond,f))return;
     if(hh){var kind=jlLineKind(hh.r,hh.j);if(!K[kind])return;if(ex==="only"){var rq=jlRq(hh.r);if(!(s&&rq&&s<rq))return}}else if(ex==="only")return;
-    row(e.job,jlEmpStd(e).v,jlEmpLv(e).v,cond).wages.push({w:w.v,h:jlEmpDayH(e)})});
+    (function(){var ej=jlEffJob(e.job,e.job_detail);return row(ej,ej==="사무행정"?jlEmpStd(e).v:"",jlEmpLv(e).v,cond)})().wages.push({w:w.v,h:jlEmpDayH(e)})});
   /* 과거 채용 기록 */
   HH.rows.forEach(function(x){if(x.kind?!K[x.kind]:!(K["신규"]||K["추가"]))return;if(from&&x.rq<from)return;if(to&&x.rq>to)return;var cond={wt:x.wt||"",d:+x.d||0,h:+x.h||0};if(!jlCondOk(cond,f))return;var isE=!!(x.st&&x.st<x.rq);if(ex==="only"&&!isE)return;
-    var o=row(x.job,x.std,x.lv,cond);o.req+=+x.n||1;o.hire+=+x.hire||0;o.hist+=+x.n||1;if(isE&&x.hire){o.early+=+x.hire;o.late.push(Math.round((new Date(x.rq)-new Date(x.st))/864e5))}
+    var xj=jlEffJob(x.job,x.ds),o=row(xj,xj==="사무행정"?x.std:"",x.lv,cond);o.req+=+x.n||1;o.hire+=+x.hire||0;o.hist+=+x.n||1;if(isE&&x.hire){o.early+=+x.hire;o.late.push(Math.round((new Date(x.rq)-new Date(x.st))/864e5))}
     else if(x.st&&x.hire){var dd=Math.round((new Date(x.st)-new Date(x.rq))/864e5);if(dd>=0&&dd<400)o.days.push(dd)}
     var w=x.mw?jlMW(cur?0:x.rq.slice(0,4)):+x.w;if(w)o.wages.push({w:w,h:+x.h||0})});
   var opt0=jlOpt(),k=+opt0.minN||5,avg=function(A){return A.length?A.reduce(function(s,v){return s+v},0)/A.length:null},med=function(A){if(!A.length)return null;var B2=A.slice().sort(function(a,b){return a-b}),m=Math.floor(B2.length/2);return B2.length%2?B2[m]:(B2[m-1]+B2[m])/2};
@@ -26423,6 +26425,17 @@ if(typeof rmLvW==="function")rmLvW=function(wid,job){if(!wid)return"";var p=(DB.
 /* ---------- ⑤ 상세 직무 분류: 방금 고친 문구 남김 ---------- */
 window.addEventListener("change",function(ev){var t=ev.target;if(t&&t.dataset&&t.dataset.jlmap!=null){S.jl313keep=S.jl313keep||{};S.jl313keep[t.dataset.jlmap]=1}},true);
 window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-act]");if(!b)return;if(b.dataset.act==="jl309-bulk"){var sel=S.jl309sel||{};S.jl313keep=S.jl313keep||{};Object.keys(sel).forEach(function(k){if(sel[k])S.jl313keep[k]=1})}else if(b.dataset.act==="jl309-f"&&b.dataset.k==="cf"){S.jl313keep={}}else if(b.dataset.act==="jl309-sub"){S.jl313keep={}}},true);
+
+/* ==========================================================
+   v314
+     ① 사무행정 줄인데 상세에 '스크랩'이 있으면 단가표에서 뉴스스크랩 직무로 셈 (요청 · 고용 · 과거 기록 원본은 그대로)
+        상세 직무 분류 목록에서도 빠짐 (뉴스스크랩으로 셈 · 안내 한 줄)
+     ② 분류 화면: 방금 고친 문구는 상세 · 기본 레벨을 둘 다 정하면 사라짐 (v313 은 필터를 바꿀 때까지 남아서 번거로움)
+        긴 문구는 줄바꿈해서 상세 · 레벨 칸이 화면 안에 보이게
+   ========================================================== */
+function jlEffJob(job,detail){return job==="사무행정"&&/스크랩/.test(String(detail||""))?"뉴스스크랩":job}
+function jl314Scrap(){var C={};(DB.rr||[]).forEach(function(r){if(r.status==="취소")return;(r.jobs||[]).forEach(function(j){if(j&&j.job==="사무행정"&&jlEffJob(j.job,j.detail)!=="사무행정")C[jlNorm(j.detail)]=1})});return Object.keys(C).length}
+jlClsHtml=(function(o){return function(){var h=o.apply(this,arguments),n=jl314Scrap();if(!n)return h;return'<p class="hint jl314n">\'스크랩\'이 들어간 문구 '+n+'개는 단가표에서 <b>뉴스스크랩</b> 직무로 세서 이 목록에서 뺐어요 (요청 원본은 그대로)</p>'+h}})(jlClsHtml);
 
 /* ============ 렌더 ============ */
 function renderMain(){
