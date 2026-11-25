@@ -19296,8 +19296,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v322 — 설정값 DB 저장 누락 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v322";APP_VER_ON="11/25";APP_NOTE="관리자 설정 중 바로 DB에 저장되지 않던 것(중증서류 스킵 협의 기간 등) · 바꾸면 바로 저장";
+/* v323 — 중증장애인확인서 필수 칸을 계약 · 행정 탭으로 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v323";APP_VER_ON="11/25";APP_NOTE="기업 창 '중증장애인확인서 필수' 칸을 입구서 발송 탭에서 계약 · 행정 탭으로 옮김";
 
 /* ================================================================
    v208
@@ -25479,7 +25479,7 @@ document.addEventListener("input",function(ev){var t=ev.target,F=S.trf;if(!F||!t
 var SV303={co:!LIVE,rr:!LIVE,probed:false};
 function sv303Tb(){if(SV303.co)colxAdd("companies",[["sev_req","sev_cert_req","yn"]]);if(SV303.rr)colxAdd("rr",[["sev_once",null,"bool"]])}sv303Tb();
 loadAll=layer("loadAll",loadAll,12301,"v303 중증확인서 칸",function(p){return function(){var a=arguments,self=this;var pr=(!LIVE||SV303.probed||typeof sb==="undefined"||!sb)?Promise.resolve():(SV303.probed=true,Promise.all([sb.from("companies").select("sev_cert_req").limit(1),sb.from("recruit_requests").select("sev_once").limit(1)]).then(function(R){SV303.co=!R[0].error;SV303.rr=!R[1].error;sv303Tb()},function(){}));return pr.then(function(){return p.apply(self,a)})}});
-CFIELDS.intake.push(["sev_req","중증장애인확인서 필수 · 켜면 '중증서류 스킵 협의' 기간에도 항상 받음 (v306)","sel",0,["불필요","필요"]]);
+CFIELDS.admin.push(["_h","중증장애인확인서","h"],["sev_req","중증장애인확인서 필수 · '필요'면 중증서류 스킵 협의 기간에도 항상 받음","sel",0,["불필요","필요"]]);/* v323 입구서 발송 탭 → 계약 · 행정 탭 */
 if(!LIVE);
 
 /* ---------- 공통 ---------- */
