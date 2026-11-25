@@ -19290,8 +19290,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v316 — 인재 등록 창 겹친 칸 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v316";APP_VER_ON="11/25";APP_NOTE="인재 등록 창에서 v312에 덧붙인 링크 · 파일 · 소개 기관 칸이 원래 칸과 겹치던 것 정리 (파일 · 링크는 원래 칸 · 수급처 칸에서 기관 DB 기관을 고르면 기관과 연결)";
+/* v317 — 퇴사자 집계용 업로드 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v317";APP_VER_ON="11/25";APP_NOTE="관리자 › 데이터 업로드 ⑤ 퇴사자(집계용): 근로자 DB 양식 그대로 · 연락처 없이 기업 · 이름 · 입사일 · 퇴사일만으로 재직자 대시보드 입사 · 퇴사 집계에 넣음 (근로자 DB는 안 만듦 · SQL v317)";
 
 /* ================================================================
    v208
@@ -26476,6 +26476,78 @@ jlTblHtml=(function(o){return function(){var F=jl312F(),h=o.apply(this,arguments
 jl313XData=(function(o){return function(F){var D=o.apply(this,arguments),m=jlMW(),L=jlStats(F||jl312F());var i=D.H.indexOf("평균 시급 (원)");if(i<0)return D;
   D.H.splice(i+1,0,"최저시급 대비 (원)");D.R=D.R.map(function(r,ri){var hh=(L[ri]&&L[ri].dayH)||4,mm=jlMonth(m,hh);[i,i+1,i+2].forEach(function(c){r[c]=jl315R(r[c],m)});if(r[i+3]!=null)r[i+3]=r[i]!=null?jl315R(jlMonth(r[i],hh),mm):null;var df=r[i]!=null?Math.max(0,r[i]-m):null;r.splice(i+1,0,df);return r});
   D.EX.push(["최저시급 대비 (원)","평균 시급 − 올해 최저시급("+jlWon(m)+") · 0 = 최저시급"]);D.EX.push(["금액 단위","100원 단위 버림 · 버려서 최저시급보다 낮아지면 최저시급 그대로"]);return D}})(jl313XData);
+
+/* ==========================================================
+   v317 퇴사자 (집계용)
+     · 관리자 › 데이터 업로드 ⑤: 근로자 DB(②)와 같은 양식 · 연락처 · 생년월일은 읽지도 저장하지도 않음
+       필수: 기업코드(또는 업체명) · 이름 · 입사일 · 퇴사일 / 있으면: 구분 · 퇴사 구분(사유) · 직무 · 근무시간 · n차 계약
+       입사일 = 입사일 → 최초 계약시작일 → 1차 계약시작일 → 플립시작일 · 퇴사일 = 퇴사일 → 마지막 n차 계약만료일
+     · 저장: emp_history (SQL v317) · 기업 + 이름 + 입사일이 같으면 한 건 (다시 올려도 두 번 안 셈)
+     · 근로자 DB · 고용 건은 만들지 않음 → 업무 화면(계약만료 · 대체 · 인재 풀 · 할 일)에는 안 나옴
+     · 재직자 대시보드 입사 · 퇴사 · 재직 집계에만 같이 셈 (화면에 '집계용 포함' 표시)
+   ========================================================== */
+var EHX_TB={k:"ehx",t:"emp_history",del:true,cols:[["id"],["k"],["company","company_id"],["cname","company_name"],["name"],["start","start_date","date"],["end","end_date","date"],["end_type"],["hire_type"],["job"],["hours"],["seq","seq","int"],["reason"],["file","src_file"]]};
+DB.ehx=DB.ehx||[];var EHX_OK=!LIVE;
+function ehxTb(){if(typeof TB==="undefined"||!EHX_OK)return;if(!TB.some(function(d){return d.k==="ehx"}))TB.push(EHX_TB)}ehxTb();
+loadAll=layer("loadAll",loadAll,12381,"v317 퇴사자 집계",function(p){return function(){var a=arguments,self=this;var pr=(!LIVE||S._ehx317||typeof sb==="undefined"||!sb)?Promise.resolve():(S._ehx317=true,Promise.resolve(sb.from("emp_history").select("id").limit(1)).then(function(r){EHX_OK=!(r&&r.error);ehxTb()},function(){}));
+  return pr.then(function(){return p.apply(self,a)}).then(function(x){DB.ehx=DB.ehx||[];return x})}});
+function ehxSave(){if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}
+/* ---------- 읽기 ---------- */
+function ehxN(s){return String(s||"").replace(/[\s*()]/g,"")}
+function ehxCo(code,nm){var c=code&&typeof compByCode==="function"?compByCode(code):null;if(c)return c;var k=ehxN(nm).replace(/\(주\)|주식회사|㈜/g,"");if(!k)return null;return(DB.companies||[]).find(function(x){return[x.name,x.vw_name,x.biz_name,x.short].some(function(v){return v&&ehxN(v).replace(/\(주\)|주식회사|㈜/g,"")===k})})||null}
+function ehxEt(v){v=String(v||"");return/취소/.test(v)?"입사취소":/중도|자진|해고|권고/.test(v)?"중도퇴사":"계약만료"}
+function ehxHt(v){v=String(v||"");return/대체/.test(v)?"대체":/추가/.test(v)?"추가":/신규/.test(v)?"신규":""}
+/* rows: 2차원 글자 배열(날짜는 YYYY-MM-DD) */
+function ehxParse(rows,file){var hr=-1,H=null;for(var r=0;r<Math.min(rows.length,12);r++){var h=(rows[r]||[]).map(ehxN);if((h.indexOf("성명")>=0||h.indexOf("이름")>=0)&&(h.indexOf("기업코드")>=0||h.indexOf("업체명")>=0||h.indexOf("기업명")>=0)){hr=r;H=h;break}}
+  if(hr<0)return{err:"'성명(이름)' · '기업코드(업체명)' 칸이 있는 머리줄을 못 찾았어요"};
+  var ix=function(L){for(var i=0;i<L.length;i++){var j=H.indexOf(ehxN(L[i]));if(j>=0)return j}return-1},C={name:ix(["성명","이름"]),code:ix(["기업코드"]),cname:ix(["업체명","기업명"]),st:ix(["입사일","최초계약시작일","1차계약시작일","플립시작일","계약시작일"]),en:ix(["퇴사일"]),et:ix(["퇴사구분","퇴사사유","퇴사유형"]),ht:ix(["구분","입사구분"]),job:ix(["직무"]),hrs:ix(["근무시간"])};
+  var S_=[],E_=[];for(var n=1;n<=8;n++){S_.push(ix([n+"차계약시작일"]));E_.push(ix([n+"차계약만료일",n+"차계약종료일"]))}
+  var g=function(row,i){return i<0?"":String(row[i]==null?"":row[i]).trim()},d=function(v){return jl312D?jl312D(v):String(v||"").slice(0,10)};
+  var out=[],bad=[],seen={},noCo={},dup=0;
+  for(var i=hr+1;i<rows.length;i++){var row=rows[i]||[],nm=g(row,C.name);if(!nm)continue;
+    var code=g(row,C.code),cn=g(row,C.cname),c=ehxCo(code,cn),st=d(g(row,C.st)),en=d(g(row,C.en)),seq=0;
+    S_.forEach(function(si,k){if(si>=0&&d(g(row,si)))seq=k+1});if(!st&&S_[0]>=0)st=d(g(row,S_[0]));
+    if(!en){for(var k=7;k>=0;k--){if(E_[k]>=0&&d(g(row,E_[k]))){en=d(g(row,E_[k]));break}}}
+    if(!st||!en){bad.push((i+1)+"행 "+(nm.slice(0,1))+"○ · "+(st?"":"입사일 ")+(en?"":"퇴사일 ")+"없음");continue}
+    if(!c)noCo[code||cn||"(비어 있음)"]=(noCo[code||cn||"(비어 있음)"]||0)+1;
+    var key=jl312Sq((c?c.id:"n:"+(cn||code))+"|"+nm+"|"+st);if(seen[key]){dup++;continue}seen[key]=1;
+    out.push({k:key.slice(0,120),company:c?c.id:"",cname:c?(c.name||""):(cn||code),name:nm,start:st,end:en,end_type:ehxEt(g(row,C.et)),hire_type:ehxHt(g(row,C.ht)),job:g(row,C.job).slice(0,40),hours:g(row,C.hrs).slice(0,40),seq:seq||null,reason:g(row,C.et).slice(0,60),file:file||""})}
+  return{rows:out,bad:bad,noCo:noCo,dup:dup}}
+function ehxRead(file){if(!file)return;if(!/\.xlsx$/i.test(file.name)){toast("엑셀(.xlsx) 파일만 올릴 수 있어요");return}if(!EHX_OK){toast("SQL v317(퇴사자 집계 표)을 먼저 실행해 주세요");return}toast("파일을 읽는 중…");
+  xlLoad().then(function(X){return file.arrayBuffer().then(function(buf){var wb=new X.Workbook();return wb.xlsx.load(buf).then(function(){return wb})})}).then(function(wb){var all=[],bad=[],noCo={},dup=0,sh=[];
+    wb.worksheets.forEach(function(ws){if(ws.state==="hidden")return;var rows=[];ws.eachRow({includeEmpty:true},function(r,ri){var a=[];for(var c=1;c<=Math.max(r.cellCount,12);c++){var v=r.getCell(c).value;a.push(v instanceof Date?mDateOf(v):(/^\d{5}(\.\d+)?$/.test(mt(v))&&+mt(v)>30000&&+mt(v)<60000?mDate(v):mt(v)))}rows[ri-1]=a});for(var i=0;i<rows.length;i++)rows[i]=rows[i]||[];
+      var R=ehxParse(rows,file.name);if(R.err)return;sh.push(ws.name);all=all.concat(R.rows);bad=bad.concat(R.bad.map(function(b){return ws.name+" "+b}));dup+=R.dup;Object.keys(R.noCo).forEach(function(k){noCo[k]=(noCo[k]||0)+R.noCo[k]})});
+    if(!sh.length){toast("'성명' · '기업코드' 칸이 있는 시트를 못 찾았어요");return}
+    ehxStage(file.name,sh,all,bad,noCo,dup);dlLog({kind:"import",menu:"퇴사자 (집계용)",file:file.name,filter:""})}).catch(function(e){toast("파일을 읽지 못했어요: "+(e&&e.message||e))})}
+function ehxStage(fname,sh,all,bad,noCo,dup){var have={};(DB.ehx||[]).forEach(function(x){have[x.k]=1});var nw=all.filter(function(x){return!have[x.k]});S.ehxUp={file:fname,sheets:sh,rows:nw,same:all.length-nw.length,bad:bad,noCo:noCo,dup:dup};render()}
+regActs({"ehx-ok":function(){var U=S.ehxUp;if(!U)return;U.rows.forEach(function(x){x.id=nid();DB.ehx.push(x)});logChange("app_settings","emp_history","퇴사자 (집계용)","시트 등록","",U.rows.length+"명 · "+U.file,"내부");ehxSave();toast("퇴사자 "+U.rows.length+"명을 집계용으로 넣었어요");S.ehxUp=null;render()},
+  "ehx-cancel":function(){S.ehxUp=null;render()},
+  "ehx-delf":function(D0){var f=D0.f,L=(DB.ehx||[]).filter(function(x){return x.file===f});askConfirm("이 파일로 넣은 기록 지우기","'"+f+"' 로 넣은 "+L.length+"명을 지울까요? 재직자 대시보드 집계에서 빠져요","지우기",function(){DB.ehx=(DB.ehx||[]).filter(function(x){return x.file!==f});logChange("app_settings","emp_history","퇴사자 (집계용)","파일 기록 지우기",L.length+"명 · "+f,"0","내부");ehxSave();render()})}});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.ehxf)return;var f=t.files&&t.files[0];t.value="";ehxRead(f)},true);
+/* ---------- 관리자 › 데이터 업로드 ⑤ ---------- */
+function ehxHtml(){var L=DB.ehx||[],U=S.ehxUp,F={};L.forEach(function(x){F[x.file||"(파일 없음)"]=(F[x.file||"(파일 없음)"]||0)+1});
+  var h='<div class="obt" style="gap:8px;flex-wrap:wrap"><b>퇴사자 (집계용)</b><span class="small muted">'+(L.length?L.length+"명 · 기업 연결 "+L.filter(function(x){return x.company}).length+"명":"아직 없음")+'</span><span class="grow"></span><label class="btn sm pri'+(EHX_OK?"":" dis")+'"'+(EHX_OK?"":' title="SQL v317을 먼저 실행해 주세요"')+'><input type="file" accept=".xlsx" data-ehxf="1" hidden'+(EHX_OK?"":" disabled")+'>시트 올리기</label></div>'+
+    '<p class="hint">근로자 DB(②)와 같은 양식을 그대로 올려요. 필수는 기업코드(또는 업체명) · 성명 · 입사일 · 퇴사일이에요. 연락처 · 생년월일은 비어 있어도 되고 저장하지 않아요. 근로자 DB · 고용 건은 만들지 않고 <b>재직자 대시보드 입사 · 퇴사 집계에만</b> 써요. 같은 기업 · 이름 · 입사일은 한 번만 들어가요.</p>';
+  if(U){var nc=Object.keys(U.noCo);h+='<div class="notebox"><b>'+esc(U.file)+'</b> · 시트 '+esc(U.sheets.join(", "))+'<div>새로 넣을 사람 <b>'+U.rows.length+'명</b>'+(U.same?' · 이미 있는 사람 '+U.same+'명 건너뜀':'')+(U.dup?' · 파일 안 중복 '+U.dup+'명':'')+(U.bad.length?' · 날짜 없어 뺌 '+U.bad.length+'명':'')+'</div>'+
+    (nc.length?'<div class="small">기업 DB에서 못 찾은 업체 '+nc.length+'곳 ('+nc.slice(0,8).map(function(k){return esc(k)+" "+U.noCo[k]}).join(" · ")+(nc.length>8?" …":"")+') · 그대로 넣으면 \'전체\' 집계에만 들어가요</div>':'')+
+    (U.bad.length?'<div class="small muted">'+esc(U.bad.slice(0,5).join(" / "))+(U.bad.length>5?" …":"")+'</div>':'')+
+    '<div class="acts" style="margin-top:6px"><button class="btn" data-act="ehx-cancel">취소</button> <button class="btn pri" data-act="ehx-ok"'+(U.rows.length?"":" disabled")+'>'+U.rows.length+'명 넣기</button></div></div>'}
+  if(L.length)h+='<table class="t" style="margin-top:8px"><thead><tr><th>파일</th><th class="num">인원</th><th></th></tr></thead><tbody>'+Object.keys(F).map(function(f){return'<tr><td>'+esc(f)+'</td><td class="num">'+F[f]+'</td><td><button class="btn xs" data-act="ehx-delf" data-f="'+esc(f)+'">이 파일 기록 지우기</button></td></tr>'}).join("")+'</tbody></table>';
+  return h}
+regAfter("v317 데이터 업로드 퇴사자 집계",function(){if(S.view!=="mig"||S.role!=="admin")return;var cs=document.querySelector("#main .migcards");if(!cs)return;var sec=document.getElementById("ehxmig");
+  if(!document.getElementById("ehxmigc"))cs.insertAdjacentHTML("beforeend",'<div class="migc" id="ehxmigc"><div class="migc-h"><b>⑤ 퇴사자 (집계용)</b><span class="b">'+((DB.ehx||[]).length?(DB.ehx||[]).length+"명":"없음")+'</span></div><p>연락처가 없는 지난 퇴사자를 재직자 대시보드 입사 · 퇴사 집계에만 넣어요. 근로자 DB는 만들지 않아요</p><p class="hint">②와 같은 양식 · 필수: 기업코드(업체명) · 성명 · 입사일 · 퇴사일</p><div class="acts"><label class="btn pri'+(EHX_OK?"":" dis")+'"><input type="file" accept=".xlsx" data-ehxf="1" hidden'+(EHX_OK?"":" disabled")+'>파일 올리기</label></div></div>');
+  var html='<section class="card" id="ehxmig" style="margin-top:12px">'+ehxHtml()+'</section>';if(sec)sec.outerHTML=html;else{var after=document.getElementById("jl312mig")||cs;after.insertAdjacentHTML("afterend",html)}});
+/* ---------- 재직자 대시보드: 집계용 기록을 같이 셈 ---------- */
+var EHX_SW=null;
+function ehxSyn(){var E=[],T=[];(DB.ehx||[]).forEach(function(x){if(!x||!x.start)return;var id="ehx:"+x.id,cx=x.end_type==="입사취소";E.push({id:id,company:x.company||"",worker:"",hire_type:x.hire_type||"",end_date:x.end||"",end_type:cx?"":(x.end_type||"계약만료"),cancelled:cx,vwork_start:x.start,_ehx:1});T.push({id:"ehxt:"+x.id,emp:id,seq:1,start:x.start,end:x.end||""})});return{E:E,T:T}}
+vDash=(function(o){return function(){var Y=ehxSyn();if(!Y.E.length)return o.apply(this,arguments);var e0=DB.employments,t0=DB.terms,h,rc0=RC;EHX_SW={e:e0,t:t0};DB.employments=e0.concat(Y.E);DB.terms=t0.concat(Y.T);if(rc0)RC={};/* 그리기 캐시를 새로 (합친 배열 기준) */
+  try{h=o.apply(this,arguments)}finally{DB.employments=e0;DB.terms=t0;EHX_SW=null;RC=rc0}
+  return typeof h==="string"?h.replace(/(<h1>재직자 대시보드[\s\S]*?<\/h1><p>)([\s\S]*?)(<\/p>)/,function(m,a,b,c){return a+b+' · <span title="데이터 업로드 ⑤로 넣은 지난 퇴사자(연락처 없음) · 입사 · 퇴사 · 재직 숫자에 같이 셈">집계용 퇴사자 '+Y.E.length+'명 포함</span>'+c}):h}})(vDash);
+/* 업무 목록 · 처리 현황은 실제 데이터만 */
+buildTodos=(function(o){return function(){if(!EHX_SW)return o.apply(this,arguments);var e1=DB.employments,t1=DB.terms,r1=RC;DB.employments=EHX_SW.e;DB.terms=EHX_SW.t;if(r1)RC={};try{return o.apply(this,arguments)}finally{DB.employments=e1;DB.terms=t1;RC=r1}}})(buildTodos);
+if(typeof dashDone==="function")dashDone=(function(o){return function(){if(!EHX_SW)return o.apply(this,arguments);var e1=DB.employments,t1=DB.terms,r1=RC;DB.employments=EHX_SW.e;DB.terms=EHX_SW.t;if(r1)RC={};try{return o.apply(this,arguments)}finally{DB.employments=e1;DB.terms=t1;RC=r1}}})(dashDone);
+/* 숫자 누르면 나오는 명단(v245)은 실제 고용 건만 · 집계용은 숫자에만 들어간다고 안내 */
+if(typeof dlShow245==="function")dlShow245=(function(o){return function(k){var r=o.apply(this,arguments);try{if((DB.ehx||[]).length&&!/^io:/.test(String(k||""))){var m=document.querySelector("#modal .dlg .ps")||document.querySelector("#modal .dlg");if(m&&!m.querySelector(".ehxn"))m.insertAdjacentHTML("afterbegin",'<p class="hint ehxn">데이터 업로드 ⑤로 넣은 집계용 퇴사자는 명단 없이 대시보드 숫자에만 들어가요</p>')}}catch(e){}return r}})(dlShow245);
 
 /* ============ 렌더 ============ */
 function renderMain(){
