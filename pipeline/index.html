@@ -876,7 +876,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('actions')">후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
   <button class="nav-item" id="nav-talent" onclick="nav('talent')">인재 영입<span class="new-badge" id="badge-talent" style="display:none;">0</span></button>
   <button class="nav-item" id="nav-jobs" onclick="nav('jobs')">채용 건 관리<span class="new-badge" id="badge-jobs" style="display:none;">0</span></button>
-  <button class="nav-item" id="nav-cold" onclick="nav('cold')">신규 컨택 로그<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-cold" onclick="nav('cold')">컨택 히스토리<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
   </div>
   <div class="ng" style="--gc:#E0953A">
   <div class="nav-section">성과</div>
@@ -1361,19 +1361,20 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 신규 컨택 로그 -->
 <div id="p-cold" class="page">
   <div class="page-header">
-    <div class="page-header-left"><div class="page-title">전체 컨택 히스토리</div><div class="page-sub">등록기관 + 신규 컨택 통합 기록</div></div>
-    <button class="btn btn-primary" onclick="openAddCold()">신규 컨택 추가</button>
+    <div class="page-header-left"><div class="page-title">전체 컨택 히스토리</div><div class="page-sub">등록기관 컨택 + 신규 기관·기존 고객 상담 통합 기록</div></div>
+    <button class="btn btn-primary" onclick="openAddCold()">컨택 기록 추가</button>
   </div>
 
   <!-- 탭 -->
   <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;">
     <button id="cold-tab-all" onclick="setColdTab('all')" style="font-size:12px;font-weight:700;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;">전체</button>
     <button id="cold-tab-reg" onclick="setColdTab('reg')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">등록기관 컨택</button>
-    <button id="cold-tab-cold" onclick="setColdTab('cold')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">신규 컨택</button>
+    <button id="cold-tab-cold" onclick="setColdTab('cold')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">신규 기관 컨택</button>
+    <button id="cold-tab-old" onclick="setColdTab('old')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">기존 고객 상담</button>
   </div>
 
   <!-- 요약 카드 -->
-  <div id="cold-metrics" style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;"></div>
+  <div id="cold-metrics" style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px;"></div>
 
   <!-- 필터 -->
   <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
@@ -1425,6 +1426,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <select id="cold-purpose"><option value="">선택</option></select>
       </div>
     </div>
+    <div class="fg" style="margin-top:-4px;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;"><input type="checkbox" id="cold-is-new" style="width:auto;margin:0;"> 신규 기관 컨택</label><div style="font-size:11px;color:var(--text3);margin-top:2px;">처음 연락하는 신규 기관이면 체크하세요. 기존 고객 상담은 체크 없이 저장합니다.</div></div>
     <!-- 2행: 기관유형 + 기관명 -->
     <div class="fg-row fg-2">
       <div class="fg" id="cold-cat-wrap"><label>기관 유형</label>
@@ -3586,7 +3588,7 @@ function renderDashboard(){
   const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>'};
   const TYPE_COLOR={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
   const logFeed=cache.logs.map(l=>({type:'log',is_quick:!!l.is_quick,summary_raw:l.summary||'',id:l.id,org_id:l.org_id,title:l.summary||'컨택',contact_type:l.contact_type||'기타',status:l.status||'완료',by:l.created_by_name||'',date:l.logged_at||l.created_at}));
-  const coldFeed=(cache.cold||[]).map(c=>({type:'cold',id:c.id,title:c.org_name||c.org||'',contact_type:c.contact_type||'통화',status:'완료',by:c.created_by_name||'',date:c.logged_at||c.created_at}));
+  const coldFeed=(cache.cold||[]).map(c=>({type:'cold',isNew:isColdNew(c),id:c.id,title:c.org_name||c.org||'',contact_type:c.contact_type||'통화',status:'완료',by:c.created_by_name||'',date:c.logged_at||c.created_at}));
   const _allFeed=[...logFeed,...coldFeed].sort((a,b)=>new Date(b.date)-new Date(a.date));
   const _today=new Date();
   // 최근 7일 활동. 공고·자료 등 간편 발송은 '발송 성과'로 따로 표시하고, 같은 때 여러 기관에 보낸 건 한 줄로 묶는다 (2026-11-03)
@@ -3620,7 +3622,7 @@ function renderDashboard(){
           <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
           <span style="font-size:13px;font-weight:700;">${f.send&&f.count>1?'일괄 발송':orgName}</span>
           <span style="font-size:10px;font-weight:800;padding:1px 8px;border-radius:10px;${f.send?'background:#fff1de;color:#b54708;':'background:#e3f4ea;color:#0a6b46;'}">${f.send?'발송 성과':'실제 연락'}</span>
-          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">신규컨택</span>':''}
+          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">'+(f.isNew===false?'기존 상담':'신규컨택')+'</span>':''}
           ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;"> 진행중</span>':''}
         </div>
         ${f.send?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.count>1?f.count+'개 기관에 발송 · ':''}실제 연락에는 미포함</div>`:(f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:'')}
@@ -4367,7 +4369,7 @@ const BACKUP_DATASETS=[
   {key:'org_perf',group:'기관·관계',sheet:'기관별성과',virtual:true,needs:['orgs','talents','candidate_applications'],desc:'기관별 인재 영입수·지원·합격자수 요약'},
   {key:'org_relations',group:'기관·관계',sheet:'관계이력',table:'org_relations',desc:'명절 선물·행사 초청 이력',cols:'*'},
   {key:'contact_logs',group:'기관·관계',sheet:'컨택이력',table:'contact_logs',desc:'기관 컨택 기록',cols:'*'},
-  {key:'cold_contacts',group:'기관·관계',sheet:'콜드컨택',table:'cold_contacts',desc:'신규 컨택 로그',cols:'*'},
+  {key:'cold_contacts',group:'기관·관계',sheet:'콜드컨택',table:'cold_contacts',desc:'컨택 히스토리(신규·기존 상담)',cols:'*'},
   {key:'business_cards',group:'기관·관계',sheet:'명함정보',table:'business_cards',desc:'명함 텍스트 정보 (이미지 제외)',cols:'id,org_id,contact_name,position,phone,email,ocr_text,created_at'},
   {key:'talents',group:'인재·채용',sheet:'인재',table:'talents',desc:'인재 정보 (첨부파일 제외)',cols:'id,name,org_id,job,member,date,status,memo,created_at,channel,referrer,created_by_name,status_history,event_id,contract_end_date,join_date,hire_company,is_waitlist,job_id,source_org_id,availability_status,phone,birth_year,birth_date,disability_type,disability_grade,is_test'},
   {key:'candidate_applications',group:'인재·채용',sheet:'지원현황',table:'candidate_applications',desc:'인재별 지원·합격·입사 현황',cols:'*'},
@@ -6614,13 +6616,15 @@ function updateMemberSelects(){
 }
 // ── 신규 컨택 로그 ──
 let coldTab='all';
+// 신규 기관 컨택 여부: 체크 안 된 값(is_new_org=false)만 '기존 고객 상담', 예전 기록(null)은 신규로 본다.
+function isColdNew(c){return !c||(c.is_new_org!==false&&!(c.pl&&c.pl.is_new_org===false));}
 // 신규 컨택(cold_contacts) 항목을 클릭했을 때, 단순히 nav('cold')만 하면 이미 그 페이지에
 // 있는 경우 화면이 안 바뀌어서 "클릭해도 반응이 없다"고 느껴졌다 (2026-09-02 발견).
 // 처음엔 nav() 후에 setColdTab()을 따로 불러서 렌더링이 두 번(예전 탭 → 신규컨택 탭) 겹쳐 도는
 // 경합이 생겼다 — coldTab을 먼저 'cold'로 맞춰두고 nav()를 한 번만 태우도록 수정 (2026-09-16).
 async function openColdEntry(){
   coldTab='cold';
-  ['all','reg','cold'].forEach(t=>{
+  ['all','reg','cold','old'].forEach(t=>{
     const btn=document.getElementById('cold-tab-'+t);
     if(!btn)return;
     if(t==='cold'){btn.style.color='var(--accent)';btn.style.borderBottomColor='var(--accent)';btn.style.fontWeight='700';}
@@ -6630,7 +6634,7 @@ async function openColdEntry(){
 }
 function setColdTab(tab){
   coldTab=tab;
-  ['all','reg','cold'].forEach(t=>{
+  ['all','reg','cold','old'].forEach(t=>{
     const btn=document.getElementById('cold-tab-'+t);
     if(!btn)return;
     if(t===tab){btn.style.color='var(--accent)';btn.style.borderBottomColor='var(--accent)';btn.style.fontWeight='700';}
@@ -6693,10 +6697,11 @@ async function renderCold(){
     summary:c.purpose||c.result||'',
     member:c.member||c.created_by_name||'',
     date:c.logged_at||c.created_at,
-    result:c.result
+    result:c.result,
+    isNew:isColdNew(c)
   }));
-  const logRows=(coldTab==='cold')?[]:fullLogRows;
-  const coldRows=(coldTab==='reg')?[]:fullColdRows;
+  const logRows=(coldTab==='cold'||coldTab==='old')?[]:fullLogRows;
+  const coldRows=(coldTab==='reg')?[]:coldTab==='cold'?fullColdRows.filter(r=>r.isNew):coldTab==='old'?fullColdRows.filter(r=>!r.isNew):fullColdRows;
 
   // 필터 적용
   const fm=document.getElementById('cold-filter-member')?.value||'';
@@ -6726,7 +6731,8 @@ async function renderCold(){
     <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${fullAllRows.length}</div><div class="metric-sub">건 누적</div></div>
     <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayAllCnt}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">등록기관</div><div class="metric-value" style="color:var(--green);">${fullLogRows.length}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">신규 컨택</div><div class="metric-value" style="color:var(--purple);">${fullColdRows.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">신규 기관 컨택</div><div class="metric-value" style="color:var(--purple);">${fullColdRows.filter(r=>r.isNew).length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">기존 고객 상담</div><div class="metric-value" style="color:var(--amber);">${fullColdRows.filter(r=>!r.isNew).length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
   `;
 
@@ -6831,6 +6837,9 @@ async function renderCold(){
   // created_by_name 같은 원본 필드를 그대로 쓰고 있어서 c.org_name이 undefined가 되어
   // 매번 렌더링이 죽고 있었다 (2026-09-16 발견). cache.cold 원본을 직접 필터링해서 사용한다.
   const filteredCold=(cache.cold||[]).filter(c=>{
+    const cNew=isColdNew(c);
+    if(coldTab==='cold'&&!cNew)return false;
+    if(coldTab==='old'&&cNew)return false;
     if(fm&&(c.member||c.created_by_name)!==fm)return false;
     if(fr&&c.result!==fr)return false;
     const d=(c.logged_at||c.created_at||'').slice(0,10);
@@ -7535,6 +7544,7 @@ function updateColdTemplate(){
 function openAddCold(){
   ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email-custom','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); const emailLocal=document.getElementById('cold-email-local');if(emailLocal)emailLocal.textContent='';
   document.getElementById('cold-contact-type').value='기관';
+  const _cn=document.getElementById('cold-is-new');if(_cn)_cn.checked=false;
   document.getElementById('cold-email-domain').value='naver.com';
   document.getElementById('cold-email-custom').style.display='none';
   document.getElementById('cold-cat').value='복지관';
@@ -7663,6 +7673,7 @@ async function saveCold(){
   const row={
     org_name:orgName,
     contact_type:document.getElementById('cold-contact-type').value,
+    is_new_org:!!document.getElementById('cold-is-new')?.checked,
     contact_purpose:document.getElementById('cold-purpose').value,
     cat:document.getElementById('cold-cat').value,
     contact_person:document.getElementById('cold-person').value.trim(),
@@ -7697,7 +7708,7 @@ async function deleteCold(id){
       const{error}=await sb.from('cold_contacts').delete().eq('id',id);
       if(error){toast('오류: '+error.message);return;}
       toast('삭제 완료');renderCold();
-      writeAuditLog('삭제','신규컨택',c?.org_name||'—');
+      writeAuditLog('삭제','컨택 히스토리',c?.org_name||'—');
     }
   });
 }
