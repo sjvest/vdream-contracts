@@ -2111,6 +2111,10 @@ function stamp(){var d=new Date();return TODAY+" "+pad(d.getHours())+":"+pad(d.g
 function toast(m){var t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(function(){t.hidden=true},3200)}
 function opt(list,val,blank){return(blank!=null?'<option value="">'+esc(blank)+'</option>':"")+list.map(function(o){var v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return'<option value="'+esc(v)+'"'+(String(v)===String(val==null?"":val)?" selected":"")+'>'+esc(l)+'</option>'}).join("")}
 
+/* v319 업로드 파일 종류(MIME)를 확장자로 정함 · 한글이 깔린 PC에서 브라우저가 .hwp 를 워드 종류로 알려 주던 것 (드라이브에 워드 아이콘) */
+var UP_MIME={hwp:"application/x-hwp",hwpx:"application/haansofthwpx",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation",pdf:"application/pdf",txt:"text/plain",csv:"text/csv",zip:"application/zip",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",gif:"image/gif",webp:"image/webp",heic:"image/heic",bmp:"image/bmp",mp4:"video/mp4",mov:"video/quicktime",m4v:"video/x-m4v",webm:"video/webm",avi:"video/x-msvideo",mkv:"video/x-matroska"};
+function upMime(name,type){var m=String(name||"").toLowerCase().match(/\.([a-z0-9]+)$/);return(m&&UP_MIME[m[1]])||type||"application/octet-stream"}
+
 /* ============ 코드값 (V-Work 기획안 명칭) ============ */
 var PARTS=["인재경영파트","채용파트","운영파트","발굴파트"];  /* 운영파트 = 예전 지원파트 */
 var STAFF_PARTS=["인재경영파트","채용파트","운영파트","발굴파트"];
@@ -3499,7 +3503,7 @@ function upFiles(prefix,files){
   if(!LIVE);
   var stamp0=Date.now();
   return files.reduce(function(p,f,i){return p.then(function(out){var ext=(f.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").slice(0,8),path=prefix+"/"+stamp0+"_"+i+"."+ext;
-    return sb.storage.from(STORAGE_BUCKET).upload(path,f,{upsert:true,contentType:f.type||"application/octet-stream"}).then(function(r){if(r.error)throw r.error;out.push({path:path,name:f.name,size:f.size});return out})})},Promise.resolve([]));
+    return sb.storage.from(STORAGE_BUCKET).upload(path,f,{upsert:true,contentType:upMime(f.name,f.type)/* v319 */}).then(function(r){if(r.error)throw r.error;out.push({path:path,name:f.name,size:f.size});return out})})},Promise.resolve([]));
 }
 function birth6(b){return b?String(b).replace(/-/g,"").slice(2,8):""}
 
@@ -19290,8 +19294,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v318 — 대시보드 명단 · 복사에 집계용 퇴사자 포함 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v318";APP_VER_ON="11/25";APP_NOTE="재직자 대시보드 숫자를 눌러 보는 명단과 [엑셀로 복사]에 집계용 퇴사자도 포함 (숫자와 명단 인원이 같게)";
+/* v319 — 업로드 파일 종류를 확장자로 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v319";APP_VER_ON="11/25";APP_NOTE="파일을 올릴 때 종류를 확장자로 정함 · 한글(.hwp · .hwpx)이 드라이브에 워드로 표시되던 것 · 교체해 올릴 때도 같은 규칙 (Apps Script v246 같이 배포)";
 
 /* ================================================================
    v208
@@ -20215,7 +20219,7 @@ var _addJob219;addJob=layer("addJob",addJob,11481,"v219",function(p){_addJob219=
 function directB64(f){return new Promise(function(ok,no){var r=new FileReader();r.onload=function(){var s=String(r.result||"");ok(s.slice(s.indexOf(",")+1))};r.onerror=function(){no(r.error||new Error("파일을 읽지 못했어요"))};r.readAsDataURL(f)})}
 function directToken(){if(window.__DIRECT_TEST)return Promise.resolve("test");return Promise.resolve(sb.auth.getSession()).then(function(r){var s=r&&r.data&&r.data.session;if(!s)throw new Error("로그인이 필요해요");return s.access_token})}
 function directSend(j){var P=directPaths(j.payload);
-  return Promise.all([directToken()].concat(P.map(function(p){var x=DIRECT_F[p.path];if(!x)return Promise.reject(new Error("올릴 파일을 찾지 못했어요"));return directB64(x.f).then(function(b){return{key:p.path,name:x.f.name,mime:x.f.type||"application/octet-stream",b64:b}})}))).then(function(R){
+  return Promise.all([directToken()].concat(P.map(function(p){var x=DIRECT_F[p.path];if(!x)return Promise.reject(new Error("올릴 파일을 찾지 못했어요"));return directB64(x.f).then(function(b){return{key:p.path,name:x.f.name,mime:upMime(x.f.name,x.f.type)/* v319 확장자로 종류 */,b64:b}})}))).then(function(R){
     var body=JSON.stringify({token:R[0],kind:j.kind,ref:j.ref,job_id:j.id,payload:j.payload,files:R.slice(1),by:j.by||null,by_name:j.by_name||"",created:j.created});
     var F=window.__directFetch||function(u,o){return fetch(u,o).then(function(r){return r.json()})};
     var ctl=typeof AbortController!=="undefined"?new AbortController():null,tm=ctl?setTimeout(function(){ctl.abort()},180000):null;
