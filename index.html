@@ -19290,8 +19290,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v314 — 스크랩 문구는 뉴스스크랩으로 · 분류 화면 줄 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v314";APP_VER_ON="11/25";APP_NOTE="사무행정 상세에 '스크랩'이 있으면 단가표에서 뉴스스크랩으로 셈(분류 목록에서도 뺌) · 분류 화면에서 상세와 기본 레벨을 둘 다 고르면 줄이 정리됨 · 긴 문구 줄바꿈";
+/* v315 — 분류 대분류 · 최저시급 대비 · 100원 단위 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v315";APP_VER_ON="11/25";APP_NOTE="상세 직무 분류에서 문구마다 대분류(사무행정 · 뉴스스크랩 · 디자인 · 미술 · 음악 · 체육 · 기타)를 고르고 사무행정일 때만 상세 · 단가표 [최저시급 대비] 보기(+700원) · 금액은 100원 단위(최저시급 아래로는 안 내림)";
 
 /* ================================================================
    v208
@@ -25902,18 +25902,18 @@ function jlBaseHtml(){var o=jlOpt(),D=jlDesc(),B=jlBaseAll(),jobs=(typeof JOBS!=
     '<table class="t jl309b" style="margin-top:10px"><thead><tr><th>직무</th>'+JL_LV.map(function(l){return'<th class="num">'+l+' · 시급</th><th class="num">'+l+' · 채용까지</th>'}).join("")+'</tr></thead><tbody>'+rows.map(function(r){var key=r[0]+"|"+r[1];return'<tr><td>'+esc(r[0]+(r[1]?" · "+r[1]:""))+'</td>'+JL_LV.map(function(l){var v=B[key+"|"+l]||{},b=jlBase(r[0],r[1],l);return'<td class="num"><input type="number" step="10" data-jlb="'+esc(key+"|"+l)+'" data-f="w" value="'+esc(v.w||"")+'" placeholder="'+b.w+'" style="width:84px"></td><td class="num"><input type="number" data-jlb="'+esc(key+"|"+l)+'" data-f="d" value="'+esc(v.d||"")+'" placeholder="'+b.d+'" style="width:56px">일</td>'}).join("")+'</tr>'}).join("")+'</tbody></table>'+
     '<p class="hint">비워 두면 회색 값(최저시급 + 레벨 가산 · 하 10일 · 중 15일 · 상 25일)을 써요 · 관리자만 고칠 수 있어요</p><div class="obt" style="justify-content:flex-end"><button class="btn pri" data-act="jl309-bsave">기본값 · 기준 저장</button></div>';
   return h}
-function jlTexts(){var C={};var add=function(t,n){t=jlNorm(t);if(!t)return;if(typeof jlEffJob==="function"&&jlEffJob("사무행정",t)!=="사무행정")return;/* v314 스크랩 문구는 뉴스스크랩으로 셈 */C[t]=C[t]||{t:t,n:0,last:""};C[t].n+=n||1};
+function jlTexts(){var C={};var add=function(t,n){t=jlNorm(t);if(!t)return;C[t]=C[t]||{t:t,n:0,last:""};C[t].n+=n||1};
   DB.employments.forEach(function(e){if(e.job==="사무행정"&&e.job_detail&&!e.cancelled){add(e.job_detail,1);var s=jlEmpStart(e),o=C[jlNorm(e.job_detail)];if(o&&s>o.last)o.last=s}});
   (DB.rr||[]).forEach(function(r){(r.jobs||[]).forEach(function(j){if(j&&j.job==="사무행정"&&j.detail){add(j.detail,+j.n||1);var o=C[jlNorm(j.detail)],d=String(r.created||"").slice(0,10);if(o&&d>o.last)o.last=d}})});
   return Object.keys(C).map(function(k){return C[k]}).sort(function(a,b){return b.n-a.n||a.t.localeCompare(b.t,"ko")})}
 function jlClsHtml(){var T=jlTexts(),M=jlMap(),F=jlF(),q=(F.q||"").trim(),fl=F.cf||"all",std=jlStdList(),sel=S.jl309sel||(S.jl309sel={});
-  T.forEach(function(x){x.c=jlClass("사무행정",x.t,"")});var tot=T.reduce(function(s,x){return s+x.n},0),done=T.filter(function(x){return x.c.std}).reduce(function(s,x){return s+x.n},0),left=T.filter(function(x){return!x.c.std});
+  T.forEach(function(x){var ej=typeof jlEffJob==="function"?jlEffJob("사무행정",x.t):"사무행정";x.c=ej==="사무행정"?jlClass("사무행정",x.t,""):{std:"("+ej+")",how:"대분류"}});/* v315 대분류가 사무행정이 아니면 상세 없이 분류된 것으로 */var tot=T.reduce(function(s,x){return s+x.n},0),done=T.filter(function(x){return x.c.std}).reduce(function(s,x){return s+x.n},0),left=T.filter(function(x){return!x.c.std});
   var cnt={};std.forEach(function(s){cnt[s]=0});T.forEach(function(x){if(x.c.std)cnt[x.c.std]=(cnt[x.c.std]||0)+x.n});
-  var V=T.filter(function(x){if(q&&x.t.indexOf(q)<0)return false;var kp=S.jl313keep&&S.jl313keep[x.t]&&!(x.c.std&&typeof jlMapLv==="function"&&jlMapLv()[x.t]);/* v314 방금 고친 문구는 상세 · 기본 레벨을 둘 다 정할 때까지만 남김 */if(fl==="none")return!x.c.std||kp;if(fl==="auto")return x.c.how==="자동"||kp;if(fl==="ok")return x.c.how==="확인"||kp;return true});
+  var V=T.filter(function(x){if(q&&x.t.indexOf(q)<0)return false;var kp=S.jl313keep&&S.jl313keep[x.t]&&!(x.c.std&&typeof jlMapLv==="function"&&jlMapLv()[x.t]);/* v314 방금 고친 문구는 상세 · 기본 레벨을 둘 다 정할 때까지만 남김 */if(fl==="job")return x.c.how==="대분류"||kp;/* v315 */if(fl==="none")return!x.c.std||kp;if(fl==="auto")return x.c.how==="자동"||kp;if(fl==="ok")return x.c.how==="확인"||kp;return true});
   var nSel=Object.keys(sel).filter(function(k){return sel[k]}).length;
   var h='<div class="jl309cg"><div class="jl309side"><b>표준 상세</b>'+std.map(function(s){return'<div class="obt" style="justify-content:space-between"><span>'+esc(s)+'</span><span class="small muted">'+(cnt[s]||0)+'건</span></div>'}).join("")+'<div class="obt jl309mis" style="justify-content:space-between"><span>미분류</span><span class="small">'+(tot-done)+'건</span></div>'+
     '<div class="jl309bar"><i style="width:'+(tot?Math.round(done*100/tot):0)+'%"></i></div><div class="small"><b>'+tot+'건 중 '+done+'건 분류</b> ('+(tot?Math.round(done*100/tot):0)+'%)</div><div class="small muted">남은 문구 '+left.length+'개 · 그중 1건짜리 '+left.filter(function(x){return x.n===1}).length+'개</div></div><div style="flex:1;min-width:0">'+
-    '<div class="obt" style="gap:6px;flex-wrap:wrap"><input data-jlq="1" value="'+esc(q)+'" placeholder="문구 검색 (예: 번역)" style="width:200px"><div class="seg sm">'+[["all","전체"],["none","미분류만"],["auto","자동만"],["ok","확인 완료"]].map(function(x){return'<button class="'+(fl===x[0]?"on":"")+'" data-act="jl309-f" data-k="cf" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><span class="grow"></span><button class="btn sm" data-act="jl309-autook" title="자동 분류된 문구를 모두 확인 완료로">자동을 모두 확인</button><button class="btn sm" data-act="jl309-texts">문구 목록 내려받기</button><button class="btn sm" data-act="jl309-imp">분류표 붙여 넣기</button></div>'+
+    '<div class="obt" style="gap:6px;flex-wrap:wrap"><input data-jlq="1" value="'+esc(q)+'" placeholder="문구 검색 (예: 번역)" style="width:200px"><div class="seg sm">'+[["all","전체"],["none","미분류만"],["auto","자동만"],["ok","확인 완료"],["job","대분류 바꾼 것만"]].map(function(x){return'<button class="'+(fl===x[0]?"on":"")+'" data-act="jl309-f" data-k="cf" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><span class="grow"></span><button class="btn sm" data-act="jl309-autook" title="자동 분류된 문구를 모두 확인 완료로">자동을 모두 확인</button><button class="btn sm" data-act="jl309-texts">문구 목록 내려받기</button><button class="btn sm" data-act="jl309-imp">분류표 붙여 넣기</button></div>'+
     (nSel?'<div class="jl309bulk obt"><b>'+nSel+'개 문구 선택</b> → <select data-jlbulk="1">'+opt([["","상세 고르기"]].concat(std.map(function(s){return[s,s]})),"")+'</select><button class="btn sm pri" data-act="jl309-bulk">한 번에 지정</button><button class="btn sm" data-act="jl309-unsel">선택 해제</button></div>':'')+
     '<table class="t" style="margin-top:8px"><thead><tr><th style="width:28px"><input type="checkbox" data-jlall="1" aria-label="보이는 문구 모두 선택"></th><th>원래 적힌 문구</th><th class="num">건수</th><th>상세 직무</th><th>최근</th></tr></thead><tbody>'+
     V.slice(0,200).map(function(x){return'<tr><td><input type="checkbox" data-jlsel="'+esc(x.t)+'"'+(sel[x.t]?" checked":"")+'></td><td>'+esc(x.t)+'</td><td class="num">'+x.n+'</td><td><select data-jlmap="'+esc(x.t)+'">'+opt([["","선택"]].concat(std.map(function(s){return[s,s]})),x.c.std||"")+'</select> '+(x.c.how==="확인"?'<span class="b sm ok">확인</span>':x.c.how==="자동"?'<span class="jl309s">자동</span>':'<span class="b sm warn">미분류</span>')+'</td><td class="small muted">'+esc(md(x.last||""))+'</td></tr>'}).join("")+
@@ -26395,7 +26395,7 @@ function jl313XData(F){F=F||jl312F();var L=jlStats(F),mon=F.pay==="m",sm=jl312Su
   return{H:H,R:R,LV:LV,EX:EX,sum:sm,n:L.length,mon:mon}}
 function jl313Xlsx(){var F=jl312F(),D=jl313XData(F);if(!D.n){toast("내보낼 줄이 없어요");return}toast("엑셀 파일을 만드는 중…");
   return xlLoad().then(function(X){var wb=new X.Workbook();wb.creator="브이드림 운영페이지";var hd=function(ws,row){var r=ws.addRow(row);r.font={bold:true,color:{argb:"FFFFFFFF"}};r.eachCell(function(c){c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF5A4CA8"}};c.alignment={vertical:"middle"}});ws.views=[{state:"frozen",ySplit:1}]};
-    var s1=wb.addWorksheet("단가표");hd(s1,D.H);D.R.forEach(function(r){s1.addRow(r)});s1.columns.forEach(function(c,i){c.width=[14,18,8,22,9,9,11,13,13,13,16,14,15,9][i]||12;if(i>=7&&i<=10)c.numFmt="#,##0"});s1.autoFilter={from:"A1",to:{row:1,column:D.H.length}};
+    var s1=wb.addWorksheet("단가표");hd(s1,D.H);D.R.forEach(function(r){s1.addRow(r)});s1.columns.forEach(function(c,i){c.width=[14,18,8,22,9,9,11,13,13,13,16,14,15,9][i]||12;if(/\(원\)/.test(D.H[i]||""))c.numFmt="#,##0"/* v315 칸 위치 대신 이름으로 */});s1.autoFilter={from:"A1",to:{row:1,column:D.H.length}};
     var s2=wb.addWorksheet("레벨 기준");hd(s2,D.LV[0]);D.LV.slice(1).forEach(function(r){s2.addRow(r)});s2.columns.forEach(function(c,i){c.width=i?42:12;c.alignment={wrapText:true,vertical:"top"}});
     var s3=wb.addWorksheet("설명");hd(s3,D.EX[0]);D.EX.slice(1).forEach(function(r){s3.addRow(r)});s3.getColumn(1).width=24;s3.getColumn(2).width=90;s3.getColumn(2).alignment={wrapText:true,vertical:"top"};
     return wb.xlsx.writeBuffer()}).then(function(buf){var nm="단가표_"+TODAY+".xlsx",a=document.createElement("a");a.href=URL.createObjectURL(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download=nm;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000);
@@ -26435,7 +26435,53 @@ window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.
    ========================================================== */
 function jlEffJob(job,detail){return job==="사무행정"&&/스크랩/.test(String(detail||""))?"뉴스스크랩":job}
 function jl314Scrap(){var C={};(DB.rr||[]).forEach(function(r){if(r.status==="취소")return;(r.jobs||[]).forEach(function(j){if(j&&j.job==="사무행정"&&jlEffJob(j.job,j.detail)!=="사무행정")C[jlNorm(j.detail)]=1})});return Object.keys(C).length}
-jlClsHtml=(function(o){return function(){var h=o.apply(this,arguments),n=jl314Scrap();if(!n)return h;return'<p class="hint jl314n">\'스크랩\'이 들어간 문구 '+n+'개는 단가표에서 <b>뉴스스크랩</b> 직무로 세서 이 목록에서 뺐어요 (요청 원본은 그대로)</p>'+h}})(jlClsHtml);
+/* v315: 안내 줄은 없앰 · 스크랩 문구도 분류 목록에 보이고 대분류에서 바꿈 */
+
+/* ==========================================================
+   v315
+     ① 상세 직무 분류: 문구마다 대분류(채용 요청 직무: 사무행정 · 뉴스스크랩 · 디자인 · 미술 · 음악 · 체육 · 기타)
+        기본은 사무행정 ('스크랩' 문구만 뉴스스크랩) · 바꾼 것은 app_settings jl315_job · 사무행정일 때만 상세
+        한 번에 지정에서도 대분류 · '대분류 바꾼 것만' 필터 · 요청 원본은 그대로
+     ② 단가표 [금액 | 최저시급 대비] · 대비는 +700원 (+6.8%) / 최저시급
+     ③ 금액은 100원 단위 버림 · 버려서 최저시급보다 낮아지면 최저시급 그대로 (화면 · 엑셀)
+   ========================================================== */
+var JL315_JOBS=["사무행정","뉴스스크랩","디자인","미술","음악","체육","기타"];
+function jl315Map(){return appSet("jl315_job",null)||{}}
+function jl315Def(t){return/스크랩/.test(String(t||""))?"뉴스스크랩":"사무행정"}
+jlEffJob=function(job,detail){if(job!=="사무행정")return job;var t=jlNorm(detail),m=jl315Map()[t];return m||jl315Def(t)};
+function jl315Dec(k){return String(k).replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&")}
+jlClsHtml=(function(o){return function(){var h=o.apply(this,arguments),M=jl315Map();
+  h=h.replace("<th>상세 직무</th>","<th>대분류</th><th>상세 직무</th>").replace(/colspan="5"/g,'colspan="7"');
+  h=h.replace(/<td><select data-jlmap="([^"]*)">/g,function(m,key){var t=jl315Dec(key),ej=jlEffJob("사무행정",t),ch=!!M[t]&&M[t]!==jl315Def(t);
+    return'<td><select data-jl315job="'+key+'" aria-label="대분류">'+JL315_JOBS.map(function(j){return'<option'+(j===ej?" selected":"")+'>'+j+'</option>'}).join("")+'</select>'+(ch?' <span class="jl309s" title="기본: '+jl315Def(t)+'">바꿈</span>':'')+'</td><td><select data-jlmap="'+key+'"'+(ej!=="사무행정"?' disabled title="대분류가 사무행정일 때만 상세를 골라요"':'')+'>'});
+  h=h.replace('<select data-jlbulk="1">','<select data-jl315bulk="1" aria-label="대분류 한 번에"><option value="">대분류 그대로</option>'+JL315_JOBS.map(function(j){return'<option>'+j+'</option>'}).join("")+'</select> <select data-jlbulk="1">');
+  return h}})(jlClsHtml);
+function jl315Set(keys,job){var M=Object.assign({},jl315Map()),n=0;keys.forEach(function(t){var b=M[t]||jl315Def(t);if(job===jl315Def(t))delete M[t];else M[t]=job;if(b!==job)n++});appSetPut("jl315_job",M);JL_ST=null;if(typeof JL312_ST!=="undefined")JL312_ST=null;if(typeof JL312_HV!=="undefined")JL312_HV++;jlSave();return n}
+window.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||t.dataset.jl315job==null)return;var k=jl315Dec(t.dataset.jl315job),b=jlEffJob("사무행정",k);jl315Set([k],t.value);S.jl313keep=S.jl313keep||{};S.jl313keep[k]=1;logChange("app_settings","jl315_job","상세 직무 분류",k+" · 대분류",b,t.value,"내부");ev.stopImmediatePropagation();jlRe()},true);
+window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="jl309-bulk"]');if(!b)return;var jb=(document.querySelector("[data-jl315bulk]")||{}).value;if(!jb)return;var sel=S.jl309sel||{},K=Object.keys(sel).filter(function(k){return sel[k]});if(!K.length)return;
+  var n=jl315Set(K,jb);logChange("app_settings","jl315_job","상세 직무 분류","대분류 한 번에","",K.length+"개 → "+jb,"내부");S.jl313keep=S.jl313keep||{};K.forEach(function(k){S.jl313keep[k]=1});
+  var std=(document.querySelector("[data-jlbulk]")||{}).value;if(!std||jb!=="사무행정"){var lv=(document.querySelector("[data-jlbulklv]")||{}).value;if(lv){var ML=Object.assign({},jlMapLv());K.forEach(function(k){ML[k]=lv});appSetPut("jl309_maplv",ML);logChange("app_settings","jl309_maplv","상세 직무 분류","기본 레벨 한 번에","",K.length+"개 → "+lv,"내부")}
+    ev.preventDefault();ev.stopImmediatePropagation();S.jl309sel={};toast(K.length+"개 문구 → "+jb+(lv?" · "+lv:""));jlRe()}},true);
+
+/* ---------- ③ 100원 단위 ---------- */
+function jl315R(v,min){if(v==null||isNaN(v))return null;var m=min==null?jlMW():min,f=Math.floor(v/100)*100;return(v>=m&&f<m)?m:f}
+function jl315Won(v,min){var x=jl315R(v,min);return x==null?"-":x.toLocaleString("ko-KR")+"원"}
+/* ---------- ② 최저시급 대비 ---------- */
+jl312F=(function(o){return function(){var F=o.apply(this,arguments);if(F.vs===undefined)F.vs="amt";return F}})(jl312F);
+function jl315Vs(w,F,hh){var m=jlMW();if(w==null||isNaN(w))return"-";if(F.pay==="m"){var a=jl315R(jlMonth(jl315R(w,m),hh),jlMonth(m,hh)),b=jlMonth(m,hh),d=Math.round((a-b)/100)*100;return d<=0?"최저시급":"+"+d.toLocaleString("ko-KR")+"원 (+"+(Math.round(d*1000/b)/10)+"%)"}
+  var x=jl315R(w,m),d2=x-m;return d2<=0?"최저시급":"+"+d2.toLocaleString("ko-KR")+"원 (+"+(Math.round(d2*1000/m)/10)+"%)"}
+jl312Val=(function(o){return function(r,k,F,tot,pdf){var mon=F.pay==="m",hh=r.dayH||4,m=jlMW();
+  if(k==="w"){if(pdf&&!r.nw)return"자료 없음";var w=pdf?r.wRaw:r.w;if(F.vs==="min")return jl315Vs(w,F,hh);return mon?jl315Won(jlMonth(jl315R(w,m),hh),jlMonth(m,hh)):jl315Won(w,m)}
+  if(k==="rng"){if(!r.nw)return"-";var a=mon?jl315R(jlMonth(jl315R(r.wMin,m),hh),jlMonth(m,hh)):jl315R(r.wMin,m),b=mon?jl315R(jlMonth(jl315R(r.wMax,m),hh),jlMonth(m,hh)):jl315R(r.wMax,m);return a.toLocaleString("ko-KR")+"~"+b.toLocaleString("ko-KR")+"원"}
+  return o.apply(this,arguments)}})(jl312Val);
+jl312Cols=(function(o){return function(F){var C=o.apply(this,arguments);if(F.vs==="min")C=C.map(function(c){return c[0]==="w"?["w",F.pay==="m"?"월 급여 · 최저시급 대비":"최저시급 대비",c[2]]:c});return C}})(jl312Cols);
+jlTblHtml=(function(o){return function(){var F=jl312F(),h=o.apply(this,arguments);var seg='<div class="seg sm">'+[["amt","금액"],["min","최저시급 대비"]].map(function(x){return'<button class="'+(F.vs===x[0]?"on":"")+'" data-act="jl312-f" data-k="vs" data-v="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div>';
+  h=h.replace(/(data-k="pay" data-v="m">월급<\/button><\/div>)/,"$1 "+seg);
+  return h.replace("· 과거 채용 기록 포함","· 과거 채용 기록 포함 · 금액은 100원 단위 버림(최저시급 아래로는 안 내림)"+(F.vs==="min"?" · 대비 = 올해 최저시급 "+jlWon(jlMW())+" 기준":""))}})(jlTblHtml);
+/* 엑셀: 100원 단위 · 최저시급 대비 칸 */
+jl313XData=(function(o){return function(F){var D=o.apply(this,arguments),m=jlMW(),L=jlStats(F||jl312F());var i=D.H.indexOf("평균 시급 (원)");if(i<0)return D;
+  D.H.splice(i+1,0,"최저시급 대비 (원)");D.R=D.R.map(function(r,ri){var hh=(L[ri]&&L[ri].dayH)||4,mm=jlMonth(m,hh);[i,i+1,i+2].forEach(function(c){r[c]=jl315R(r[c],m)});if(r[i+3]!=null)r[i+3]=r[i]!=null?jl315R(jlMonth(r[i],hh),mm):null;var df=r[i]!=null?Math.max(0,r[i]-m):null;r.splice(i+1,0,df);return r});
+  D.EX.push(["최저시급 대비 (원)","평균 시급 − 올해 최저시급("+jlWon(m)+") · 0 = 최저시급"]);D.EX.push(["금액 단위","100원 단위 버림 · 버려서 최저시급보다 낮아지면 최저시급 그대로"]);return D}})(jl313XData);
 
 /* ============ 렌더 ============ */
 function renderMain(){
