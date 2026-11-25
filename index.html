@@ -19296,8 +19296,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v321 — 근로계약서는 운영페이지 목록에 그대로 · 메일 첨부만 뺌 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v321";APP_VER_ON="11/25";APP_NOTE="v320에서 입구서 추가 첨부 목록에서 근로계약서를 빼던 것을 되돌림 (운영페이지 목록은 그대로) · 메일 발송 때만 Apps Script(v247)가 근로계약서를 빼고 보냄";
+/* v322 — 설정값 DB 저장 누락 정리 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v322";APP_VER_ON="11/25";APP_NOTE="관리자 설정 중 바로 DB에 저장되지 않던 것(중증서류 스킵 협의 기간 등) · 바꾸면 바로 저장";
 
 /* ================================================================
    v208
@@ -26563,14 +26563,14 @@ if(typeof dlShow245==="function")dlShow245=(function(o){return function(k){var r
 /* ==========================================================
    v320
      ① 근로계약서(미서명본)는 메일로 보내지 않음: [계약서만 메일로 보내기] 막음 · (v321) 입구서 추가 첨부 목록은 그대로 두고 메일 첨부만 Apps Script v247 에서 뺌
-     ② 단가표 설정(jl309_*)이 DB에 저장되지 않던 것: 바꾸면 바로 저장(schedulePersist)
+     ② 단가표 설정(jl309_*)이 DB에 저장되지 않던 것: 바꾸면 바로 저장(schedulePersist) · (v322) 모든 app_settings 로 넓힘 (중증서류 스킵 협의 기간도 저장 안 되던 것)
      ③ 단가표 기본값 입력 방식: 최저시급 + 얼마(최저시급을 따라감) · 금액(시급) · 금액(월급 → 시급으로 저장)
    ========================================================== */
 /* ① */
 window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('[data-act="ctr-mail"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();toast("근로계약서는 메일로 보내지 않아요")},true);
 if(typeof JOB_KIND!=="undefined")JOB_KIND.send_extra="근로계약서 메일 (v320부터 안 씀)";
 /* ② */
-appSetPut=(function(o){return function(k,v){var r=o.apply(this,arguments);if(/^jl3/.test(String(k||""))){if(typeof RM_DIRTY!=="undefined")RM_DIRTY++;if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}return r}})(appSetPut);
+appSetPut=(function(o){return function(k,v){var r=o.apply(this,arguments);if(k){/* v322 모든 설정(중증서류 스킵 협의 기간 등)도 바로 DB에 저장 */if(typeof RM_DIRTY!=="undefined")RM_DIRTY++;if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}return r}})(appSetPut);
 /* ③ 기본값 입력 방식 3가지: 최저시급 + 얼마(p · 최저시급이 바뀌면 같이 움직임) · 시급(w) · 월급(→ 시급으로 저장) */
 jlBase=(function(o){return function(job,std,lv){var r=o.apply(this,arguments),B=jlBaseAll(),v=B[job+"|"+(std||"")+"|"+(lv||"")]||B[job+"||"+(lv||"")]||{};if(!+v.w&&v.p!=null&&v.p!==""){r.w=+jlOpt().minWage+(+v.p||0);r.plus=+v.p||0}return r}})(jlBase);
 function jl320H(){return+(S.jl320h||4)}
