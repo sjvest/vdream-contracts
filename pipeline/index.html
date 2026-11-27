@@ -9543,7 +9543,7 @@ async function openOrg(id){
     </div>
     <div class="info-row"><span class="info-key">담당자</span>
       <div style="flex:1;">
-        ${(o.contacts&&o.contacts.length)?o.contacts.filter(c=>c.status!=='변경됨').map(c=>`
+        ${(o.contacts&&o.contacts.length)?(o.contacts.filter(c=>c.status!=='변경됨'&&c.status!=='퇴사').length?'':'<span style="color:var(--text3);font-size:12px;">현재 담당자 없음 (모두 퇴사·변경 처리됨)</span>')+o.contacts.filter(c=>c.status!=='변경됨'&&c.status!=='퇴사').map(c=>`
           <div style="margin-bottom:4px;">
             <span style="font-weight:600;">${cpv(c.name)}</span>
             ${c.phone?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${cpv(c.phone)}</span>`:''}
@@ -10643,7 +10643,7 @@ function mergeContactIntoContactsArray(o,info){
   // 완전 일치만 보면 매칭이 실패한다. 한쪽이 다른 쪽 이름으로 시작하면 같은 사람으로 본다 (2026-08-03).
   const norm=s=>(s||'').replace(/\s/g,'');
   const idx=o.contacts.findIndex(c=>{
-    if(c.status==='변경됨')return false;
+    if(c.status==='변경됨'||c.status==='퇴사')return false;
     const a=norm(c.name),b=norm(info.contact_name);
     return a&&b&&(a===b||a.startsWith(b)||b.startsWith(a));
   });
