@@ -2488,6 +2488,8 @@ let _pendingInitialHash=null; // 새로고침 시 URL 해시로 즉시 진입한
 let jobScopedRegistration=null; // "+지원자 등록"으로 채용건 컨텍스트에서 인재 등록 폼을 열었을 때의 job id (사람이 다시 고르지 않고 자동 연결하기 위함)
 let selectedOrgIds=new Set(); // 기관 목록 일괄 빠른 접촉용 체크박스 선택 상태 (2026-08-22)
 let bulkQuickContactPending=false; // 일괄 저장 중복 클릭 방지
+// 재직자(운영페이지 근로자 DB)에서 가져온 가상 인재: 새 인재 등록 때 이름만 같다고 정보를 불러오면 안 되므로 연결 대상에서 제외한다.
+function isWorkerTalent(t){return !!t&&(t._k==='wk'||t.created_by_name==='V-Work'||/운영페이지 근로자 DB/.test(t.memo||''));}
 let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일치해 연결하기로 한 기존 talent.id (재지원/동명이인 중복등록 방지)
 
 // ── 새 버전 배포 감지 배너 (2026-07-30) ──
@@ -5782,7 +5784,7 @@ function searchTalentMatch(i){
   if(!dd)return;
   const q=(document.getElementById(`t-name-${i}`)?.value||'').trim();
   // 기관명 검색과 동일하게, 비어있어도 포커스만 하면 전체 인재 목록을 바로 보여준다(빈 문자열은 모든 이름에 포함되므로)
-  const results=(cache.talents||[]).filter(t=>(t.name||'').includes(q)).slice(0,10);
+  const results=(cache.talents||[]).filter(t=>!isWorkerTalent(t)&&(t.name||'').includes(q)).slice(0,10);
   if(!results.length&&!q){dd.style.display='none';dd.innerHTML='';return;}
   dd.style.display='block';
   dd.innerHTML=results.length?results.map(t=>`
@@ -5796,6 +5798,12 @@ function searchTalentMatch(i){
 function selectExistingTalent(i,talentId){
   const t=(cache.talents||[]).find(x=>x.id===talentId);
   if(!t)return;
+  if(isWorkerTalent(t)){toast('재직자(근로자 DB)는 인재 등록에서 불러올 수 없어요');return;}
+  // 이름이 같다는 이유만으로 정보를 불러오지 않는다: 입력한 전화번호가 있는데 뒤 4자리가 다르면 다른 사람으로 보고 막는다.
+  const typedPh=(document.getElementById(`t-phone-${i}`)?.value||'').replace(/\D/g,'');
+  const tPh=(t.phone||'').replace(/\D/g,'');
+  if(typedPh.length>=4&&tPh.length>=4&&typedPh.slice(-4)!==tPh.slice(-4)){toast(`전화번호가 달라서 다른 사람으로 보여요 (기존 ${t.phone}). 새 인재로 등록하려면 목록에서 고르지 마세요.`);const dd0=document.getElementById(`t-name-dropdown-${i}`);if(dd0)dd0.style.display='none';return;}
+  if(!confirm(`'${t.name}' (${t.phone||'전화번호 없음'} · 등록일 ${t.created_at?String(t.created_at).slice(0,10):'—'}) 님과 같은 사람인가요?\n\n같은 사람이면 [확인]을 누르세요. 그 사람의 전화번호·생년월일·장애정보·기관을 불러와 지원이력만 추가합니다.\n다른 사람이면 [취소]를 누르고 새로 등록하세요.`))return;
   talentLinkMap[i]=talentId;
   const dd=document.getElementById(`t-name-dropdown-${i}`);if(dd)dd.style.display='none';
   document.getElementById(`t-name-${i}`).value=t.name;
@@ -5889,6 +5897,7 @@ async function saveTalent(){
     if(!name){toast(`${i+1}번째 지원자명을 입력하세요`);return;}
     const linkedId=talentLinkMap[i];
     const existing=linkedId?(cache.talents||[]).find(t=>t.id===linkedId):null;
+    if(existing&&isWorkerTalent(existing)){toast(`${name}님은 재직자(근로자 DB) 정보라 인재 등록으로 연결할 수 없어요. 연결을 해제하고 새로 등록해주세요.`);return;}
     if(existing){linkedTalents[i]=existing;continue;}
     newRowIndexes.push(i);
     newRows.push({
