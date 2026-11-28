@@ -2052,6 +2052,18 @@ button.chip{white-space:nowrap}
 /* v326 채용 요청 창: 차수 머리줄이 창 머리를 덮지 않게 · 긴 직무 집계는 한 줄 */
 .rrround.rd243-ing>.rrrh,.rrround.rd243-done>.rrrh{top:var(--phh,0px)}
 .sv3jt .b{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
+/* v327 직무 줄 구분 · 분리 */
+.k327b{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;white-space:nowrap;background:#EAF4EE;color:#1f7a45;border:1px solid #CFE7D8}
+.k327b.rp{background:#EFEDF7;color:#4b3f99;border-color:#DCD7F0}
+select.k327{display:block;margin-top:3px;font-size:12px;max-width:180px;border-radius:6px;padding:2px 4px;border:1px solid #CFE7D8;background:#F5FBF7;color:#1f7a45}
+select.k327.rp{border-color:#DCD7F0;background:#F6F5FB;color:#4b3f99}
+.ln327{margin-top:6px;display:flex;flex-direction:column;gap:3px}
+.ln327r{display:flex;align-items:center;gap:6px;font-size:13px}
+.ln327l{font-size:12.5px;color:#4b3f99}
+.r327tip{display:block;font-size:12px;color:var(--muted,#777);margin-top:4px}
+/* v328 차수 머리줄 고정: 차수 상자가 고정 기준이 되지 않게 · 열 이름 줄도 고정 */
+.rrround.rd243-ing,.rrround.rd243-done{overflow:clip}
+.rrround.rd243-ing>table.rrc>thead th,.rrround.rd243-done>table.rrc>thead th{position:sticky;top:calc(var(--phh,0px) + var(--rrh,0px));z-index:2;background:#fff;box-shadow:0 1px 0 var(--line,#e8e6f0)}
 </style>
 </head>
 <body>
@@ -19304,8 +19316,8 @@ var HELP_URL="guide/index.html";
 function helpLink(){var h1=document.querySelector("#main .hd h1");if(!h1||h1.querySelector(".helpq"))return;h1.insertAdjacentHTML("beforeend",' <a class="helpq" href="'+HELP_URL+'#'+encodeURIComponent(S.view||"menus")+'" target="_blank" rel="noopener" title="이 메뉴 도움말 (새 탭)" aria-label="도움말">?</a>')}
 regAfter("v207 도움말",helpLink);
 
-/* v326 — 창 Esc · 겹침 · 다른 메뉴 이동 띠 (이전 버전 기록은 src git log · 각 모듈 머리말) */
-APP_VER="v326";APP_VER_ON="11/25";APP_NOTE="Esc로 맨 위 창 하나씩 닫힘(장애 재판정 · 사전 공유 · 작은 확인 창 등 안 닫히던 것) · 작은 창 위에서 오른쪽 창을 열면 작은 창 닫힘 · 창 안 버튼으로 다른 메뉴로 가면 [← 돌아가기] 띠 · 휴대폰 칩 줄바꿈";
+/* v328 — 담당자 목록 채용파트 먼저 · 차수 머리줄 고정 오류 (이전 버전 기록은 src git log · 각 모듈 머리말) */
+APP_VER="v328";APP_VER_ON="11/28";APP_NOTE="채용 요청 담당 거르기 · 조율 요청 담당(채용 쪽) 목록에서 채용파트를 맨 위로 · 채용 요청 창 차수 머리줄이 아래로 밀려 내용을 덮던 오류 수정 · 후보 표 열 이름 줄도 고정";
 
 /* ================================================================
    v208
@@ -26733,8 +26745,191 @@ regActs({"v326-back":function(){var B=S.v326back;S.v326back=null;if(!B)return;go
 window.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest('#nav [data-act="view"], [data-act="view"]');if(b&&!b.closest("#modal, body > .ov, #main aside.pnl"))S.v326back=null},true);
 regAfter("v326 이동 버튼 표시",function(){V326_NAV.forEach(function(a){[].forEach.call(document.querySelectorAll('#modal [data-act="'+a+'"], #main aside.pnl [data-act="'+a+'"]'),function(b){if(b.dataset.v326)return;b.dataset.v326="1";if(!/↗/.test(b.textContent))b.insertAdjacentHTML("beforeend",' <span aria-hidden="true">↗</span>');b.title=(b.title?b.title+" · ":"")+"다른 메뉴로 이동해요"})})});
 /* ⑤ 오른쪽 창 머리 높이 → 차수 머리줄 고정 위치 (긴 직무 집계로 머리가 높아져도 덮지 않게) */
-regAfter("v326 창 머리 높이",function(){[].forEach.call(document.querySelectorAll("aside.pnl"),function(a){var ph=a.querySelector(":scope > .ph");if(!ph)return;var h=ph.offsetHeight;if(h&&a.style.getPropertyValue("--phh")!==h+"px")a.style.setProperty("--phh",h+"px")});
+regAfter("v326 창 머리 높이",function(){[].forEach.call(document.querySelectorAll("aside.pnl"),function(a){var ph=a.querySelector(":scope > .ph");if(!ph)return;var h=getComputedStyle(ph).position==="sticky"?ph.offsetHeight:0;/* v328 창 머리가 고정일 때만 */if(a.style.getPropertyValue("--phh")!==h+"px")a.style.setProperty("--phh",h+"px")});
   [].forEach.call(document.querySelectorAll(".sv3jt .b"),function(b){if(!b.dataset.v326t){b.dataset.v326t="1";b.title=(b.textContent||"")+(b.title?" · "+b.title:"")}})});
+
+/* ==========================================================
+   v327 채용 요청 직무 줄 구분 · 줄 분리
+     ① 합격자 입사 구분 = 그 후보가 들어갈 직무 줄 구분 (대체 줄 = 대체 · 그 사람 자리 / 나머지 = 추가 · 신규)
+        · 자리 배정: 직접 고른 자리 → 이미 연결된 대체 대상 → 같은 직무 대체 자리 → 같은 직무 추가 줄 → 남은 자리
+        · 입구서 불러오기 · 입사 등록(rrApplyKind)이 요청 전체 구분 대신 이 값을 씀
+        · 후보 줄: 섞인 요청(대체 + 추가)이면 합격자 옆에 자리 고르기 (바꾸면 입구서 · 고용 건도 같이 바뀜)
+     ② 관리자: 채용 요청 화면 위 '요청과 입사 구분이 다른 입사자 n명' → 목록에서 바로잡기 (변경 이력)
+     ③ 요청서: 줄마다 대체 · 추가 표시 · 구분 '추가'에서 [대체 대상도 함께] (대체 + 추가 한 요청)
+     ④ 직무 줄 분리: 요청 정보 '직무 · 인원' 아래 줄마다 [분리] → 새 채용 요청 (조건 복사 · 입사 시기 · 마감 새로)
+        · 연결은 app_settings rr327:<새 요청> · 두 요청에 '분리됨 ↔ 원래 요청' · 후보가 없으면 [다시 합치기]
+        · 진행 중 후보는 원래 요청에 남음 (지원 기록 · 서류 연결이 꼬이지 않게)
+   ========================================================== */
+
+/* ---------- ① 자리 배정 ---------- */
+function rr327Slots(r){var L=[];(r.jobs||[]).forEach(function(j,li){if(!j||!(j.job||j.repl))return;
+    if(j.repl)L.push({li:li,repl:j.repl,kind:"대체",job:j.job||"",det:jlNorm(j.detail)});
+    else for(var k=0;k<(+j.n||1);k++)L.push({li:li,repl:"",kind:jlLineKind(r,j),job:j.job||"",det:jlNorm(j.detail)})});
+  (r.replaced||[]).forEach(function(id){if(!L.some(function(s){return s.repl===id})){var e=emp(id);L.push({li:-1,repl:id,kind:"대체",job:(e&&e.job)||"",det:""})}});
+  return L}
+function rr327Mixed(r){var S0=rr327Slots(r);return S0.some(function(s){return s.repl})&&S0.some(function(s){return!s.repl})}
+function rr327Lab(s){if(!s)return"";if(s.repl){var e=emp(s.repl);return"대체 · "+((e&&(wk(e.worker)||{}).name)||"?")+" 자리"}return s.kind+" · "+(s.job||"직무")+(s.det?"("+s.det+")":"")}
+function rr327Short(s,slots){if(s.repl)return rr327Lab(s);var g={};slots.forEach(function(z){if(!z.repl)g[z.job+"|"+z.det]=1});return Object.keys(g).length>1?rr327Lab(s):s.kind}
+function rr327Key(s){return s.repl?"r:"+s.repl:"j:"+s.job+"|"+s.det}
+function rr327EmpOf(x,c,i){var eid=typeof c.hired==="string"?c.hired:c.hired?c.emp:"";var a=(DB.intake||[]).find(function(b){return b.rrr===x.id&&+b.rri===+i});if(!eid&&a&&a.emp)eid=a.emp;var e=eid?emp(eid):null;if(e&&e.cancelled)e=null;return{a:a||null,e:e}}
+function rr327Assign(r){var slots=rr327Slots(r),used=slots.map(function(){return false}),M={},C=[];
+  rrRounds(r.id).forEach(function(x){(x.cands||[]).forEach(function(c,i){if(c.final==="합격")C.push({x:x,c:c,i:i,k:x.id+"|"+i,L:rr327EmpOf(x,c,i)})})});
+  C.sort(function(p,q){return String(p.c.final_on||"9").localeCompare(String(q.c.final_on||"9"))||(p.x.seq||0)-(q.x.seq||0)||p.i-q.i});
+  var take=function(f){for(var s=0;s<slots.length;s++)if(!used[s]&&f(slots[s])){used[s]=true;return slots[s]}return null};
+  /* 직접 고른 자리 */
+  C.forEach(function(o){var v=o.c.jl327;if(!v)return;var s=take(function(s){return rr327Key(s)===v});if(s)M[o.k]=s});
+  /* 이미 연결된 대체 대상 */
+  C.forEach(function(o){if(M[o.k])return;var id=(o.L.e&&o.L.e.replaced)||(o.L.a&&o.L.a.repl)||"";if(!id)return;var s=take(function(s){return s.repl===id});if(s)M[o.k]=s});
+  /* 이미 추가 · 신규로 들어간 사람 */
+  C.forEach(function(o){if(M[o.k])return;var h=o.L.e&&o.L.e.hire_type&&o.L.e.hire_type!=="신규"?o.L.e.hire_type:o.L.a?o.L.a.ht:"";if(!h||h==="대체")return;var jb=o.c.job||"";var s=take(function(s){return!s.repl&&s.job===jb})||take(function(s){return!s.repl});if(s)M[o.k]=s});
+  /* 나머지: 같은 직무 대체 → 같은 직무 추가 → 남은 자리 */
+  C.forEach(function(o){if(M[o.k])return;var jb=o.c.job||"",dt=jlNorm(o.c.jdet);
+    var s=take(function(s){return s.repl&&jb&&s.job===jb})||take(function(s){return!s.repl&&jb&&s.job===jb&&(!dt||s.det===dt)})||take(function(s){return!s.repl&&jb&&s.job===jb})||take(function(s){return s.repl&&!s.job})||take(function(s){return s.repl})||take(function(){return true});
+    if(s)M[o.k]=s});
+  return M}
+function rr327SlotOf(r,xid,i){if(!r||!xid||i==null)return null;return rr327Assign(r)[xid+"|"+(+i)]||null}
+function rr327Save(){if(typeof RM_DIRTY!=="undefined")RM_DIRTY++;if(LIVE&&READY&&typeof schedulePersist==="function")schedulePersist()}
+
+/* 입구서 불러오기: 줄 구분으로 */
+var _rrLoadOk327;rrLoadOk=layer("rrLoadOk",rrLoadOk,12411,"v327 직무 줄 구분",function(p){_rrLoadOk327=p;return function(){var n0=DB.intake.length,res=_rrLoadOk327.apply(this,arguments),N=DB.intake.slice(n0);
+  try{N.forEach(function(a){if(a.rrr)a._r327=a.repl,a.repl=""});N.forEach(function(a){if(!a.rrr)return;var r=rcReq(a),s=r&&rr327SlotOf(r,a.rrr,a.rri);var old=a._r327;delete a._r327;
+      if(!s){a.repl=old||"";return}if(a.ht!==s.kind)logChange("intake_applicants",a.id,a.name,"입사 구분 (직무 줄)",a.ht||"신규",s.kind,"내부");a.ht=s.kind;a.repl=s.kind==="대체"?(s.repl||""):""})}
+  catch(e){console.warn("[v327 입구서 구분]",e);N.forEach(function(a){if("_r327"in a){if(!a.repl)a.repl=a._r327||"";delete a._r327}})}
+  return res}});
+/* 불러오기 창: 구분 칸 */
+var _rrLoadOpen327;rrLoadOpen=layer("rrLoadOpen",rrLoadOpen,12411,"v327 직무 줄 구분",function(p){_rrLoadOpen327=p;return function(){var res=_rrLoadOpen327.apply(this,arguments);
+  try{[].forEach.call(document.querySelectorAll("#modal .rlchk"),function(ck){var P=String(ck.dataset.k||"").split("|"),x=DB.rrr.find(function(y){return y.id===P[0]}),r=x&&rcOf(x.req),s=r&&rr327SlotOf(r,P[0],P[1]);if(!s)return;var td=ck.closest("tr")&&ck.closest("tr").children[3];if(td)td.textContent=rr327Lab(s)})}catch(e){}
+  return res}});
+/* 입사 등록 · 연결: 줄 구분 */
+rrApplyKind=function(a,e,quiet){var r=rcReq(a)||(a.rr&&rcOf(a.rr));if(!r||!e)return false;var w=wk(e.worker)||{},ch=[];var s=a.rrr?rr327SlotOf(r,a.rrr,a.rri):null,K=s?s.kind:r.kind; /* v327 요청 전체 구분 → 후보 직무 줄 구분 */
+  if(K&&K!==e.hire_type){logChange("workers",e.worker,w.name||"","입사 구분 (채용 요청)",e.hire_type||"신규",K,"내부");e.hire_type=K;ch.push("입사 구분 "+K)}
+  if(e.hire_type==="대체"&&!e.replaced&&!e.replaced_name){var id=(s&&s.repl)||a.repl||rrPickRepl(r,a,e);if(id&&emp(id)){e.replaced=id;a.repl=id;logChange("workers",e.worker,w.name||"","대체 대상 (채용 요청)","",(wk(emp(id).worker)||{}).name||"","내부");ch.push("대체 대상 "+((wk(emp(id).worker)||{}).name||""))}}
+  if(a.ht!==e.hire_type)a.ht=e.hire_type;if(!e.job){var j=a.job||((r.jobs||[])[0]||{}).job;if(j)e.job=j}
+  if(ch.length&&!quiet)toast("채용 요청에 맞춰 "+ch.join(" · ")+"을(를) 넣었어요");return ch.length>0};
+
+/* 한 후보에 자리 반영 (입구서 · 고용 건) */
+function rr327Apply(r,x,i,s){var c=(x.cands||[])[+i];if(!c||!s)return 0;var L=rr327EmpOf(x,c,i),a=L.a,e=L.e,n=0,nm=c.name||"";
+  if(a&&!a.completed){if(a.ht!==s.kind){logChange("intake_applicants",a.id,a.name,"입사 구분 (직무 줄)",a.ht||"신규",s.kind,"내부");a.ht=s.kind;n++}var rp=s.kind==="대체"?(s.repl||""):"";if((a.repl||"")!==rp){a.repl=rp;n++}}
+  if(e){var w=wk(e.worker)||{};nm=w.name||nm;
+    if(e.hire_type!==s.kind){logChange("workers",e.worker,nm,"입사 구분 (직무 줄 바로잡기)",e.hire_type||"신규",s.kind,"내부");e.hire_type=s.kind;n++}
+    if(s.kind==="대체"&&s.repl&&e.replaced!==s.repl){var b=e.replaced&&emp(e.replaced);logChange("workers",e.worker,nm,"대체 대상 (직무 줄 바로잡기)",b?(wk(b.worker)||{}).name||"":"",(wk((emp(s.repl)||{}).worker)||{}).name||"","내부");e.replaced=s.repl;n++}
+    if(s.kind!=="대체"&&(e.replaced||e.replaced_name)){var b2=e.replaced&&emp(e.replaced);logChange("workers",e.worker,nm,"대체 대상 (직무 줄 바로잡기)",b2?(wk(b2.worker)||{}).name||"":e.replaced_name||"","(없음 · "+s.kind+")","내부");e.replaced="";if(e.replaced_name)e.replaced_name="";n++}
+    if(a&&a.completed&&a.ht!==e.hire_type)a.ht=e.hire_type}
+  return n}
+
+/* ② 요청과 입사 구분이 다른 입사자 */
+function rr327Bad(){var L=[];(DB.rr||[]).forEach(function(r){if(!r||r.status==="취소"||!rr327Mixed(r))return;var M=rr327Assign(r);
+  rrRounds(r.id).forEach(function(x){(x.cands||[]).forEach(function(c,i){if(c.final!=="합격")return;var s=M[x.id+"|"+i];if(!s)return;var o=rr327EmpOf(x,c,i),e=o.e;if(!e)return;
+    var bad=e.hire_type!==s.kind||(s.kind==="대체"&&s.repl&&e.replaced!==s.repl)||(s.kind!=="대체"&&!!(e.replaced||e.replaced_name));if(bad)L.push({r:r,x:x,i:i,c:c,e:e,s:s})})})});return L}
+function rr327Now(e){var b=e.replaced&&emp(e.replaced);return(e.hire_type||"신규")+(e.hire_type==="대체"||b||e.replaced_name?" · "+(b?(wk(b.worker)||{}).name||"":e.replaced_name||"대상 없음")+" 자리":"")}
+regAfter("v327 구분 다른 입사자 띠",function(){if(S.view!=="rr"||S.role!=="admin")return;var m=document.getElementById("main");if(!m)return;var L=rr327Bad(),ex=m.querySelector(".r327band");if(!L.length){if(ex)ex.remove();return}
+  var t='<b>채용 요청과 입사 구분이 다른 입사자 '+L.length+'명</b> <span class="small muted">대체 + 추가가 섞인 요청에서 모두 같은 구분으로 들어갔을 수 있어요</span> <button class="linkbtn" data-act="r327-list">바로잡기</button>';
+  if(ex){if(ex.dataset.n!==String(L.length)){ex.innerHTML=t;ex.dataset.n=L.length}return}var hd=m.querySelector(".hd");if(!hd)return;hd.insertAdjacentHTML("afterend",'<div class="notebox r327band" data-n="'+L.length+'">'+t+'</div>')});
+function rr327ListHtml(){var L=rr327Bad();window.__r327L=L;
+  return'<div class="ov" id="r327list"><div class="dlg" role="dialog" aria-modal="true" aria-label="입사 구분 바로잡기" style="max-width:860px"><div class="ph"><div><h2>채용 요청과 입사 구분이 다른 입사자</h2><div class="small muted">합격자가 들어간 직무 줄 기준이에요 · 자리가 다르면 채용 요청 후보 줄에서 직접 고를 수 있어요</div></div><button class="close" data-act="r327-lclose" aria-label="닫기">×</button></div><div class="ps">'+
+    (L.length?'<table class="mini"><thead><tr><th>이름</th><th>기업 · 요청</th><th>지금</th><th>맞는 구분</th><th></th></tr></thead><tbody>'+L.map(function(o,k){return'<tr><td><b>'+esc((wk(o.e.worker)||{}).name||o.c.name||"")+'</b></td><td>'+esc(((coR(o.r)||{}).name||"")+" · "+rr265Lab(o.r))+'</td><td>'+esc(rr327Now(o.e))+'</td><td><b>'+esc(rr327Lab(o.s))+'</b></td><td class="nowrap"><button class="btn xs" data-act="r327-fix" data-i="'+k+'">바로잡기</button> <button class="linkbtn small" data-act="r327-go" data-i="'+k+'">요청 열기</button></td></tr>'}).join("")+'</tbody></table>':'<p class="hint">다른 입사자가 없어요</p>')+
+    '</div><div class="ps foot"><span class="grow"></span><button class="btn" data-act="r327-lclose">닫기</button>'+(L.length>1?'<button class="btn pri" data-act="r327-fixall">모두 바로잡기 ('+L.length+'명)</button>':"")+'</div></div></div>'}
+function rr327ListShow(){$("#modal").innerHTML=rr327ListHtml()}
+regActs({"r327-list":function(){rr327ListShow()},
+  "r327-lclose":function(){$("#modal").innerHTML="";render()},
+  "r327-fix":function(D0){var o=(window.__r327L||[])[+D0.i];if(!o)return;var n=rr327Apply(o.r,o.x,o.i,o.s);rr327Save();toast(n?"입사 구분을 바로잡았어요 · "+rr327Lab(o.s):"바꿀 게 없어요");rr327ListShow()},
+  "r327-fixall":function(){var L=(window.__r327L||[]).slice();askConfirm("모두 바로잡기",L.length+"명의 입사 구분 · 대체 대상을 직무 줄 기준으로 바꿔요. 변경 이력에 남아요.","바로잡기",function(){var n=0;L.forEach(function(o){if(rr327Apply(o.r,o.x,o.i,o.s))n++});rr327Save();toast(n+"명을 바로잡았어요");rr327ListShow()})},
+  "r327-go":function(D0){var o=(window.__r327L||[])[+D0.i];if(!o)return;$("#modal").innerHTML="";go("rr");S.rrSel=o.r.id;S.rrF=null;render()}});
+
+/* 후보 줄: 합격자 자리 고르기 (섞인 요청 · 대체 자리 여러 개) */
+function rr327Cands(){var P=document.querySelector("aside.pnl");if(!P)return;var cache={};
+  [].forEach.call(P.querySelectorAll('select[data-cd$="|final"]'),function(fs){var k=fs.dataset.cd.replace(/\|final$/,""),Q=k.split("|"),xid=Q[0],i=+Q[1];var tr=fs.closest("tr");if(!tr)return;var old=tr.querySelector(".k327");
+    if(fs.value!=="합격"){if(old)old.remove();return}
+    var x=(DB.rrr||[]).find(function(y){return y.id===xid}),r=x&&rcOf(x.req);if(!r)return;var c=(x.cands||[])[i];if(!c)return;
+    var slots=cache[r.id+"s"]||(cache[r.id+"s"]=rr327Slots(r)),reps=slots.filter(function(s){return s.repl}).length;if(!(rr327Mixed(r)||reps>1)){if(old)old.remove();return}
+    var M=cache[r.id]||(cache[r.id]=rr327Assign(r)),cur=M[k],mine=c.jl327||"",sig=r.id+"|"+mine+"|"+(cur?rr327Key(cur):"")+"|"+slots.length;if(old&&old.dataset.sig===sig)return;
+    var takenBy={};Object.keys(M).forEach(function(kk){if(kk!==k)takenBy[rr327Key(M[kk])]=(takenBy[rr327Key(M[kk])]||0)+1});
+    var seen={},O='<option value="">'+(cur?esc(rr327Short(cur,slots))+" (자동)":"자리 자동")+'</option>';
+    slots.forEach(function(s){var kk=rr327Key(s);if(seen[kk])return;seen[kk]=1;var cap=s.repl?1:slots.filter(function(z){return rr327Key(z)===kk}).length,full=(takenBy[kk]||0)>=cap&&mine!==kk;O+='<option value="'+esc(kk)+'"'+(mine===kk?" selected":"")+(full?" disabled":"")+'>'+esc(rr327Short(s,slots))+(full?" (다른 합격자)":"")+'</option>'});
+    var h='<select class="k327 '+(cur&&cur.repl?"rp":"ad")+'" data-k327="'+esc(k)+'" data-sig="'+esc(sig)+'" aria-label="입사 자리 (대체 · 추가)" title="이 합격자가 들어갈 자리 · 입사 구분이 이걸로 정해져요">'+O+'</select>';
+    if(old){old.outerHTML=h;return}var jt=tr.querySelector(".sv3job")||tr.querySelector('[data-cd="'+k+'|job"]');var td=jt&&jt.closest("td");if(td)td.insertAdjacentHTML("beforeend",h)})}
+/* v303 후보 표 정리(render 12301) 뒤에 */
+render=layer("render",render,12411,"v327 합격자 자리",function(p){return function(){var r=p.apply(this,arguments);try{rr327Cands()}catch(e){console.warn("[v327 합격자 자리]",e)}return r}});
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.dataset||!t.dataset.k327)return;ev.stopImmediatePropagation();var Q=t.dataset.k327.split("|"),xid=Q[0],i=+Q[1],x=(DB.rrr||[]).find(function(y){return y.id===xid}),r=x&&rcOf(x.req);if(!r)return;var c0=x.cands[i]||{},b=rr327SlotOf(r,xid,i),v=t.value;
+  cdPut(xid,i,function(c){c.jl327=v});var s=rr327SlotOf(r,xid,i);if(s){logChange("recruit_requests",r.id,(coR(r)||{}).name||"",x.seq+"차 합격자 자리 · "+(c0.name||""),b?rr327Lab(b):"-",rr327Lab(s)+(v?"":" (자동)"),"내부");var n=rr327Apply(r,x,i,s);if(n)toast("입사 구분도 "+rr327Lab(s)+"(으)로 바꿨어요")}
+  rr327Save();render()},true);
+
+/* ---------- ③ 요청서: 줄 구분 표시 · 대체 + 추가 ---------- */
+regAfter("v327 요청서 줄 구분",function(){var F=S.rrF;var f=document.querySelector(".rr2f");if(!F||!f)return;
+  [].forEach.call(f.querySelectorAll(".rrjl .rrjr"),function(row){var inp=row.querySelector("[data-i]");if(!inp)return;var j=(F.jobs||[])[+inp.dataset.i];if(!j)return;var k=j.repl?"대체":F.kind==="대체"?"추가":(F.kind||"신규"),old=row.querySelector(".k327b");if(old&&old.textContent===k)return;if(old)old.remove();
+    row.insertAdjacentHTML("afterbegin",'<span class="k327b '+(j.repl?"rp":"ad")+'">'+k+'</span>')});
+  var ch=f.querySelector(".rr2chips");if(!ch)return;var tip=f.querySelector(".r327tip"),want=F.kind==="대체"?'<span class="r327tip"><b>+ 직무</b> = 추가 인원 줄 · 대체 대상 체크 = 대체 줄 · 한 요청에 섞어도 합격자마다 맞는 구분으로 들어가요</span>':F.kind==="추가"?'<span class="r327tip"><button type="button" class="linkbtn small" data-act="r327-mix">+ 대체 대상도 함께 (대체 + 추가)</button></span>':"";
+  if(tip&&tip.outerHTML===want)return;if(tip)tip.remove();if(want)ch.insertAdjacentHTML("afterend",want)});
+regActs({"r327-mix":function(){var F=S.rrF;if(!F)return;if(typeof rrFormRead==="function")rrFormRead(F);F.kind="대체";F.replaced=F.replaced||[];rrSyncRepl(F);F.headcount=rrHead(F);toast("대체 대상을 체크해 주세요 · 지금 직무 줄은 '추가'로 남아요");render()}});
+
+/* ---------- ④ 직무 줄 분리 ---------- */
+function rr327Links(r){var to=[],from=null;(DB.appset||[]).forEach(function(o){if(!o||!/^rr327:/.test(o.key)||!o.value||o.value.joined)return;var id=o.key.slice(6);if(o.value.from===r.id){var n=rcOf(id);if(n)to.push(n)}if(id===r.id)from=Object.assign({id:o.value.from},o.value)});return{to:to,from:from}}
+function rr327CanSplit(r,li){var j=(r.jobs||[])[li];if(!j||!(j.job||j.repl))return false;var lines=(r.jobs||[]).filter(function(z){return z&&(z.job||z.repl)}).length;return lines>1||(!j.repl&&(+j.n||1)>1)}
+function rr327LineLab(r,j){var e=j.repl&&emp(j.repl);return(j.job||"직무 미정")+(j.detail?"("+j.detail+")":"")+(e?" · "+((wk(e.worker)||{}).name||"")+" 자리":" "+(+j.n||1)+"명")}
+regAfter("v327 직무 줄 분리",function(){var rid=S.rrSel;if(!rid||rid==="new")return;var r=rcOf(rid);if(!r)return;var P=document.querySelector("aside.pnl .rr2v");if(!P)return;var td=P.querySelector(".rr2t tr td");if(!td||td.querySelector(".rr2f"))return;
+  var can=!!P.querySelector('[data-act="rr-edit"]')&&r.status!=="취소"&&r.status!=="완료",J=(r.jobs||[]),Lk=rr327Links(r),mix=rr327Mixed(r);
+  var rows=J.map(function(j,li){if(!j||!(j.job||j.repl))return"";var k=jlLineKind(r,j);return'<div class="ln327r"><span class="k327b '+(j.repl?"rp":"ad")+'">'+esc(k)+'</span><span>'+esc(rr327LineLab(r,j))+'</span>'+(can&&rr327CanSplit(r,li)?'<button type="button" class="linkbtn small" data-act="r327-split" data-id="'+r.id+'" data-li="'+li+'" title="이 줄(또는 몇 명)을 새 채용 요청으로 떼어 내요 · 예) 1명은 다음 달 건으로">분리</button>':"")+'</div>'}).filter(Boolean);
+  var lk=(Lk.from?'<div class="ln327l">↖ 원래 요청에서 분리됨 · <button type="button" class="linkbtn small" data-act="r327-open" data-id="'+esc(Lk.from.id)+'">'+esc(rcOf(Lk.from.id)?rr265Lab(rcOf(Lk.from.id)):"원래 요청")+'</button>'+(can&&!rrCands(r.id).length?' · <button type="button" class="linkbtn small" data-act="r327-join" data-id="'+r.id+'">다시 합치기</button>':"")+'</div>':"")+
+    Lk.to.map(function(n){return'<div class="ln327l">↘ 분리한 요청 · <button type="button" class="linkbtn small" data-act="r327-open" data-id="'+n.id+'">'+esc(rr265Lab(n))+'</button>'+(n.status==="취소"?' <span class="small muted">(취소)</span>':"")+'</div>'}).join("");
+  if(!(lk||mix||rows.some(function(x){return/r327-split/.test(x)})))return;
+  var h='<div class="ln327">'+((mix||rows.length>1||/r327-split/.test(rows.join("")))?rows.join(""):"")+lk+'</div>',sig=h.length+"|"+J.length+"|"+rrHead(r),old=td.querySelector(".ln327");if(old&&old.dataset.sig===String(sig))return;if(old)old.remove();td.insertAdjacentHTML("beforeend",h.replace('<div class="ln327">','<div class="ln327" data-sig="'+sig+'">'))});
+function rr327NextMonth(){var d=pd(TODAY.slice(0,7)+"-01");d.setMonth(d.getMonth()+1);return d.getFullYear()+"년 "+(d.getMonth()+1)+"월 중"}
+function rr327Dlg(r,li){var j=(r.jobs||[])[li];if(!j)return;var lines=(r.jobs||[]).filter(function(z){return z&&(z.job||z.repl)}).length,n=+j.n||1,max=j.repl?1:(lines>1?n:n-1),ok=rrHired(r),left=rrHead(r);
+  S.r327={id:r.id,li:li};
+  $("#modal").innerHTML=('<div class="ov" id="r327dlg"><div class="dlg" role="dialog" aria-modal="true" aria-label="직무 줄 분리" style="max-width:520px"><div class="ph"><div><div class="k">'+esc((coR(r)||{}).name||"")+' · '+esc(rr265Lab(r))+'</div><h2>새 채용 요청으로 분리</h2></div><button class="close" data-act="r327-x" aria-label="닫기">×</button></div><div class="ps"><div class="fg">'+
+    '<div class="f full"><span>떼어 낼 줄</span><div class="ro"><span class="k327b '+(j.repl?"rp":"ad")+'">'+esc(jlLineKind(r,j))+'</span> '+esc(rr327LineLab(r,j))+'</div></div>'+
+    (j.repl?'':'<label class="f"><span>옮길 인원</span><input type="number" id="r327n" min="1" max="'+max+'" value="1" style="width:90px"> <small class="muted">최대 '+max+'명</small></label>')+
+    '<div class="f full"><span>새 요청 입사 시기</span><div class="rrrow"><select id="r327sm"><option value="month">월 지정</option><option value="date">날짜 지정</option></select><input id="r327m" value="'+esc(rr327NextMonth())+'" style="width:150px"><input type="date" id="r327d" hidden></div></div>'+
+    '<label class="f"><span>이력서 전달 마감</span><input type="date" id="r327due" value="'+esc(addD(TODAY,7))+'"></label></div>'+
+    '<p class="hint" style="margin-top:8px">근무 조건 · 급여 · 자격 · 채용 담당은 그대로 복사돼요 · 진행 중 후보는 원래 요청에 남아요'+(j.repl?' · 대체 대상도 새 요청으로 옮겨요':'')+'</p>'+
+    (ok?'<p class="small" id="r327warn" style="margin:4px 0 0;color:#a15c00" data-ok="'+ok+'" data-left="'+left+'">원래 요청 최종 합격 '+ok+'명 · 분리하면 남는 채용수가 줄어요</p>':'')+
+    '</div><div class="ps foot"><span class="grow"></span><button class="btn" data-act="r327-x">취소</button><button class="btn pri" data-act="r327-do">분리하기</button></div></div></div>')}
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.id!=="r327sm")return;var m=document.getElementById("r327m"),d=document.getElementById("r327d");if(m)m.hidden=t.value!=="month";if(d)d.hidden=t.value!=="date"},true);
+function rr327Split(r,li,k,start,note,due){var J=(r.jobs||[]).map(function(j){return Object.assign({},j)}),j=J[li];if(!j)return null;var co=(coR(r)||{}).name||"",b=rr265Lab(r),kind=j.repl?"대체":jlLineKind(r,j),n=+j.n||1;k=j.repl?1:Math.max(1,Math.min(+k||1,n));
+  var N=JSON.parse(JSON.stringify(r));["id","created","raw","vm","vm_on","auto","status_note","replaced_names"].forEach(function(f){delete N[f]});
+  N.id=nid();N.created=stamp();N.requested=TODAY;N.status="진행중";N.kind=kind;N.jobs=[Object.assign({},j,{n:j.repl?1:k})];N.replaced=j.repl?[j.repl]:[];N.start_date=start||"";N.start_note=start?"":(note||"");N.due_date=due||"";N.headcount=rrHead(N);N.requester=st(S.me).name||N.requester||"";
+  if(j.repl||k>=n)J.splice(li,1);else J[li].n=n-k;r.jobs=J;if(j.repl)r.replaced=(r.replaced||[]).filter(function(x){return x!==j.repl});
+  if(r.kind==="대체"&&!J.some(function(z){return z&&z.repl})&&!(r.replaced||[]).length){logChange("recruit_requests",r.id,co,"구분","대체","추가 (대체 줄을 분리해서 추가 줄만 남음)","내부");r.kind="추가"}
+  r.headcount=rrHead(r);DB.rr.push(N);
+  appSetPut("rr327:"+N.id,{from:r.id,kind0:b,job:j.job||"",det:j.detail||"",repl:j.repl||"",n:N.jobs[0].n,at:stamp(),by:st(S.me).name||""});
+  logChange("recruit_requests",r.id,co,"직무 줄 분리",b,rr265Lab(r)+" (→ 새 요청 "+rr265Lab(N)+")","내부");
+  logChange("recruit_requests",N.id,co,"채용 요청 등록 (분리)","",rr265Lab(N)+" (← "+b+")","내부");
+  rr327Save();return N}
+function rr327Join(N){var o=appSet("rr327:"+N.id,null),r=o&&rcOf(o.from);if(!o||!r){toast("원래 요청을 찾지 못했어요");return false}if(rrCands(N.id).length){toast("후보가 있는 요청은 다시 합칠 수 없어요");return false}
+  var co=(coR(r)||{}).name||"",b=rr265Lab(r),J=(r.jobs||[]).map(function(j){return Object.assign({},j)});
+  (N.jobs||[]).forEach(function(j){if(!j||!(j.job||j.repl))return;if(j.repl){if(!J.some(function(z){return z.repl===j.repl}))J.push(Object.assign({},j));if((r.replaced||[]).indexOf(j.repl)<0)r.replaced=(r.replaced||[]).concat([j.repl]);if(r.kind!=="대체")r.kind="대체";return}
+    var t=J.find(function(z){return!z.repl&&z.job===j.job&&jlNorm(z.detail)===jlNorm(j.detail)});if(t)t.n=(+t.n||1)+(+j.n||1);else J.push(Object.assign({},j))});
+  r.jobs=J;r.headcount=rrHead(r);if(r.status==="완료"||r.status==="취소"){logChange("recruit_requests",r.id,co,"상태",r.status,"진행중","내부");r.status="진행중"}
+  logChange("recruit_requests",r.id,co,"분리한 줄 다시 합침",b,rr265Lab(r),"내부");logChange("recruit_requests",N.id,co,"상태",N.status||"","취소","내부");logChange("recruit_requests",N.id,co,"취소 사유","","원래 요청에 다시 합침 · "+b,"내부");
+  N.status="취소";N.status_note="원래 요청에 다시 합침 · "+b;N.replaced=[];appSetPut("rr327:"+N.id,Object.assign({},o,{joined:stamp(),jby:st(S.me).name||""}));rr327Save();return r}
+regActs({"r327-split":function(D0){var r=rcOf(D0.id);if(!r)return;if(!rr327CanSplit(r,+D0.li)){toast("남는 인원이 없어서 분리할 수 없어요");return}rr327Dlg(r,+D0.li)},
+  "r327-x":function(){$("#modal").innerHTML="";S.r327=null},
+  "r327-do":function(){var q=S.r327,r=q&&rcOf(q.id);if(!r)return;var g=function(id){var e=document.getElementById(id);return e?e.value:""},sm=g("r327sm"),k=+(g("r327n")||1),j=(r.jobs||[])[q.li];if(!j)return;
+    var lines=(r.jobs||[]).filter(function(z){return z&&(z.job||z.repl)}).length,max=j.repl?1:(lines>1?(+j.n||1):(+j.n||1)-1);if(!j.repl&&(k<1||k>max)){toast("옮길 인원은 1~"+max+"명이에요");return}
+    if(sm==="date"&&!g("r327d")){toast("입사 날짜를 골라 주세요");return}
+    var N=rr327Split(r,q.li,k,sm==="date"?g("r327d"):"",sm==="month"?String(g("r327m")||"").trim():"",g("r327due"));$("#modal").innerHTML="";S.r327=null;if(!N)return;
+    toast("새 채용 요청으로 분리했어요 · "+rr265Lab(N));S.rrSel=N.id;S.rrF=null;S.rrEdit=null;render()},
+  "r327-open":function(D0){var r=rcOf(D0.id);if(!r){toast("요청을 찾지 못했어요");return}S.rrSel=r.id;S.rrF=null;S.rrEdit=null;render()},
+  "r327-join":function(D0){var N=rcOf(D0.id);if(!N)return;askConfirm("원래 요청에 다시 합치기","이 요청의 직무 줄 · 인원을 원래 요청으로 되돌리고, 이 요청은 '취소'로 바꿔요 (삭제 아님 · 변경 이력에 남아요).","다시 합치기",function(){var r=rr327Join(N);if(!r)return;toast("원래 요청에 다시 합쳤어요");S.rrSel=r.id;S.rrF=null;render()})}});
+
+/* ==========================================================
+   v328 담당자 목록 채용파트 먼저 · 차수 머리줄 고정 오류
+     ① 채용 요청 화면 '담당' 거르기 · 조율 요청 담당(채용 쪽): 채용파트 묶음을 맨 위, 나머지는 '다른 파트'
+        (조율 요청 '운영 쪽'은 운영파트 먼저)
+     ② 차수 상자(둥근 모서리 overflow:hidden)가 머리줄 고정 기준이 돼서, v326 의 top:창 머리 높이만큼
+        머리줄이 상자 안에서 밀려 내려오던 것 → overflow:clip (고정 기준 = 창) · 후보 표 열 이름 줄도 머리줄 아래 고정
+   ========================================================== */
+function rr328Group(sel,part){if(!sel||sel.dataset.g328===part)return;var first=sel.options[0]&&!sel.options[0].value?sel.options[0]:null,v=sel.value,A=[],B=[];
+  [].slice.call(sel.options).forEach(function(o){if(o===first||!o.value)return;var s=st(o.value);((s&&s.part)===part?A:B).push(o)});if(!A.length)return;
+  var mk=function(lab,L){var g=document.createElement("optgroup");g.label=lab;L.forEach(function(o){g.appendChild(o)});return g};
+  [].slice.call(sel.querySelectorAll("optgroup")).forEach(function(g){g.remove()});sel.appendChild(mk(part,A));if(B.length)sel.appendChild(mk("다른 파트",B));if(first)sel.insertBefore(first,sel.firstChild);sel.value=v;sel.dataset.g328=part}
+function rr328Dom(){
+  if(S.view==="rreq")rr328Group(document.querySelector('#main select[data-ch="mgr"]'),"채용파트");
+  [].forEach.call(document.querySelectorAll('select[data-tk272o]'),function(s){rr328Group(s,s.dataset.tk272o==="ops"?"운영파트":"채용파트")});
+  [].forEach.call(document.querySelectorAll("aside.pnl .rrround"),function(R){var h=R.querySelector(":scope > .rrrh"),v=(h?h.offsetHeight:0)+"px";if(R.style.getPropertyValue("--rrh")!==v)R.style.setProperty("--rrh",v)})}
+render=layer("render",render,12421,"v328 담당 목록 · 머리줄",function(p){return function(){var r=p.apply(this,arguments);try{rr328Dom()}catch(e){console.warn("[v328]",e)}return r}});
+/* 조율 요청 담당 창은 render 없이 열려서 */
+document.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('[data-act="tk272-own"]');if(b)setTimeout(function(){try{rr328Dom()}catch(e){}},0)});
 
 /* ============ 렌더 ============ */
 function renderMain(){
